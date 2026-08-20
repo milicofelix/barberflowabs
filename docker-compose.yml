@@ -1,0 +1,34 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: barberflow_abs_app
+    working_dir: /workspace/barberFlowABS
+    init: true
+    tty: true
+    stdin_open: true
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: file:./dev.db
+      JWT_SECRET: ${JWT_SECRET:-barberflow_abs_dev_secret}
+      # Ajuda file watchers de Next/Nest/Expo a perceber alterações em bind mounts.
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "3000:3000"   # Next.js frontend
+      - "4000:4000"   # NestJS backend
+      - "8081:8081"   # Expo / Metro / web
+      - "19000:19000" # Expo
+      - "19001:19001" # Expo
+      - "19002:19002" # Expo DevTools
+      - "19006:19006" # Expo web (compatibilidade)
+    volumes:
+      - .:/workspace/barberFlowABS
+      - barberflow_node_modules:/workspace/barberFlowABS/node_modules
+    command: yarn turbo dev --ui=stream
+    restart: unless-stopped
+
+volumes:
+  barberflow_node_modules:
