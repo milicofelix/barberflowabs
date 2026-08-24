@@ -1,22 +1,4 @@
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: barberflow_abs_mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-barberflow_abs}
-      MYSQL_USER: ${MYSQL_USER:-barberflow}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-barberflow}
-    ports:
-      - "3307:3306"
-    volumes:
-      - barberflow_mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
   app:
     build:
       context: .
@@ -28,7 +10,7 @@ services:
     stdin_open: true
     environment:
       NODE_ENV: development
-      DATABASE_URL: mysql://barberflow:barberflow@mysql:3306/barberflow_abs
+      DATABASE_URL: ${DATABASE_URL:-mysql://barberflow:barberflow@infra-mysql-1:3306/barberflow_abs}
       JWT_SECRET: ${JWT_SECRET:-barberflow_abs_dev_secret}
       EXPO_DEVTOOLS_LISTEN_ADDRESS: 0.0.0.0
       RCT_METRO_PORT: 8081
@@ -48,10 +30,13 @@ services:
       - barberflow_node_modules:/workspace/barberFlowABS/node_modules
     command: yarn turbo dev --ui=stream
     restart: unless-stopped
-    depends_on:
-      mysql:
-        condition: service_healthy
+    networks:
+      - shared
 
 volumes:
   barberflow_node_modules:
-  barberflow_mysql_data:
+
+networks:
+  shared:
+    external: true
+    name: shared_net

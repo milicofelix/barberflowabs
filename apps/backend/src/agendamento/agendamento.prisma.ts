@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../db/prisma.service';
 import Agendamento from '@barbabrutal/core/src/agendamento/model/Agendamento';
 import RepositorioAgendamento from '@barbabrutal/core/src/agendamento/provider/RepositorioAgendamento';
+import { DEFAULT_BARBEARIA_ID } from 'src/shared/tenant';
 
 @Injectable()
 export class AgendamentoPrisma implements RepositorioAgendamento {
@@ -21,8 +22,11 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
   }
 
   async criar(agendamento: Agendamento): Promise<void> {
+    const barbeariaId = agendamento.usuario.barbeariaId ?? DEFAULT_BARBEARIA_ID;
+
     await this.prisma.agendamento.create({
       data: {
+        barbearia: { connect: { id: barbeariaId } },
         data: agendamento.data,
         usuario: { connect: { id: agendamento.usuario.id } },
         profissional: { connect: { id: agendamento.profissional.id } },
@@ -37,7 +41,7 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
     const agendamento = await this.prisma.agendamento.findUnique({
       where: { id },
       include: {
-        usuario: { select: { id: true, nome: true, email: true } },
+        usuario: { select: { id: true, barbeariaId: true, nome: true, email: true } },
         profissional: { select: { id: true, nome: true } },
         servicos: {
           select: { id: true, nome: true, preco: true, qtdeSlots: true },
@@ -52,7 +56,7 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
     const agendamentos = await this.prisma.agendamento.findMany({
       where: { usuario: { email }, data: { gte: new Date() } },
       include: {
-        usuario: { select: { id: true, nome: true, email: true } },
+        usuario: { select: { id: true, barbeariaId: true, nome: true, email: true } },
         profissional: { select: { id: true, nome: true } },
         servicos: {
           select: { id: true, nome: true, preco: true, qtdeSlots: true },
@@ -77,11 +81,12 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
 
     const agendamentos = await this.prisma.agendamento.findMany({
       where: {
+        barbeariaId: DEFAULT_BARBEARIA_ID,
         profissionalId: profissional,
         data: { gte: inicioDoDia, lte: fimDoDia },
       },
       include: {
-        usuario: { select: { id: true, nome: true, email: true } },
+        usuario: { select: { id: true, barbeariaId: true, nome: true, email: true } },
         profissional: { select: { id: true, nome: true } },
         servicos: {
           select: { id: true, nome: true, preco: true, qtdeSlots: true },

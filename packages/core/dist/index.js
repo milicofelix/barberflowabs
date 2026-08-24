@@ -74,7 +74,8 @@ var ExcluirAgendamento = class {
       throw new Error("Agendamento n\xE3o encontrado");
     }
     const cliente = agendamento.usuario.email === usuario.email;
-    const profissional = usuario.barbeiro;
+    const mesmaBarbearia = agendamento.barbeariaId === usuario.barbeariaId;
+    const profissional = usuario.barbeiro && mesmaBarbearia;
     if (!cliente && !profissional) {
       throw new Error("Usu\xE1rio n\xE3o autorizado");
     }

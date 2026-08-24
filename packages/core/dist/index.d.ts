@@ -1,5 +1,6 @@
 interface Usuario {
     id?: number;
+    barbeariaId?: number;
     nome: string;
     email: string;
     senha?: string;
@@ -9,6 +10,7 @@ interface Usuario {
 
 interface Profissional {
     id: number;
+    barbeariaId?: number;
     nome: string;
     descricao: string;
     imagemURL: string;
@@ -18,6 +20,7 @@ interface Profissional {
 
 interface Servico {
     id: number;
+    barbeariaId?: number;
     nome: string;
     descricao: string;
     preco: number;
@@ -27,6 +30,7 @@ interface Servico {
 
 interface Agendamento {
     id: number;
+    barbeariaId?: number;
     data: Date;
     usuario: Usuario;
     profissional: Partial<Profissional>;

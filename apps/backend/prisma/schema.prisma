@@ -12,43 +12,57 @@ datasource db {
 
 model Usuario {
   id           Int           @id @default(autoincrement())
+  barbeariaId  Int
   nome         String
   email        String        @unique
   senha        String
   telefone     String?
   barbeiro     Boolean
+  barbearia    Barbearia     @relation(fields: [barbeariaId], references: [id])
   agendamentos Agendamento[]
 
+  @@index([barbeariaId])
   @@map("usuarios")
 }
 
 model Profissional {
   id                   Int           @id @default(autoincrement())
-  nome                 String        @unique
+  barbeariaId          Int
+  nome                 String
   descricao            String        @db.Text
   imagemURL            String
   avaliacao            Float
   quantidadeAvaliacoes Int
+  barbearia            Barbearia     @relation(fields: [barbeariaId], references: [id])
   agendamentos         Agendamento[]
 
+  @@unique([barbeariaId, nome])
+  @@index([barbeariaId])
   @@map("profissionais")
 }
 
 model Servico {
   id           Int           @id @default(autoincrement())
-  nome         String        @unique
+  barbeariaId  Int
+  nome         String
   descricao    String        @db.Text
   preco        Decimal       @db.Decimal(10, 2)
   qtdeSlots    Int
   imagemURL    String
+  barbearia    Barbearia     @relation(fields: [barbeariaId], references: [id])
   agendamentos Agendamento[]
 
+  @@unique([barbeariaId, nome])
+  @@index([barbeariaId])
   @@map("servicos")
 }
 
 model Agendamento {
-  id   Int      @id @default(autoincrement())
-  data DateTime
+  id          Int      @id @default(autoincrement())
+  data        DateTime
+  barbeariaId Int
+
+  barbearia Barbearia @relation(fields: [barbeariaId], references: [id])
 
   usuario   Usuario @relation(fields: [usuarioId], references: [id])
   usuarioId Int
@@ -58,5 +72,40 @@ model Agendamento {
 
   servicos Servico[]
 
+  @@index([barbeariaId])
+  @@index([profissionalId, data])
   @@map("agendamentos")
+}
+
+model Barbearia {
+  id            Int            @id @default(autoincrement())
+  nome          String
+  slug          String         @unique
+  telefone      String?
+  email         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  unidades      Unidade[]
+  usuarios      Usuario[]
+  profissionais Profissional[]
+  servicos      Servico[]
+  agendamentos  Agendamento[]
+
+  @@map("barbearias")
+}
+
+model Unidade {
+  id          Int       @id @default(autoincrement())
+  barbeariaId Int
+  nome        String
+  endereco    String?
+  telefone    String?
+  ativa       Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
+
+  @@unique([barbeariaId, nome])
+  @@index([barbeariaId])
+  @@map("unidades")
 }

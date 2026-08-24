@@ -4,6 +4,7 @@ import Servico from '../../servico/model/Servico'
 
 export default interface Agendamento {
     id: number
+    barbeariaId?: number
     data: Date
     usuario: Usuario
     profissional: Partial<Profissional>
