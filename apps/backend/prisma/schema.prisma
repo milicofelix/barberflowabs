@@ -9,3 +9,54 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
+
+model Usuario {
+  id           Int           @id @default(autoincrement())
+  nome         String
+  email        String        @unique
+  senha        String
+  telefone     String?
+  barbeiro     Boolean
+  agendamentos Agendamento[]
+
+  @@map("usuarios")
+}
+
+model Profissional {
+  id                   Int           @id @default(autoincrement())
+  nome                 String        @unique
+  descricao            String
+  imagemURL            String
+  avaliacao            Float
+  quantidadeAvaliacoes Int
+  agendamentos         Agendamento[]
+
+  @@map("profissionais")
+}
+
+model Servico {
+  id           Int           @id @default(autoincrement())
+  nome         String        @unique
+  descricao    String
+  preco        Float
+  qtdeSlots    Int
+  imagemURL    String
+  agendamentos Agendamento[]
+
+  @@map("servicos")
+}
+
+model Agendamento {
+  id   Int      @id @default(autoincrement())
+  data DateTime
+
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  usuarioId Int
+
+  profissional   Profissional @relation(fields: [profissionalId], references: [id])
+  profissionalId Int
+
+  servicos Servico[]
+
+  @@map("agendamentos")
+}

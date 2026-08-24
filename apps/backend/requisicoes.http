@@ -1,0 +1,63 @@
+GET http://localhost:4000/ping
+
+###
+POST http://localhost:4000/auth/login
+
+###
+POST http://localhost:4000/auth/registrar
+content-type: application/json
+
+{
+    "nome": "Rebeca Pereira Silva",
+    "email": "rebecaprrsilva@zmail.com",
+    "senha": "#Senha123",
+    "telefone": "(11) 88888-9999",
+    "barbeiro": false
+}
+
+###
+POST http://localhost:4000/auth/login
+content-type: application/json
+
+{
+    "email": "leonardo@formacao.dev",
+    "senha": "#Senha123"
+}
+
+###
+GET http://localhost:4000/profissionais
+
+###
+GET http://localhost:4000/servicos
+
+### 
+POST http://localhost:4000/agendamentos
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwibm9tZSI6Ikxlb25hcmRvIExlaXTDo28iLCJlbWFpbCI6Imxlb25hcmRvQGZvcm1hY2FvLmRldiIsInRlbGVmb25lIjoiKDExKSA5OTk5OS05OTk5IiwiYmFyYmVpcm8iOmZhbHNlLCJpYXQiOjE3MjU2NDk4ODIsImV4cCI6MTcyNjk0NTg4Mn0.kqkdJ7uYBr7xO3pDGMgc6Z9Fd4EzY9Yoys65GWGzn1M
+Content-Type: application/json
+
+{
+    "data": "2024-08-29T13:00:00.000Z",
+    "usuario": { "id": 2 },
+    "profissional": { "id": 1 },
+    "servicos": [
+        { "id": 1 },
+        { "id": 2 },
+        { "id": 3 }
+    ]
+}
+
+###
+GET http://localhost:4000/agendamentos
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwibm9tZSI6Ikxlb25hcmRvIExlaXTDo28iLCJlbWFpbCI6Imxlb25hcmRvQGZvcm1hY2FvLmRldiIsInRlbGVmb25lIjoiKDExKSA5OTk5OS05OTk5IiwiYmFyYmVpcm8iOmZhbHNlLCJpYXQiOjE3MjU2NDk4ODIsImV4cCI6MTcyNjk0NTg4Mn0.kqkdJ7uYBr7xO3pDGMgc6Z9Fd4EzY9Yoys65GWGzn1M
+
+###
+GET http://localhost:4000/agendamentos/1/2024-08-29
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwibm9tZSI6Ikxlb25hcmRvIExlaXTDo28iLCJlbWFpbCI6Imxlb25hcmRvQGZvcm1hY2FvLmRldiIsInRlbGVmb25lIjoiKDExKSA5OTk5OS05OTk5IiwiYmFyYmVpcm8iOmZhbHNlLCJpYXQiOjE3MjU2NDk4ODIsImV4cCI6MTcyNjk0NTg4Mn0.kqkdJ7uYBr7xO3pDGMgc6Z9Fd4EzY9Yoys65GWGzn1M
+
+###
+DELETE http://localhost:4000/agendamentos/1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwibm9tZSI6Ikxlb25hcmRvIExlaXTDo28iLCJlbWFpbCI6Imxlb25hcmRvQGZvcm1hY2FvLmRldiIsInRlbGVmb25lIjoiKDExKSA5OTk5OS05OTk5IiwiYmFyYmVpcm8iOmZhbHNlLCJpYXQiOjE3MjU2NDk4ODIsImV4cCI6MTcyNjk0NTg4Mn0.kqkdJ7uYBr7xO3pDGMgc6Z9Fd4EzY9Yoys65GWGzn1M
+
+###
+GET http://localhost:4000/agendamentos/ocupacao/2/2024-09-07
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Miwibm9tZSI6Ikxlb25hcmRvIExlaXTDo28iLCJlbWFpbCI6Imxlb25hcmRvQGZvcm1hY2FvLmRldiIsInRlbGVmb25lIjoiKDExKSA5OTk5OS05OTk5IiwiYmFyYmVpcm8iOmZhbHNlLCJpYXQiOjE3MjU2NDk4ODIsImV4cCI6MTcyNjk0NTg4Mn0.kqkdJ7uYBr7xO3pDGMgc6Z9Fd4EzY9Yoys65GWGzn1M

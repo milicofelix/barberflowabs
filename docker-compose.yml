@@ -10,9 +10,10 @@ services:
     stdin_open: true
     environment:
       NODE_ENV: development
-      PORT: 4000
       DATABASE_URL: file:./dev.db
       JWT_SECRET: ${JWT_SECRET:-barberflow_abs_dev_secret}
+      EXPO_DEVTOOLS_LISTEN_ADDRESS: 0.0.0.0
+      RCT_METRO_PORT: 8081
       # Ajuda file watchers de Next/Nest/Expo a perceber alterações em bind mounts.
       WATCHPACK_POLLING: "true"
       CHOKIDAR_USEPOLLING: "true"
