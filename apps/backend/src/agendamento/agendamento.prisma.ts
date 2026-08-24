@@ -7,6 +7,19 @@ import RepositorioAgendamento from '@barbabrutal/core/src/agendamento/provider/R
 export class AgendamentoPrisma implements RepositorioAgendamento {
   constructor(private readonly prisma: PrismaService) {}
 
+  private normalizarAgendamento(agendamento: any): Agendamento {
+    delete agendamento.usuarioId;
+    delete agendamento.profissionalId;
+
+    return {
+      ...agendamento,
+      servicos: agendamento.servicos.map((servico: any) => ({
+        ...servico,
+        preco: Number(servico.preco),
+      })),
+    };
+  }
+
   async criar(agendamento: Agendamento): Promise<void> {
     await this.prisma.agendamento.create({
       data: {
@@ -20,8 +33,8 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
     });
   }
 
-  buscarPorId(id: number): Promise<Agendamento | null> {
-    return this.prisma.agendamento.findUnique({
+  async buscarPorId(id: number): Promise<Agendamento | null> {
+    const agendamento = await this.prisma.agendamento.findUnique({
       where: { id },
       include: {
         usuario: { select: { id: true, nome: true, email: true } },
@@ -31,6 +44,8 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
         },
       },
     });
+
+    return agendamento ? this.normalizarAgendamento(agendamento) : null;
   }
 
   async buscarPorEmail(email: string): Promise<Agendamento[]> {
@@ -46,14 +61,10 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
       orderBy: { data: 'desc' },
     });
 
-    return agendamentos.map((agendamento) => {
-      delete agendamento.usuarioId;
-      delete agendamento.profissionalId;
-      return agendamento;
-    });
+    return agendamentos.map((agendamento) => this.normalizarAgendamento(agendamento));
   }
 
-  buscarPorProfissionalEData(
+  async buscarPorProfissionalEData(
     profissional: number,
     data: Date,
   ): Promise<Agendamento[]> {
@@ -64,7 +75,7 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
     const inicioDoDia = new Date(ano, mes, dia, 0, 0, 0);
     const fimDoDia = new Date(ano, mes, dia, 23, 59, 59);
 
-    return this.prisma.agendamento.findMany({
+    const agendamentos = await this.prisma.agendamento.findMany({
       where: {
         profissionalId: profissional,
         data: { gte: inicioDoDia, lte: fimDoDia },
@@ -77,6 +88,8 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
         },
       },
     });
+
+    return agendamentos.map((agendamento) => this.normalizarAgendamento(agendamento));
   }
 
   async excluir(id: number): Promise<void> {

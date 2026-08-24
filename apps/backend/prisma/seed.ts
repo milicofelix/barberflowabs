@@ -6,10 +6,12 @@ const prisma = new PrismaClient();
 async function seed() {
   await prisma.profissional.createMany({
     data: profissionais as any,
+    skipDuplicates: true,
   });
 
   await prisma.servico.createMany({
     data: servicos as any,
+    skipDuplicates: true,
   });
 
   // senha é... #Senha123
@@ -32,7 +34,7 @@ async function seed() {
     },
   ];
 
-  await prisma.usuario.createMany({ data: usuarios as any });
+  await prisma.usuario.createMany({ data: usuarios as any, skipDuplicates: true });
 }
 
 seed();

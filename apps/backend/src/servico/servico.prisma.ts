@@ -6,7 +6,11 @@ import { PrismaService } from 'src/db/prisma.service';
 export class ServicoPrisma implements RepositorioServico {
   constructor(private readonly prisma: PrismaService) {}
 
-  buscarTodos(): Promise<Servico[]> {
-    return this.prisma.servico.findMany();
+  async buscarTodos(): Promise<Servico[]> {
+    const servicos = await this.prisma.servico.findMany();
+    return servicos.map((servico) => ({
+      ...servico,
+      preco: Number(servico.preco),
+    }));
   }
 }

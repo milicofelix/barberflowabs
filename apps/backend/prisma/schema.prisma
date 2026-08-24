@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -25,7 +25,7 @@ model Usuario {
 model Profissional {
   id                   Int           @id @default(autoincrement())
   nome                 String        @unique
-  descricao            String
+  descricao            String        @db.Text
   imagemURL            String
   avaliacao            Float
   quantidadeAvaliacoes Int
@@ -37,8 +37,8 @@ model Profissional {
 model Servico {
   id           Int           @id @default(autoincrement())
   nome         String        @unique
-  descricao    String
-  preco        Float
+  descricao    String        @db.Text
+  preco        Decimal       @db.Decimal(10, 2)
   qtdeSlots    Int
   imagemURL    String
   agendamentos Agendamento[]
