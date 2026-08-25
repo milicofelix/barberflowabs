@@ -11,6 +11,7 @@ export default function FormularioAgendamento() {
         servicos,
         data,
         horariosOcupados,
+        horariosDisponiveis,
         selecionarProfissional,
         selecionarServicos,
         selecionarData,
@@ -44,6 +45,7 @@ export default function FormularioAgendamento() {
                     value={data}
                     onChange={(d) => selecionarData(d!)}
                     horariosOcupados={horariosOcupados}
+                    horariosDisponiveis={horariosDisponiveis}
                     className="input"
                     qtdeHorarios={qtdeHorarios()}
                 />

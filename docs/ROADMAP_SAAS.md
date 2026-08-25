@@ -27,6 +27,7 @@ O projeto ja possui uma base forte:
 - Dominio compartilhado em `packages/core`.
 - Autenticacao com JWT e bcrypt.
 - Agenda baseada em slots de 15 minutos.
+- Agenda profissional com horarios de funcionamento e bloqueios.
 - Prisma configurado para MySQL.
 - Entidades iniciais de SaaS: `Barbearia` e `Unidade`.
 - Dados principais vinculados a `barbeariaId`.
@@ -76,7 +77,6 @@ Pendente:
 
 - Criar entidade `Cliente` separada de `Usuario`, se o dominio exigir.
 - Criar entidade de plano/assinatura.
-- Criar migrations para agenda configuravel, bloqueios e disponibilidade.
 
 ## Fase 2 - SaaS E Multi-Tenant
 
@@ -152,20 +152,36 @@ Melhorias futuras:
 
 ## Fase 4 - Agenda Profissional
 
-Status: pendente.
+Status: concluida para o MVP SaaS.
 
 Objetivo: transformar agenda simples em agenda operacional de barbearia.
 
-Itens:
+Concluido:
 
-- Criar horario de funcionamento por barbearia/unidade.
-- Criar disponibilidade por profissional.
-- Criar bloqueios manuais.
-- Criar folgas, ferias e excecoes.
-- Tratar feriados.
-- Proteger concorrencia de agendamento.
+- Criada tabela `horarios_funcionamento`.
+- Criada tabela `bloqueios_agenda`.
+- Seed/migration criam horario padrao da barbearia de segunda a sabado:
+  - `08:00` a `21:00`
+  - intervalo de `12:00` a `13:00`
+- Criado endpoint autenticado:
+  - `GET /agenda/horarios/:data`
+- Disponibilidade respeita:
+  - barbearia do usuario autenticado
+  - unidade opcional
+  - profissional opcional
+  - bloqueios globais ou do profissional
+- Frontend e mobile consomem horarios disponiveis da API.
+- Selecionar/agendar deixa de depender da regra fixa `8h-20h`.
+- Mantido fallback para a grade antiga quando nao houver configuracao no banco.
+
+Melhorias futuras:
+
+- Criar tela administrativa para editar horarios de funcionamento.
+- Criar CRUD de bloqueios, folgas, ferias e excecoes.
+- Tratar feriados nacionais/municipais.
+- Proteger concorrencia de agendamento com transacao/constraint.
 - Criar regras de cancelamento.
-- Criar no-show.
+- Criar fluxo de no-show.
 
 ## Fase 5 - Gestao Operacional
 

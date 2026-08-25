@@ -1,6 +1,6 @@
 import { DateUtils } from '@barbabrutal/core'
 import CampoDia from './CampoDia'
-import CampoHorario from './CampoHorario'
+import CampoHorario, { HorariosDisponiveis } from './CampoHorario'
 
 export interface CampoDataHoraProps
     extends Omit<React.SelectHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
@@ -8,6 +8,7 @@ export interface CampoDataHoraProps
     value: Date | null
     qtdeHorarios: number
     horariosOcupados: string[]
+    horariosDisponiveis?: HorariosDisponiveis
     onChange: (value: Date | null) => void
 }
 
@@ -20,6 +21,7 @@ export default function CampoDataHora(props: CampoDataHoraProps) {
                 label="Horários Disponíveis"
                 qtdeHorarios={props.qtdeHorarios}
                 horariosOcupados={props.horariosOcupados}
+                horariosDisponiveis={props.horariosDisponiveis}
                 value={data}
                 onChange={props.onChange}
             />

@@ -35,6 +35,7 @@ model Profissional {
   quantidadeAvaliacoes Int
   barbearia            Barbearia     @relation(fields: [barbeariaId], references: [id])
   agendamentos         Agendamento[]
+  bloqueiosAgenda      BloqueioAgenda[]
 
   @@unique([barbeariaId, nome])
   @@index([barbeariaId])
@@ -90,6 +91,8 @@ model Barbearia {
   profissionais Profissional[]
   servicos      Servico[]
   agendamentos  Agendamento[]
+  horariosFuncionamento HorarioFuncionamento[]
+  bloqueiosAgenda       BloqueioAgenda[]
 
   @@map("barbearias")
 }
@@ -104,8 +107,50 @@ model Unidade {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
+  horariosFuncionamento HorarioFuncionamento[]
+  bloqueiosAgenda       BloqueioAgenda[]
 
   @@unique([barbeariaId, nome])
   @@index([barbeariaId])
   @@map("unidades")
+}
+
+model HorarioFuncionamento {
+  id              Int       @id @default(autoincrement())
+  barbeariaId     Int
+  unidadeId       Int?
+  diaSemana       Int
+  inicio          String    @db.VarChar(5)
+  fim             String    @db.VarChar(5)
+  intervaloInicio String?   @db.VarChar(5)
+  intervaloFim    String?   @db.VarChar(5)
+  ativo           Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  barbearia       Barbearia @relation(fields: [barbeariaId], references: [id])
+  unidade         Unidade?  @relation(fields: [unidadeId], references: [id])
+
+  @@index([barbeariaId, diaSemana])
+  @@index([unidadeId])
+  @@map("horarios_funcionamento")
+}
+
+model BloqueioAgenda {
+  id             Int           @id @default(autoincrement())
+  barbeariaId    Int
+  profissionalId Int?
+  unidadeId      Int?
+  inicio         DateTime
+  fim            DateTime
+  motivo         String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  barbearia      Barbearia     @relation(fields: [barbeariaId], references: [id])
+  profissional   Profissional? @relation(fields: [profissionalId], references: [id])
+  unidade        Unidade?      @relation(fields: [unidadeId], references: [id])
+
+  @@index([barbeariaId, inicio, fim])
+  @@index([profissionalId, inicio, fim])
+  @@index([unidadeId, inicio, fim])
+  @@map("bloqueios_agenda")
 }

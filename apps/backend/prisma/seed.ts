@@ -54,6 +54,22 @@ async function seed() {
     skipDuplicates: true,
   });
 
+  await prisma.horarioFuncionamento.deleteMany({
+    where: { barbeariaId: BARBEARIA_PADRAO_ID },
+  });
+
+  await prisma.horarioFuncionamento.createMany({
+    data: [1, 2, 3, 4, 5, 6].map((diaSemana) => ({
+      barbeariaId: BARBEARIA_PADRAO_ID,
+      diaSemana,
+      inicio: '08:00',
+      fim: '21:00',
+      intervaloInicio: '12:00',
+      intervaloFim: '13:00',
+      ativo: true,
+    })),
+  });
+
   // senha é... #Senha123
   const senha = '$2b$10$9LQTRK3LRzIddKYW2C4MTelydFzk5Ys4JoROPajNqvYshhrn1PRa6';
 

@@ -80,7 +80,8 @@ declare class Horarios {
     readonly inicio: string;
     readonly qtde: number;
     private readonly horariosOcupados;
-    constructor(inicio: string, qtde: number, horariosOcupados: string[]);
+    private readonly horariosDisponiveis?;
+    constructor(inicio: string, qtde: number, horariosOcupados: string[], horariosDisponiveis?: string[]);
     get todos(): string[];
     get completo(): boolean;
     get incompleto(): boolean;

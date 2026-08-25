@@ -6,10 +6,18 @@ export default class Horarios {
     constructor(
         public readonly inicio: string,
         public readonly qtde: number,
-        private readonly horariosOcupados: string[]
+        private readonly horariosOcupados: string[],
+        private readonly horariosDisponiveis?: string[]
     ) {}
 
     get todos() {
+        if (this.horariosDisponiveis?.length) {
+            const indiceDisponivel = this.horariosDisponiveis.indexOf(this.inicio)
+            return indiceDisponivel >= 0
+                ? this.horariosDisponiveis.slice(indiceDisponivel, indiceDisponivel + this.qtde)
+                : []
+        }
+
         const { manha, tardeNoite } = AgendaUtils.horariosDoDia()
         const horarios = manha.includes(this.inicio) ? manha : tardeNoite
         const indice = horarios.indexOf(this.inicio)

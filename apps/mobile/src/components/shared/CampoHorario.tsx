@@ -2,17 +2,24 @@ import { AgendaUtils, DateUtils, Horarios } from '@barbabrutal/core'
 import { useEffect, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 
+export interface HorariosDisponiveis {
+    manha: string[]
+    tardeNoite: string[]
+}
+
 interface CampoHorarioProps {
     value: Date
     qtdeHorarios: number
     horariosOcupados: string[]
+    horariosDisponiveis?: HorariosDisponiveis
     onChange(data: Date): void
 }
 
 export default function CampoHorario(props: CampoHorarioProps) {
     const [horaSelecionada, setHoraSelecionada] = useState<string | null>(null)
-    const { manha, tardeNoite } = AgendaUtils.horariosDoDia()
+    const { manha, tardeNoite } = props.horariosDisponiveis ?? AgendaUtils.horariosDoDia()
     const { horariosOcupados } = props
+    const todosHorariosDisponiveis = [...manha, ...tardeNoite]
 
     const dia = props.value.toISOString().slice(0, 10) ?? ''
 
@@ -28,7 +35,8 @@ export default function CampoHorario(props: CampoHorarioProps) {
         const horariosSelecionados = new Horarios(
             horaSelecionada!,
             props.qtdeHorarios,
-            horariosOcupados
+            horariosOcupados,
+            todosHorariosDisponiveis
         )
         const selecionado = horariosSelecionados.todos.includes(horario)
 
@@ -47,7 +55,12 @@ export default function CampoHorario(props: CampoHorarioProps) {
                 key={horario}
                 onPress={function () {
                     setHoraSelecionada(horario)
-                    const horarios = new Horarios(horario!, props.qtdeHorarios, horariosOcupados)
+                    const horarios = new Horarios(
+                        horario!,
+                        props.qtdeHorarios,
+                        horariosOcupados,
+                        todosHorariosDisponiveis
+                    )
 
                     if (horarios.ocupado || horarios.incompleto) {
                         props.onChange(DateUtils.aplicarHorario(props.value, '00:00'))

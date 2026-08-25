@@ -16,6 +16,7 @@ export default function FormularioAgendamento(props: FormularioAgendamentoProps)
         servicos,
         data,
         horariosOcupados,
+        horariosDisponiveis,
         selecionarProfissional,
         selecionarServicos,
         selecionarData,
@@ -39,6 +40,7 @@ export default function FormularioAgendamento(props: FormularioAgendamentoProps)
                     onChange={selecionarData}
                     qtdeHorarios={qtdeHorarios()}
                     horariosOcupados={horariosOcupados}
+                    horariosDisponiveis={horariosDisponiveis}
                 />
             </Passos>
         </View>

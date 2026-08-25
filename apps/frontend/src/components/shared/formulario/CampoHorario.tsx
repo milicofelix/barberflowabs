@@ -4,19 +4,26 @@ import { AgendaUtils, DateUtils, Horarios } from '@barbabrutal/core'
 import { IconX } from '@tabler/icons-react'
 import { useState } from 'react'
 
+export interface HorariosDisponiveis {
+    manha: string[]
+    tardeNoite: string[]
+}
+
 export interface CampoHorarioProps
     extends Omit<React.SelectHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
     label?: string
     value: Date
     qtdeHorarios: number
     horariosOcupados: string[]
+    horariosDisponiveis?: HorariosDisponiveis
     onChange: (value: Date) => void
 }
 
 export default function CampoHorario(props: CampoHorarioProps) {
     const [horarioHover, setHorarioHover] = useState<string | null>(null)
-    const { manha, tardeNoite } = AgendaUtils.horariosDoDia()
+    const { manha, tardeNoite } = props.horariosDisponiveis ?? AgendaUtils.horariosDoDia()
     const { horariosOcupados } = props
+    const todosHorariosDisponiveis = [...manha, ...tardeNoite]
 
     const horarioSelecionado = props.value.toLocaleTimeString('pt-BR', {
         hour: '2-digit',
@@ -24,11 +31,17 @@ export default function CampoHorario(props: CampoHorarioProps) {
     })
 
     function renderizarHorario(horario: string) {
-        const horariosHover = new Horarios(horarioHover!, props.qtdeHorarios, horariosOcupados)
+        const horariosHover = new Horarios(
+            horarioHover!,
+            props.qtdeHorarios,
+            horariosOcupados,
+            todosHorariosDisponiveis
+        )
         const horariosSelecionados = new Horarios(
             horarioSelecionado,
             props.qtdeHorarios,
-            horariosOcupados
+            horariosOcupados,
+            todosHorariosDisponiveis
         )
         const selecionado =
             horariosSelecionados.todos.includes(horario) && horariosSelecionados.completo

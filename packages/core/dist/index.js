@@ -167,12 +167,17 @@ var MoedaUtils = class {
 
 // src/agendamento/model/Horarios.ts
 var Horarios = class {
-  constructor(inicio, qtde, horariosOcupados) {
+  constructor(inicio, qtde, horariosOcupados, horariosDisponiveis) {
     this.inicio = inicio;
     this.qtde = qtde;
     this.horariosOcupados = horariosOcupados;
+    this.horariosDisponiveis = horariosDisponiveis;
   }
   get todos() {
+    if (this.horariosDisponiveis?.length) {
+      const indiceDisponivel = this.horariosDisponiveis.indexOf(this.inicio);
+      return indiceDisponivel >= 0 ? this.horariosDisponiveis.slice(indiceDisponivel, indiceDisponivel + this.qtde) : [];
+    }
     const { manha, tardeNoite } = AgendaUtils.horariosDoDia();
     const horarios = manha.includes(this.inicio) ? manha : tardeNoite;
     const indice = horarios.indexOf(this.inicio);

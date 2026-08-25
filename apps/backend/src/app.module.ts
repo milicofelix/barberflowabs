@@ -6,6 +6,7 @@ import { AgendamentoModule } from './agendamento/agendamento.module';
 import { ProfissionalModule } from './profissional/profissional.module';
 import { ServicoModule } from './servico/servico.module';
 import { BarbeariaModule } from './barbearia/barbearia.module';
+import { AgendaModule } from './agenda/agenda.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { BarbeariaModule } from './barbearia/barbearia.module';
     ProfissionalModule,
     ServicoModule,
     BarbeariaModule,
+    AgendaModule,
   ],
   controllers: [AppController],
 })
