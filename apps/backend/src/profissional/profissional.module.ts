@@ -2,10 +2,11 @@ import { Module } from '@nestjs/common';
 import { ProfissionalController } from './profissional.controller';
 import { ProfissionalPrisma } from './profissional.prisma';
 import { DbModule } from 'src/db/db.module';
+import { TenantService } from 'src/shared/tenant.service';
 
 @Module({
   imports: [DbModule],
   controllers: [ProfissionalController],
-  providers: [ProfissionalPrisma],
+  providers: [ProfissionalPrisma, TenantService],
 })
 export class ProfissionalModule {}

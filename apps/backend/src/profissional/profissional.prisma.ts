@@ -7,9 +7,9 @@ import { DEFAULT_BARBEARIA_ID } from 'src/shared/tenant';
 export class ProfissionalPrisma implements RepositorioProfissional {
   constructor(private readonly prisma: PrismaService) {}
 
-  buscarTodos(): Promise<Profissional[]> {
+  buscarTodos(barbeariaId = DEFAULT_BARBEARIA_ID): Promise<Profissional[]> {
     return this.prisma.profissional.findMany({
-      where: { barbeariaId: DEFAULT_BARBEARIA_ID },
+      where: { barbeariaId },
     });
   }
 }

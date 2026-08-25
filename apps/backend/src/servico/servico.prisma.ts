@@ -7,9 +7,9 @@ import { DEFAULT_BARBEARIA_ID } from 'src/shared/tenant';
 export class ServicoPrisma implements RepositorioServico {
   constructor(private readonly prisma: PrismaService) {}
 
-  async buscarTodos(): Promise<Servico[]> {
+  async buscarTodos(barbeariaId = DEFAULT_BARBEARIA_ID): Promise<Servico[]> {
     const servicos = await this.prisma.servico.findMany({
-      where: { barbeariaId: DEFAULT_BARBEARIA_ID },
+      where: { barbeariaId },
     });
     return servicos.map((servico) => ({
       ...servico,

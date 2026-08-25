@@ -1,14 +1,17 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Req } from '@nestjs/common';
 import { ServicoPrisma } from './servico.prisma';
-import { BuscarServicos } from '@barbabrutal/core';
+import { TenantService } from 'src/shared/tenant.service';
 
 @Controller('servicos')
 export class ServicoController {
-  constructor(private readonly repo: ServicoPrisma) {}
+  constructor(
+    private readonly repo: ServicoPrisma,
+    private readonly tenant: TenantService,
+  ) {}
 
   @Get()
-  obterServicos() {
-    const casoDeUso = new BuscarServicos(this.repo);
-    return casoDeUso.executar();
+  async obterServicos(@Req() req: any) {
+    const barbeariaId = await this.tenant.resolverBarbeariaId(req);
+    return this.repo.buscarTodos(barbeariaId);
   }
 }

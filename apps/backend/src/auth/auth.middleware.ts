@@ -22,12 +22,12 @@ export class AuthMiddleware implements NestMiddleware {
       }
 
       const usuario = await this.repo.buscarPorEmail(payload.email);
-      delete usuario.senha;
 
       if (!usuario) {
         throw new HttpException('Usuário não encontrado', 401);
       }
 
+      delete usuario.senha;
       req.usuario = usuario;
       next();
     } catch (error) {
