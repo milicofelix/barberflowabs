@@ -20,6 +20,7 @@ model Usuario {
   barbeiro     Boolean
   barbearia    Barbearia     @relation(fields: [barbeariaId], references: [id])
   agendamentos Agendamento[]
+  lancamentosFinanceiros LancamentoFinanceiro[]
 
   @@index([barbeariaId])
   @@map("usuarios")
@@ -36,6 +37,7 @@ model Profissional {
   barbearia            Barbearia     @relation(fields: [barbeariaId], references: [id])
   agendamentos         Agendamento[]
   bloqueiosAgenda      BloqueioAgenda[]
+  lancamentosFinanceiros LancamentoFinanceiro[]
 
   @@unique([barbeariaId, nome])
   @@index([barbeariaId])
@@ -62,6 +64,10 @@ model Agendamento {
   id          Int      @id @default(autoincrement())
   data        DateTime
   barbeariaId Int
+  status      String   @default("AGENDADO")
+  valorTotal  Decimal  @default(0) @db.Decimal(10, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   barbearia Barbearia @relation(fields: [barbeariaId], references: [id])
 
@@ -94,6 +100,7 @@ model Barbearia {
   agendamentos  Agendamento[]
   horariosFuncionamento HorarioFuncionamento[]
   bloqueiosAgenda       BloqueioAgenda[]
+  lancamentosFinanceiros LancamentoFinanceiro[]
 
   @@map("barbearias")
 }
@@ -154,4 +161,26 @@ model BloqueioAgenda {
   @@index([profissionalId, inicio, fim])
   @@index([unidadeId, inicio, fim])
   @@map("bloqueios_agenda")
+}
+
+model LancamentoFinanceiro {
+  id             Int           @id @default(autoincrement())
+  barbeariaId    Int
+  profissionalId Int?
+  usuarioId      Int?
+  tipo           String
+  categoria      String?
+  descricao      String
+  valor          Decimal       @db.Decimal(10, 2)
+  data           DateTime
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  barbearia      Barbearia     @relation(fields: [barbeariaId], references: [id])
+  profissional   Profissional? @relation(fields: [profissionalId], references: [id])
+  usuario        Usuario?      @relation(fields: [usuarioId], references: [id])
+
+  @@index([barbeariaId, data])
+  @@index([profissionalId, data])
+  @@index([usuarioId])
+  @@map("lancamentos_financeiros")
 }

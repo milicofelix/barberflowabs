@@ -24,23 +24,28 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
   async criar(agendamento: Agendamento): Promise<void> {
     const barbeariaId = agendamento.usuario.barbeariaId ?? DEFAULT_BARBEARIA_ID;
     const servicoIds = agendamento.servicos.map((servico) => servico.id);
-    const [profissional, totalServicos] = await Promise.all([
+    const [profissional, servicos] = await Promise.all([
       this.prisma.profissional.findFirst({
         where: { id: agendamento.profissional.id, barbeariaId },
       }),
-      this.prisma.servico.count({
+      this.prisma.servico.findMany({
         where: { id: { in: servicoIds }, barbeariaId },
+        select: { preco: true },
       }),
     ]);
 
-    if (!profissional || totalServicos !== servicoIds.length) {
+    if (!profissional || servicos.length !== servicoIds.length) {
       throw new Error('Profissional ou serviço não pertence à barbearia informada');
     }
+
+    const valorTotal = servicos.reduce((total, servico) => total + Number(servico.preco), 0);
 
     await this.prisma.agendamento.create({
       data: {
         barbearia: { connect: { id: barbeariaId } },
         data: agendamento.data,
+        status: 'AGENDADO',
+        valorTotal,
         usuario: { connect: { id: agendamento.usuario.id } },
         profissional: { connect: { id: agendamento.profissional.id } },
         servicos: {

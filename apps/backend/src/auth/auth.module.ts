@@ -17,7 +17,7 @@ import { RateLimitMiddleware } from './rate-limit.middleware';
     TenantService,
     RateLimitMiddleware,
   ],
-  exports: [AuthMiddleware, UsuarioPrisma],
+  exports: [AuthMiddleware, UsuarioPrisma, BcryptProvider],
 })
 export class AuthModule {
   configure(consumer: MiddlewareConsumer) {

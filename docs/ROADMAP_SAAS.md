@@ -191,7 +191,7 @@ Melhorias futuras:
 
 ## Fase 5 - Gestao Operacional
 
-Status: parcialmente concluida.
+Status: concluida para o MVP SaaS.
 
 Objetivo: entregar valor para donos e equipes.
 
@@ -213,17 +213,51 @@ Concluido:
   - `/gestao`
 - Menu web mostra `Gestao` para usuarios barbeiros.
 - Validado fluxo de criar, editar e excluir registros temporarios via API.
+- Criados campos operacionais em agendamentos:
+  - `status`
+  - `valorTotal`
+  - `createdAt`
+  - `updatedAt`
+- Criada tabela `lancamentos_financeiros`.
+- Criado modulo backend de gestao com endpoints autenticados:
+  - `GET /gestao/dashboard`
+  - `GET /gestao/clientes`
+  - `POST /gestao/clientes`
+  - `PUT /gestao/clientes/:id`
+  - `DELETE /gestao/clientes/:id`
+  - `GET /gestao/clientes/:id/historico`
+  - `GET /gestao/agendamentos`
+  - `PUT /gestao/agendamentos/:id/status`
+  - `GET /gestao/financeiro`
+  - `POST /gestao/financeiro`
+  - `DELETE /gestao/financeiro/:id`
+  - `GET /gestao/relatorios`
+- Tela `/gestao` ampliada com abas:
+  - Dashboard
+  - Agenda
+  - Clientes
+  - Caixa
+  - Relatorios
+  - Servicos
+  - Profissionais
+- Atendimento/check-in implementado por status do agendamento:
+  - `AGENDADO`
+  - `CONFIRMADO`
+  - `CHECKIN`
+  - `CONCLUIDO`
+  - `CANCELADO`
+  - `NO_SHOW`
+- Caixa inicial permite registrar receitas e despesas.
+- Relatorios iniciais calculam receitas, despesas, saldo, comissoes e servicos vendidos.
+- Historico do cliente mostra seus agendamentos por barbearia.
 
-Pendente:
+Melhorias futuras:
 
-- CRUD de clientes.
-- Dashboard operacional.
-- Historico do cliente.
-- Atendimento/check-in.
-- Caixa.
-- Despesas.
-- Comissoes.
-- Relatorios.
+- Criar entidade `Cliente` separada de `Usuario`, se o dominio exigir dados comerciais mais ricos.
+- Parametrizar percentual de comissao por profissional/servico.
+- Baixar comissoes e fechar caixa por periodo.
+- Criar exportacao CSV/PDF dos relatorios.
+- Adicionar testes automatizados para todos os endpoints de gestao.
 
 ## Fase 6 - Experiencia SaaS
 
