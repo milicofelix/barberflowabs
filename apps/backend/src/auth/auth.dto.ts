@@ -14,7 +14,7 @@ export type RefreshTokenDto = {
   token: string;
 };
 
-export type UsuarioRole = 'BARBER' | 'CUSTOMER';
+export type UsuarioRole = 'SUPER_ADMIN' | 'BARBER' | 'CUSTOMER';
 
 export type AuthTokenPayload = {
   sub: number;
@@ -23,6 +23,7 @@ export type AuthTokenPayload = {
   email: string;
   barbeariaId: number;
   barbeiro: boolean;
+  papel?: UsuarioRole;
   role: UsuarioRole;
   telefone?: string;
 };

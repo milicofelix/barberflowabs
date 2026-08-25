@@ -7,7 +7,15 @@ import {
     DropdownMenuSeparator,
 } from '../ui/dropdown-menu'
 import Image from 'next/image'
-import { IconCalendar, IconHome, IconLogout, IconSettings, IconTool } from '@tabler/icons-react'
+import {
+    IconCalendar,
+    IconCreditCard,
+    IconHome,
+    IconLogout,
+    IconSettings,
+    IconShieldLock,
+    IconTool,
+} from '@tabler/icons-react'
 import Link from 'next/link'
 
 export default function MenuUsuario() {
@@ -52,6 +60,22 @@ export default function MenuUsuario() {
                         <Link href="/configuracoes" className="flex gap-2">
                             <IconSettings size={18} />
                             <span>Configurações</span>
+                        </Link>
+                    </DropdownMenuItem>
+                )}
+                {(usuario.barbeiro || usuario.role === 'SUPER_ADMIN') && (
+                    <DropdownMenuItem>
+                        <Link href="/billing" className="flex gap-2">
+                            <IconCreditCard size={18} />
+                            <span>Billing</span>
+                        </Link>
+                    </DropdownMenuItem>
+                )}
+                {usuario.role === 'SUPER_ADMIN' && (
+                    <DropdownMenuItem>
+                        <Link href="/admin" className="flex gap-2">
+                            <IconShieldLock size={18} />
+                            <span>Admin SaaS</span>
                         </Link>
                     </DropdownMenuItem>
                 )}

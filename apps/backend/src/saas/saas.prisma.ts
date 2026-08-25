@@ -1,0 +1,215 @@
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { PrismaService } from 'src/db/prisma.service';
+
+const TRIAL_DIAS = 14;
+
+@Injectable()
+export class SaasPrisma {
+  constructor(private readonly prisma: PrismaService) {}
+
+  listarPlanos() {
+    return this.prisma.planoAssinatura.findMany({
+      where: { ativo: true },
+      orderBy: { precoMensal: 'asc' },
+    });
+  }
+
+  async onboarding(dados: any) {
+    const slug = this.normalizarSlug(dados.barbearia.slug);
+    const planoSlug = dados.planoSlug || 'starter';
+    const [barbeariaExistente, usuarioExistente, plano] = await Promise.all([
+      this.prisma.barbearia.findUnique({ where: { slug } }),
+      this.prisma.usuario.findUnique({ where: { email: dados.dono.email } }),
+      this.prisma.planoAssinatura.findUnique({ where: { slug: planoSlug } }),
+    ]);
+
+    if (barbeariaExistente) throw new ConflictException('Slug já está em uso');
+    if (usuarioExistente) throw new ConflictException('E-mail do responsável já está em uso');
+    if (!plano) throw new BadRequestException('Plano inválido');
+
+    const trialEndsAt = this.adicionarDias(new Date(), TRIAL_DIAS);
+
+    return this.prisma.$transaction(async (tx) => {
+      const barbearia = await tx.barbearia.create({
+        data: {
+          nome: dados.barbearia.nome.trim(),
+          slug,
+          email: dados.barbearia.email?.trim() || null,
+          telefone: dados.barbearia.telefone?.trim() || null,
+          status: 'TRIAL',
+          trialEndsAt,
+          unidades: {
+            create: {
+              nome: 'Matriz',
+              telefone: dados.barbearia.telefone?.trim() || null,
+            },
+          },
+          assinatura: {
+            create: {
+              planoId: plano.id,
+              status: 'TRIAL',
+              trialEndsAt,
+            },
+          },
+        },
+        include: { assinatura: { include: { plano: true } }, unidades: true },
+      });
+
+      const dono = await tx.usuario.create({
+        data: {
+          barbeariaId: barbearia.id,
+          nome: dados.dono.nome.trim(),
+          email: dados.dono.email.trim(),
+          telefone: dados.dono.telefone?.trim() || null,
+          senha: dados.dono.senha,
+          barbeiro: true,
+          papel: 'BARBER',
+        },
+        select: { id: true, nome: true, email: true, telefone: true, barbeiro: true, papel: true },
+      });
+
+      await tx.logAuditoria.create({
+        data: {
+          barbeariaId: barbearia.id,
+          usuarioId: dono.id,
+          acao: 'SAAS_ONBOARDING',
+          entidade: 'Barbearia',
+          entidadeId: String(barbearia.id),
+          detalhes: { planoSlug },
+        },
+      });
+
+      return { barbearia, dono };
+    });
+  }
+
+  async billing(barbeariaId: number) {
+    const barbearia = await this.prisma.barbearia.findUnique({
+      where: { id: barbeariaId },
+      include: {
+        assinatura: { include: { plano: true } },
+        _count: { select: { usuarios: true, unidades: true, servicos: true } },
+      },
+    });
+
+    if (!barbearia) return null;
+    return this.normalizarBarbearia(barbearia);
+  }
+
+  async atualizarPlano(barbeariaId: number, planoSlug: string, usuarioId: number) {
+    const plano = await this.prisma.planoAssinatura.findUnique({ where: { slug: planoSlug } });
+    if (!plano) throw new BadRequestException('Plano inválido');
+
+    const assinatura = await this.prisma.assinaturaBarbearia.upsert({
+      where: { barbeariaId },
+      update: {
+        planoId: plano.id,
+        status: 'ACTIVE',
+        currentPeriodEnd: this.adicionarDias(new Date(), 30),
+      },
+      create: {
+        barbeariaId,
+        planoId: plano.id,
+        status: 'ACTIVE',
+        currentPeriodEnd: this.adicionarDias(new Date(), 30),
+      },
+      include: { plano: true },
+    });
+
+    await this.prisma.barbearia.update({
+      where: { id: barbeariaId },
+      data: { status: 'ACTIVE' },
+    });
+
+    await this.registrarAuditoria(barbeariaId, usuarioId, 'BILLING_CHANGE_PLAN', 'AssinaturaBarbearia', assinatura.id, { planoSlug });
+    return assinatura;
+  }
+
+  listarBarbeariasAdmin() {
+    return this.prisma.barbearia.findMany({
+      include: {
+        assinatura: { include: { plano: true } },
+        _count: { select: { usuarios: true, unidades: true, servicos: true, agendamentos: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async atualizarStatusBarbearia(id: number, status: string, usuarioId: number) {
+    const barbearia = await this.prisma.barbearia.update({
+      where: { id },
+      data: {
+        status,
+        assinatura: {
+          update: { status },
+        },
+      },
+      include: { assinatura: { include: { plano: true } } },
+    });
+
+    await this.registrarAuditoria(id, usuarioId, 'ADMIN_CHANGE_BARBERSHOP_STATUS', 'Barbearia', id, { status });
+    return barbearia;
+  }
+
+  listarAuditoriaAdmin() {
+    return this.prisma.logAuditoria.findMany({
+      include: {
+        barbearia: { select: { id: true, nome: true, slug: true } },
+        usuario: { select: { id: true, nome: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    });
+  }
+
+  private async registrarAuditoria(
+    barbeariaId: number,
+    usuarioId: number,
+    acao: string,
+    entidade: string,
+    entidadeId: number,
+    detalhes: any,
+  ) {
+    await this.prisma.logAuditoria.create({
+      data: {
+        barbeariaId,
+        usuarioId,
+        acao,
+        entidade,
+        entidadeId: String(entidadeId),
+        detalhes,
+      },
+    });
+  }
+
+  private normalizarBarbearia(barbearia: any) {
+    return {
+      ...barbearia,
+      assinatura: barbearia.assinatura
+        ? {
+            ...barbearia.assinatura,
+            plano: {
+              ...barbearia.assinatura.plano,
+              precoMensal: Number(barbearia.assinatura.plano.precoMensal),
+            },
+          }
+        : null,
+    };
+  }
+
+  private adicionarDias(data: Date, dias: number) {
+    const novaData = new Date(data);
+    novaData.setDate(novaData.getDate() + dias);
+    return novaData;
+  }
+
+  private normalizarSlug(slug: string) {
+    return slug
+      ?.trim()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+}

@@ -84,6 +84,8 @@ export class AuthController {
   }
 
   private criarPayloadToken(usuario: Usuario): AuthTokenPayload {
+    const papel = this.resolverPapel(usuario);
+
     return {
       sub: usuario.id!,
       id: usuario.id!,
@@ -91,8 +93,22 @@ export class AuthController {
       email: usuario.email,
       barbeariaId: usuario.barbeariaId!,
       barbeiro: usuario.barbeiro ?? false,
-      role: usuario.barbeiro ? 'BARBER' : 'CUSTOMER',
+      papel,
+      role: papel,
       telefone: usuario.telefone,
     };
+  }
+
+  private resolverPapel(usuario: Usuario): AuthTokenPayload['role'] {
+    const emailsSuperAdmin = (process.env.SUPER_ADMIN_EMAILS ?? '')
+      .split(',')
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
+
+    if (emailsSuperAdmin.includes(usuario.email.toLowerCase())) {
+      return 'SUPER_ADMIN';
+    }
+
+    return (usuario.papel ?? (usuario.barbeiro ? 'BARBER' : 'CUSTOMER')) as AuthTokenPayload['role'];
   }
 }

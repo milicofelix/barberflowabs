@@ -1,0 +1,93 @@
+'use client'
+
+import useAPI from '@/data/hooks/useAPI'
+import useSessao from '@/data/hooks/useSessao'
+import { useCallback, useEffect, useState } from 'react'
+
+const status = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'CANCELED']
+
+export default function PainelSuperAdmin() {
+    const { usuario } = useSessao()
+    const { httpGet, httpPut } = useAPI()
+    const [barbearias, setBarbearias] = useState<any[]>([])
+    const [auditoria, setAuditoria] = useState<any[]>([])
+    const [mensagem, setMensagem] = useState('')
+
+    const carregar = useCallback(async function carregar() {
+        const [dadosBarbearias, dadosAuditoria] = await Promise.all([
+            httpGet('/saas/admin/barbearias'),
+            httpGet('/saas/admin/auditoria'),
+        ])
+        setBarbearias(Array.isArray(dadosBarbearias) ? dadosBarbearias : [])
+        setAuditoria(Array.isArray(dadosAuditoria) ? dadosAuditoria : [])
+    }, [httpGet])
+
+    useEffect(() => {
+        if (usuario?.role === 'SUPER_ADMIN') carregar()
+    }, [carregar, usuario?.role])
+
+    async function alterarStatus(id: number, novoStatus: string) {
+        setMensagem('')
+        const resposta = await httpPut(`/saas/admin/barbearias/${id}/status`, { status: novoStatus })
+        if (resposta?.statusCode) return setMensagem(resposta.message)
+        await carregar()
+        setMensagem('Status atualizado.')
+    }
+
+    if (usuario?.role !== 'SUPER_ADMIN') {
+        return <p className="rounded border border-zinc-800 bg-zinc-950 p-5 text-zinc-300">Acesso restrito.</p>
+    }
+
+    return (
+        <div className="grid gap-6">
+            <section className="grid gap-3">
+                {barbearias.map((barbearia) => (
+                    <div key={barbearia.id} className="rounded border border-zinc-800 bg-zinc-950 p-4">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                            <div>
+                                <h2 className="text-xl font-bold text-zinc-100">{barbearia.nome}</h2>
+                                <p className="text-sm text-zinc-400">
+                                    {barbearia.slug} | {barbearia.assinatura?.plano?.nome ?? 'sem plano'}
+                                </p>
+                                <p className="text-sm text-zinc-500">
+                                    {barbearia._count?.usuarios ?? 0} usuários | {barbearia._count?.agendamentos ?? 0} agendamentos
+                                </p>
+                            </div>
+                            <select
+                                value={barbearia.status}
+                                onChange={(e) => alterarStatus(barbearia.id, e.target.value)}
+                                className="input lg:w-56"
+                            >
+                                {status.map((item) => (
+                                    <option key={item}>{item}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                ))}
+            </section>
+
+            <section className="rounded border border-zinc-800 bg-zinc-950 p-5">
+                <h2 className="text-xl font-bold text-zinc-100">Auditoria</h2>
+                <div className="mt-4 grid gap-3">
+                    {auditoria.map((log) => (
+                        <div key={log.id} className="rounded border border-zinc-800 p-3">
+                            <p className="font-semibold text-zinc-100">{log.acao}</p>
+                            <p className="text-sm text-zinc-400">
+                                {log.barbearia?.nome ?? '-'} | {log.usuario?.email ?? '-'} | {formatarData(log.createdAt)}
+                            </p>
+                        </div>
+                    ))}
+                    {auditoria.length === 0 && <p className="text-sm text-zinc-400">Sem registros.</p>}
+                </div>
+            </section>
+
+            {mensagem && <p className="text-sm text-zinc-300">{mensagem}</p>}
+        </div>
+    )
+}
+
+function formatarData(valor: string) {
+    if (!valor) return '-'
+    return new Date(valor).toLocaleString('pt-BR')
+}

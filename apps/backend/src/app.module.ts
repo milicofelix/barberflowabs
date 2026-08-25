@@ -8,6 +8,7 @@ import { ServicoModule } from './servico/servico.module';
 import { BarbeariaModule } from './barbearia/barbearia.module';
 import { AgendaModule } from './agenda/agenda.module';
 import { GestaoModule } from './gestao/gestao.module';
+import { SaasModule } from './saas/saas.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { GestaoModule } from './gestao/gestao.module';
     BarbeariaModule,
     AgendaModule,
     GestaoModule,
+    SaasModule,
   ],
   controllers: [AppController],
 })

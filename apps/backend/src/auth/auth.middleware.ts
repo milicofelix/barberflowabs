@@ -31,6 +31,15 @@ export class AuthMiddleware implements NestMiddleware {
       }
 
       delete usuario.senha;
+      const emailsSuperAdmin = (process.env.SUPER_ADMIN_EMAILS ?? '')
+        .split(',')
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean);
+
+      usuario.papel = emailsSuperAdmin.includes(usuario.email.toLowerCase())
+        ? 'SUPER_ADMIN'
+        : (usuario.papel ?? (usuario.barbeiro ? 'BARBER' : 'CUSTOMER'));
+      usuario.role = usuario.papel;
       req.usuario = usuario;
       next();
     } catch (error) {

@@ -10,7 +10,18 @@ export default function Cabecalho() {
         <header className="flex items-center h-24 bg-black/60 self-stretch">
             <nav className="flex items-center justify-between container">
                 <Logo />
-                <div>{usuario ? <MenuUsuario /> : <Link href="/entrar">Entrar</Link>}</div>
+                <div>
+                    {usuario ? (
+                        <MenuUsuario />
+                    ) : (
+                        <div className="flex items-center gap-5">
+                            <Link href="/onboarding" className="font-semibold text-yellow-400">
+                                Criar barbearia
+                            </Link>
+                            <Link href="/entrar">Entrar</Link>
+                        </div>
+                    )}
+                </div>
             </nav>
         </header>
     )

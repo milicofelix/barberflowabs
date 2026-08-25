@@ -6,5 +6,6 @@ export default interface Usuario {
     senha?: string
     telefone?: string
     barbeiro?: boolean
-    role?: 'BARBER' | 'CUSTOMER'
+    papel?: 'SUPER_ADMIN' | 'BARBER' | 'CUSTOMER'
+    role?: 'SUPER_ADMIN' | 'BARBER' | 'CUSTOMER'
 }

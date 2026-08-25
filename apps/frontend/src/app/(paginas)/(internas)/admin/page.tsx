@@ -1,0 +1,18 @@
+'use client'
+
+import PainelSuperAdmin from '@/components/saas/PainelSuperAdmin'
+import CabecalhoComTitulo from '@/components/shared/CabecalhoComTitulo'
+
+export default function Page() {
+    return (
+        <div className="flex flex-col gap-5">
+            <CabecalhoComTitulo
+                titulo="Admin SaaS"
+                descricao="Acompanhe barbearias, assinaturas e auditoria."
+            />
+            <div className="container py-10">
+                <PainelSuperAdmin />
+            </div>
+        </div>
+    )
+}

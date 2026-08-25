@@ -261,20 +261,54 @@ Melhorias futuras:
 
 ## Fase 6 - Experiencia SaaS
 
-Status: pendente.
+Status: concluida para o MVP SaaS.
 
 Objetivo: transformar o produto em plataforma comercializavel.
 
-Itens:
+Concluido:
 
-- Onboarding de nova barbearia.
-- Trial.
-- Planos.
-- Assinaturas.
-- Limites por plano.
-- Super Admin.
-- Tela de billing.
-- Auditoria de acoes sensiveis.
+- Criados modelos SaaS no Prisma:
+  - `PlanoAssinatura`
+  - `AssinaturaBarbearia`
+  - `LogAuditoria`
+- `Barbearia` passou a ter:
+  - `status`
+  - `trialEndsAt`
+- `Usuario` passou a ter `papel`, preservando `barbeiro` para compatibilidade.
+- Payload de sessao suporta:
+  - `SUPER_ADMIN`
+  - `BARBER`
+  - `CUSTOMER`
+- Criado onboarding publico:
+  - `GET /saas/planos`
+  - `POST /saas/onboarding`
+- Onboarding cria:
+  - barbearia
+  - unidade matriz
+  - assinatura em trial
+  - usuario dono/barbeiro
+  - log de auditoria
+- Criada area de billing:
+  - `GET /saas/billing`
+  - `PUT /saas/billing/plano`
+- Criada area Super Admin:
+  - `GET /saas/admin/barbearias`
+  - `PUT /saas/admin/barbearias/:id/status`
+  - `GET /saas/admin/auditoria`
+- Frontend criado:
+  - `/onboarding`
+  - `/billing`
+  - `/admin`
+- Menu web exibe Billing para responsaveis e Admin SaaS para super admins.
+
+Melhorias futuras:
+
+- Integrar gateway real de pagamento.
+- Criar checkout hospedado e webhooks de assinatura.
+- Bloquear recursos automaticamente conforme limites do plano.
+- Criar convite de equipe.
+- Criar painel de troca de dominio/subdominio por barbearia.
+- Expandir auditoria para todas as acoes sensiveis.
 
 ## Fase 7 - Relacionamento E Inteligencia
 

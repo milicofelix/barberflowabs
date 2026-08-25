@@ -12,6 +12,7 @@ services:
       NODE_ENV: development
       DATABASE_URL: ${DATABASE_URL:-mysql://barberflow:barberflow@infra-mysql-1:3306/barberflow_abs}
       JWT_SECRET: ${JWT_SECRET:-barberflow_abs_dev_secret}
+      SUPER_ADMIN_EMAILS: ${SUPER_ADMIN_EMAILS:-marcao@barberflowabs.app}
       EXPO_DEVTOOLS_LISTEN_ADDRESS: 0.0.0.0
       RCT_METRO_PORT: 8081
       # Ajuda file watchers de Next/Nest/Expo a perceber alterações em bind mounts.

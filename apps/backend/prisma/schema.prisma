@@ -18,9 +18,11 @@ model Usuario {
   senha        String
   telefone     String?
   barbeiro     Boolean
+  papel        String        @default("CUSTOMER")
   barbearia    Barbearia     @relation(fields: [barbeariaId], references: [id])
   agendamentos Agendamento[]
   lancamentosFinanceiros LancamentoFinanceiro[]
+  logsAuditoria LogAuditoria[]
 
   @@index([barbeariaId])
   @@map("usuarios")
@@ -90,6 +92,8 @@ model Barbearia {
   slug          String         @unique
   telefone      String?
   email         String?
+  status        String         @default("TRIAL")
+  trialEndsAt   DateTime?
   antecedenciaMinutos Int      @default(30)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -101,6 +105,8 @@ model Barbearia {
   horariosFuncionamento HorarioFuncionamento[]
   bloqueiosAgenda       BloqueioAgenda[]
   lancamentosFinanceiros LancamentoFinanceiro[]
+  assinatura             AssinaturaBarbearia?
+  logsAuditoria          LogAuditoria[]
 
   @@map("barbearias")
 }
@@ -183,4 +189,57 @@ model LancamentoFinanceiro {
   @@index([profissionalId, data])
   @@index([usuarioId])
   @@map("lancamentos_financeiros")
+}
+
+model PlanoAssinatura {
+  id              Int                  @id @default(autoincrement())
+  nome            String               @unique
+  slug            String               @unique
+  descricao       String               @db.Text
+  precoMensal     Decimal              @db.Decimal(10, 2)
+  limiteUsuarios  Int
+  limiteUnidades  Int
+  limiteServicos  Int
+  recursos        Json
+  ativo           Boolean              @default(true)
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  assinaturas     AssinaturaBarbearia[]
+
+  @@map("planos_assinatura")
+}
+
+model AssinaturaBarbearia {
+  id              Int              @id @default(autoincrement())
+  barbeariaId     Int              @unique
+  planoId         Int
+  status          String           @default("TRIAL")
+  trialEndsAt     DateTime?
+  currentPeriodEnd DateTime?
+  cancelAtPeriodEnd Boolean        @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  barbearia       Barbearia        @relation(fields: [barbeariaId], references: [id])
+  plano           PlanoAssinatura  @relation(fields: [planoId], references: [id])
+
+  @@index([planoId])
+  @@index([status])
+  @@map("assinaturas_barbearia")
+}
+
+model LogAuditoria {
+  id          Int       @id @default(autoincrement())
+  barbeariaId Int?
+  usuarioId   Int?
+  acao        String
+  entidade    String
+  entidadeId  String?
+  detalhes    Json?
+  createdAt   DateTime  @default(now())
+  barbearia   Barbearia? @relation(fields: [barbeariaId], references: [id])
+  usuario     Usuario?   @relation(fields: [usuarioId], references: [id])
+
+  @@index([barbeariaId, createdAt])
+  @@index([usuarioId, createdAt])
+  @@map("logs_auditoria")
 }
