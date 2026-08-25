@@ -1,6 +1,10 @@
-import { Controller, Get, Req } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, Param, Post, Put, Req } from '@nestjs/common';
 import { ServicoPrisma } from './servico.prisma';
 import { TenantService } from 'src/shared/tenant.service';
+import { UsuarioLogado } from 'src/shared/usuario.decorator';
+import { Usuario } from '@barbabrutal/core';
+import { validarNumeroInteiroPositivo, validarTextoObrigatorio } from 'src/shared/validacao';
+import { CriarServicoDto } from './servico.dto';
 
 @Controller('servicos')
 export class ServicoController {
@@ -13,5 +17,48 @@ export class ServicoController {
   async obterServicos(@Req() req: any) {
     const barbeariaId = await this.tenant.resolverBarbeariaId(req);
     return this.repo.buscarTodos(barbeariaId);
+  }
+
+  @Post()
+  criarServico(@Body() dados: CriarServicoDto, @UsuarioLogado() usuario: Usuario) {
+    this.validarPermissao(usuario);
+    this.validarServico(dados);
+    return this.repo.criar(usuario.barbeariaId, dados);
+  }
+
+  @Put(':id')
+  atualizarServico(
+    @Param('id') id: string,
+    @Body() dados: CriarServicoDto,
+    @UsuarioLogado() usuario: Usuario,
+  ) {
+    this.validarPermissao(usuario);
+    validarNumeroInteiroPositivo(id, 'Serviço');
+    this.validarServico(dados);
+    return this.repo.atualizar(Number(id), usuario.barbeariaId, dados);
+  }
+
+  @Delete(':id')
+  excluirServico(@Param('id') id: string, @UsuarioLogado() usuario: Usuario) {
+    this.validarPermissao(usuario);
+    validarNumeroInteiroPositivo(id, 'Serviço');
+    return this.repo.excluir(Number(id), usuario.barbeariaId);
+  }
+
+  private validarPermissao(usuario: Usuario) {
+    if (!usuario?.barbeiro) {
+      throw new ForbiddenException('Apenas barbeiros podem gerenciar serviços');
+    }
+  }
+
+  private validarServico(dados: CriarServicoDto) {
+    validarTextoObrigatorio(dados?.nome, 'Nome');
+    validarTextoObrigatorio(dados?.descricao, 'Descrição');
+    validarTextoObrigatorio(dados?.imagemURL, 'Imagem');
+    validarNumeroInteiroPositivo(dados?.qtdeSlots, 'Quantidade de slots');
+
+    if (!Number.isFinite(Number(dados?.preco)) || Number(dados.preco) <= 0) {
+      throw new BadRequestException('Preço inválido');
+    }
   }
 }

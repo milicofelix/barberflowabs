@@ -191,15 +191,32 @@ Melhorias futuras:
 
 ## Fase 5 - Gestao Operacional
 
-Status: pendente.
+Status: parcialmente concluida.
 
 Objetivo: entregar valor para donos e equipes.
 
-Itens:
+Concluido:
+
+- Criado CRUD backend multi-tenant de profissionais:
+  - `GET /profissionais`
+  - `POST /profissionais`
+  - `PUT /profissionais/:id`
+  - `DELETE /profissionais/:id`
+- Criado CRUD backend multi-tenant de servicos:
+  - `GET /servicos`
+  - `POST /servicos`
+  - `PUT /servicos/:id`
+  - `DELETE /servicos/:id`
+- Rotas de escrita protegidas para usuarios barbeiros.
+- Frontend e mobile passaram a carregar servicos/profissionais da API.
+- Criada tela web inicial de gestao:
+  - `/gestao`
+- Menu web mostra `Gestao` para usuarios barbeiros.
+- Validado fluxo de criar, editar e excluir registros temporarios via API.
+
+Pendente:
 
 - CRUD de clientes.
-- CRUD de profissionais.
-- CRUD de servicos.
 - Dashboard operacional.
 - Historico do cliente.
 - Atendimento/check-in.

@@ -1,3 +1,5 @@
+'use client'
+
 import { Servico } from '@barbabrutal/core'
 import useServicos from '@/data/hooks/useServicos'
 import Image from 'next/image'

@@ -1,3 +1,5 @@
+'use client'
+
 import ItemProfissional from './ItemProfissional'
 import TituloSecao from '../shared/TituloSecao'
 import useProfissionais from '../../data/hooks/useProfissionais'

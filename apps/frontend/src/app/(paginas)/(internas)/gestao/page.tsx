@@ -1,0 +1,35 @@
+'use client'
+
+import PainelGestaoOperacional from '@/components/gestao/PainelGestaoOperacional'
+import CabecalhoComTitulo from '@/components/shared/CabecalhoComTitulo'
+import useSessao from '@/data/hooks/useSessao'
+
+export default function Page() {
+    const { usuario } = useSessao()
+
+    if (!usuario?.barbeiro) {
+        return (
+            <div className="flex flex-col gap-5">
+                <CabecalhoComTitulo
+                    titulo="Gestão"
+                    descricao="Acesso restrito aos responsáveis pela barbearia."
+                />
+                <div className="container py-10 text-zinc-300">
+                    Você não tem permissão para acessar esta área.
+                </div>
+            </div>
+        )
+    }
+
+    return (
+        <div className="flex flex-col gap-5">
+            <CabecalhoComTitulo
+                titulo="Gestão Operacional"
+                descricao="Gerencie serviços e profissionais da barbearia."
+            />
+            <div className="container py-10">
+                <PainelGestaoOperacional />
+            </div>
+        </div>
+    )
+}

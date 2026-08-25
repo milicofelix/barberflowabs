@@ -1,3 +1,5 @@
+'use client'
+
 import useProfissionais from '@/data/hooks/useProfissionais'
 import { Profissional } from '@barbabrutal/core'
 import Image from 'next/image'

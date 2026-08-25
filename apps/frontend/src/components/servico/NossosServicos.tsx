@@ -1,3 +1,5 @@
+'use client'
+
 import ItemServico from './ItemServico'
 import TituloSecao from '../shared/TituloSecao'
 import useServicos from '../../data/hooks/useServicos'
