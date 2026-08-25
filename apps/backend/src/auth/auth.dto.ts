@@ -10,6 +10,12 @@ export type LoginDto = {
   senha: string;
 };
 
+export type RefreshTokenDto = {
+  token: string;
+};
+
+export type UsuarioRole = 'BARBER' | 'CUSTOMER';
+
 export type AuthTokenPayload = {
   sub: number;
   id: number;
@@ -17,5 +23,6 @@ export type AuthTokenPayload = {
   email: string;
   barbeariaId: number;
   barbeiro: boolean;
+  role: UsuarioRole;
   telefone?: string;
 };

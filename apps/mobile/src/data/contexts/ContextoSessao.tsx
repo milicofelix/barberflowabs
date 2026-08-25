@@ -51,6 +51,7 @@ export function ProvedorSessao(props: any) {
                         nome: payload.nome,
                         email: payload.email,
                         barbeiro: payload.barbeiro,
+                        role: payload.role,
                         telefone: payload.telefone,
                     },
                 }

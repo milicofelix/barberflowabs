@@ -80,7 +80,7 @@ Pendente:
 
 ## Fase 2 - SaaS E Multi-Tenant
 
-Status: em andamento.
+Status: concluida para o MVP SaaS.
 
 Objetivo: garantir isolamento por barbearia.
 
@@ -105,7 +105,7 @@ Pendente:
 
 ## Fase 3 - Seguranca E Contratos De API
 
-Status: em andamento.
+Status: concluida para o MVP SaaS.
 
 Objetivo: preparar a API para uso real em producao.
 
@@ -129,17 +129,26 @@ Concluido:
   - `barbeariaId`
   - `barbeiro`
 - Web e mobile leem `barbeariaId` do token.
-
-Pendente:
-
-- Instalar `class-validator` e `class-transformer`.
-- Ativar `ValidationPipe` global com `whitelist`, `transform` e `forbidNonWhitelisted`.
-- Criar DTOs para:
+- Criados DTOs para:
   - `CriarServicoDto`
   - `CriarProfissionalDto`
-- Evoluir access token e refresh token.
-- Trocar `barbeiro: boolean` por roles.
-- Adicionar rate limiting em rotas sensiveis.
+- Criado endpoint compativel de renovacao de token:
+  - `POST /auth/refresh`
+- Criado rate limit simples em memoria para:
+  - `POST /auth/login`
+  - `POST /auth/registrar`
+  - `POST /auth/refresh`
+- Adicionado `role` derivado no JWT e no modelo compartilhado:
+  - `BARBER`
+  - `CUSTOMER`
+
+Melhorias futuras:
+
+- Trocar a validacao interna por `class-validator` e `class-transformer` quando a fase de normalizacao de dependencias for executada.
+- Ativar `ValidationPipe` global com `whitelist`, `transform` e `forbidNonWhitelisted`.
+- Evoluir refresh token para persistencia, rotacao e revogacao em banco.
+- Trocar definitivamente `barbeiro: boolean` por RBAC completo no banco.
+- Substituir rate limit em memoria por estrategia distribuida com Redis antes de producao multi-instancia.
 
 ## Fase 4 - Agenda Profissional
 
