@@ -23,6 +23,15 @@ export class UsuarioPrisma implements RepositorioUsuario {
   async buscarPorEmail(email: string): Promise<Usuario | null> {
     return this.prisma.usuario.findUnique({
       where: { email },
+      select: {
+        id: true,
+        barbeariaId: true,
+        nome: true,
+        email: true,
+        senha: true,
+        telefone: true,
+        barbeiro: true,
+      },
     });
   }
 }

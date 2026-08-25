@@ -22,7 +22,10 @@ export class TenantService {
         throw new BadRequestException('Header x-barbearia-id inválido');
       }
 
-      const barbearia = await this.prisma.barbearia.findUnique({ where: { id } });
+      const barbearia = await this.prisma.barbearia.findUnique({
+        where: { id },
+        select: { id: true },
+      });
       if (!barbearia) {
         throw new NotFoundException('Barbearia não encontrada');
       }
@@ -31,6 +34,7 @@ export class TenantService {
 
     const barbearia = await this.prisma.barbearia.findUnique({
       where: { slug: slugHeader },
+      select: { id: true },
     });
 
     if (barbearia) {

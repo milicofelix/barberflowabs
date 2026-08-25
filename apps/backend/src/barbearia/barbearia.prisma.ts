@@ -9,14 +9,32 @@ export class BarbeariaPrisma {
   listar() {
     return this.prisma.barbearia.findMany({
       orderBy: { nome: 'asc' },
-      include: { unidades: true },
+      select: {
+        id: true,
+        nome: true,
+        slug: true,
+        telefone: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
+        unidades: true,
+      },
     });
   }
 
   buscarPorSlug(slug: string) {
     return this.prisma.barbearia.findUnique({
       where: { slug },
-      include: { unidades: true },
+      select: {
+        id: true,
+        nome: true,
+        slug: true,
+        telefone: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
+        unidades: true,
+      },
     });
   }
 
@@ -46,7 +64,16 @@ export class BarbeariaPrisma {
           },
         },
       },
-      include: { unidades: true },
+      select: {
+        id: true,
+        nome: true,
+        slug: true,
+        telefone: true,
+        email: true,
+        createdAt: true,
+        updatedAt: true,
+        unidades: true,
+      },
     });
   }
 
