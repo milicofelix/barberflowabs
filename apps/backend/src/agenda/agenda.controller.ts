@@ -1,12 +1,34 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { BadRequestException, Controller, ForbiddenException, Get, Param, Put, Query, Body } from '@nestjs/common';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import { Usuario } from '@barbabrutal/core';
-import { validarData, validarNumeroInteiroPositivo } from 'src/shared/validacao';
+import {
+  validarData,
+  validarHorario,
+  validarNumeroInteiroNaoNegativo,
+  validarNumeroInteiroPositivo,
+} from 'src/shared/validacao';
 import { AgendaPrisma } from './agenda.prisma';
+import { ConfiguracaoAgendaDto } from './agenda.dto';
 
 @Controller('agenda')
 export class AgendaController {
   constructor(private readonly repo: AgendaPrisma) {}
+
+  @Get('configuracao/horarios')
+  buscarConfiguracao(@UsuarioLogado() usuario: Usuario) {
+    this.validarPermissaoConfiguracao(usuario);
+    return this.repo.buscarConfiguracao(usuario.barbeariaId);
+  }
+
+  @Put('configuracao/horarios')
+  salvarConfiguracao(
+    @Body() dados: ConfiguracaoAgendaDto,
+    @UsuarioLogado() usuario: Usuario,
+  ) {
+    this.validarPermissaoConfiguracao(usuario);
+    this.validarConfiguracao(dados);
+    return this.repo.salvarConfiguracao(usuario.barbeariaId, dados);
+  }
 
   @Get('horarios/:data')
   buscarHorariosDisponiveis(
@@ -30,6 +52,39 @@ export class AgendaController {
       data,
       profissionalId: profissionalId ? Number(profissionalId) : undefined,
       unidadeId: unidadeId ? Number(unidadeId) : undefined,
+    });
+  }
+
+  private validarPermissaoConfiguracao(usuario: Usuario) {
+    if (!usuario.barbeiro) {
+      throw new ForbiddenException('Apenas barbeiros podem alterar configurações da agenda');
+    }
+  }
+
+  private validarConfiguracao(dados: ConfiguracaoAgendaDto) {
+    validarNumeroInteiroNaoNegativo(dados?.antecedenciaMinutos, 'Antecedência');
+
+    if (!Array.isArray(dados?.horarios)) {
+      throw new BadRequestException('Horários de funcionamento são obrigatórios');
+    }
+
+    dados.horarios.forEach((horario) => {
+      validarNumeroInteiroNaoNegativo(horario.diaSemana, 'Dia da semana');
+      if (horario.diaSemana > 6) {
+        throw new BadRequestException('Dia da semana inválido');
+      }
+
+      validarHorario(horario.inicio, 'Início');
+      validarHorario(horario.fim, 'Fim');
+
+      if (horario.intervaloInicio || horario.intervaloFim) {
+        validarHorario(horario.intervaloInicio, 'Início do intervalo');
+        validarHorario(horario.intervaloFim, 'Fim do intervalo');
+      }
+
+      if (horario.inicio >= horario.fim) {
+        throw new BadRequestException('Horário de início deve ser menor que o fim');
+      }
     });
   }
 }

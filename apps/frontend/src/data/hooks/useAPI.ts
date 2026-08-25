@@ -42,6 +42,25 @@ export default function useAPI() {
         [token]
     )
 
+    const httpPut = useCallback(
+        async function (caminho: string, body: any) {
+            const uri = caminho.startsWith('/') ? caminho : `/${caminho}`
+            const urlCompleta = `${URL_BASE}${uri}`
+
+            const resposta = await fetch(urlCompleta, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                    'x-barbearia-slug': BARBEARIA_SLUG,
+                },
+                body: JSON.stringify(body),
+            })
+            return extrairDados(resposta)
+        },
+        [token]
+    )
+
     async function extrairDados(resposta: Response) {
         let conteudo = ''
         try {
@@ -52,5 +71,5 @@ export default function useAPI() {
         }
     }
 
-    return { httpGet, httpPost }
+    return { httpGet, httpPost, httpPut }
 }

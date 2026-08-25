@@ -12,6 +12,7 @@ async function seed() {
       slug: 'barber-flow-abs',
       telefone: '(11) 99999-9999',
       email: 'contato@barberflowabs.app',
+      antecedenciaMinutos: 30,
     },
     create: {
       id: BARBEARIA_PADRAO_ID,
@@ -19,6 +20,7 @@ async function seed() {
       slug: 'barber-flow-abs',
       telefone: '(11) 99999-9999',
       email: 'contato@barberflowabs.app',
+      antecedenciaMinutos: 30,
     },
   });
 

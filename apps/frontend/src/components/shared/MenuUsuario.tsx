@@ -7,7 +7,7 @@ import {
     DropdownMenuSeparator,
 } from '../ui/dropdown-menu'
 import Image from 'next/image'
-import { IconCalendar, IconHome, IconLogout } from '@tabler/icons-react'
+import { IconCalendar, IconHome, IconLogout, IconSettings } from '@tabler/icons-react'
 import Link from 'next/link'
 
 export default function MenuUsuario() {
@@ -39,6 +39,14 @@ export default function MenuUsuario() {
                         <span>Agendar</span>
                     </Link>
                 </DropdownMenuItem>
+                {usuario.barbeiro && (
+                    <DropdownMenuItem>
+                        <Link href="/configuracoes" className="flex gap-2">
+                            <IconSettings size={18} />
+                            <span>Configurações</span>
+                        </Link>
+                    </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={encerrarSessao} className="flex gap-2 text-red-500">
                     <IconLogout size={18} />

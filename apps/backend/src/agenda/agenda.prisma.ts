@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AgendaUtils, TEMPO_SLOT } from '@barbabrutal/core';
 import { PrismaService } from 'src/db/prisma.service';
-import { HorariosDisponiveisDto } from './agenda.dto';
+import { ConfiguracaoAgendaDto, HorariosDisponiveisDto } from './agenda.dto';
 
 @Injectable()
 export class AgendaPrisma {
@@ -16,18 +16,28 @@ export class AgendaPrisma {
     const dataReferencia = this.criarDataReferencia(params.data);
     const diaSemana = dataReferencia.getUTCDay();
 
-    const horariosFuncionamento = await this.prisma.horarioFuncionamento.findMany({
-      where: {
-        barbeariaId: params.barbeariaId,
-        diaSemana,
-        ativo: true,
-        ...(params.unidadeId ? { unidadeId: params.unidadeId } : {}),
-      },
-      orderBy: { inicio: 'asc' },
-    });
+    const [barbearia, horariosFuncionamento] = await Promise.all([
+      this.prisma.barbearia.findUnique({
+        where: { id: params.barbeariaId },
+        select: { antecedenciaMinutos: true },
+      }),
+      this.prisma.horarioFuncionamento.findMany({
+        where: {
+          barbeariaId: params.barbeariaId,
+          diaSemana,
+          ativo: true,
+          ...(params.unidadeId ? { unidadeId: params.unidadeId } : {}),
+        },
+        orderBy: { inicio: 'asc' },
+      }),
+    ]);
 
     if (horariosFuncionamento.length === 0) {
-      return AgendaUtils.horariosDoDia();
+      return this.removerHorariosSemAntecedencia(
+        AgendaUtils.horariosDoDia(),
+        params.data,
+        barbearia?.antecedenciaMinutos ?? 30,
+      );
     }
 
     const horarios = horariosFuncionamento.flatMap((horario) =>
@@ -59,10 +69,53 @@ export class AgendaPrisma {
       return !bloqueios.some((bloqueio) => inicioSlot < bloqueio.fim && fimSlot > bloqueio.inicio);
     });
 
-    return {
+    return this.removerHorariosSemAntecedencia({
       manha: horariosDisponiveis.filter((horario) => horario < '12:00'),
       tardeNoite: horariosDisponiveis.filter((horario) => horario >= '12:00'),
+    }, params.data, barbearia?.antecedenciaMinutos ?? 30);
+  }
+
+  async buscarConfiguracao(barbeariaId: number): Promise<ConfiguracaoAgendaDto> {
+    const [barbearia, horarios] = await Promise.all([
+      this.prisma.barbearia.findUnique({
+        where: { id: barbeariaId },
+        select: { antecedenciaMinutos: true },
+      }),
+      this.prisma.horarioFuncionamento.findMany({
+        where: { barbeariaId, unidadeId: null },
+        orderBy: [{ diaSemana: 'asc' }, { inicio: 'asc' }],
+      }),
+    ]);
+
+    return {
+      antecedenciaMinutos: barbearia?.antecedenciaMinutos ?? 30,
+      horarios,
     };
+  }
+
+  async salvarConfiguracao(barbeariaId: number, configuracao: ConfiguracaoAgendaDto) {
+    await this.prisma.$transaction([
+      this.prisma.barbearia.update({
+        where: { id: barbeariaId },
+        data: { antecedenciaMinutos: configuracao.antecedenciaMinutos },
+      }),
+      this.prisma.horarioFuncionamento.deleteMany({
+        where: { barbeariaId, unidadeId: null },
+      }),
+      this.prisma.horarioFuncionamento.createMany({
+        data: configuracao.horarios.map((horario) => ({
+          barbeariaId,
+          diaSemana: horario.diaSemana,
+          inicio: horario.inicio,
+          fim: horario.fim,
+          intervaloInicio: horario.intervaloInicio || null,
+          intervaloFim: horario.intervaloFim || null,
+          ativo: horario.ativo ?? true,
+        })),
+      }),
+    ]);
+
+    return this.buscarConfiguracao(barbeariaId);
   }
 
   private gerarSlots(params: {
@@ -91,6 +144,48 @@ export class AgendaPrisma {
     }
 
     return horarios;
+  }
+
+  private removerHorariosSemAntecedencia(
+    horarios: HorariosDisponiveisDto,
+    data: string,
+    antecedenciaMinutos: number,
+  ): HorariosDisponiveisDto {
+    const hoje = this.obterHojeLocal();
+
+    if (data < hoje.data) {
+      return { manha: [], tardeNoite: [] };
+    }
+
+    if (data > hoje.data) {
+      return horarios;
+    }
+
+    const limite = hoje.minutos + antecedenciaMinutos;
+    return {
+      manha: horarios.manha.filter((horario) => this.horarioParaMinutos(horario) >= limite),
+      tardeNoite: horarios.tardeNoite.filter(
+        (horario) => this.horarioParaMinutos(horario) >= limite,
+      ),
+    };
+  }
+
+  private obterHojeLocal() {
+    const partes = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(new Date());
+
+    const valor = (tipo: string) => partes.find((parte) => parte.type === tipo)?.value ?? '00';
+    return {
+      data: `${valor('year')}-${valor('month')}-${valor('day')}`,
+      minutos: Number(valor('hour')) * 60 + Number(valor('minute')),
+    };
   }
 
   private criarDataReferencia(data: string) {

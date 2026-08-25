@@ -84,6 +84,7 @@ model Barbearia {
   slug          String         @unique
   telefone      String?
   email         String?
+  antecedenciaMinutos Int      @default(30)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   unidades      Unidade[]

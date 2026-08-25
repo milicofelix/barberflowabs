@@ -39,3 +39,19 @@ export function validarNumeroInteiroPositivo(valor: unknown, campo: string) {
     throw new BadRequestException(`${campo} inválido`);
   }
 }
+
+export function validarNumeroInteiroNaoNegativo(valor: unknown, campo: string) {
+  const numero = Number(valor);
+
+  if (!Number.isInteger(numero) || numero < 0) {
+    throw new BadRequestException(`${campo} inválido`);
+  }
+}
+
+export function validarHorario(valor: unknown, campo: string) {
+  validarTextoObrigatorio(valor, campo);
+
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(valor))) {
+    throw new BadRequestException(`${campo} inválido`);
+  }
+}
