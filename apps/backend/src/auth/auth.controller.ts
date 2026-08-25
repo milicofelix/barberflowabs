@@ -4,6 +4,8 @@ import { UsuarioPrisma } from './usuario.prisma';
 import { BcryptProvider } from './bcrypt.provider';
 import * as jwt from 'jsonwebtoken';
 import { TenantService } from 'src/shared/tenant.service';
+import { validarEmail, validarSenha, validarTextoObrigatorio } from 'src/shared/validacao';
+import { AuthTokenPayload, LoginDto, RegistrarUsuarioDto } from './auth.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -14,14 +16,18 @@ export class AuthController {
   ) {}
 
   @Post('registrar')
-  async registrar(@Body() usuario: Usuario, @Req() req: any) {
+  async registrar(@Body() usuario: RegistrarUsuarioDto, @Req() req: any) {
+    this.validarRegistro(usuario);
+
     const barbeariaId = await this.tenant.resolverBarbeariaId(req);
     const casoDeUso = new RegistrarUsuario(this.repo, this.cripto);
     await casoDeUso.executar({ ...usuario, barbeariaId });
   }
 
   @Post('login')
-  async login(@Body() dados: { email: string; senha: string }) {
+  async login(@Body() dados: LoginDto) {
+    this.validarLogin(dados);
+
     const casoDeUso = new LoginUsuario(this.repo, this.cripto);
     const usuario = await casoDeUso.executar({
       email: dados.email,
@@ -29,6 +35,29 @@ export class AuthController {
     });
 
     const segredo = process.env.JWT_SECRET;
-    return jwt.sign(usuario, segredo, { expiresIn: '15d' });
+    return jwt.sign(this.criarPayloadToken(usuario), segredo, { expiresIn: '15d' });
+  }
+
+  private validarRegistro(usuario: RegistrarUsuarioDto) {
+    validarTextoObrigatorio(usuario.nome, 'Nome');
+    validarEmail(usuario.email);
+    validarSenha(usuario.senha);
+  }
+
+  private validarLogin(dados: LoginDto) {
+    validarEmail(dados.email);
+    validarSenha(dados.senha);
+  }
+
+  private criarPayloadToken(usuario: Usuario): AuthTokenPayload {
+    return {
+      sub: usuario.id!,
+      id: usuario.id!,
+      nome: usuario.nome,
+      email: usuario.email,
+      barbeariaId: usuario.barbeariaId!,
+      barbeiro: usuario.barbeiro ?? false,
+      telefone: usuario.telefone,
+    };
   }
 }

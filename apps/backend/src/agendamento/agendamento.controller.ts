@@ -5,10 +5,23 @@ import {
   ExcluirAgendamento,
   TEMPO_SLOT,
 } from '@barbabrutal/core';
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+} from '@nestjs/common';
 
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import { AgendamentoPrisma } from './agendamento.prisma';
+import { CriarAgendamentoDto } from './agendamento.dto';
+import {
+  validarData,
+  validarNumeroInteiroPositivo,
+} from 'src/shared/validacao';
 
 @Controller('agendamentos')
 export class AgendamentoController {
@@ -16,11 +29,13 @@ export class AgendamentoController {
 
   @Post()
   async novoAgendamento(
-    @Body() dados: Agendamento,
+    @Body() dados: CriarAgendamentoDto,
     @UsuarioLogado() usuario: Usuario,
   ) {
+    this.validarNovoAgendamento(dados);
+
     const agendamento: Agendamento = {
-      ...dados,
+      ...(dados as any),
       barbeariaId: usuario.barbeariaId,
       data: new Date(dados.data),
       usuario,
@@ -40,6 +55,9 @@ export class AgendamentoController {
     @Param('data') data: string,
     @UsuarioLogado() usuario: Usuario,
   ) {
+    validarNumeroInteiroPositivo(profissional, 'Profissional');
+    validarData(data);
+
     return this.repo.buscarPorProfissionalEData(
       +profissional,
       new Date(data),
@@ -53,6 +71,9 @@ export class AgendamentoController {
     @Param('data') dataParam: string,
     @UsuarioLogado() usuario: Usuario,
   ) {
+    validarNumeroInteiroPositivo(profissional, 'Profissional');
+    validarData(dataParam);
+
     const agendamentos = await this.repo.buscarPorProfissionalEData(
       +profissional,
       new Date(dataParam),
@@ -82,10 +103,26 @@ export class AgendamentoController {
     @Param('id') id: string,
     @UsuarioLogado() usuario: Usuario,
   ) {
+    validarNumeroInteiroPositivo(id, 'Agendamento');
+
     const casoDeUso = new ExcluirAgendamento(this.repo);
     await casoDeUso.executar({
       id: +id,
       usuario,
+    });
+  }
+
+  private validarNovoAgendamento(dados: CriarAgendamentoDto) {
+    validarData(dados.data);
+    validarNumeroInteiroPositivo(dados.usuario?.id, 'Usuário');
+    validarNumeroInteiroPositivo(dados.profissional?.id, 'Profissional');
+
+    if (!Array.isArray(dados.servicos) || dados.servicos.length === 0) {
+      throw new BadRequestException('Informe pelo menos um serviço');
+    }
+
+    dados.servicos.forEach((servico) => {
+      validarNumeroInteiroPositivo(servico?.id, 'Serviço');
     });
   }
 }

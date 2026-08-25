@@ -1,12 +1,7 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { BarbeariaPrisma } from './barbearia.prisma';
-
-type NovaBarbeariaDTO = {
-  nome: string;
-  slug: string;
-  email?: string;
-  telefone?: string;
-};
+import { CriarBarbeariaDto } from './barbearia.dto';
+import { validarEmail, validarTextoObrigatorio } from 'src/shared/validacao';
 
 @Controller('barbearias')
 export class BarbeariaController {
@@ -23,7 +18,14 @@ export class BarbeariaController {
   }
 
   @Post()
-  criar(@Body() dados: NovaBarbeariaDTO) {
+  criar(@Body() dados: CriarBarbeariaDto) {
+    validarTextoObrigatorio(dados.nome, 'Nome');
+    validarTextoObrigatorio(dados.slug, 'Slug');
+
+    if (dados.email) {
+      validarEmail(dados.email);
+    }
+
     return this.repo.criar(dados);
   }
 }

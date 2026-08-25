@@ -1,7 +1,7 @@
-import { Usuario } from '@barbabrutal/core';
 import { HttpException, Injectable, NestMiddleware } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { UsuarioPrisma } from './usuario.prisma';
+import { AuthTokenPayload } from './auth.dto';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
@@ -15,9 +15,12 @@ export class AuthMiddleware implements NestMiddleware {
         throw new HttpException('Token não informado', 401);
       }
 
-      const payload = jwt.verify(token, process.env.JWT_SECRET!) as Usuario;
+      const payload = jwt.verify(
+        token,
+        process.env.JWT_SECRET!,
+      ) as unknown as AuthTokenPayload;
 
-      if (!payload) {
+      if (!payload?.email) {
         throw new HttpException('Token inválido', 401);
       }
 

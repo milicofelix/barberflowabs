@@ -1,12 +1,6 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
-
-type NovaBarbearia = {
-  nome: string;
-  slug: string;
-  email?: string;
-  telefone?: string;
-};
+import { CriarBarbeariaDto } from './barbearia.dto';
 
 @Injectable()
 export class BarbeariaPrisma {
@@ -26,7 +20,7 @@ export class BarbeariaPrisma {
     });
   }
 
-  async criar(dados: NovaBarbearia) {
+  async criar(dados: CriarBarbeariaDto) {
     const nome = dados.nome?.trim();
     const slug = this.normalizarSlug(dados.slug);
 
