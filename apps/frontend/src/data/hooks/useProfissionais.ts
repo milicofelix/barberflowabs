@@ -1,4 +1,4 @@
-import { profissionais } from '@barberflowabs/core'
+import { profissionais } from '@barbabrutal/core'
 
 export default function useProfissionais() {
     return {

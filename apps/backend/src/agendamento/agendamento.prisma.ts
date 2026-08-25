@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../db/prisma.service';
-import Agendamento from '@barberflowabs/core/src/agendamento/model/Agendamento';
-import RepositorioAgendamento from '@barberflowabs/core/src/agendamento/provider/RepositorioAgendamento';
+import Agendamento from '@barbabrutal/core/src/agendamento/model/Agendamento';
+import RepositorioAgendamento from '@barbabrutal/core/src/agendamento/provider/RepositorioAgendamento';
 import { DEFAULT_BARBEARIA_ID } from 'src/shared/tenant';
 
 @Injectable()

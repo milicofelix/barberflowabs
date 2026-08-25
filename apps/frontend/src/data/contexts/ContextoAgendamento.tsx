@@ -2,7 +2,7 @@
 import { createContext, useCallback, useEffect, useState } from 'react'
 import useAPI from '../hooks/useAPI'
 import useSessao from '../hooks/useSessao'
-import { AgendaUtils, DateUtils, Profissional, Servico } from '@barberflowabs/core'
+import { AgendaUtils, DateUtils, Profissional, Servico } from '@barbabrutal/core'
 import { useRouter } from 'next/navigation'
 
 export interface ContextoAgendamentoProps {

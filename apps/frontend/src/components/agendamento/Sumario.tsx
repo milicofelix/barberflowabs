@@ -1,5 +1,5 @@
 import useAgendamento from '@/data/hooks/useAgendamento'
-import { MoedaUtils, Profissional, Servico } from '@barberflowabs/core'
+import { MoedaUtils, Profissional, Servico } from '@barbabrutal/core'
 import { IconCalendar } from '@tabler/icons-react'
 
 export default function Sumario() {

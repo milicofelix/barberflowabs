@@ -1,4 +1,4 @@
-import { DateUtils } from '@barberflowabs/core'
+import { DateUtils } from '@barbabrutal/core'
 import CampoDia from './CampoDia'
 import CampoHorario from './CampoHorario'
 

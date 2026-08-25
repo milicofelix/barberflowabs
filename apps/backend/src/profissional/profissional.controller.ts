@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ProfissionalPrisma } from './profissional.prisma';
-import { BuscarProfissionais } from '@barberflowabs/core';
+import { BuscarProfissionais } from '@barbabrutal/core';
 
 @Controller('profissionais')
 export class ProfissionalController {

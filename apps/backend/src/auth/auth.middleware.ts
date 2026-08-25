@@ -1,4 +1,4 @@
-import { Usuario } from '@barberflowabs/core';
+import { Usuario } from '@barbabrutal/core';
 import { HttpException, Injectable, NestMiddleware } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
 import { UsuarioPrisma } from './usuario.prisma';

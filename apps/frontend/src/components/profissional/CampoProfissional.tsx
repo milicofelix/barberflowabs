@@ -1,5 +1,5 @@
 import useProfissionais from '@/data/hooks/useProfissionais'
-import { Profissional } from '@barberflowabs/core'
+import { Profissional } from '@barbabrutal/core'
 import Image from 'next/image'
 
 export interface CampoProfissionalProps

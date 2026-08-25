@@ -1,4 +1,4 @@
-import { Servico } from '@barberflowabs/core'
+import { Servico } from '@barbabrutal/core'
 import Image from 'next/image'
 
 export interface ItemServicoProps {

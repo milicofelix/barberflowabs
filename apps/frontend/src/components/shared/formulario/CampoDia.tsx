@@ -1,4 +1,4 @@
-import { DateUtils } from '@barberflowabs/core'
+import { DateUtils } from '@barbabrutal/core'
 
 export interface CampoDiaProps
     extends Omit<React.SelectHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {

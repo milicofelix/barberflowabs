@@ -1,4 +1,4 @@
-import { DateUtils } from '@barberflowabs/core'
+import { DateUtils } from '@barbabrutal/core'
 import { StyleSheet, Text, Pressable, View } from 'react-native'
 
 export interface CampoDiaProps {

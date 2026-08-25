@@ -1,5 +1,5 @@
 'use client'
-import { Usuario } from '@barberflowabs/core'
+import { Usuario } from '@barbabrutal/core'
 import { createContext, useCallback, useEffect, useState } from 'react'
 import cookie from 'js-cookie'
 import { jwtDecode } from 'jwt-decode'

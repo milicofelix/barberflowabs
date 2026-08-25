@@ -1,4 +1,4 @@
-import { Profissional } from '@barberflowabs/core'
+import { Profissional } from '@barbabrutal/core'
 import {
     IconBrandInstagram,
     IconBrandLinkedin,

@@ -1,7 +1,7 @@
 'use client'
 import { createContext, useCallback, useEffect, useState } from 'react'
 import { jwtDecode } from 'jwt-decode'
-import { Usuario } from '@barberflowabs/core'
+import { Usuario } from '@barbabrutal/core'
 import useLocalStorage from '../hooks/useLocalStorage'
 
 interface Sessao {

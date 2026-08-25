@@ -1,5 +1,5 @@
 import { Body, Controller, Post } from '@nestjs/common';
-import { LoginUsuario, RegistrarUsuario, Usuario } from '@barberflowabs/core';
+import { LoginUsuario, RegistrarUsuario, Usuario } from '@barbabrutal/core';
 import { UsuarioPrisma } from './usuario.prisma';
 import { BcryptProvider } from './bcrypt.provider';
 import * as jwt from 'jsonwebtoken';

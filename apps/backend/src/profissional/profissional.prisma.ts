@@ -1,4 +1,4 @@
-import { Profissional, RepositorioProfissional } from '@barberflowabs/core';
+import { Profissional, RepositorioProfissional } from '@barbabrutal/core';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
 import { DEFAULT_BARBEARIA_ID } from 'src/shared/tenant';

@@ -1,4 +1,4 @@
-import { profissionais, servicos, Usuario } from '@barberflowabs/core';
+import { profissionais, servicos, Usuario } from '@barbabrutal/core';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
