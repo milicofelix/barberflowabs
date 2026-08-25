@@ -17,6 +17,7 @@ services:
       # Ajuda file watchers de Next/Nest/Expo a perceber alterações em bind mounts.
       WATCHPACK_POLLING: "true"
       CHOKIDAR_USEPOLLING: "true"
+      TURBO_DAEMON: "false"
     ports:
       - "3000:3000"   # Next.js frontend
       - "4000:4000"   # NestJS backend

@@ -1,6 +1,6 @@
 'use client'
 import { cn } from '@/lib/utils'
-import { AgendaUtils, DateUtils, Horarios } from '@barbabrutal/core'
+import { AgendaUtils, DateUtils, Horarios } from '@barberflowabs/core'
 import { IconX } from '@tabler/icons-react'
 import { useState } from 'react'
 

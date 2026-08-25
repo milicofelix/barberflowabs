@@ -1,4 +1,4 @@
-import { servicos } from '@barbabrutal/core'
+import { servicos } from '@barberflowabs/core'
 
 export default function useServicos() {
     return {

@@ -1,5 +1,5 @@
 import { StyleSheet, Text, Pressable, View } from 'react-native'
-import { DateUtils, MoedaUtils } from '@barbabrutal/core'
+import { DateUtils, MoedaUtils } from '@barberflowabs/core'
 import useAgendamento from '../../data/hooks/useAgendamento'
 
 export default function Sumario({ navigation }: any) {

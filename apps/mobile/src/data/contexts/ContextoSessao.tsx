@@ -1,7 +1,7 @@
 'use client'
 import { createContext, useCallback, useEffect, useState } from 'react'
 import { jwtDecode } from 'jwt-decode'
-import { Usuario } from '@barbabrutal/core'
+import { Usuario } from '@barberflowabs/core'
 import useLocalStorage from '../hooks/useLocalStorage'
 
 interface Sessao {
@@ -21,7 +21,7 @@ const ContextoSessao = createContext<ContextoSessaoProps>({} as any)
 export default ContextoSessao
 
 export function ProvedorSessao(props: any) {
-    const tokenNome = '_barbabrutal_token'
+    const tokenNome = '_barberflowabs_token'
     const { get, set, remove } = useLocalStorage()
 
     const [carregando, setCarregando] = useState(true)

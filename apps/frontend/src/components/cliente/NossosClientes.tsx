@@ -1,4 +1,4 @@
-import { clientes } from '@barbabrutal/core'
+import { clientes } from '@barberflowabs/core'
 import { LayoutGrid } from '../ui/layout-grid'
 import ItemCliente from './ItemCliente'
 import TituloSecao from '../shared/TituloSecao'

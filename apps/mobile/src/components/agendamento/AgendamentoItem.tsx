@@ -1,4 +1,4 @@
-import { Agendamento, DateUtils, MoedaUtils } from '@barbabrutal/core'
+import { Agendamento, DateUtils, MoedaUtils } from '@barberflowabs/core'
 import { StyleSheet, Text, View } from 'react-native'
 
 interface AgendamentoItemProps {

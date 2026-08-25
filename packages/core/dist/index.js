@@ -227,7 +227,7 @@ var clientes = [
     id: 4,
     imagemURL: "/clientes/cliente-4.jpg",
     nome: "Sr. Carlos",
-    testemunho: 'Nosso cliente mais velho e cheio de hist\xF3rias incr\xEDveis que nunca se repetem! Ele anima a barbearia com suas aventuras e sabedoria. Sr. Carlos diz: "A Barba Brutal \xE9 raiz, me lembra a barbearia que eu ia quando era moleque. Servi\xE7o excelente e hist\xF3rias boas garantidas"'
+    testemunho: 'Nosso cliente mais velho e cheio de hist\xF3rias incr\xEDveis que nunca se repetem! Ele anima a barbearia com suas aventuras e sabedoria. Sr. Carlos diz: "A Barber Flow ABS \xE9 raiz, me lembra a barbearia que eu ia quando era moleque. Servi\xE7o excelente e hist\xF3rias boas garantidas"'
   }
 ];
 var clientes_default = clientes;

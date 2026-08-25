@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ServicoPrisma } from './servico.prisma';
-import { BuscarServicos } from '@barbabrutal/core';
+import { BuscarServicos } from '@barberflowabs/core';
 
 @Controller('servicos')
 export class ServicoController {

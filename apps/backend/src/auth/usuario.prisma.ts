@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { RepositorioUsuario, Usuario } from '@barbabrutal/core';
+import { RepositorioUsuario, Usuario } from '@barberflowabs/core';
 import { PrismaService } from 'src/db/prisma.service';
 import { DEFAULT_BARBEARIA_ID } from 'src/shared/tenant';
 

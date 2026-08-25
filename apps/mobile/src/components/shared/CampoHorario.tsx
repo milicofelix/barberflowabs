@@ -1,4 +1,4 @@
-import { AgendaUtils, DateUtils, Horarios } from '@barbabrutal/core'
+import { AgendaUtils, DateUtils, Horarios } from '@barberflowabs/core'
 import { useEffect, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 

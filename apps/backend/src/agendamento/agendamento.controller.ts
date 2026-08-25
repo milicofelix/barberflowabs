@@ -6,7 +6,7 @@ import {
   BuscarAgendaProfissionalPorDia,
   ExcluirAgendamento,
   ObterHorariosOcupados,
-} from '@barbabrutal/core';
+} from '@barberflowabs/core';
 import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
 
 import { UsuarioLogado } from 'src/shared/usuario.decorator';

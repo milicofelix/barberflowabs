@@ -1,5 +1,5 @@
 'use client'
-import { Usuario } from '@barbabrutal/core'
+import { Usuario } from '@barberflowabs/core'
 import { createContext, useCallback, useEffect, useState } from 'react'
 import cookie from 'js-cookie'
 import { jwtDecode } from 'jwt-decode'
@@ -21,7 +21,7 @@ const ContextoSessao = createContext<ContextoSessaoProps>({} as any)
 export default ContextoSessao
 
 export function ProvedorSessao(props: any) {
-    const nomeCookie = '_barbabrutal_token'
+    const nomeCookie = '_barberflowabs_token'
 
     const [carregando, setCarregando] = useState(true)
     const [sessao, setSessao] = useState<Sessao>({ token: null, usuario: null })

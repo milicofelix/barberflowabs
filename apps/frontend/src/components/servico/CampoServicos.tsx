@@ -1,4 +1,4 @@
-import { Servico } from '@barbabrutal/core'
+import { Servico } from '@barberflowabs/core'
 import useServicos from '@/data/hooks/useServicos'
 import Image from 'next/image'
 

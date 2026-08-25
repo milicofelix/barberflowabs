@@ -1,4 +1,4 @@
-import { RepositorioServico, Servico } from '@barbabrutal/core';
+import { RepositorioServico, Servico } from '@barberflowabs/core';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
 import { DEFAULT_BARBEARIA_ID } from 'src/shared/tenant';

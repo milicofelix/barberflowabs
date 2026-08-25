@@ -1,4 +1,4 @@
-import { Agendamento } from '@barbabrutal/core'
+import { Agendamento } from '@barberflowabs/core'
 import { StyleSheet, Text, View, Image } from 'react-native'
 import AgendamentoItem from './AgendamentoItem'
 import React, { useEffect, useState } from 'react'

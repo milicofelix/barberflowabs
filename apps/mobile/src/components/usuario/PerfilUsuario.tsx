@@ -1,5 +1,5 @@
 import { StyleSheet, View, Image, Text, Pressable } from 'react-native'
-import { Usuario } from '@barbabrutal/core'
+import { Usuario } from '@barberflowabs/core'
 import React from 'react'
 
 export interface PerfilUsuarioProps {

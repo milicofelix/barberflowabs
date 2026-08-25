@@ -14,7 +14,7 @@ CREATE TABLE `barbearias` (
 
 -- Seed default tenant before existing rows receive the required FK.
 INSERT INTO `barbearias` (`id`, `nome`, `slug`, `telefone`, `email`)
-VALUES (1, 'Barba Brutal', 'barba-brutal', '(11) 99999-9999', 'contato@barbabrutal.app')
+VALUES (1, 'Barber Flow ABS', 'barber-flow-abs', '(11) 99999-9999', 'contato@barberflowabs.app')
 ON DUPLICATE KEY UPDATE `nome` = `nome`;
 
 -- CreateTable
