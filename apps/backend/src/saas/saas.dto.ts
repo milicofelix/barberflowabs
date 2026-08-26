@@ -36,3 +36,13 @@ export interface AtualizarComercialBarbeariaDto {
   ultimoContatoEm?: string | null;
   proximoContatoEm?: string | null;
 }
+
+export interface AtualizarPlanoAdminDto {
+  nome?: string;
+  descricao?: string;
+  precoMensal?: number;
+  limiteUsuarios?: number;
+  limiteUnidades?: number;
+  limiteServicos?: number;
+  ativo?: boolean;
+}

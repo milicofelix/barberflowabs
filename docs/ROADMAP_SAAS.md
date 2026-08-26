@@ -288,18 +288,24 @@ Concluido:
   - assinatura em trial
   - usuario dono/barbeiro
   - log de auditoria
-- Criada area de billing:
-  - `GET /saas/billing`
-  - `PUT /saas/billing/plano`
+- Criada area de cobranca:
+  - `GET /saas/cobranca`
+  - `PUT /saas/cobranca/plano`
+  - aliases legados mantidos em `/saas/billing`
 - Criada area Super Admin:
+  - `GET /saas/admin/planos`
+  - `PUT /saas/admin/planos/:id`
   - `GET /saas/admin/barbearias`
   - `PUT /saas/admin/barbearias/:id/status`
   - `GET /saas/admin/auditoria`
 - Frontend criado:
   - `/onboarding`
-  - `/billing`
+  - `/cobranca`
   - `/admin`
-- Menu web exibe Billing para responsaveis e Admin SaaS para super admins.
+- Menu web exibe Cobranca para responsaveis de barbearia e Admin SaaS para super admins.
+- Super admin foi separado do tenant operacional:
+  - sem `barbeariaId` no token
+  - sem acesso a agendamento, gestao, perfil publico, agenda e cobranca de barbearia
 
 Melhorias futuras:
 
@@ -364,7 +370,7 @@ Objetivo: fazer os planos deixarem de ser apenas informativos e começarem a con
 Concluido:
 
 - Criado servico backend de limites de plano.
-- Billing passou a retornar objeto estruturado de uso:
+- Cobranca passou a retornar objeto estruturado de uso:
   - profissionais
   - unidades
   - servicos
@@ -377,7 +383,7 @@ Concluido:
   - criar agendamentos
   - criar/editar/excluir servicos
   - criar/editar/excluir profissionais
-- Tela de Billing mostra barras de uso e alerta de limite.
+- Tela de Cobranca mostra barras de uso e alerta de limite.
 - Tela de Admin SaaS mostra uso dos limites por barbearia.
 
 Melhorias futuras:

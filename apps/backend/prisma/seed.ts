@@ -237,14 +237,14 @@ async function seed() {
   // senha é... #Senha123
   const senha = senhaPadrao;
 
-  const usuarios: Usuario[] = [
+  const usuarios: Array<Usuario & { barbeariaId?: number | null }> = [
     {
       nome: 'Marcão Machadada',
-      barbeariaId: BARBEARIA_PADRAO_ID,
+      barbeariaId: null,
       email: 'marcao@barberflowabs.app',
       senha,
       telefone: '(11) 99999-9999',
-      barbeiro: true,
+      barbeiro: false,
       papel: 'SUPER_ADMIN',
     },
     {
@@ -263,7 +263,8 @@ async function seed() {
   await prisma.usuario.updateMany({
     where: { email: { in: SUPER_ADMIN_EMAILS } },
     data: {
-      barbeiro: true,
+      barbeariaId: null,
+      barbeiro: false,
       papel: 'SUPER_ADMIN',
     },
   });

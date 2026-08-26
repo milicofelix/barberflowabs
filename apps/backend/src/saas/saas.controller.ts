@@ -14,11 +14,13 @@ import { BcryptProvider } from 'src/auth/bcrypt.provider';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import {
   validarEmail,
+  validarNumeroInteiroNaoNegativo,
   validarNumeroInteiroPositivo,
   validarSenha,
   validarTextoObrigatorio,
 } from 'src/shared/validacao';
 import {
+  AtualizarPlanoAdminDto,
   AtualizarPlanoDto,
   AtualizarComercialBarbeariaDto,
   AtualizarDestaqueBarbeariaDto,
@@ -56,7 +58,16 @@ export class SaasController {
   }
 
   @Get('billing')
-  async billing(@UsuarioLogado() usuario: Usuario) {
+  async billingLegado(@UsuarioLogado() usuario: Usuario) {
+    return this.buscarCobranca(usuario);
+  }
+
+  @Get('cobranca')
+  async cobranca(@UsuarioLogado() usuario: Usuario) {
+    return this.buscarCobranca(usuario);
+  }
+
+  private async buscarCobranca(usuario: Usuario) {
     this.validarBarbeiro(usuario);
     const billing = await this.repo.billing(usuario.barbeariaId!);
     if (!billing) throw new NotFoundException('Barbearia não encontrada');
@@ -64,7 +75,16 @@ export class SaasController {
   }
 
   @Put('billing/plano')
+  atualizarPlanoLegado(@Body() dados: AtualizarPlanoDto, @UsuarioLogado() usuario: Usuario) {
+    return this.atualizarPlanoCobranca(dados, usuario);
+  }
+
+  @Put('cobranca/plano')
   atualizarPlano(@Body() dados: AtualizarPlanoDto, @UsuarioLogado() usuario: Usuario) {
+    return this.atualizarPlanoCobranca(dados, usuario);
+  }
+
+  private atualizarPlanoCobranca(dados: AtualizarPlanoDto, usuario: Usuario) {
     this.validarBarbeiro(usuario);
     validarTextoObrigatorio(dados.planoSlug, 'Plano');
     return this.repo.atualizarPlano(usuario.barbeariaId!, dados.planoSlug, usuario.id!);
@@ -100,6 +120,24 @@ export class SaasController {
       superAdmin: this.ehSuperAdmin(usuario),
       superAdminEmailsConfigurado: emailsSuperAdmin.length > 0,
     };
+  }
+
+  @Get('admin/planos')
+  listarPlanosAdmin(@UsuarioLogado() usuario: Usuario) {
+    this.validarSuperAdmin(usuario);
+    return this.repo.listarPlanosAdmin();
+  }
+
+  @Put('admin/planos/:id')
+  atualizarPlanoAdmin(
+    @Param('id') id: string,
+    @Body() dados: AtualizarPlanoAdminDto,
+    @UsuarioLogado() usuario: Usuario,
+  ) {
+    this.validarSuperAdmin(usuario);
+    validarNumeroInteiroPositivo(id, 'Plano');
+    this.validarPlanoAdmin(dados);
+    return this.repo.atualizarPlanoAdmin(Number(id), usuario.id!, dados);
   }
 
   @Put('admin/barbearias/:id/status')
@@ -198,9 +236,29 @@ export class SaasController {
     }
   }
 
+  private validarPlanoAdmin(dados: AtualizarPlanoAdminDto) {
+    if (dados.nome !== undefined) validarTextoObrigatorio(dados.nome, 'Nome do plano');
+    if (dados.descricao !== undefined) validarTextoObrigatorio(dados.descricao, 'Descrição do plano');
+
+    if (dados.precoMensal !== undefined) {
+      const preco = Number(dados.precoMensal);
+      if (!Number.isFinite(preco) || preco < 0) {
+        throw new BadRequestException('Preço mensal inválido');
+      }
+    }
+
+    if (dados.limiteUsuarios !== undefined) validarNumeroInteiroNaoNegativo(dados.limiteUsuarios, 'Limite de usuários');
+    if (dados.limiteUnidades !== undefined) validarNumeroInteiroNaoNegativo(dados.limiteUnidades, 'Limite de unidades');
+    if (dados.limiteServicos !== undefined) validarNumeroInteiroNaoNegativo(dados.limiteServicos, 'Limite de serviços');
+
+    if (dados.ativo !== undefined && typeof dados.ativo !== 'boolean') {
+      throw new BadRequestException('Ativo deve ser verdadeiro ou falso');
+    }
+  }
+
   private validarBarbeiro(usuario: Usuario) {
-    if (!usuario?.barbeiro && !this.ehSuperAdmin(usuario)) {
-      throw new ForbiddenException('Apenas responsáveis pela barbearia podem acessar billing');
+    if (!usuario?.barbeiro || this.ehSuperAdmin(usuario)) {
+      throw new ForbiddenException('Apenas responsáveis pela barbearia podem acessar cobrança');
     }
   }
 

@@ -85,14 +85,15 @@ export class AuthController {
 
   private criarPayloadToken(usuario: Usuario): AuthTokenPayload {
     const papel = this.resolverPapel(usuario);
+    const superAdmin = papel === 'SUPER_ADMIN';
 
     return {
       sub: usuario.id!,
       id: usuario.id!,
       nome: usuario.nome,
       email: usuario.email,
-      barbeariaId: usuario.barbeariaId!,
-      barbeiro: usuario.barbeiro ?? false,
+      barbeariaId: superAdmin ? null : usuario.barbeariaId!,
+      barbeiro: superAdmin ? false : usuario.barbeiro ?? false,
       papel,
       role: papel,
       telefone: usuario.telefone,

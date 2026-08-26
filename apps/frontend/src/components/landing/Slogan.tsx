@@ -5,7 +5,7 @@ import Link from 'next/link'
 export default function Slogan() {
     return (
         <div className="relative h-[450px] sm:h-[700px]">
-            <Image src="/banners/principal.webp" fill alt="Barbearia" className="object-cover" />
+            <Image src="/banners/principal.png" fill alt="Barbearia" className="object-cover" />
             <div
                 className="
                     flex flex-col items-center

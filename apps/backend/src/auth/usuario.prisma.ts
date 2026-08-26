@@ -39,6 +39,7 @@ export class UsuarioPrisma implements RepositorioUsuario {
 
     return {
       ...usuario,
+      barbeariaId: usuario.barbeariaId ?? undefined,
       papel: this.normalizarPapel(usuario.papel, usuario.barbeiro),
     };
   }

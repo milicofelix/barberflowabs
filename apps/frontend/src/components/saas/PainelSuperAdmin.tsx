@@ -19,21 +19,24 @@ export default function PainelSuperAdmin() {
     const [barbearias, setBarbearias] = useState<any[]>([])
     const [pendentes, setPendentes] = useState<any[]>([])
     const [auditoria, setAuditoria] = useState<any[]>([])
+    const [planos, setPlanos] = useState<any[]>([])
     const [mensagem, setMensagem] = useState('')
     const [motivoRevisao, setMotivoRevisao] = useState('')
     const [carregando, setCarregando] = useState(true)
     const [acessoNegado, setAcessoNegado] = useState(false)
     const [diagnostico, setDiagnostico] = useState<any>(null)
     const [comercial, setComercial] = useState<Record<number, any>>({})
+    const [planosEditados, setPlanosEditados] = useState<Record<number, any>>({})
 
     const carregar = useCallback(async function carregar() {
         setCarregando(true)
         setAcessoNegado(false)
-        const [dadosMe, dadosBarbearias, dadosPendentes, dadosAuditoria] = await Promise.all([
+        const [dadosMe, dadosBarbearias, dadosPendentes, dadosAuditoria, dadosPlanos] = await Promise.all([
             httpGet('/saas/admin/me'),
             httpGet('/saas/admin/barbearias'),
             httpGet('/saas/admin/barbearias/pendentes'),
             httpGet('/saas/admin/auditoria'),
+            httpGet('/saas/admin/planos'),
         ])
         const negado = dadosBarbearias?.statusCode === 403 || dadosAuditoria?.statusCode === 403
         setDiagnostico(dadosMe?.statusCode ? null : dadosMe)
@@ -41,6 +44,7 @@ export default function PainelSuperAdmin() {
         setBarbearias(Array.isArray(dadosBarbearias) ? dadosBarbearias : [])
         setPendentes(Array.isArray(dadosPendentes) ? dadosPendentes : [])
         setAuditoria(Array.isArray(dadosAuditoria) ? dadosAuditoria : [])
+        setPlanos(Array.isArray(dadosPlanos) ? dadosPlanos : [])
         setCarregando(false)
     }, [httpGet])
 
@@ -116,6 +120,33 @@ export default function PainelSuperAdmin() {
         }))
     }
 
+    async function salvarPlano(plano: any) {
+        setMensagem('')
+        const dados = planosEditados[plano.id] ?? {}
+        const resposta = await httpPut(`/saas/admin/planos/${plano.id}`, {
+            nome: dados.nome ?? plano.nome,
+            descricao: dados.descricao ?? plano.descricao,
+            precoMensal: Number(dados.precoMensal ?? plano.precoMensal ?? 0),
+            limiteUsuarios: Number(dados.limiteUsuarios ?? plano.limiteUsuarios ?? 0),
+            limiteUnidades: Number(dados.limiteUnidades ?? plano.limiteUnidades ?? 0),
+            limiteServicos: Number(dados.limiteServicos ?? plano.limiteServicos ?? 0),
+            ativo: dados.ativo ?? plano.ativo,
+        })
+        if (resposta?.statusCode) return setMensagem(resposta.message)
+        await carregar()
+        setMensagem('Plano atualizado.')
+    }
+
+    function atualizarPlano(id: number, campo: string, valor: string | boolean) {
+        setPlanosEditados((atual) => ({
+            ...atual,
+            [id]: {
+                ...(atual[id] ?? {}),
+                [campo]: valor,
+            },
+        }))
+    }
+
     if (carregando) {
         return <p className="rounded border border-zinc-800 bg-zinc-950 p-5 text-zinc-300">Carregando admin SaaS...</p>
     }
@@ -126,6 +157,25 @@ export default function PainelSuperAdmin() {
 
     return (
         <div className="grid gap-6">
+            <section className="rounded border border-zinc-800 bg-zinc-950 p-5">
+                <div>
+                    <h2 className="text-xl font-bold text-zinc-100">Planos e cobrança</h2>
+                    <p className="text-sm text-zinc-400">Valores e limites comerciais da plataforma</p>
+                </div>
+                <div className="mt-4 grid gap-3">
+                    {planos.map((plano) => (
+                        <PlanoAdmin
+                            key={plano.id}
+                            plano={plano}
+                            editado={planosEditados[plano.id] ?? {}}
+                            onChange={atualizarPlano}
+                            onSalvar={salvarPlano}
+                        />
+                    ))}
+                    {planos.length === 0 && <p className="text-sm text-zinc-400">Nenhum plano cadastrado.</p>}
+                </div>
+            </section>
+
             <section className="rounded border border-zinc-800 bg-zinc-950 p-5">
                 <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                     <div>
@@ -263,6 +313,95 @@ export default function PainelSuperAdmin() {
             </section>
 
             {mensagem && <p className="text-sm text-zinc-300">{mensagem}</p>}
+        </div>
+    )
+}
+
+function PlanoAdmin(props: {
+    plano: any
+    editado: any
+    onChange: (id: number, campo: string, valor: string | boolean) => void
+    onSalvar: (plano: any) => void
+}) {
+    const plano = props.plano
+
+    return (
+        <div className="rounded border border-zinc-800 bg-zinc-900 p-4">
+            <div className="grid gap-3 lg:grid-cols-[1fr_130px_110px_110px_110px_90px_auto] lg:items-end">
+                <label className="grid gap-1 text-sm text-zinc-400">
+                    Plano
+                    <input
+                        value={props.editado.nome ?? plano.nome ?? ''}
+                        onChange={(e) => props.onChange(plano.id, 'nome', e.target.value)}
+                        className="input"
+                    />
+                </label>
+                <label className="grid gap-1 text-sm text-zinc-400">
+                    Mensalidade
+                    <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={props.editado.precoMensal ?? plano.precoMensal ?? 0}
+                        onChange={(e) => props.onChange(plano.id, 'precoMensal', e.target.value)}
+                        className="input"
+                    />
+                </label>
+                <label className="grid gap-1 text-sm text-zinc-400">
+                    Usuários
+                    <input
+                        type="number"
+                        min="0"
+                        value={props.editado.limiteUsuarios ?? plano.limiteUsuarios ?? 0}
+                        onChange={(e) => props.onChange(plano.id, 'limiteUsuarios', e.target.value)}
+                        className="input"
+                    />
+                </label>
+                <label className="grid gap-1 text-sm text-zinc-400">
+                    Unidades
+                    <input
+                        type="number"
+                        min="0"
+                        value={props.editado.limiteUnidades ?? plano.limiteUnidades ?? 0}
+                        onChange={(e) => props.onChange(plano.id, 'limiteUnidades', e.target.value)}
+                        className="input"
+                    />
+                </label>
+                <label className="grid gap-1 text-sm text-zinc-400">
+                    Serviços
+                    <input
+                        type="number"
+                        min="0"
+                        value={props.editado.limiteServicos ?? plano.limiteServicos ?? 0}
+                        onChange={(e) => props.onChange(plano.id, 'limiteServicos', e.target.value)}
+                        className="input"
+                    />
+                </label>
+                <label className="grid gap-1 text-sm text-zinc-400">
+                    Ativo
+                    <input
+                        type="checkbox"
+                        checked={props.editado.ativo ?? plano.ativo ?? true}
+                        onChange={(e) => props.onChange(plano.id, 'ativo', e.target.checked)}
+                        className="h-10 w-5"
+                    />
+                </label>
+                <button
+                    type="button"
+                    onClick={() => props.onSalvar(plano)}
+                    className="rounded bg-zinc-100 px-4 py-2 text-sm font-bold text-zinc-950"
+                >
+                    Salvar plano
+                </button>
+            </div>
+            <label className="mt-3 grid gap-1 text-sm text-zinc-400">
+                Descrição
+                <input
+                    value={props.editado.descricao ?? plano.descricao ?? ''}
+                    onChange={(e) => props.onChange(plano.id, 'descricao', e.target.value)}
+                    className="input"
+                />
+            </label>
         </div>
     )
 }

@@ -11,7 +11,7 @@ export default function PainelBilling() {
 
     const carregar = useCallback(async function carregar() {
         const [dadosBilling, dadosPlanos] = await Promise.all([
-            httpGet('/saas/billing'),
+            httpGet('/saas/cobranca'),
             httpGet('/saas/planos'),
         ])
         setBilling(dadosBilling?.statusCode ? null : dadosBilling)
@@ -24,7 +24,7 @@ export default function PainelBilling() {
 
     async function trocarPlano(planoSlug: string) {
         setMensagem('')
-        const resposta = await httpPut('/saas/billing/plano', { planoSlug })
+        const resposta = await httpPut('/saas/cobranca/plano', { planoSlug })
         if (resposta?.statusCode) return setMensagem(resposta.message)
         await carregar()
         setMensagem('Plano atualizado.')

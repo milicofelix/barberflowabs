@@ -12,7 +12,7 @@ datasource db {
 
 model Usuario {
   id           Int           @id @default(autoincrement())
-  barbeariaId  Int
+  barbeariaId  Int?
   nome         String
   email        String        @unique
   senha        String
@@ -20,7 +20,7 @@ model Usuario {
   dataNascimento DateTime?
   barbeiro     Boolean
   papel        String        @default("CUSTOMER")
-  barbearia    Barbearia     @relation(fields: [barbeariaId], references: [id])
+  barbearia    Barbearia?    @relation(fields: [barbeariaId], references: [id])
   agendamentos Agendamento[]
   lancamentosFinanceiros LancamentoFinanceiro[]
   logsAuditoria LogAuditoria[]

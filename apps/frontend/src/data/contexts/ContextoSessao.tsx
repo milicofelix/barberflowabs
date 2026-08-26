@@ -80,7 +80,7 @@ export function ProvedorSessao(props: any) {
                 token,
                 usuario: {
                     id: payload.id,
-                    barbeariaId: payload.barbeariaId,
+                    barbeariaId: payload.barbeariaId ?? undefined,
                     nome: payload.nome,
                     email: payload.email,
                     barbeiro: payload.barbeiro,

@@ -10,8 +10,9 @@ import { useState } from 'react'
 export default function Page() {
     const { usuario } = useSessao()
     const [aba, setAba] = useState<'agenda' | 'perfil'>('perfil')
+    const superAdmin = usuario?.role === 'SUPER_ADMIN' || usuario?.papel === 'SUPER_ADMIN'
 
-    if (!usuario?.barbeiro) {
+    if (!usuario?.barbeiro || superAdmin) {
         return (
             <div className="flex flex-col gap-5">
                 <CabecalhoComTitulo

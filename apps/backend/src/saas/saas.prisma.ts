@@ -14,6 +14,36 @@ export class SaasPrisma {
     });
   }
 
+  listarPlanosAdmin() {
+    return this.prisma.planoAssinatura.findMany({
+      orderBy: { precoMensal: 'asc' },
+    });
+  }
+
+  async atualizarPlanoAdmin(id: number, usuarioId: number, dados: any) {
+    const plano = await this.prisma.planoAssinatura.update({
+      where: { id },
+      data: {
+        ...(dados.nome !== undefined ? { nome: dados.nome.trim() } : {}),
+        ...(dados.descricao !== undefined ? { descricao: dados.descricao.trim() } : {}),
+        ...(dados.precoMensal !== undefined ? { precoMensal: Number(dados.precoMensal) } : {}),
+        ...(dados.limiteUsuarios !== undefined ? { limiteUsuarios: Number(dados.limiteUsuarios) } : {}),
+        ...(dados.limiteUnidades !== undefined ? { limiteUnidades: Number(dados.limiteUnidades) } : {}),
+        ...(dados.limiteServicos !== undefined ? { limiteServicos: Number(dados.limiteServicos) } : {}),
+        ...(dados.ativo !== undefined ? { ativo: dados.ativo } : {}),
+      },
+    });
+
+    await this.registrarAuditoria(null, usuarioId, 'ADMIN_UPDATE_SUBSCRIPTION_PLAN', 'PlanoAssinatura', id, {
+      nome: plano.nome,
+      slug: plano.slug,
+    });
+    return {
+      ...plano,
+      precoMensal: Number(plano.precoMensal),
+    };
+  }
+
   async onboarding(dados: any) {
     const slug = this.normalizarSlug(dados.barbearia.slug);
     const planoSlug = dados.planoSlug || 'starter';
@@ -262,7 +292,7 @@ export class SaasPrisma {
   }
 
   private async registrarAuditoria(
-    barbeariaId: number,
+    barbeariaId: number | null,
     usuarioId: number,
     acao: string,
     entidade: string,

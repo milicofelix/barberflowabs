@@ -20,7 +20,8 @@ export default function useFormAuth() {
     useEffect(() => {
         if (usuario?.email) {
             const destino = param.get('destino') as string
-            router.push(destino ? destino : '/')
+            const superAdmin = usuario.role === 'SUPER_ADMIN' || usuario.papel === 'SUPER_ADMIN'
+            router.push(destino ? destino : superAdmin ? '/admin' : '/')
         }
     }, [usuario, router, param])
 

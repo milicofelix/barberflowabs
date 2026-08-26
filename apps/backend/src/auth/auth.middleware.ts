@@ -40,6 +40,12 @@ export class AuthMiddleware implements NestMiddleware {
         ? 'SUPER_ADMIN'
         : (usuario.papel ?? (usuario.barbeiro ? 'BARBER' : 'CUSTOMER'));
       usuario.role = usuario.papel;
+
+      if (usuario.papel === 'SUPER_ADMIN') {
+        usuario.barbeiro = false;
+        usuario.barbeariaId = null as any;
+      }
+
       req.usuario = usuario;
       next();
     } catch (error) {

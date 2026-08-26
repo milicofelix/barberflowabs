@@ -21,7 +21,7 @@ export type AuthTokenPayload = {
   id: number;
   nome: string;
   email: string;
-  barbeariaId: number;
+  barbeariaId: number | null;
   barbeiro: boolean;
   papel?: UsuarioRole;
   role: UsuarioRole;

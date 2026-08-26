@@ -119,6 +119,9 @@ Regra de transicao:
 
 - Backend deve aceitar `papel` e `role` enquanto a normalizacao final nao for feita.
 - `SUPER_ADMIN_EMAILS` no ambiente pode promover usuario para super admin em tempo de request.
+- `SUPER_ADMIN` e papel de plataforma, nao tenant de barbearia.
+- `SUPER_ADMIN` nao deve carregar `barbeariaId`, `barbeiro`, agenda, gestao operacional, perfil publico ou cobranca de barbearia.
+- Donos/responsaveis de barbearia usam `BARBER` com `barbeiro=true` e `barbeariaId` definido.
 - Depois de alterar papel ou token, fazer logout/login ou chamar refresh.
 
 ## Contratos Principais De API
@@ -153,6 +156,8 @@ Agendamentos:
 Admin SaaS:
 
 - `GET /saas/admin/me`
+- `GET /saas/admin/planos`
+- `PUT /saas/admin/planos/:id`
 - `GET /saas/admin/barbearias`
 - `GET /saas/admin/barbearias/pendentes`
 - `PUT /saas/admin/barbearias/:id/status`
@@ -161,6 +166,14 @@ Admin SaaS:
 - `PUT /saas/admin/barbearias/:id/aprovar`
 - `PUT /saas/admin/barbearias/:id/reprovar`
 - `GET /saas/admin/auditoria`
+
+Cobrança Da Barbearia:
+
+- `GET /saas/cobranca`
+- `PUT /saas/cobranca/plano`
+- Compatibilidade legada:
+  - `GET /saas/billing`
+  - `PUT /saas/billing/plano`
 
 ## Regras Para Frontend
 

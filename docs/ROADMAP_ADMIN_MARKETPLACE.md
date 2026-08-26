@@ -240,7 +240,7 @@ Validacao manual:
 
 Status: em andamento.
 
-Objetivo: fechar o ciclo comercial com aprovacao, billing e comunicacao.
+Objetivo: fechar o ciclo comercial com aprovacao, cobranca e comunicacao.
 
 Checklist:
 
@@ -254,6 +254,8 @@ Checklist:
   - recusado
   - convertido
 - [x] Registrar auditoria ao atualizar dados comerciais.
+- [x] Permitir que o dono do software gerencie preco e limites dos planos no Admin SaaS.
+- [x] Separar `SUPER_ADMIN` de tenant operacional de barbearia.
 - [ ] Integrar pagamento real.
 - [ ] Bloquear recursos conforme inadimplencia real.
 
