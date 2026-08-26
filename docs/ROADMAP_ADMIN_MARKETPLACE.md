@@ -12,7 +12,7 @@ Este plano organiza a evolucao do Barber Flow ABS para um SaaS com dono do app, 
 
 ## Fase A0 - Corrigir Dono Do App E Admin SaaS
 
-Status: em andamento.
+Status: concluida para o MVP.
 
 Objetivo: tornar o acesso admin previsivel, profissional e sem gambiarra de token antigo.
 
@@ -74,7 +74,7 @@ Checklist:
 - [x] Atualizar painel admin com fila de aprovacao.
 - [x] Garantir que barbearias novas iniciem sem servicos/profissionais demo.
 - [x] Priorizar `barbeariaId` da sessao nas chamadas logadas de servicos/profissionais.
-- [ ] Bloquear barbearias nao aprovadas da busca publica quando os endpoints publicos forem criados.
+- [x] Bloquear barbearias nao aprovadas da busca publica quando os endpoints publicos forem criados.
 
 Validacao manual:
 
@@ -86,13 +86,13 @@ Validacao manual:
 
 ## Fase A2 - Perfil Publico Da Barbearia
 
-Status: pendente.
+Status: concluida para o MVP.
 
 Objetivo: cada barbearia aprovada deve ter uma pagina publica consultavel.
 
 Checklist:
 
-- [ ] Criar campos publicos da barbearia:
+- [x] Criar campos publicos da barbearia:
   - nome publico
   - descricao
   - imagem/banner
@@ -104,16 +104,23 @@ Checklist:
   - longitude
   - aceita agendamento online
   - destaque
-- [ ] Criar endpoint publico:
+- [x] Criar endpoint publico:
   - `GET /public/barbearias/:slug`
-- [ ] Retornar servicos, profissionais e horarios publicos.
-- [ ] Criar pagina web:
+- [x] Retornar servicos, profissionais e horarios publicos.
+- [x] Criar pagina web:
   - `/barbearias/[slug]`
-- [ ] Exibir status operacional:
+- [x] Exibir status operacional:
   - aberta agora
   - fechada
   - abre em breve
-- [ ] Adicionar chamada para agendamento usando o tenant correto.
+- [x] Adicionar chamada para agendamento usando o slug escolhido na URL.
+
+Melhorias futuras:
+
+- Fazer o fluxo autenticado de agendamento consumir o slug da URL como tenant selecionado.
+- Permitir a barbearia editar seus dados publicos pela tela de configuracoes.
+- Adicionar imagens reais por barbearia.
+- Melhorar status operacional considerando fuso horario da barbearia.
 
 Validacao manual:
 

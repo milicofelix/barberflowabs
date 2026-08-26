@@ -9,6 +9,7 @@ import { BarbeariaModule } from './barbearia/barbearia.module';
 import { AgendaModule } from './agenda/agenda.module';
 import { GestaoModule } from './gestao/gestao.module';
 import { SaasModule } from './saas/saas.module';
+import { PublicoModule } from './publico/publico.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { SaasModule } from './saas/saas.module';
     AgendaModule,
     GestaoModule,
     SaasModule,
+    PublicoModule,
   ],
   controllers: [AppController],
 })

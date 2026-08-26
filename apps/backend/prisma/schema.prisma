@@ -94,6 +94,17 @@ model Barbearia {
   slug          String         @unique
   telefone      String?
   email         String?
+  nomePublico   String?
+  descricaoPublica String?     @db.Text
+  imagemCapaURL String?
+  endereco      String?
+  bairro        String?
+  cidade        String?
+  estado        String?
+  latitude      Float?
+  longitude     Float?
+  aceitaAgendamentoOnline Boolean @default(true)
+  destaque      Boolean        @default(false)
   status        String         @default("TRIAL")
   reviewStatus  String         @default("APPROVED")
   approvedAt    DateTime?
