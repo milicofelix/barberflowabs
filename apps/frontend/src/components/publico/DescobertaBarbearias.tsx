@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { ListFilter, LocateFixed, MapPinned, Search, Star } from 'lucide-react'
+import { ListFilter, LocateFixed, Search, Star } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import MapaLeafletBarbearias from './MapaLeafletBarbearias'
 
 const URL_BASE = process.env.NEXT_PUBLIC_API_URL
 const RAIOS = [2, 5, 10, 25]
@@ -165,7 +166,11 @@ export default function DescobertaBarbearias() {
 
                 {erro && <p className="rounded border border-red-900 bg-red-950/50 p-4 text-sm text-red-200">{erro}</p>}
 
-                {modo === 'mapa' ? <MapaBarbearias barbearias={barbearias} /> : <ListaBarbearias barbearias={barbearias} carregando={carregando} />}
+                {modo === 'mapa' ? (
+                    <MapaLeafletBarbearias barbearias={barbearias} posicaoUsuario={posicao} />
+                ) : (
+                    <ListaBarbearias barbearias={barbearias} carregando={carregando} />
+                )}
             </section>
         </main>
     )
@@ -238,48 +243,6 @@ function BarbeariaCard({ barbearia }: { barbearia: any }) {
     )
 }
 
-function MapaBarbearias({ barbearias }: { barbearias: any[] }) {
-    const comCoordenadas = barbearias.filter((barbearia) => barbearia.endereco?.latitude !== null && barbearia.endereco?.longitude !== null)
-
-    return (
-        <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
-            <div className="relative min-h-[520px] overflow-hidden rounded border border-zinc-800 bg-zinc-900">
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.05)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.05)_1px,transparent_1px)] bg-[size:44px_44px]" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(250,204,21,.16),transparent_42%)]" />
-                <div className="relative h-full min-h-[520px]">
-                    {comCoordenadas.length === 0 && (
-                        <div className="flex h-full min-h-[520px] items-center justify-center px-6 text-center text-zinc-400">
-                            As barbearias ainda não possuem coordenadas cadastradas.
-                        </div>
-                    )}
-                    {comCoordenadas.map((barbearia, indice) => (
-                        <Link
-                            key={barbearia.id}
-                            href={`/barbearias/${barbearia.slug}`}
-                            className="absolute grid h-12 w-12 place-items-center rounded-full bg-yellow-400 text-black shadow-lg shadow-black/40 transition hover:scale-105"
-                            style={posicaoMarker(indice, comCoordenadas.length)}
-                            title={barbearia.nome}
-                        >
-                            <MapPinned size={24} />
-                        </Link>
-                    ))}
-                </div>
-            </div>
-            <div className="grid content-start gap-3">
-                {barbearias.map((barbearia) => (
-                    <Link key={barbearia.id} href={`/barbearias/${barbearia.slug}`} className="rounded border border-zinc-800 bg-zinc-900 p-4">
-                        <div className="flex items-start justify-between gap-3">
-                            <strong>{barbearia.nome}</strong>
-                            {barbearia.distanciaKm !== null && <span className="text-sm text-zinc-400">{barbearia.distanciaKm} km</span>}
-                        </div>
-                        <p className="mt-1 text-sm text-zinc-400">{barbearia.statusOperacional?.label ?? 'Status indisponível'}</p>
-                    </Link>
-                ))}
-            </div>
-        </div>
-    )
-}
-
 function CampoBusca({ valor, onChange, placeholder, icone }: { valor: string; onChange: (valor: string) => void; placeholder: string; icone?: any }) {
     return (
         <label className="flex h-11 items-center gap-2 rounded border border-zinc-700 bg-zinc-950 px-3 text-zinc-400">
@@ -303,15 +266,4 @@ function statusClasse(status: string) {
     if (status === 'ABERTA') return `${base} bg-emerald-500 text-white`
     if (status === 'ABRE_EM_BREVE' || status === 'INTERVALO') return `${base} bg-yellow-400 text-black`
     return `${base} bg-zinc-800 text-zinc-200`
-}
-
-function posicaoMarker(indice: number, total: number) {
-    const angulo = (indice / Math.max(total, 1)) * Math.PI * 2
-    const raio = 32 + (indice % 3) * 9
-    const left = 50 + Math.cos(angulo) * raio
-    const top = 50 + Math.sin(angulo) * raio
-    return {
-        left: `${Math.max(8, Math.min(88, left))}%`,
-        top: `${Math.max(8, Math.min(88, top))}%`,
-    }
 }
