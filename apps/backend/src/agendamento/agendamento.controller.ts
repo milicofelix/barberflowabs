@@ -22,10 +22,14 @@ import {
   validarData,
   validarNumeroInteiroPositivo,
 } from 'src/shared/validacao';
+import { PlanoLimitesService } from 'src/saas/plano-limites.service';
 
 @Controller('agendamentos')
 export class AgendamentoController {
-  constructor(private readonly repo: AgendamentoPrisma) {}
+  constructor(
+    private readonly repo: AgendamentoPrisma,
+    private readonly limites: PlanoLimitesService,
+  ) {}
 
   @Post()
   async novoAgendamento(
@@ -33,6 +37,7 @@ export class AgendamentoController {
     @UsuarioLogado() usuario: Usuario,
   ) {
     this.validarNovoAgendamento(dados);
+    await this.limites.validarBarbeariaOperacional(usuario.barbeariaId);
 
     const agendamento: Agendamento = {
       ...(dados as any),

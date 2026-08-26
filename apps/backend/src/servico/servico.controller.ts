@@ -5,12 +5,14 @@ import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import { Usuario } from '@barbabrutal/core';
 import { validarNumeroInteiroPositivo, validarTextoObrigatorio } from 'src/shared/validacao';
 import { CriarServicoDto } from './servico.dto';
+import { PlanoLimitesService } from 'src/saas/plano-limites.service';
 
 @Controller('servicos')
 export class ServicoController {
   constructor(
     private readonly repo: ServicoPrisma,
     private readonly tenant: TenantService,
+    private readonly limites: PlanoLimitesService,
   ) {}
 
   @Get()
@@ -20,14 +22,16 @@ export class ServicoController {
   }
 
   @Post()
-  criarServico(@Body() dados: CriarServicoDto, @UsuarioLogado() usuario: Usuario) {
+  async criarServico(@Body() dados: CriarServicoDto, @UsuarioLogado() usuario: Usuario) {
     this.validarPermissao(usuario);
     this.validarServico(dados);
+    await this.limites.validarBarbeariaOperacional(usuario.barbeariaId);
+    await this.limites.validarNovoServico(usuario.barbeariaId);
     return this.repo.criar(usuario.barbeariaId, dados);
   }
 
   @Put(':id')
-  atualizarServico(
+  async atualizarServico(
     @Param('id') id: string,
     @Body() dados: CriarServicoDto,
     @UsuarioLogado() usuario: Usuario,
@@ -35,13 +39,15 @@ export class ServicoController {
     this.validarPermissao(usuario);
     validarNumeroInteiroPositivo(id, 'Serviço');
     this.validarServico(dados);
+    await this.limites.validarBarbeariaOperacional(usuario.barbeariaId);
     return this.repo.atualizar(Number(id), usuario.barbeariaId, dados);
   }
 
   @Delete(':id')
-  excluirServico(@Param('id') id: string, @UsuarioLogado() usuario: Usuario) {
+  async excluirServico(@Param('id') id: string, @UsuarioLogado() usuario: Usuario) {
     this.validarPermissao(usuario);
     validarNumeroInteiroPositivo(id, 'Serviço');
+    await this.limites.validarBarbeariaOperacional(usuario.barbeariaId);
     return this.repo.excluir(Number(id), usuario.barbeariaId);
   }
 

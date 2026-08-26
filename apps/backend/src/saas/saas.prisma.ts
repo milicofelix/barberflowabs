@@ -88,7 +88,7 @@ export class SaasPrisma {
       where: { id: barbeariaId },
       include: {
         assinatura: { include: { plano: true } },
-        _count: { select: { usuarios: true, unidades: true, servicos: true } },
+        _count: { select: { usuarios: true, profissionais: true, unidades: true, servicos: true } },
       },
     });
 
@@ -125,14 +125,16 @@ export class SaasPrisma {
     return assinatura;
   }
 
-  listarBarbeariasAdmin() {
-    return this.prisma.barbearia.findMany({
+  async listarBarbeariasAdmin() {
+    const barbearias = await this.prisma.barbearia.findMany({
       include: {
         assinatura: { include: { plano: true } },
-        _count: { select: { usuarios: true, unidades: true, servicos: true, agendamentos: true } },
+        _count: { select: { usuarios: true, profissionais: true, unidades: true, servicos: true, agendamentos: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    return barbearias.map((barbearia) => this.normalizarBarbearia(barbearia));
   }
 
   async atualizarStatusBarbearia(id: number, status: string, usuarioId: number) {
@@ -183,8 +185,38 @@ export class SaasPrisma {
   }
 
   private normalizarBarbearia(barbearia: any) {
+    const plano = barbearia.assinatura?.plano;
+    const uso = {
+      profissionais: barbearia._count?.profissionais ?? 0,
+      unidades: barbearia._count?.unidades ?? 0,
+      servicos: barbearia._count?.servicos ?? 0,
+    };
+    const limites = plano
+      ? {
+          profissionais: plano.limiteUsuarios,
+          unidades: plano.limiteUnidades,
+          servicos: plano.limiteServicos,
+        }
+      : null;
+
     return {
       ...barbearia,
+      limites: limites
+        ? {
+            uso,
+            limites,
+            percentual: {
+              profissionais: this.percentualUso(uso.profissionais, limites.profissionais),
+              unidades: this.percentualUso(uso.unidades, limites.unidades),
+              servicos: this.percentualUso(uso.servicos, limites.servicos),
+            },
+            excedido: {
+              profissionais: uso.profissionais >= limites.profissionais,
+              unidades: uso.unidades >= limites.unidades,
+              servicos: uso.servicos >= limites.servicos,
+            },
+          }
+        : null,
       assinatura: barbearia.assinatura
         ? {
             ...barbearia.assinatura,
@@ -201,6 +233,11 @@ export class SaasPrisma {
     const novaData = new Date(data);
     novaData.setDate(novaData.getDate() + dias);
     return novaData;
+  }
+
+  private percentualUso(uso: number, limite: number) {
+    if (!limite) return 0;
+    return Math.min(100, Math.round((uso / limite) * 100));
   }
 
   private normalizarSlug(slug: string) {

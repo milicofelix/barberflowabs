@@ -4,11 +4,13 @@ import { AuthModule } from 'src/auth/auth.module';
 import { DbModule } from 'src/db/db.module';
 import { SaasController } from './saas.controller';
 import { SaasPrisma } from './saas.prisma';
+import { PlanoLimitesService } from './plano-limites.service';
 
 @Module({
   imports: [AuthModule, DbModule],
   controllers: [SaasController],
-  providers: [SaasPrisma],
+  providers: [SaasPrisma, PlanoLimitesService],
+  exports: [PlanoLimitesService],
 })
 export class SaasModule {
   configure(consumer: MiddlewareConsumer) {

@@ -355,6 +355,40 @@ Melhorias futuras:
 - Criar campanhas segmentadas com templates.
 - Registrar logs de auditoria para disparos e alteracoes de lembrete.
 
+## Fase 8 - Governanca De Plano E Limites
+
+Status: concluida para o MVP SaaS.
+
+Objetivo: fazer os planos deixarem de ser apenas informativos e começarem a controlar uso da plataforma.
+
+Concluido:
+
+- Criado servico backend de limites de plano.
+- Billing passou a retornar objeto estruturado de uso:
+  - profissionais
+  - unidades
+  - servicos
+  - percentual de uso
+  - indicadores de limite atingido
+- Super Admin passou a receber a mesma visao de limites por barbearia.
+- Criacao de servicos respeita `limiteServicos`.
+- Criacao de profissionais respeita `limiteUsuarios`, usado no MVP como limite de equipe/profissionais.
+- Barbearias com status `SUSPENDED` ou `CANCELED` ficam impedidas de:
+  - criar agendamentos
+  - criar/editar/excluir servicos
+  - criar/editar/excluir profissionais
+- Tela de Billing mostra barras de uso e alerta de limite.
+- Tela de Admin SaaS mostra uso dos limites por barbearia.
+
+Melhorias futuras:
+
+- Separar formalmente `limiteUsuarios` de `limiteProfissionais`.
+- Criar entidade de membros/equipe com convites e papeis.
+- Aplicar limites para unidades quando existir CRUD de unidades.
+- Aplicar feature flags por recurso do plano.
+- Integrar checkout, webhooks e status de assinatura com gateway real.
+- Criar telas de upgrade contextual quando um limite for atingido.
+
 ## Checklist De Validacao Manual
 
 Use este checklist apos cada fase importante.
@@ -414,4 +448,5 @@ git c "feat: configurar agenda profissional"
 git c "feat: adicionar gestao operacional"
 git c "feat: adicionar onboarding saas"
 git c "feat: adicionar relacionamento e inteligencia"
+git c "feat: aplicar limites dos planos saas"
 ```

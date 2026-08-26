@@ -39,9 +39,9 @@ export default function PainelBilling() {
             </section>
 
             <section className="grid gap-3 md:grid-cols-3">
-                <Resumo titulo="Usuários" valor={`${billing?._count?.usuarios ?? 0}/${billing?.assinatura?.plano?.limiteUsuarios ?? 0}`} />
-                <Resumo titulo="Unidades" valor={`${billing?._count?.unidades ?? 0}/${billing?.assinatura?.plano?.limiteUnidades ?? 0}`} />
-                <Resumo titulo="Serviços" valor={`${billing?._count?.servicos ?? 0}/${billing?.assinatura?.plano?.limiteServicos ?? 0}`} />
+                <UsoPlano titulo="Profissionais" dados={billing?.limites} chave="profissionais" />
+                <UsoPlano titulo="Unidades" dados={billing?.limites} chave="unidades" />
+                <UsoPlano titulo="Serviços" dados={billing?.limites} chave="servicos" />
             </section>
 
             <section className="grid gap-3 lg:grid-cols-3">
@@ -50,6 +50,11 @@ export default function PainelBilling() {
                         <h2 className="text-xl font-bold text-zinc-100">{plano.nome}</h2>
                         <p className="mt-2 text-sm text-zinc-400">{plano.descricao}</p>
                         <p className="mt-4 text-2xl font-black text-yellow-400">{moeda(plano.precoMensal)}</p>
+                        <ul className="mt-4 grid gap-2 text-sm text-zinc-400">
+                            <li>{plano.limiteUsuarios} profissionais</li>
+                            <li>{plano.limiteUnidades} unidade(s)</li>
+                            <li>{plano.limiteServicos} serviço(s)</li>
+                        </ul>
                         <button
                             type="button"
                             onClick={() => trocarPlano(plano.slug)}
@@ -62,6 +67,31 @@ export default function PainelBilling() {
             </section>
 
             {mensagem && <p className="text-sm text-zinc-300">{mensagem}</p>}
+        </div>
+    )
+}
+
+function UsoPlano(props: { titulo: string; dados: any; chave: 'profissionais' | 'unidades' | 'servicos' }) {
+    const uso = props.dados?.uso?.[props.chave] ?? 0
+    const limite = props.dados?.limites?.[props.chave] ?? 0
+    const percentual = props.dados?.percentual?.[props.chave] ?? 0
+    const excedido = props.dados?.excedido?.[props.chave]
+
+    return (
+        <div className="rounded border border-zinc-800 bg-zinc-950 p-5">
+            <div className="flex items-center justify-between gap-3">
+                <span className="text-sm text-zinc-400">{props.titulo}</span>
+                {excedido && <span className="rounded bg-red-500/15 px-2 py-1 text-xs font-bold text-red-300">Limite</span>}
+            </div>
+            <strong className="mt-2 block text-2xl text-zinc-100">
+                {uso}/{limite}
+            </strong>
+            <div className="mt-4 h-2 overflow-hidden rounded bg-zinc-800">
+                <div
+                    className={['h-full', excedido ? 'bg-red-400' : 'bg-yellow-400'].join(' ')}
+                    style={{ width: `${percentual}%` }}
+                />
+            </div>
         </div>
     )
 }

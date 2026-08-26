@@ -4,9 +4,10 @@ import { AuthModule } from 'src/auth/auth.module';
 import { AuthMiddleware } from 'src/auth/auth.middleware';
 import { DbModule } from 'src/db/db.module';
 import { AgendamentoPrisma } from './agendamento.prisma';
+import { SaasModule } from 'src/saas/saas.module';
 
 @Module({
-  imports: [AuthModule, DbModule],
+  imports: [AuthModule, DbModule, SaasModule],
   controllers: [AgendamentoController],
   providers: [AgendamentoPrisma],
 })

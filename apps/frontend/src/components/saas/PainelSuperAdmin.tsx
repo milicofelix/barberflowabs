@@ -50,8 +50,13 @@ export default function PainelSuperAdmin() {
                                     {barbearia.slug} | {barbearia.assinatura?.plano?.nome ?? 'sem plano'}
                                 </p>
                                 <p className="text-sm text-zinc-500">
-                                    {barbearia._count?.usuarios ?? 0} usuários | {barbearia._count?.agendamentos ?? 0} agendamentos
+                                    {barbearia._count?.profissionais ?? 0} profissionais | {barbearia._count?.servicos ?? 0} serviços | {barbearia._count?.agendamentos ?? 0} agendamentos
                                 </p>
+                                <div className="mt-3 grid gap-2 text-xs text-zinc-400 md:grid-cols-3">
+                                    <UsoLimite label="Profissionais" dados={barbearia.limites} chave="profissionais" />
+                                    <UsoLimite label="Unidades" dados={barbearia.limites} chave="unidades" />
+                                    <UsoLimite label="Serviços" dados={barbearia.limites} chave="servicos" />
+                                </div>
                             </div>
                             <select
                                 value={barbearia.status}
@@ -84,6 +89,18 @@ export default function PainelSuperAdmin() {
 
             {mensagem && <p className="text-sm text-zinc-300">{mensagem}</p>}
         </div>
+    )
+}
+
+function UsoLimite(props: { label: string; dados: any; chave: 'profissionais' | 'unidades' | 'servicos' }) {
+    const uso = props.dados?.uso?.[props.chave] ?? 0
+    const limite = props.dados?.limites?.[props.chave] ?? 0
+    const excedido = props.dados?.excedido?.[props.chave]
+
+    return (
+        <span className={['rounded border px-2 py-1', excedido ? 'border-red-500/40 text-red-300' : 'border-zinc-800'].join(' ')}>
+            {props.label}: {uso}/{limite}
+        </span>
     )
 }
 
