@@ -123,7 +123,7 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
   }
 
   async avaliar(id: number, usuarioId: number, nota: number, comentario?: string) {
-    const agendamento = await this.prisma.agendamento.findFirst({
+    const agendamento: any = await (this.prisma.agendamento as any).findFirst({
       where: { id, usuarioId },
       select: {
         id: true,
@@ -133,8 +133,8 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
         status: true,
         data: true,
         avaliacao: { select: { id: true } },
-      } as any,
-    } as any);
+      },
+    });
 
     if (!agendamento) return null;
 
