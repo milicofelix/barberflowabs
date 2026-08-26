@@ -55,7 +55,7 @@ export default function PerfilPublicoBarbearia({ slug }: { slug: string }) {
         <div className="bg-zinc-950 text-zinc-100">
             <section
                 className="min-h-[420px] bg-cover bg-center"
-                style={{ backgroundImage: `linear-gradient(90deg, rgba(0,0,0,.88), rgba(0,0,0,.46)), url(${barbearia.imagemCapaURL || '/banner.png'})` }}
+                style={{ backgroundImage: `linear-gradient(90deg, rgba(0,0,0,.88), rgba(0,0,0,.46)), url(${barbearia.imagemCapaURL || '/banners/principal.webp'})` }}
             >
                 <div className="container flex min-h-[420px] flex-col justify-end gap-5 py-10">
                     <span className={statusClasse(barbearia.statusOperacional?.status)}>

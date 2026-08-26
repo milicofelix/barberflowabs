@@ -131,15 +131,15 @@ Validacao manual:
 
 ## Fase A3 - Mapa Publico E Busca Por Proximidade
 
-Status: pendente.
+Status: concluida para o MVP.
 
 Objetivo: permitir que clientes encontrem barbearias proximas com raio e filtros.
 
 Checklist:
 
-- [ ] Criar endpoint publico:
+- [x] Criar endpoint publico:
   - `GET /public/barbearias`
-- [ ] Suportar filtros:
+- [x] Suportar filtros:
   - `lat`
   - `lng`
   - `raioKm`
@@ -149,27 +149,30 @@ Checklist:
   - `servico`
   - `abertaAgora`
   - `status`
-- [ ] Calcular distancia aproximada por Haversine.
-- [ ] Ordenar por proximidade quando `lat/lng` forem informados.
-- [ ] Criar pagina publica:
+- [x] Calcular distancia aproximada por Haversine.
+- [x] Ordenar por proximidade quando `lat/lng` forem informados.
+- [x] Criar pagina publica:
   - `/barbearias`
-- [ ] Criar alternancia lista/mapa.
-- [ ] Solicitar localizacao do navegador com permissao do usuario.
-- [ ] Permitir busca manual por cidade/bairro.
-- [ ] Mostrar raio configuravel:
+- [x] Criar alternancia lista/mapa.
+- [x] Solicitar localizacao do navegador com permissao do usuario.
+- [x] Permitir busca manual por cidade/bairro.
+- [x] Mostrar raio configuravel:
   - 2 km
   - 5 km
   - 10 km
   - 25 km
-- [ ] Mostrar markers com:
+- [x] Mostrar markers com:
   - nome
   - distancia
   - aberta/fechada
   - botao ver perfil
   - botao agendar
-- [ ] Definir biblioteca de mapa:
-  - Leaflet/OpenStreetMap para MVP sem chave paga
-  - Google Maps/Mapbox como melhoria futura
+- [x] Definir estrategia de mapa:
+  - visualizacao interna para MVP, sem chave paga e sem dependencia nova
+  - Leaflet/OpenStreetMap como melhoria futura
+  - Google Maps/Mapbox como alternativa futura
+
+Observacao: o MVP usa uma visualizacao propria de mapa/lista sem biblioteca externa para evitar dependencia de chave paga e instalacao adicional. A integracao Leaflet/OpenStreetMap fica como melhoria tecnica da proxima iteracao, quando as coordenadas reais estiverem editaveis pela barbearia.
 
 Validacao manual:
 
