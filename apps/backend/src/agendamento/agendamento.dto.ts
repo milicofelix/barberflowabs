@@ -10,3 +10,8 @@ export type CriarAgendamentoDto = {
     id: number;
   }>;
 };
+
+export type AvaliarAgendamentoDto = {
+  nota: number;
+  comentario?: string;
+};

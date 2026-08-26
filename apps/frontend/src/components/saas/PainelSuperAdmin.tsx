@@ -54,6 +54,14 @@ export default function PainelSuperAdmin() {
         setMensagem('Status atualizado.')
     }
 
+    async function alternarDestaque(id: number, destaqueAtual: boolean) {
+        setMensagem('')
+        const resposta = await httpPut(`/saas/admin/barbearias/${id}/destaque`, { destaque: !destaqueAtual })
+        if (resposta?.statusCode) return setMensagem(resposta.message)
+        await carregar()
+        setMensagem(!destaqueAtual ? 'Barbearia destacada.' : 'Destaque removido.')
+    }
+
     async function aprovarBarbearia(id: number) {
         setMensagem('')
         const resposta = await httpPut(`/saas/admin/barbearias/${id}/aprovar`, {
@@ -133,15 +141,27 @@ export default function PainelSuperAdmin() {
                                     <UsoLimite label="Serviços" dados={barbearia.limites} chave="servicos" />
                                 </div>
                             </div>
-                            <select
-                                value={barbearia.status}
-                                onChange={(e) => alterarStatus(barbearia.id, e.target.value)}
-                                className="input lg:w-56"
-                            >
-                                {status.map((item) => (
-                                    <option key={item}>{item}</option>
-                                ))}
-                            </select>
+                            <div className="grid gap-2 lg:w-56">
+                                <select
+                                    value={barbearia.status}
+                                    onChange={(e) => alterarStatus(barbearia.id, e.target.value)}
+                                    className="input"
+                                >
+                                    {status.map((item) => (
+                                        <option key={item}>{item}</option>
+                                    ))}
+                                </select>
+                                <button
+                                    type="button"
+                                    onClick={() => alternarDestaque(barbearia.id, !!barbearia.destaque)}
+                                    className={[
+                                        'rounded px-4 py-2 text-sm font-bold',
+                                        barbearia.destaque ? 'bg-yellow-400 text-black' : 'border border-zinc-700 text-zinc-200',
+                                    ].join(' ')}
+                                >
+                                    {barbearia.destaque ? 'Remover destaque' : 'Destacar'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 ))}

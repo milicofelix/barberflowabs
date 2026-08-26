@@ -212,7 +212,7 @@ function BarbeariaCard({ barbearia }: { barbearia: any }) {
                 </div>
                 <div className="flex flex-wrap gap-2 text-sm text-zinc-300">
                     {barbearia.distanciaKm !== null && <span className="rounded bg-zinc-800 px-2 py-1">{barbearia.distanciaKm} km</span>}
-                    {barbearia.avaliacaoMedia !== null && (
+                    {barbearia.avaliacaoMedia != null && (
                         <span className="inline-flex items-center gap-1 rounded bg-zinc-800 px-2 py-1">
                             <Star size={14} className="fill-yellow-400 text-yellow-400" />
                             {barbearia.avaliacaoMedia} ({barbearia.quantidadeAvaliacoes})

@@ -8,16 +8,18 @@ import {
 import {
   BadRequestException,
   Body,
+  ConflictException,
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   Post,
 } from '@nestjs/common';
 
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import { AgendamentoPrisma } from './agendamento.prisma';
-import { CriarAgendamentoDto } from './agendamento.dto';
+import { AvaliarAgendamentoDto, CriarAgendamentoDto } from './agendamento.dto';
 import {
   validarData,
   validarNumeroInteiroPositivo,
@@ -52,6 +54,34 @@ export class AgendamentoController {
   @Get()
   buscarAgendamentosCliente(@UsuarioLogado() usuario: Usuario) {
     return this.repo.buscarPorEmail(usuario.email, usuario.barbeariaId);
+  }
+
+  @Post(':id/avaliacao')
+  async avaliarAgendamento(
+    @Param('id') id: string,
+    @Body() dados: AvaliarAgendamentoDto,
+    @UsuarioLogado() usuario: Usuario,
+  ) {
+    validarNumeroInteiroPositivo(id, 'Agendamento');
+    this.validarAvaliacao(dados);
+
+    try {
+      const avaliacao = await this.repo.avaliar(
+        Number(id),
+        usuario.id!,
+        Number(dados.nota),
+        dados.comentario,
+      );
+
+      if (!avaliacao) throw new NotFoundException('Agendamento não encontrado');
+      return avaliacao;
+    } catch (error: any) {
+      if (error instanceof NotFoundException) throw error;
+      if (error?.message?.includes('já foi avaliado')) {
+        throw new ConflictException(error.message);
+      }
+      throw new BadRequestException(error?.message ?? 'Não foi possível avaliar o atendimento');
+    }
   }
 
   @Get(':profissional/:data')
@@ -129,5 +159,17 @@ export class AgendamentoController {
     dados.servicos.forEach((servico) => {
       validarNumeroInteiroPositivo(servico?.id, 'Serviço');
     });
+  }
+
+  private validarAvaliacao(dados: AvaliarAgendamentoDto) {
+    const nota = Number(dados?.nota);
+
+    if (!Number.isInteger(nota) || nota < 1 || nota > 5) {
+      throw new BadRequestException('Nota deve ser um número inteiro entre 1 e 5');
+    }
+
+    if (dados?.comentario && dados.comentario.length > 1000) {
+      throw new BadRequestException('Comentário deve ter no máximo 1000 caracteres');
+    }
   }
 }

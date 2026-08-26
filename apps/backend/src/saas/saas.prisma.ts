@@ -168,6 +168,21 @@ export class SaasPrisma {
     return barbearia;
   }
 
+  async atualizarDestaqueBarbearia(id: number, destaque: boolean, usuarioId: number) {
+    const barbearia = await this.prisma.barbearia.update({
+      where: { id },
+      data: { destaque },
+      include: {
+        assinatura: { include: { plano: true } },
+        _count: { select: { usuarios: true, profissionais: true, unidades: true, servicos: true, agendamentos: true } },
+      },
+    });
+
+    await this.registrarAuditoria(id, usuarioId, 'ADMIN_CHANGE_BARBERSHOP_HIGHLIGHT', 'Barbearia', id, { destaque });
+    return this.normalizarBarbearia(barbearia);
+  }
+
+
   async aprovarBarbearia(id: number, usuarioId: number, motivo?: string) {
     const barbearia = await this.prisma.barbearia.update({
       where: { id },

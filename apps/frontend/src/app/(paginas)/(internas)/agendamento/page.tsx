@@ -1,7 +1,7 @@
 'use client'
 
 import FormularioAgendamento from '@/components/agendamento/FormularioAgendamento'
-import Cabecalho from '@/components/shared/Cabecalho'
+import HistoricoAvaliacoes from '@/components/agendamento/HistoricoAvaliacoes'
 import CabecalhoComTitulo from '@/components/shared/CabecalhoComTitulo'
 
 export default function Page() {
@@ -13,6 +13,7 @@ export default function Page() {
             />
             <div className="container py-10">
                 <FormularioAgendamento />
+                <HistoricoAvaliacoes />
             </div>
         </div>
     )

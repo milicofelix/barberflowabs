@@ -168,11 +168,10 @@ Checklist:
   - botao ver perfil
   - botao agendar
 - [x] Definir estrategia de mapa:
-  - visualizacao interna para MVP, sem chave paga e sem dependencia nova
-  - Leaflet/OpenStreetMap como melhoria futura
+  - Leaflet/OpenStreetMap via carregamento client-side
   - Google Maps/Mapbox como alternativa futura
 
-Observacao: o MVP usa uma visualizacao propria de mapa/lista sem biblioteca externa para evitar dependencia de chave paga e instalacao adicional. A integracao Leaflet/OpenStreetMap fica como melhoria tecnica da proxima iteracao, quando as coordenadas reais estiverem editaveis pela barbearia.
+Observacao: o MVP usa Leaflet/OpenStreetMap sem chave paga e sem instalar dependencia local. Uma evolucao futura pode empacotar `leaflet` no workspace em vez de carregar por CDN.
 
 Validacao manual:
 
@@ -210,23 +209,25 @@ Validacao manual:
 
 ## Fase A5 - Qualidade, Reputacao E Destaques
 
-Status: pendente.
+Status: concluida parcialmente para o MVP.
 
 Objetivo: melhorar ranking e confianca da busca publica.
 
 Checklist:
 
-- [ ] Criar avaliacao por atendimento concluido.
-- [ ] Calcular media real por barbearia.
-- [ ] Mostrar quantidade de avaliacoes.
-- [ ] Criar regras de destaque administradas pelo dono do app.
-- [ ] Permitir destaque manual no admin.
-- [ ] Ordenar resultados por:
+- [x] Criar avaliacao por atendimento concluido.
+- [x] Calcular media real por barbearia.
+- [x] Mostrar quantidade de avaliacoes.
+- [x] Criar regras de destaque administradas pelo dono do app.
+- [x] Permitir destaque manual no admin.
+- [x] Ordenar resultados por:
   - distancia
   - aberta agora
   - destaque
   - avaliacao
 - [ ] Criar denuncia/revisao de perfil publico.
+
+Observacao: a avaliacao do MVP fica disponivel no historico do cliente em `/agendamento` para atendimentos com status `CONCLUIDO`. Cada agendamento pode receber uma unica avaliacao. Denuncias e moderacao granular de comentarios ficam para uma evolucao futura.
 
 Validacao manual:
 

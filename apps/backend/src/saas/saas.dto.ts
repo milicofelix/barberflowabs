@@ -25,3 +25,7 @@ export interface AtualizarStatusBarbeariaDto {
 export interface RevisarBarbeariaDto {
   motivo?: string;
 }
+
+export interface AtualizarDestaqueBarbeariaDto {
+  destaque: boolean;
+}

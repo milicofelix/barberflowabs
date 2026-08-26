@@ -56,6 +56,10 @@ export class PublicoPrisma {
           quantidadeAvaliacoes: true,
         },
       },
+      avaliacoes: {
+        where: { status: 'APPROVED' },
+        select: { nota: true },
+      },
       horariosFuncionamento: {
         where: { ativo: true },
         orderBy: [{ diaSemana: 'asc' }],
@@ -86,10 +90,15 @@ export class PublicoPrisma {
         return true;
       })
       .sort((a, b) => {
-        if (a.destaque !== b.destaque) return a.destaque ? -1 : 1;
         if (a.distanciaKm !== null && b.distanciaKm !== null) return a.distanciaKm - b.distanciaKm;
+        if (a.distanciaKm !== null && b.distanciaKm === null) return -1;
+        if (a.distanciaKm === null && b.distanciaKm !== null) return 1;
         if (a.statusOperacional.status !== b.statusOperacional.status) {
           return a.statusOperacional.status === 'ABERTA' ? -1 : 1;
+        }
+        if (a.destaque !== b.destaque) return a.destaque ? -1 : 1;
+        if ((a.avaliacaoMedia ?? 0) !== (b.avaliacaoMedia ?? 0)) {
+          return (b.avaliacaoMedia ?? 0) - (a.avaliacaoMedia ?? 0);
         }
         return a.nome.localeCompare(b.nome);
       });
@@ -123,6 +132,19 @@ export class PublicoPrisma {
             imagemURL: true,
             avaliacao: true,
             quantidadeAvaliacoes: true,
+          },
+        },
+        avaliacoes: {
+          where: { status: 'APPROVED' },
+          orderBy: { createdAt: 'desc' },
+          take: 6,
+          select: {
+            id: true,
+            nota: true,
+            comentario: true,
+            createdAt: true,
+            usuario: { select: { nome: true } },
+            profissional: { select: { nome: true } },
           },
         },
         horariosFuncionamento: {
@@ -166,6 +188,16 @@ export class PublicoPrisma {
         duracaoMinutos: servico.qtdeSlots * 15,
       })),
       profissionais: barbearia.profissionais ?? [],
+      avaliacaoMedia: this.mediaAvaliacoes(barbearia.avaliacoes ?? []),
+      quantidadeAvaliacoes: barbearia.avaliacoes?.length ?? 0,
+      avaliacoes: (barbearia.avaliacoes ?? []).map((avaliacao: any) => ({
+        id: avaliacao.id,
+        nota: avaliacao.nota,
+        comentario: avaliacao.comentario,
+        criadoEm: avaliacao.createdAt,
+        cliente: avaliacao.usuario?.nome,
+        profissional: avaliacao.profissional?.nome,
+      })),
       horariosFuncionamento: barbearia.horariosFuncionamento ?? [],
     };
   }
@@ -217,13 +249,8 @@ export class PublicoPrisma {
         ? this.distanciaKm(latitude, longitude, barbearia.latitude, barbearia.longitude)
         : null;
 
-    const avaliacoes = (barbearia.profissionais ?? []).reduce(
-      (total: any, profissional: any) => ({
-        soma: total.soma + Number(profissional.avaliacao ?? 0) * Number(profissional.quantidadeAvaliacoes ?? 0),
-        quantidade: total.quantidade + Number(profissional.quantidadeAvaliacoes ?? 0),
-      }),
-      { soma: 0, quantidade: 0 },
-    );
+    const avaliacaoMedia = this.mediaAvaliacoes(barbearia.avaliacoes ?? []);
+    const quantidadeAvaliacoes = barbearia.avaliacoes?.length ?? 0;
 
     return {
       id: barbearia.id,
@@ -245,8 +272,8 @@ export class PublicoPrisma {
       destaque: barbearia.destaque,
       distanciaKm: distanciaKm === null ? null : Number(distanciaKm.toFixed(1)),
       statusOperacional: this.statusOperacional(barbearia.horariosFuncionamento ?? []),
-      avaliacaoMedia: avaliacoes.quantidade > 0 ? Number((avaliacoes.soma / avaliacoes.quantidade).toFixed(1)) : null,
-      quantidadeAvaliacoes: avaliacoes.quantidade,
+      avaliacaoMedia,
+      quantidadeAvaliacoes,
       servicos: (barbearia.servicos ?? []).map((servico: any) => ({
         ...servico,
         preco: Number(servico.preco),
@@ -259,6 +286,13 @@ export class PublicoPrisma {
     if (valor === undefined || valor === null || valor === '') return null;
     const numero = Number(valor);
     return Number.isFinite(numero) ? numero : null;
+  }
+
+  private mediaAvaliacoes(avaliacoes: any[]) {
+    if (!avaliacoes.length) return null;
+
+    const soma = avaliacoes.reduce((total, avaliacao) => total + Number(avaliacao.nota ?? 0), 0);
+    return Number((soma / avaliacoes.length).toFixed(1));
   }
 
   private distanciaKm(lat1: number, lng1: number, lat2: number, lng2: number) {

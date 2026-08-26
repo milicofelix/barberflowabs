@@ -20,6 +20,7 @@ import {
 } from 'src/shared/validacao';
 import {
   AtualizarPlanoDto,
+  AtualizarDestaqueBarbeariaDto,
   AtualizarStatusBarbeariaDto,
   OnboardingSaasDto,
   RevisarBarbeariaDto,
@@ -113,6 +114,22 @@ export class SaasController {
     }
 
     return this.repo.atualizarStatusBarbearia(Number(id), dados.status, usuario.id!);
+  }
+
+  @Put('admin/barbearias/:id/destaque')
+  atualizarDestaqueBarbearia(
+    @Param('id') id: string,
+    @Body() dados: AtualizarDestaqueBarbeariaDto,
+    @UsuarioLogado() usuario: Usuario,
+  ) {
+    this.validarSuperAdmin(usuario);
+    validarNumeroInteiroPositivo(id, 'Barbearia');
+
+    if (typeof dados?.destaque !== 'boolean') {
+      throw new BadRequestException('Destaque deve ser verdadeiro ou falso');
+    }
+
+    return this.repo.atualizarDestaqueBarbearia(Number(id), dados.destaque, usuario.id!);
   }
 
   @Put('admin/barbearias/:id/aprovar')

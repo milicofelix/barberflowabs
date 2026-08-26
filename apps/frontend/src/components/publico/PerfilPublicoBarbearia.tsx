@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { Star } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 
 const URL_BASE = process.env.NEXT_PUBLIC_API_URL
@@ -66,6 +67,12 @@ export default function PerfilPublicoBarbearia({ slug }: { slug: string }) {
                         <p className="mt-4 max-w-2xl text-lg text-zinc-300">{barbearia.descricao}</p>
                     </div>
                     <div className="flex flex-wrap gap-3 text-sm text-zinc-300">
+                        {barbearia.avaliacaoMedia != null && (
+                            <span className="inline-flex items-center gap-1 rounded border border-yellow-400/50 px-3 py-2 text-yellow-300">
+                                <Star size={16} className="fill-yellow-400 text-yellow-400" />
+                                {barbearia.avaliacaoMedia} ({barbearia.quantidadeAvaliacoes} avaliações)
+                            </span>
+                        )}
                         {endereco && <span className="rounded border border-zinc-700 px-3 py-2">{endereco}</span>}
                         {barbearia.telefone && <span className="rounded border border-zinc-700 px-3 py-2">{barbearia.telefone}</span>}
                     </div>
@@ -86,6 +93,7 @@ export default function PerfilPublicoBarbearia({ slug }: { slug: string }) {
                     <Horarios horarios={barbearia.horariosFuncionamento ?? []} />
                 </section>
                 <ListaProfissionais profissionais={barbearia.profissionais ?? []} />
+                <ListaAvaliacoes avaliacoes={barbearia.avaliacoes ?? []} />
             </div>
         </div>
     )
@@ -145,6 +153,29 @@ function Horarios({ horarios }: { horarios: any[] }) {
                     </p>
                 ))}
                 {horarios.length === 0 && <Vazio texto="Horários ainda não configurados." />}
+            </div>
+        </section>
+    )
+}
+
+function ListaAvaliacoes({ avaliacoes }: { avaliacoes: any[] }) {
+    return (
+        <section>
+            <h2 className="text-2xl font-black">Avaliações</h2>
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {avaliacoes.map((avaliacao) => (
+                    <article key={avaliacao.id} className="rounded border border-zinc-800 bg-zinc-900 p-4">
+                        <p className="inline-flex items-center gap-1 text-sm font-bold text-yellow-300">
+                            <Star size={15} className="fill-yellow-400 text-yellow-400" />
+                            {avaliacao.nota}
+                        </p>
+                        <p className="mt-3 text-sm text-zinc-300">{avaliacao.comentario || 'Cliente não deixou comentário.'}</p>
+                        <p className="mt-3 text-xs text-zinc-500">
+                            {avaliacao.cliente ?? 'Cliente'} | {avaliacao.profissional ?? 'Profissional'}
+                        </p>
+                    </article>
+                ))}
+                {avaliacoes.length === 0 && <Vazio texto="Esta barbearia ainda não possui avaliações." />}
             </div>
         </section>
     )

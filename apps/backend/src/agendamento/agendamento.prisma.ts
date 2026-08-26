@@ -8,6 +8,19 @@ import { DEFAULT_BARBEARIA_ID } from 'src/shared/tenant';
 export class AgendamentoPrisma implements RepositorioAgendamento {
   constructor(private readonly prisma: PrismaService) {}
 
+  private includeAgendamento() {
+    return {
+      usuario: { select: { id: true, barbeariaId: true, nome: true, email: true } },
+      profissional: { select: { id: true, nome: true } },
+      avaliacao: {
+        select: { id: true, nota: true, comentario: true, createdAt: true },
+      },
+      servicos: {
+        select: { id: true, nome: true, preco: true, qtdeSlots: true },
+      },
+    } as any;
+  }
+
   private normalizarAgendamento(agendamento: any): Agendamento {
     delete agendamento.usuarioId;
     delete agendamento.profissionalId;
@@ -58,14 +71,8 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
   async buscarPorId(id: number): Promise<Agendamento | null> {
     const agendamento = await this.prisma.agendamento.findUnique({
       where: { id },
-      include: {
-        usuario: { select: { id: true, barbeariaId: true, nome: true, email: true } },
-        profissional: { select: { id: true, nome: true } },
-        servicos: {
-          select: { id: true, nome: true, preco: true, qtdeSlots: true },
-        },
-      },
-    });
+      include: this.includeAgendamento(),
+    } as any);
 
     return agendamento ? this.normalizarAgendamento(agendamento) : null;
   }
@@ -75,17 +82,11 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
       where: {
         usuario: { email },
         ...(barbeariaId ? { barbeariaId } : {}),
-        data: { gte: new Date() },
       },
-      include: {
-        usuario: { select: { id: true, barbeariaId: true, nome: true, email: true } },
-        profissional: { select: { id: true, nome: true } },
-        servicos: {
-          select: { id: true, nome: true, preco: true, qtdeSlots: true },
-        },
-      },
+      include: this.includeAgendamento(),
       orderBy: { data: 'desc' },
-    });
+      take: 100,
+    } as any);
 
     return agendamentos.map((agendamento) => this.normalizarAgendamento(agendamento));
   }
@@ -108,14 +109,8 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
         profissionalId: profissional,
         data: { gte: inicioDoDia, lte: fimDoDia },
       },
-      include: {
-        usuario: { select: { id: true, barbeariaId: true, nome: true, email: true } },
-        profissional: { select: { id: true, nome: true } },
-        servicos: {
-          select: { id: true, nome: true, preco: true, qtdeSlots: true },
-        },
-      },
-    });
+      include: this.includeAgendamento(),
+    } as any);
 
     return agendamentos.map((agendamento) => this.normalizarAgendamento(agendamento));
   }
@@ -124,6 +119,63 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
     await this.prisma.agendamento.delete({
       where: { id },
       include: { servicos: true },
+    });
+  }
+
+  async avaliar(id: number, usuarioId: number, nota: number, comentario?: string) {
+    const agendamento = await this.prisma.agendamento.findFirst({
+      where: { id, usuarioId },
+      select: {
+        id: true,
+        barbeariaId: true,
+        usuarioId: true,
+        profissionalId: true,
+        status: true,
+        data: true,
+        avaliacao: { select: { id: true } },
+      } as any,
+    } as any);
+
+    if (!agendamento) return null;
+
+    if (agendamento.status !== 'CONCLUIDO') {
+      throw new Error('Somente atendimentos concluídos podem ser avaliados');
+    }
+
+    if (agendamento.avaliacao) {
+      throw new Error('Esse atendimento já foi avaliado');
+    }
+
+    const avaliacao = await (this.prisma as any).avaliacao.create({
+      data: {
+        barbeariaId: agendamento.barbeariaId,
+        agendamentoId: agendamento.id,
+        usuarioId: agendamento.usuarioId,
+        profissionalId: agendamento.profissionalId,
+        nota,
+        comentario: comentario?.trim() || null,
+        status: 'APPROVED',
+      },
+    });
+
+    await this.atualizarMediaProfissional(agendamento.profissionalId);
+
+    return avaliacao;
+  }
+
+  private async atualizarMediaProfissional(profissionalId: number) {
+    const agregado = await (this.prisma as any).avaliacao.aggregate({
+      where: { profissionalId, status: 'APPROVED' },
+      _avg: { nota: true },
+      _count: { nota: true },
+    });
+
+    await this.prisma.profissional.update({
+      where: { id: profissionalId },
+      data: {
+        avaliacao: Number((agregado._avg.nota ?? 0).toFixed(1)),
+        quantidadeAvaliacoes: agregado._count.nota ?? 0,
+      },
     });
   }
 }

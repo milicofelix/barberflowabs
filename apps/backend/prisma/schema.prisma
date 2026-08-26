@@ -25,6 +25,7 @@ model Usuario {
   lancamentosFinanceiros LancamentoFinanceiro[]
   logsAuditoria LogAuditoria[]
   lembretesRelacionamento LembreteRelacionamento[]
+  avaliacoes Avaliacao[]
 
   @@index([barbeariaId])
   @@map("usuarios")
@@ -42,6 +43,7 @@ model Profissional {
   agendamentos         Agendamento[]
   bloqueiosAgenda      BloqueioAgenda[]
   lancamentosFinanceiros LancamentoFinanceiro[]
+  avaliacoes           Avaliacao[]
 
   @@unique([barbeariaId, nome])
   @@index([barbeariaId])
@@ -82,6 +84,7 @@ model Agendamento {
   profissionalId Int
 
   servicos Servico[]
+  avaliacao Avaliacao?
 
   @@index([barbeariaId])
   @@index([profissionalId, data])
@@ -127,6 +130,7 @@ model Barbearia {
   assinatura             AssinaturaBarbearia?
   logsAuditoria          LogAuditoria[]
   lembretesRelacionamento LembreteRelacionamento[]
+  avaliacoes             Avaliacao[]
 
   @@map("barbearias")
 }
@@ -283,4 +287,26 @@ model LembreteRelacionamento {
   @@index([barbeariaId, status, dataPrevista])
   @@index([usuarioId])
   @@map("lembretes_relacionamento")
+}
+
+model Avaliacao {
+  id             Int          @id @default(autoincrement())
+  barbeariaId    Int
+  agendamentoId  Int          @unique
+  usuarioId      Int
+  profissionalId Int
+  nota           Int
+  comentario     String?      @db.Text
+  status         String       @default("APPROVED")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  barbearia      Barbearia    @relation(fields: [barbeariaId], references: [id])
+  agendamento    Agendamento  @relation(fields: [agendamentoId], references: [id])
+  usuario        Usuario      @relation(fields: [usuarioId], references: [id])
+  profissional   Profissional @relation(fields: [profissionalId], references: [id])
+
+  @@index([barbeariaId, status])
+  @@index([profissionalId, status])
+  @@index([usuarioId])
+  @@map("avaliacoes")
 }
