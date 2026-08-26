@@ -185,18 +185,20 @@ Validacao manual:
 
 ## Fase A4 - Gestao De Localizacao Pela Barbearia
 
-Status: pendente.
+Status: concluida para o MVP.
 
 Objetivo: permitir que o dono da barbearia mantenha dados publicos e localizacao.
 
 Checklist:
 
-- [ ] Criar aba `Perfil publico` em `/configuracoes`.
-- [ ] Permitir editar endereco e coordenadas.
-- [ ] Permitir marcar barbearia como visivel/invisivel publicamente.
-- [ ] Criar campo de observacao para aprovacao.
-- [ ] Quando dados criticos mudarem, voltar para `PENDING_REVIEW`.
-- [ ] Validar campos obrigatorios para aparecer no mapa.
+- [x] Criar aba `Perfil publico` em `/configuracoes`.
+- [x] Permitir editar endereco e coordenadas.
+- [x] Permitir controlar agendamento online no perfil publico.
+- [x] Criar campo de observacao para aprovacao.
+- [x] Quando dados criticos mudarem, voltar para `PENDING_REVIEW`.
+- [x] Validar campos obrigatorios para aparecer no mapa.
+
+Observacao: no MVP, a visibilidade publica continua governada pelo `reviewStatus`. Ao alterar dados criticos, a barbearia volta para revisao e sai dos endpoints publicos ate nova aprovacao. Um campo dedicado de visibilidade pode entrar numa evolucao posterior de schema.
 
 Validacao manual:
 
