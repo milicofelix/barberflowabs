@@ -21,3 +21,7 @@ export interface AtualizarPlanoDto {
 export interface AtualizarStatusBarbeariaDto {
   status: string;
 }
+
+export interface RevisarBarbeariaDto {
+  motivo?: string;
+}

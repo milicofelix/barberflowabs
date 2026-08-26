@@ -95,6 +95,12 @@ model Barbearia {
   telefone      String?
   email         String?
   status        String         @default("TRIAL")
+  reviewStatus  String         @default("APPROVED")
+  approvedAt    DateTime?
+  approvedById  Int?
+  rejectedAt    DateTime?
+  rejectedById  Int?
+  reviewReason  String?        @db.Text
   trialEndsAt   DateTime?
   antecedenciaMinutos Int      @default(30)
   createdAt     DateTime       @default(now())

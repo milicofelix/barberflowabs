@@ -48,31 +48,31 @@ Validacao manual:
 
 ## Fase A1 - Aprovacao De Cadastros De Barbearias
 
-Status: pendente.
+Status: em andamento.
 
 Objetivo: toda nova barbearia entra em analise antes de aparecer publicamente.
 
 Checklist:
 
-- [ ] Adicionar status de revisao da barbearia:
+- [x] Adicionar status de revisao da barbearia:
   - `PENDING_REVIEW`
   - `APPROVED`
   - `REJECTED`
   - `SUSPENDED`
-- [ ] Atualizar onboarding para criar barbearia como `PENDING_REVIEW`.
-- [ ] Criar campos de revisao:
+- [x] Atualizar onboarding para criar barbearia como `PENDING_REVIEW`.
+- [x] Criar campos de revisao:
   - `approvedAt`
   - `approvedById`
   - `rejectedAt`
   - `rejectedById`
   - `reviewReason`
-- [ ] Criar endpoints admin:
+- [x] Criar endpoints admin:
   - `GET /saas/admin/barbearias/pendentes`
   - `PUT /saas/admin/barbearias/:id/aprovar`
   - `PUT /saas/admin/barbearias/:id/reprovar`
-- [ ] Registrar auditoria em cada decisao.
-- [ ] Atualizar painel admin com fila de aprovacao.
-- [ ] Bloquear barbearias nao aprovadas da busca publica.
+- [x] Registrar auditoria em cada decisao.
+- [x] Atualizar painel admin com fila de aprovacao.
+- [ ] Bloquear barbearias nao aprovadas da busca publica quando os endpoints publicos forem criados.
 
 Validacao manual:
 

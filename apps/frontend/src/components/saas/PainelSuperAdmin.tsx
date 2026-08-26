@@ -10,8 +10,10 @@ export default function PainelSuperAdmin() {
     const { usuario } = useSessao()
     const { httpGet, httpPut } = useAPI()
     const [barbearias, setBarbearias] = useState<any[]>([])
+    const [pendentes, setPendentes] = useState<any[]>([])
     const [auditoria, setAuditoria] = useState<any[]>([])
     const [mensagem, setMensagem] = useState('')
+    const [motivoRevisao, setMotivoRevisao] = useState('')
     const [carregando, setCarregando] = useState(true)
     const [acessoNegado, setAcessoNegado] = useState(false)
     const [diagnostico, setDiagnostico] = useState<any>(null)
@@ -19,15 +21,17 @@ export default function PainelSuperAdmin() {
     const carregar = useCallback(async function carregar() {
         setCarregando(true)
         setAcessoNegado(false)
-        const [dadosMe, dadosBarbearias, dadosAuditoria] = await Promise.all([
+        const [dadosMe, dadosBarbearias, dadosPendentes, dadosAuditoria] = await Promise.all([
             httpGet('/saas/admin/me'),
             httpGet('/saas/admin/barbearias'),
+            httpGet('/saas/admin/barbearias/pendentes'),
             httpGet('/saas/admin/auditoria'),
         ])
         const negado = dadosBarbearias?.statusCode === 403 || dadosAuditoria?.statusCode === 403
         setDiagnostico(dadosMe?.statusCode ? null : dadosMe)
         setAcessoNegado(negado)
         setBarbearias(Array.isArray(dadosBarbearias) ? dadosBarbearias : [])
+        setPendentes(Array.isArray(dadosPendentes) ? dadosPendentes : [])
         setAuditoria(Array.isArray(dadosAuditoria) ? dadosAuditoria : [])
         setCarregando(false)
     }, [httpGet])
@@ -50,6 +54,28 @@ export default function PainelSuperAdmin() {
         setMensagem('Status atualizado.')
     }
 
+    async function aprovarBarbearia(id: number) {
+        setMensagem('')
+        const resposta = await httpPut(`/saas/admin/barbearias/${id}/aprovar`, {
+            motivo: motivoRevisao || undefined,
+        })
+        if (resposta?.statusCode) return setMensagem(resposta.message)
+        setMotivoRevisao('')
+        await carregar()
+        setMensagem('Barbearia aprovada.')
+    }
+
+    async function reprovarBarbearia(id: number) {
+        setMensagem('')
+        const resposta = await httpPut(`/saas/admin/barbearias/${id}/reprovar`, {
+            motivo: motivoRevisao,
+        })
+        if (resposta?.statusCode) return setMensagem(resposta.message)
+        setMotivoRevisao('')
+        await carregar()
+        setMensagem('Barbearia reprovada.')
+    }
+
     if (carregando) {
         return <p className="rounded border border-zinc-800 bg-zinc-950 p-5 text-zinc-300">Carregando admin SaaS...</p>
     }
@@ -60,6 +86,32 @@ export default function PainelSuperAdmin() {
 
     return (
         <div className="grid gap-6">
+            <section className="rounded border border-zinc-800 bg-zinc-950 p-5">
+                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h2 className="text-xl font-bold text-zinc-100">Fila de aprovação</h2>
+                        <p className="text-sm text-zinc-400">{pendentes.length} cadastro(s) aguardando revisão</p>
+                    </div>
+                    <input
+                        value={motivoRevisao}
+                        onChange={(e) => setMotivoRevisao(e.target.value)}
+                        placeholder="Motivo/observação da revisão"
+                        className="input md:w-96"
+                    />
+                </div>
+                <div className="mt-4 grid gap-3">
+                    {pendentes.map((barbearia) => (
+                        <BarbeariaPendente
+                            key={barbearia.id}
+                            barbearia={barbearia}
+                            onAprovar={aprovarBarbearia}
+                            onReprovar={reprovarBarbearia}
+                        />
+                    ))}
+                    {pendentes.length === 0 && <p className="text-sm text-zinc-400">Nenhum cadastro pendente.</p>}
+                </div>
+            </section>
+
             <section className="grid gap-3">
                 {barbearias.map((barbearia) => (
                     <div key={barbearia.id} className="rounded border border-zinc-800 bg-zinc-950 p-4">
@@ -68,6 +120,9 @@ export default function PainelSuperAdmin() {
                                 <h2 className="text-xl font-bold text-zinc-100">{barbearia.nome}</h2>
                                 <p className="text-sm text-zinc-400">
                                     {barbearia.slug} | {barbearia.assinatura?.plano?.nome ?? 'sem plano'}
+                                </p>
+                                <p className="text-sm text-zinc-500">
+                                    Revisão: {barbearia.reviewStatus ?? 'APPROVED'} | Assinatura: {barbearia.status}
                                 </p>
                                 <p className="text-sm text-zinc-500">
                                     {barbearia._count?.profissionais ?? 0} profissionais | {barbearia._count?.servicos ?? 0} serviços | {barbearia._count?.agendamentos ?? 0} agendamentos
@@ -108,6 +163,49 @@ export default function PainelSuperAdmin() {
             </section>
 
             {mensagem && <p className="text-sm text-zinc-300">{mensagem}</p>}
+        </div>
+    )
+}
+
+function BarbeariaPendente(props: {
+    barbearia: any
+    onAprovar: (id: number) => void
+    onReprovar: (id: number) => void
+}) {
+    const barbearia = props.barbearia
+
+    return (
+        <div className="rounded border border-yellow-400/30 bg-zinc-900 p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                    <h3 className="text-lg font-bold text-zinc-100">{barbearia.nome}</h3>
+                    <p className="text-sm text-zinc-400">
+                        {barbearia.slug} | {barbearia.email ?? 'sem e-mail'} | {barbearia.telefone ?? 'sem telefone'}
+                    </p>
+                    <p className="text-sm text-zinc-500">
+                        Plano {barbearia.assinatura?.plano?.nome ?? '-'} | criado em {formatarData(barbearia.createdAt)}
+                    </p>
+                    {barbearia.reviewReason && (
+                        <p className="mt-2 text-sm text-zinc-400">{barbearia.reviewReason}</p>
+                    )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    <button
+                        type="button"
+                        onClick={() => props.onAprovar(barbearia.id)}
+                        className="rounded bg-emerald-500 px-4 py-2 font-bold text-white"
+                    >
+                        Aprovar
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => props.onReprovar(barbearia.id)}
+                        className="rounded bg-red-500/15 px-4 py-2 font-bold text-red-300"
+                    >
+                        Reprovar
+                    </button>
+                </div>
+            </div>
         </div>
     )
 }

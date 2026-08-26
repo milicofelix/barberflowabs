@@ -18,7 +18,12 @@ import {
   validarSenha,
   validarTextoObrigatorio,
 } from 'src/shared/validacao';
-import { AtualizarPlanoDto, AtualizarStatusBarbeariaDto, OnboardingSaasDto } from './saas.dto';
+import {
+  AtualizarPlanoDto,
+  AtualizarStatusBarbeariaDto,
+  OnboardingSaasDto,
+  RevisarBarbeariaDto,
+} from './saas.dto';
 import { SaasPrisma } from './saas.prisma';
 
 const STATUS_BARBEARIA = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'CANCELED'];
@@ -68,6 +73,12 @@ export class SaasController {
     return this.repo.listarBarbeariasAdmin();
   }
 
+  @Get('admin/barbearias/pendentes')
+  listarBarbeariasPendentesAdmin(@UsuarioLogado() usuario: Usuario) {
+    this.validarSuperAdmin(usuario);
+    return this.repo.listarBarbeariasPendentesAdmin();
+  }
+
   @Get('admin/me')
   diagnosticoAdmin(@UsuarioLogado() usuario: Usuario) {
     const emailsSuperAdmin = this.emailsSuperAdmin();
@@ -102,6 +113,29 @@ export class SaasController {
     }
 
     return this.repo.atualizarStatusBarbearia(Number(id), dados.status, usuario.id!);
+  }
+
+  @Put('admin/barbearias/:id/aprovar')
+  aprovarBarbearia(
+    @Param('id') id: string,
+    @Body() dados: RevisarBarbeariaDto,
+    @UsuarioLogado() usuario: Usuario,
+  ) {
+    this.validarSuperAdmin(usuario);
+    validarNumeroInteiroPositivo(id, 'Barbearia');
+    return this.repo.aprovarBarbearia(Number(id), usuario.id!, dados?.motivo);
+  }
+
+  @Put('admin/barbearias/:id/reprovar')
+  reprovarBarbearia(
+    @Param('id') id: string,
+    @Body() dados: RevisarBarbeariaDto,
+    @UsuarioLogado() usuario: Usuario,
+  ) {
+    this.validarSuperAdmin(usuario);
+    validarNumeroInteiroPositivo(id, 'Barbearia');
+    validarTextoObrigatorio(dados?.motivo, 'Motivo');
+    return this.repo.reprovarBarbearia(Number(id), usuario.id!, dados.motivo!);
   }
 
   @Get('admin/auditoria')

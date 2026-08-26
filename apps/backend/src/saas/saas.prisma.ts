@@ -37,6 +37,8 @@ export class SaasPrisma {
           email: dados.barbearia.email?.trim() || null,
           telefone: dados.barbearia.telefone?.trim() || null,
           status: 'TRIAL',
+          reviewStatus: 'PENDING_REVIEW',
+          reviewReason: 'Cadastro realizado pelo onboarding público.',
           trialEndsAt,
           unidades: {
             create: {
@@ -51,7 +53,7 @@ export class SaasPrisma {
               trialEndsAt,
             },
           },
-        },
+        } as any,
         include: { assinatura: { include: { plano: true } }, unidades: true },
       });
 
@@ -75,7 +77,7 @@ export class SaasPrisma {
           acao: 'SAAS_ONBOARDING',
           entidade: 'Barbearia',
           entidadeId: String(barbearia.id),
-          detalhes: { planoSlug },
+          detalhes: { planoSlug, reviewStatus: 'PENDING_REVIEW' },
         },
       });
 
@@ -137,6 +139,19 @@ export class SaasPrisma {
     return barbearias.map((barbearia) => this.normalizarBarbearia(barbearia));
   }
 
+  async listarBarbeariasPendentesAdmin() {
+    const barbearias = await this.prisma.barbearia.findMany({
+      where: { reviewStatus: 'PENDING_REVIEW' } as any,
+      include: {
+        assinatura: { include: { plano: true } },
+        _count: { select: { usuarios: true, profissionais: true, unidades: true, servicos: true, agendamentos: true } },
+      },
+      orderBy: { createdAt: 'asc' },
+    } as any);
+
+    return barbearias.map((barbearia) => this.normalizarBarbearia(barbearia));
+  }
+
   async atualizarStatusBarbearia(id: number, status: string, usuarioId: number) {
     const barbearia = await this.prisma.barbearia.update({
       where: { id },
@@ -151,6 +166,50 @@ export class SaasPrisma {
 
     await this.registrarAuditoria(id, usuarioId, 'ADMIN_CHANGE_BARBERSHOP_STATUS', 'Barbearia', id, { status });
     return barbearia;
+  }
+
+  async aprovarBarbearia(id: number, usuarioId: number, motivo?: string) {
+    const barbearia = await this.prisma.barbearia.update({
+      where: { id },
+      data: {
+        reviewStatus: 'APPROVED',
+        approvedAt: new Date(),
+        approvedById: usuarioId,
+        rejectedAt: null,
+        rejectedById: null,
+        reviewReason: motivo?.trim() || 'Cadastro aprovado pelo admin SaaS.',
+      } as any,
+      include: {
+        assinatura: { include: { plano: true } },
+        _count: { select: { usuarios: true, profissionais: true, unidades: true, servicos: true, agendamentos: true } },
+      },
+    } as any);
+
+    await this.registrarAuditoria(id, usuarioId, 'ADMIN_APPROVE_BARBERSHOP', 'Barbearia', id, {
+      motivo: motivo?.trim() || null,
+    });
+    return this.normalizarBarbearia(barbearia);
+  }
+
+  async reprovarBarbearia(id: number, usuarioId: number, motivo: string) {
+    const barbearia = await this.prisma.barbearia.update({
+      where: { id },
+      data: {
+        reviewStatus: 'REJECTED',
+        rejectedAt: new Date(),
+        rejectedById: usuarioId,
+        reviewReason: motivo.trim(),
+      } as any,
+      include: {
+        assinatura: { include: { plano: true } },
+        _count: { select: { usuarios: true, profissionais: true, unidades: true, servicos: true, agendamentos: true } },
+      },
+    } as any);
+
+    await this.registrarAuditoria(id, usuarioId, 'ADMIN_REJECT_BARBERSHOP', 'Barbearia', id, {
+      motivo: motivo.trim(),
+    });
+    return this.normalizarBarbearia(barbearia);
   }
 
   listarAuditoriaAdmin() {

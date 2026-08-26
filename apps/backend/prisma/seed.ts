@@ -17,6 +17,9 @@ async function seed() {
       telefone: '(11) 99999-9999',
       email: 'contato@barberflowabs.app',
       antecedenciaMinutos: 30,
+      reviewStatus: 'APPROVED',
+      approvedAt: new Date(),
+      reviewReason: null,
     },
     create: {
       id: BARBEARIA_PADRAO_ID,
@@ -25,6 +28,8 @@ async function seed() {
       telefone: '(11) 99999-9999',
       email: 'contato@barberflowabs.app',
       antecedenciaMinutos: 30,
+      reviewStatus: 'APPROVED',
+      approvedAt: new Date(),
     },
   });
 
