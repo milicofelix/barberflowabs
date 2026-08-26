@@ -115,6 +115,10 @@ model Barbearia {
   rejectedAt    DateTime?
   rejectedById  Int?
   reviewReason  String?        @db.Text
+  comercialStatus String        @default("NOVO")
+  notasInternas String?         @db.Text
+  ultimoContatoEm DateTime?
+  proximoContatoEm DateTime?
   trialEndsAt   DateTime?
   antecedenciaMinutos Int      @default(30)
   createdAt     DateTime       @default(now())

@@ -157,6 +157,7 @@ Admin SaaS:
 - `GET /saas/admin/barbearias/pendentes`
 - `PUT /saas/admin/barbearias/:id/status`
 - `PUT /saas/admin/barbearias/:id/destaque`
+- `PUT /saas/admin/barbearias/:id/comercial`
 - `PUT /saas/admin/barbearias/:id/aprovar`
 - `PUT /saas/admin/barbearias/:id/reprovar`
 - `GET /saas/admin/auditoria`

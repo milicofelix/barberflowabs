@@ -238,23 +238,26 @@ Validacao manual:
 
 ## Fase A6 - Operacao Comercial Do SaaS
 
-Status: pendente.
+Status: em andamento.
 
 Objetivo: fechar o ciclo comercial com aprovacao, billing e comunicacao.
 
 Checklist:
 
 - [ ] Enviar notificacao para o dono do app em novos cadastros.
-- [ ] Criar tela de detalhes comerciais da barbearia.
-- [ ] Criar notas internas admin.
-- [ ] Criar status de lead/comercial:
+- [x] Criar tela de detalhes comerciais da barbearia.
+- [x] Criar notas internas admin.
+- [x] Criar status de lead/comercial:
   - novo
   - em contato
   - aprovado
   - recusado
   - convertido
+- [x] Registrar auditoria ao atualizar dados comerciais.
 - [ ] Integrar pagamento real.
 - [ ] Bloquear recursos conforme inadimplencia real.
+
+Observacao: o primeiro recorte da A6 adiciona gestao comercial manual no Admin SaaS. Notificacao real, gateway de pagamento e bloqueio por inadimplencia ficam para recortes seguintes.
 
 Validacao manual:
 

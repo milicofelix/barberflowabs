@@ -29,3 +29,10 @@ export interface RevisarBarbeariaDto {
 export interface AtualizarDestaqueBarbeariaDto {
   destaque: boolean;
 }
+
+export interface AtualizarComercialBarbeariaDto {
+  comercialStatus: string;
+  notasInternas?: string | null;
+  ultimoContatoEm?: string | null;
+  proximoContatoEm?: string | null;
+}

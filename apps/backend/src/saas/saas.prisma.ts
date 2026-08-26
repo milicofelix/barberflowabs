@@ -182,6 +182,29 @@ export class SaasPrisma {
     return this.normalizarBarbearia(barbearia);
   }
 
+  async atualizarComercialBarbearia(id: number, usuarioId: number, dados: any) {
+    const barbearia = await this.prisma.barbearia.update({
+      where: { id },
+      data: {
+        comercialStatus: dados.comercialStatus,
+        notasInternas: this.textoOuNulo(dados.notasInternas),
+        ultimoContatoEm: dados.ultimoContatoEm,
+        proximoContatoEm: dados.proximoContatoEm,
+      } as any,
+      include: {
+        assinatura: { include: { plano: true } },
+        _count: { select: { usuarios: true, profissionais: true, unidades: true, servicos: true, agendamentos: true } },
+      },
+    } as any);
+
+    await this.registrarAuditoria(id, usuarioId, 'ADMIN_UPDATE_COMMERCIAL_DETAILS', 'Barbearia', id, {
+      comercialStatus: dados.comercialStatus,
+      ultimoContatoEm: dados.ultimoContatoEm,
+      proximoContatoEm: dados.proximoContatoEm,
+    });
+    return this.normalizarBarbearia(barbearia);
+  }
+
 
   async aprovarBarbearia(id: number, usuarioId: number, motivo?: string) {
     const barbearia = await this.prisma.barbearia.update({
@@ -312,6 +335,11 @@ export class SaasPrisma {
   private percentualUso(uso: number, limite: number) {
     if (!limite) return 0;
     return Math.min(100, Math.round((uso / limite) * 100));
+  }
+
+  private textoOuNulo(valor?: string | null) {
+    const texto = typeof valor === 'string' ? valor.trim() : '';
+    return texto || null;
   }
 
   private normalizarSlug(slug: string) {

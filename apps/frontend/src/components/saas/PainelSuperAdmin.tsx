@@ -5,6 +5,13 @@ import useSessao from '@/data/hooks/useSessao'
 import { useCallback, useEffect, useState } from 'react'
 
 const status = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'CANCELED']
+const statusComercial = [
+    { valor: 'NOVO', label: 'Novo' },
+    { valor: 'EM_CONTATO', label: 'Em contato' },
+    { valor: 'APROVADO', label: 'Aprovado' },
+    { valor: 'RECUSADO', label: 'Recusado' },
+    { valor: 'CONVERTIDO', label: 'Convertido' },
+]
 
 export default function PainelSuperAdmin() {
     const { usuario } = useSessao()
@@ -17,6 +24,7 @@ export default function PainelSuperAdmin() {
     const [carregando, setCarregando] = useState(true)
     const [acessoNegado, setAcessoNegado] = useState(false)
     const [diagnostico, setDiagnostico] = useState<any>(null)
+    const [comercial, setComercial] = useState<Record<number, any>>({})
 
     const carregar = useCallback(async function carregar() {
         setCarregando(true)
@@ -82,6 +90,30 @@ export default function PainelSuperAdmin() {
         setMotivoRevisao('')
         await carregar()
         setMensagem('Barbearia reprovada.')
+    }
+
+    async function salvarComercial(barbearia: any) {
+        setMensagem('')
+        const dados = comercial[barbearia.id] ?? {}
+        const resposta = await httpPut(`/saas/admin/barbearias/${barbearia.id}/comercial`, {
+            comercialStatus: dados.comercialStatus ?? barbearia.comercialStatus ?? 'NOVO',
+            notasInternas: dados.notasInternas ?? barbearia.notasInternas ?? '',
+            ultimoContatoEm: dados.ultimoContatoEm ?? dataInput(barbearia.ultimoContatoEm),
+            proximoContatoEm: dados.proximoContatoEm ?? dataInput(barbearia.proximoContatoEm),
+        })
+        if (resposta?.statusCode) return setMensagem(resposta.message)
+        await carregar()
+        setMensagem('Dados comerciais atualizados.')
+    }
+
+    function atualizarComercial(id: number, campo: string, valor: string) {
+        setComercial((atual) => ({
+            ...atual,
+            [id]: {
+                ...(atual[id] ?? {}),
+                [campo]: valor,
+            },
+        }))
     }
 
     if (carregando) {
@@ -162,6 +194,54 @@ export default function PainelSuperAdmin() {
                                     {barbearia.destaque ? 'Remover destaque' : 'Destacar'}
                                 </button>
                             </div>
+                        </div>
+                        <div className="mt-4 grid gap-3 border-t border-zinc-800 pt-4 lg:grid-cols-[180px_160px_160px_1fr_auto] lg:items-end">
+                            <label className="grid gap-1 text-sm text-zinc-400">
+                                Status comercial
+                                <select
+                                    value={valorComercial(comercial, barbearia, 'comercialStatus', 'NOVO')}
+                                    onChange={(e) => atualizarComercial(barbearia.id, 'comercialStatus', e.target.value)}
+                                    className="input"
+                                >
+                                    {statusComercial.map((item) => (
+                                        <option key={item.valor} value={item.valor}>{item.label}</option>
+                                    ))}
+                                </select>
+                            </label>
+                            <label className="grid gap-1 text-sm text-zinc-400">
+                                Último contato
+                                <input
+                                    type="date"
+                                    value={valorComercial(comercial, barbearia, 'ultimoContatoEm', dataInput(barbearia.ultimoContatoEm))}
+                                    onChange={(e) => atualizarComercial(barbearia.id, 'ultimoContatoEm', e.target.value)}
+                                    className="input"
+                                />
+                            </label>
+                            <label className="grid gap-1 text-sm text-zinc-400">
+                                Próximo contato
+                                <input
+                                    type="date"
+                                    value={valorComercial(comercial, barbearia, 'proximoContatoEm', dataInput(barbearia.proximoContatoEm))}
+                                    onChange={(e) => atualizarComercial(barbearia.id, 'proximoContatoEm', e.target.value)}
+                                    className="input"
+                                />
+                            </label>
+                            <label className="grid gap-1 text-sm text-zinc-400">
+                                Notas internas
+                                <input
+                                    value={valorComercial(comercial, barbearia, 'notasInternas', barbearia.notasInternas ?? '')}
+                                    onChange={(e) => atualizarComercial(barbearia.id, 'notasInternas', e.target.value)}
+                                    placeholder="Resumo do contato comercial"
+                                    className="input"
+                                />
+                            </label>
+                            <button
+                                type="button"
+                                onClick={() => salvarComercial(barbearia)}
+                                className="rounded bg-zinc-100 px-4 py-2 text-sm font-bold text-zinc-950"
+                            >
+                                Salvar comercial
+                            </button>
                         </div>
                     </div>
                 ))}
@@ -274,4 +354,13 @@ function UsoLimite(props: { label: string; dados: any; chave: 'profissionais' | 
 function formatarData(valor: string) {
     if (!valor) return '-'
     return new Date(valor).toLocaleString('pt-BR')
+}
+
+function dataInput(valor?: string | null) {
+    if (!valor) return ''
+    return new Date(valor).toISOString().slice(0, 10)
+}
+
+function valorComercial(comercial: Record<number, any>, barbearia: any, campo: string, fallback: string) {
+    return comercial[barbearia.id]?.[campo] ?? fallback
 }

@@ -20,6 +20,7 @@ import {
 } from 'src/shared/validacao';
 import {
   AtualizarPlanoDto,
+  AtualizarComercialBarbeariaDto,
   AtualizarDestaqueBarbeariaDto,
   AtualizarStatusBarbeariaDto,
   OnboardingSaasDto,
@@ -28,6 +29,7 @@ import {
 import { SaasPrisma } from './saas.prisma';
 
 const STATUS_BARBEARIA = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'CANCELED'];
+const STATUS_COMERCIAL = ['NOVO', 'EM_CONTATO', 'APROVADO', 'RECUSADO', 'CONVERTIDO'];
 
 @Controller('saas')
 export class SaasController {
@@ -132,6 +134,29 @@ export class SaasController {
     return this.repo.atualizarDestaqueBarbearia(Number(id), dados.destaque, usuario.id!);
   }
 
+  @Put('admin/barbearias/:id/comercial')
+  atualizarComercialBarbearia(
+    @Param('id') id: string,
+    @Body() dados: AtualizarComercialBarbeariaDto,
+    @UsuarioLogado() usuario: Usuario,
+  ) {
+    this.validarSuperAdmin(usuario);
+    validarNumeroInteiroPositivo(id, 'Barbearia');
+
+    if (!STATUS_COMERCIAL.includes(dados?.comercialStatus)) {
+      throw new BadRequestException('Status comercial inválido');
+    }
+
+    const ultimoContatoEm = this.dataOpcional(dados.ultimoContatoEm, 'Último contato');
+    const proximoContatoEm = this.dataOpcional(dados.proximoContatoEm, 'Próximo contato');
+    return this.repo.atualizarComercialBarbearia(Number(id), usuario.id!, {
+      comercialStatus: dados.comercialStatus,
+      notasInternas: dados.notasInternas,
+      ultimoContatoEm,
+      proximoContatoEm,
+    });
+  }
+
   @Put('admin/barbearias/:id/aprovar')
   aprovarBarbearia(
     @Param('id') id: string,
@@ -200,5 +225,16 @@ export class SaasController {
       .split(',')
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean);
+  }
+
+  private dataOpcional(valor: string | null | undefined, campo: string) {
+    if (!valor) return null;
+    const data = new Date(valor);
+
+    if (Number.isNaN(data.getTime())) {
+      throw new BadRequestException(`${campo} inválido`);
+    }
+
+    return data;
   }
 }
