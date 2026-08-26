@@ -40,6 +40,8 @@ RUN --mount=type=cache,target=/usr/local/share/.cache/yarn \
 # mas o COPY mantém a imagem utilizável também fora do Compose.
 COPY . .
 
+RUN cd apps/backend && npx prisma generate
+
 EXPOSE 3000 4000 8081 19000 19001 19002 19006
 
 CMD ["yarn", "turbo", "dev", "--ui=stream"]

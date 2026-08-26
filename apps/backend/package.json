@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
-    "postinstall": "prisma generate",
+    "postinstall": "node -e \"const fs=require('fs');const cp=require('child_process');if(fs.existsSync('prisma/schema.prisma')) cp.execSync('prisma generate',{stdio:'inherit'}); else console.log('Skipping prisma generate: schema not available yet')\"",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "dev": "nest start",
     "start": "nest start",
