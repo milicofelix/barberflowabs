@@ -23,6 +23,8 @@ import {
 } from 'src/shared/validacao';
 import {
   AtualizarStatusAgendamentoDto,
+  AtualizarStatusLembreteDto,
+  CriarLembreteRelacionamentoDto,
   CriarLancamentoFinanceiroDto,
   SalvarClienteDto,
 } from './gestao.dto';
@@ -30,6 +32,9 @@ import { GestaoPrisma } from './gestao.prisma';
 
 const STATUS_AGENDAMENTO = ['AGENDADO', 'CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW'];
 const TIPOS_LANCAMENTO = ['RECEITA', 'DESPESA'];
+const TIPOS_LEMBRETE = ['CONFIRMACAO', 'ANIVERSARIO', 'RETORNO', 'FIDELIDADE', 'CAMPANHA'];
+const CANAIS_LEMBRETE = ['WHATSAPP', 'EMAIL', 'TELEFONE'];
+const STATUS_LEMBRETE = ['PENDENTE', 'AGENDADO', 'ENVIADO', 'CANCELADO'];
 
 @Controller('gestao')
 export class GestaoController {
@@ -165,6 +170,45 @@ export class GestaoController {
     return this.repo.relatorios(usuario.barbeariaId, inicio, fim);
   }
 
+  @Get('relacionamento')
+  relacionamento(@UsuarioLogado() usuario: Usuario) {
+    this.validarPermissao(usuario);
+    return this.repo.relacionamento(usuario.barbeariaId);
+  }
+
+  @Post('relacionamento/lembretes')
+  async criarLembrete(
+    @Body() dados: CriarLembreteRelacionamentoDto,
+    @UsuarioLogado() usuario: Usuario,
+  ) {
+    this.validarPermissao(usuario);
+    this.validarLembrete(dados);
+    const lembrete = await this.repo.criarLembrete(usuario.barbeariaId, dados);
+    if (!lembrete) throw new NotFoundException('Cliente ou agendamento não encontrado');
+    return lembrete;
+  }
+
+  @Put('relacionamento/lembretes/:id/status')
+  async atualizarStatusLembrete(
+    @Param('id') id: string,
+    @Body() dados: AtualizarStatusLembreteDto,
+    @UsuarioLogado() usuario: Usuario,
+  ) {
+    this.validarPermissao(usuario);
+    validarNumeroInteiroPositivo(id, 'Lembrete');
+    if (!STATUS_LEMBRETE.includes(dados?.status)) {
+      throw new BadRequestException('Status do lembrete inválido');
+    }
+
+    const lembrete = await this.repo.atualizarStatusLembrete(
+      Number(id),
+      usuario.barbeariaId,
+      dados.status,
+    );
+    if (!lembrete) throw new NotFoundException('Lembrete não encontrado');
+    return lembrete;
+  }
+
   private validarPermissao(usuario: Usuario) {
     if (!usuario?.barbeiro) {
       throw new ForbiddenException('Apenas barbeiros podem acessar a gestão');
@@ -198,6 +242,31 @@ export class GestaoController {
 
     if (exigirSenha || dados?.senha) {
       validarSenha(dados.senha);
+    }
+
+    if (dados?.dataNascimento) {
+      validarData(dados.dataNascimento, 'Data de nascimento');
+    }
+  }
+
+  private validarLembrete(dados: CriarLembreteRelacionamentoDto) {
+    if (!TIPOS_LEMBRETE.includes(dados?.tipo)) {
+      throw new BadRequestException('Tipo de lembrete inválido');
+    }
+
+    if (dados?.canal && !CANAIS_LEMBRETE.includes(dados.canal)) {
+      throw new BadRequestException('Canal do lembrete inválido');
+    }
+
+    validarTextoObrigatorio(dados?.mensagem, 'Mensagem');
+    validarData(dados?.dataPrevista, 'Data prevista');
+
+    if (dados?.usuarioId) {
+      validarNumeroInteiroPositivo(dados.usuarioId, 'Cliente');
+    }
+
+    if (dados?.agendamentoId) {
+      validarNumeroInteiroPositivo(dados.agendamentoId, 'Agendamento');
     }
   }
 }

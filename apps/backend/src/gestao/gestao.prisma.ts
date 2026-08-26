@@ -3,6 +3,8 @@ import { PrismaService } from 'src/db/prisma.service';
 
 const STATUS_ATENDIDOS = ['CONCLUIDO'];
 const PERCENTUAL_COMISSAO_PADRAO = 40;
+const DIAS_RETORNO_RISCO = 45;
+const DIAS_ANIVERSARIO = 30;
 
 @Injectable()
 export class GestaoPrisma {
@@ -45,6 +47,7 @@ export class GestaoPrisma {
         nome: true,
         email: true,
         telefone: true,
+        dataNascimento: true,
         _count: { select: { agendamentos: true } },
       },
       orderBy: { nome: 'asc' },
@@ -55,6 +58,7 @@ export class GestaoPrisma {
       nome: cliente.nome,
       email: cliente.email,
       telefone: cliente.telefone,
+      dataNascimento: cliente.dataNascimento?.toISOString().slice(0, 10) ?? null,
       totalAgendamentos: cliente._count.agendamentos,
     }));
   }
@@ -67,6 +71,7 @@ export class GestaoPrisma {
         nome: true,
         email: true,
         telefone: true,
+        dataNascimento: true,
         agendamentos: {
           include: {
             profissional: { select: { id: true, nome: true } },
@@ -81,6 +86,7 @@ export class GestaoPrisma {
 
     return {
       ...cliente,
+      dataNascimento: cliente.dataNascimento?.toISOString().slice(0, 10) ?? null,
       agendamentos: cliente.agendamentos.map((agendamento) =>
         this.normalizarAgendamento(agendamento),
       ),
@@ -94,13 +100,18 @@ export class GestaoPrisma {
         nome: dados.nome,
         email: dados.email,
         telefone: dados.telefone || null,
+        dataNascimento: dados.dataNascimento ? new Date(`${dados.dataNascimento}T00:00:00.000Z`) : null,
         senha: dados.senha,
         barbeiro: false,
       },
-      select: { id: true, nome: true, email: true, telefone: true },
+      select: { id: true, nome: true, email: true, telefone: true, dataNascimento: true },
     });
 
-    return { ...cliente, totalAgendamentos: 0 };
+    return {
+      ...cliente,
+      dataNascimento: cliente.dataNascimento?.toISOString().slice(0, 10) ?? null,
+      totalAgendamentos: 0,
+    };
   }
 
   async atualizarCliente(id: number, barbeariaId: number, dados: any) {
@@ -111,16 +122,22 @@ export class GestaoPrisma {
 
     if (!cliente) return null;
 
-    return this.prisma.usuario.update({
+    const atualizado = await this.prisma.usuario.update({
       where: { id },
       data: {
         nome: dados.nome,
         email: dados.email,
         telefone: dados.telefone || null,
+        dataNascimento: dados.dataNascimento ? new Date(`${dados.dataNascimento}T00:00:00.000Z`) : null,
         ...(dados.senha ? { senha: dados.senha } : {}),
       },
-      select: { id: true, nome: true, email: true, telefone: true },
+      select: { id: true, nome: true, email: true, telefone: true, dataNascimento: true },
     });
+
+    return {
+      ...atualizado,
+      dataNascimento: atualizado.dataNascimento?.toISOString().slice(0, 10) ?? null,
+    };
   }
 
   async excluirCliente(id: number, barbeariaId: number) {
@@ -252,6 +269,146 @@ export class GestaoPrisma {
     };
   }
 
+  async relacionamento(barbeariaId: number) {
+    const agora = new Date();
+    const limiteConfirmacao = this.somarDias(agora, 2);
+    const limiteRetorno = this.somarDias(agora, -DIAS_RETORNO_RISCO);
+
+    const [clientes, agendamentosConfirmacao, lembretes] = await Promise.all([
+      this.prisma.usuario.findMany({
+        where: { barbeariaId, barbeiro: false },
+        select: {
+          id: true,
+          nome: true,
+          email: true,
+          telefone: true,
+          dataNascimento: true,
+          agendamentos: {
+            where: { status: { in: STATUS_ATENDIDOS } },
+            select: { id: true, data: true, status: true },
+            orderBy: { data: 'desc' },
+          },
+        },
+        orderBy: { nome: 'asc' },
+      }),
+      this.prisma.agendamento.findMany({
+        where: {
+          barbeariaId,
+          status: 'AGENDADO',
+          data: { gte: agora, lte: limiteConfirmacao },
+        },
+        include: {
+          usuario: { select: { id: true, nome: true, telefone: true } },
+          profissional: { select: { id: true, nome: true } },
+          servicos: { select: { id: true, nome: true } },
+        },
+        orderBy: { data: 'asc' },
+      }),
+      this.prisma.lembreteRelacionamento.findMany({
+        where: { barbeariaId, status: { in: ['PENDENTE', 'AGENDADO'] } },
+        include: { usuario: { select: { id: true, nome: true, telefone: true } } },
+        orderBy: { dataPrevista: 'asc' },
+        take: 30,
+      }),
+    ]);
+
+    const aniversariantes = clientes
+      .filter((cliente) => cliente.dataNascimento)
+      .map((cliente) => this.normalizarAniversariante(cliente, agora))
+      .filter((cliente) => cliente.diasAteAniversario <= DIAS_ANIVERSARIO)
+      .sort((a, b) => a.diasAteAniversario - b.diasAteAniversario);
+
+    const clientesComAtendimento = clientes.filter((cliente) => cliente.agendamentos.length > 0);
+    const clientesRecorrentes = clientes.filter((cliente) => cliente.agendamentos.length >= 2);
+    const clientesSemRetorno = clientesComAtendimento
+      .filter((cliente) => cliente.agendamentos[0].data < limiteRetorno)
+      .map((cliente) => ({
+        id: cliente.id,
+        nome: cliente.nome,
+        email: cliente.email,
+        telefone: cliente.telefone,
+        ultimoAtendimento: cliente.agendamentos[0].data,
+        diasSemRetorno: this.diferencaDias(cliente.agendamentos[0].data, agora),
+      }))
+      .sort((a, b) => b.diasSemRetorno - a.diasSemRetorno);
+
+    return {
+      metricas: {
+        totalClientes: clientes.length,
+        clientesAtendidos: clientesComAtendimento.length,
+        clientesRecorrentes: clientesRecorrentes.length,
+        clientesSemRetorno: clientesSemRetorno.length,
+        taxaRetorno: clientesComAtendimento.length
+          ? Math.round((clientesRecorrentes.length / clientesComAtendimento.length) * 100)
+          : 0,
+      },
+      aniversariantes,
+      clientesSemRetorno,
+      confirmacoesPendentes: agendamentosConfirmacao.map((agendamento) =>
+        this.normalizarAgendamento(agendamento),
+      ),
+      lembretes: lembretes.map((lembrete) => ({
+        ...lembrete,
+        dataPrevista: lembrete.dataPrevista,
+        enviadoEm: lembrete.enviadoEm,
+      })),
+      sugestoes: this.sugestoesRelacionamento(
+        aniversariantes.length,
+        clientesSemRetorno.length,
+        agendamentosConfirmacao.length,
+      ),
+    };
+  }
+
+  async criarLembrete(barbeariaId: number, dados: any) {
+    if (dados.usuarioId) {
+      const cliente = await this.prisma.usuario.findFirst({
+        where: { id: Number(dados.usuarioId), barbeariaId, barbeiro: false },
+        select: { id: true },
+      });
+      if (!cliente) return null;
+    }
+
+    if (dados.agendamentoId) {
+      const agendamento = await this.prisma.agendamento.findFirst({
+        where: { id: Number(dados.agendamentoId), barbeariaId },
+        select: { id: true },
+      });
+      if (!agendamento) return null;
+    }
+
+    return this.prisma.lembreteRelacionamento.create({
+      data: {
+        barbeariaId,
+        usuarioId: dados.usuarioId ? Number(dados.usuarioId) : null,
+        agendamentoId: dados.agendamentoId ? Number(dados.agendamentoId) : null,
+        tipo: dados.tipo,
+        canal: dados.canal || 'WHATSAPP',
+        mensagem: dados.mensagem,
+        dataPrevista: new Date(dados.dataPrevista),
+      },
+      include: { usuario: { select: { id: true, nome: true, telefone: true } } },
+    });
+  }
+
+  async atualizarStatusLembrete(id: number, barbeariaId: number, status: string) {
+    const lembrete = await this.prisma.lembreteRelacionamento.findFirst({
+      where: { id, barbeariaId },
+      select: { id: true },
+    });
+
+    if (!lembrete) return null;
+
+    return this.prisma.lembreteRelacionamento.update({
+      where: { id },
+      data: {
+        status,
+        enviadoEm: status === 'ENVIADO' ? new Date() : null,
+      },
+      include: { usuario: { select: { id: true, nome: true, telefone: true } } },
+    });
+  }
+
   private async somarReceitas(barbeariaId: number, inicio: Date, fim: Date) {
     const [manual, agendamentos] = await Promise.all([
       this.somarLancamentos(barbeariaId, 'RECEITA', inicio, fim),
@@ -351,5 +508,82 @@ export class GestaoPrisma {
       inicio: new Date(`${inicio}T00:00:00.000Z`),
       fim: new Date(`${fim}T23:59:59.999Z`),
     };
+  }
+
+  private normalizarAniversariante(cliente: any, referencia: Date) {
+    const nascimento = cliente.dataNascimento as Date;
+    const proximo = new Date(Date.UTC(
+      referencia.getUTCFullYear(),
+      nascimento.getUTCMonth(),
+      nascimento.getUTCDate(),
+      12,
+    ));
+
+    if (proximo < referencia) {
+      proximo.setUTCFullYear(proximo.getUTCFullYear() + 1);
+    }
+
+    return {
+      id: cliente.id,
+      nome: cliente.nome,
+      email: cliente.email,
+      telefone: cliente.telefone,
+      dataNascimento: nascimento.toISOString().slice(0, 10),
+      proximoAniversario: proximo,
+      diasAteAniversario: this.diferencaDias(referencia, proximo),
+    };
+  }
+
+  private sugestoesRelacionamento(
+    totalAniversariantes: number,
+    totalSemRetorno: number,
+    totalConfirmacoes: number,
+  ) {
+    const sugestoes = [];
+
+    if (totalConfirmacoes > 0) {
+      sugestoes.push({
+        tipo: 'CONFIRMACAO',
+        titulo: 'Confirmar horários próximos',
+        descricao: `${totalConfirmacoes} agendamento(s) nas próximas 48 horas ainda estão como AGENDADO.`,
+      });
+    }
+
+    if (totalAniversariantes > 0) {
+      sugestoes.push({
+        tipo: 'ANIVERSARIO',
+        titulo: 'Criar campanha de aniversário',
+        descricao: `${totalAniversariantes} cliente(s) fazem aniversário nos próximos ${DIAS_ANIVERSARIO} dias.`,
+      });
+    }
+
+    if (totalSemRetorno > 0) {
+      sugestoes.push({
+        tipo: 'RETORNO',
+        titulo: 'Recuperar clientes sem retorno',
+        descricao: `${totalSemRetorno} cliente(s) não voltam há mais de ${DIAS_RETORNO_RISCO} dias.`,
+      });
+    }
+
+    if (sugestoes.length === 0) {
+      sugestoes.push({
+        tipo: 'FIDELIDADE',
+        titulo: 'Manter relacionamento ativo',
+        descricao: 'A base está saudável. Considere criar lembretes periódicos para clientes recorrentes.',
+      });
+    }
+
+    return sugestoes;
+  }
+
+  private somarDias(data: Date, dias: number) {
+    const resultado = new Date(data);
+    resultado.setUTCDate(resultado.getUTCDate() + dias);
+    return resultado;
+  }
+
+  private diferencaDias(inicio: Date, fim: Date) {
+    const dia = 24 * 60 * 60 * 1000;
+    return Math.max(0, Math.ceil((fim.getTime() - inicio.getTime()) / dia));
   }
 }

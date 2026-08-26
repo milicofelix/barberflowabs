@@ -312,19 +312,48 @@ Melhorias futuras:
 
 ## Fase 7 - Relacionamento E Inteligencia
 
-Status: pendente.
+Status: concluida para o MVP SaaS.
 
 Objetivo: criar diferenciais competitivos.
 
-Itens:
+Concluido:
 
-- Lembretes por WhatsApp.
-- Confirmacao automatica de horario.
-- Aniversariantes.
-- Fidelidade.
-- Metricas de retorno.
-- Previsao de demanda.
-- Sugestoes inteligentes para agenda e campanhas.
+- Adicionado campo opcional de data de nascimento no cadastro de clientes.
+- Criada tabela de lembretes de relacionamento:
+  - cliente opcional
+  - tipo
+  - canal
+  - status
+  - mensagem
+  - data prevista
+  - data de envio manual
+- Criado endpoint autenticado:
+  - `GET /gestao/relacionamento`
+- Criados endpoints de lembrete:
+  - `POST /gestao/relacionamento/lembretes`
+  - `PUT /gestao/relacionamento/lembretes/:id/status`
+- Painel de gestao ganhou aba `Relacionamento`.
+- Relacionamento mostra:
+  - total de clientes
+  - clientes atendidos
+  - clientes recorrentes
+  - taxa de retorno
+  - clientes sem retorno ha mais de 45 dias
+  - aniversariantes dos proximos 30 dias
+  - agendamentos das proximas 48 horas ainda pendentes de confirmacao
+  - lembretes pendentes/agendados
+  - sugestoes iniciais de campanha
+- Lembretes podem ser criados manualmente e marcados como enviados ou cancelados.
+
+Melhorias futuras:
+
+- Integrar WhatsApp real via provedor externo.
+- Criar fila de envio e worker para disparos automaticos.
+- Criar confirmacao automatica com link unico.
+- Criar programa de fidelidade com pontuacao/recompensas.
+- Evoluir previsao de demanda com historico por dia/horario/profissional.
+- Criar campanhas segmentadas com templates.
+- Registrar logs de auditoria para disparos e alteracoes de lembrete.
 
 ## Checklist De Validacao Manual
 
@@ -384,4 +413,5 @@ git c "feat: adicionar validacao de entrada na api"
 git c "feat: configurar agenda profissional"
 git c "feat: adicionar gestao operacional"
 git c "feat: adicionar onboarding saas"
+git c "feat: adicionar relacionamento e inteligencia"
 ```

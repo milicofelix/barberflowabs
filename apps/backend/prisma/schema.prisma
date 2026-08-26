@@ -17,12 +17,14 @@ model Usuario {
   email        String        @unique
   senha        String
   telefone     String?
+  dataNascimento DateTime?
   barbeiro     Boolean
   papel        String        @default("CUSTOMER")
   barbearia    Barbearia     @relation(fields: [barbeariaId], references: [id])
   agendamentos Agendamento[]
   lancamentosFinanceiros LancamentoFinanceiro[]
   logsAuditoria LogAuditoria[]
+  lembretesRelacionamento LembreteRelacionamento[]
 
   @@index([barbeariaId])
   @@map("usuarios")
@@ -107,6 +109,7 @@ model Barbearia {
   lancamentosFinanceiros LancamentoFinanceiro[]
   assinatura             AssinaturaBarbearia?
   logsAuditoria          LogAuditoria[]
+  lembretesRelacionamento LembreteRelacionamento[]
 
   @@map("barbearias")
 }
@@ -242,4 +245,25 @@ model LogAuditoria {
   @@index([barbeariaId, createdAt])
   @@index([usuarioId, createdAt])
   @@map("logs_auditoria")
+}
+
+model LembreteRelacionamento {
+  id             Int          @id @default(autoincrement())
+  barbeariaId    Int
+  usuarioId      Int?
+  agendamentoId  Int?
+  tipo           String
+  canal          String       @default("WHATSAPP")
+  status         String       @default("PENDENTE")
+  mensagem       String       @db.Text
+  dataPrevista   DateTime
+  enviadoEm      DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  barbearia      Barbearia    @relation(fields: [barbeariaId], references: [id])
+  usuario        Usuario?     @relation(fields: [usuarioId], references: [id])
+
+  @@index([barbeariaId, status, dataPrevista])
+  @@index([usuarioId])
+  @@map("lembretes_relacionamento")
 }

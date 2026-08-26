@@ -5,7 +5,15 @@ import { Profissional, Servico } from '@barbabrutal/core'
 import { IconPencil, IconPlus, IconTrash } from '@tabler/icons-react'
 import { useCallback, useEffect, useState } from 'react'
 
-type Aba = 'dashboard' | 'agenda' | 'clientes' | 'financeiro' | 'relatorios' | 'servicos' | 'profissionais'
+type Aba =
+    | 'dashboard'
+    | 'agenda'
+    | 'clientes'
+    | 'financeiro'
+    | 'relatorios'
+    | 'relacionamento'
+    | 'servicos'
+    | 'profissionais'
 
 const hoje = () => new Date().toISOString().slice(0, 10)
 
@@ -37,7 +45,16 @@ const clienteVazio = {
     nome: '',
     email: '',
     telefone: '',
+    dataNascimento: '',
     senha: '',
+}
+
+const lembreteVazio = {
+    tipo: 'RETORNO',
+    canal: 'WHATSAPP',
+    usuarioId: '',
+    mensagem: '',
+    dataPrevista: `${hoje()}T09:00`,
 }
 
 const statusAgenda = ['AGENDADO', 'CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW']
@@ -54,12 +71,14 @@ export default function PainelGestaoOperacional() {
     const [historico, setHistorico] = useState<any>(null)
     const [lancamentos, setLancamentos] = useState<any[]>([])
     const [relatorio, setRelatorio] = useState<any>(null)
+    const [relacionamento, setRelacionamento] = useState<any>(null)
     const [servicos, setServicos] = useState<Servico[]>([])
     const [profissionais, setProfissionais] = useState<Profissional[]>([])
     const [cliente, setCliente] = useState<any>(clienteVazio)
     const [servico, setServico] = useState<any>(servicoVazio)
     const [profissional, setProfissional] = useState<any>(profissionalVazio)
     const [lancamento, setLancamento] = useState<any>(lancamentoVazio)
+    const [lembrete, setLembrete] = useState<any>(lembreteVazio)
     const [mensagem, setMensagem] = useState('')
 
     const carregar = useCallback(async () => {
@@ -71,6 +90,7 @@ export default function PainelGestaoOperacional() {
             dadosRelatorio,
             dadosServicos,
             dadosProfissionais,
+            dadosRelacionamento,
         ] = await Promise.all([
             httpGet('/gestao/dashboard'),
             httpGet(`/gestao/agendamentos?data=${dataOperacao}`),
@@ -79,6 +99,7 @@ export default function PainelGestaoOperacional() {
             httpGet(`/gestao/relatorios?inicio=${inicioRelatorio}&fim=${fimRelatorio}`),
             httpGet('/servicos'),
             httpGet('/profissionais'),
+            httpGet('/gestao/relacionamento'),
         ])
 
         setDashboard(dadosDashboard?.statusCode ? null : dadosDashboard)
@@ -88,6 +109,7 @@ export default function PainelGestaoOperacional() {
         setRelatorio(dadosRelatorio?.statusCode ? null : dadosRelatorio)
         setServicos(Array.isArray(dadosServicos) ? dadosServicos : [])
         setProfissionais(Array.isArray(dadosProfissionais) ? dadosProfissionais : [])
+        setRelacionamento(dadosRelacionamento?.statusCode ? null : dadosRelacionamento)
     }, [dataOperacao, fimRelatorio, httpGet, inicioRelatorio])
 
     useEffect(() => {
@@ -171,6 +193,7 @@ export default function PainelGestaoOperacional() {
             nome: cliente.nome,
             email: cliente.email,
             telefone: cliente.telefone,
+            dataNascimento: cliente.dataNascimento || undefined,
             ...(cliente.senha ? { senha: cliente.senha } : {}),
         }
         const resposta = cliente.id
@@ -211,6 +234,28 @@ export default function PainelGestaoOperacional() {
         setMensagem('Lançamento excluído.')
     }
 
+    async function salvarLembrete() {
+        setMensagem('')
+        const payload = {
+            ...lembrete,
+            usuarioId: lembrete.usuarioId ? Number(lembrete.usuarioId) : undefined,
+            dataPrevista: new Date(lembrete.dataPrevista).toISOString(),
+        }
+        const resposta = await httpPost('/gestao/relacionamento/lembretes', payload)
+        if (resposta?.statusCode) return setMensagem(resposta.message)
+        setLembrete(lembreteVazio)
+        await carregar()
+        setMensagem('Lembrete criado.')
+    }
+
+    async function alterarStatusLembrete(id: number, status: string) {
+        setMensagem('')
+        const resposta = await httpPut(`/gestao/relacionamento/lembretes/${id}/status`, { status })
+        if (resposta?.statusCode) return setMensagem(resposta.message)
+        await carregar()
+        setMensagem('Lembrete atualizado.')
+    }
+
     return (
         <div className="flex flex-col gap-6">
             <div className="flex flex-wrap gap-2">
@@ -220,6 +265,7 @@ export default function PainelGestaoOperacional() {
                     ['clientes', 'Clientes'],
                     ['financeiro', 'Caixa'],
                     ['relatorios', 'Relatórios'],
+                    ['relacionamento', 'Relacionamento'],
                     ['servicos', 'Serviços'],
                     ['profissionais', 'Profissionais'],
                 ] as [Aba, string][]).map(([id, label]) => (
@@ -275,6 +321,17 @@ export default function PainelGestaoOperacional() {
                     fim={fimRelatorio}
                     onInicio={setInicioRelatorio}
                     onFim={setFimRelatorio}
+                />
+            )}
+
+            {aba === 'relacionamento' && (
+                <PainelRelacionamento
+                    dados={relacionamento}
+                    clientes={clientes}
+                    lembrete={lembrete}
+                    onChange={setLembrete}
+                    onSalvar={salvarLembrete}
+                    onStatus={alterarStatusLembrete}
                 />
             )}
 
@@ -364,6 +421,7 @@ function PainelClientes(props: any) {
                 <Campo label="Nome" value={props.cliente.nome} onChange={(nome) => props.onChange({ ...props.cliente, nome })} />
                 <Campo label="E-mail" value={props.cliente.email} onChange={(email) => props.onChange({ ...props.cliente, email })} />
                 <Campo label="Telefone" value={props.cliente.telefone} onChange={(telefone) => props.onChange({ ...props.cliente, telefone })} />
+                <Campo label="Nascimento" type="date" value={props.cliente.dataNascimento} onChange={(dataNascimento) => props.onChange({ ...props.cliente, dataNascimento })} />
                 <Campo label={props.cliente.id ? 'Nova senha' : 'Senha'} type="password" value={props.cliente.senha} onChange={(senha) => props.onChange({ ...props.cliente, senha })} />
             </FormularioBase>
             <div className="grid gap-3">
@@ -405,6 +463,192 @@ function PainelClientes(props: any) {
                 </div>
             </div>
         </section>
+    )
+}
+
+function PainelRelacionamento(props: any) {
+    const metricas = props.dados?.metricas ?? {}
+    return (
+        <section className="flex flex-col gap-6">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                <Resumo titulo="Clientes" valor={metricas.totalClientes ?? 0} />
+                <Resumo titulo="Atendidos" valor={metricas.clientesAtendidos ?? 0} />
+                <Resumo titulo="Recorrentes" valor={metricas.clientesRecorrentes ?? 0} />
+                <Resumo titulo="Sem retorno" valor={metricas.clientesSemRetorno ?? 0} />
+                <Resumo titulo="Taxa retorno" valor={`${metricas.taxaRetorno ?? 0}%`} />
+            </div>
+
+            <section className="grid gap-6 xl:grid-cols-[360px_1fr]">
+                <FormularioBase titulo="Novo lembrete" onSubmit={props.onSalvar} onNovo={() => props.onChange(lembreteVazio)}>
+                    <label className="flex flex-col gap-2 text-sm text-zinc-400">
+                        Tipo
+                        <select
+                            value={props.lembrete.tipo}
+                            onChange={(e) => props.onChange({ ...props.lembrete, tipo: e.target.value })}
+                            className="input"
+                        >
+                            <option value="RETORNO">Retorno</option>
+                            <option value="CONFIRMACAO">Confirmação</option>
+                            <option value="ANIVERSARIO">Aniversário</option>
+                            <option value="FIDELIDADE">Fidelidade</option>
+                            <option value="CAMPANHA">Campanha</option>
+                        </select>
+                    </label>
+                    <label className="flex flex-col gap-2 text-sm text-zinc-400">
+                        Cliente
+                        <select
+                            value={props.lembrete.usuarioId}
+                            onChange={(e) => props.onChange({ ...props.lembrete, usuarioId: e.target.value })}
+                            className="input"
+                        >
+                            <option value="">Sem cliente específico</option>
+                            {props.clientes.map((cliente: any) => (
+                                <option key={cliente.id} value={cliente.id}>
+                                    {cliente.nome}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
+                    <label className="flex flex-col gap-2 text-sm text-zinc-400">
+                        Canal
+                        <select
+                            value={props.lembrete.canal}
+                            onChange={(e) => props.onChange({ ...props.lembrete, canal: e.target.value })}
+                            className="input"
+                        >
+                            <option value="WHATSAPP">WhatsApp</option>
+                            <option value="EMAIL">E-mail</option>
+                            <option value="TELEFONE">Telefone</option>
+                        </select>
+                    </label>
+                    <Campo label="Quando" type="datetime-local" value={props.lembrete.dataPrevista} onChange={(dataPrevista) => props.onChange({ ...props.lembrete, dataPrevista })} />
+                    <Campo label="Mensagem" value={props.lembrete.mensagem} onChange={(mensagem) => props.onChange({ ...props.lembrete, mensagem })} />
+                </FormularioBase>
+
+                <div className="grid gap-6">
+                    <ListaSugestoes itens={props.dados?.sugestoes ?? []} />
+                    <ListaConfirmacoes itens={props.dados?.confirmacoesPendentes ?? []} />
+                    <ListaLembretes itens={props.dados?.lembretes ?? []} onStatus={props.onStatus} />
+                </div>
+            </section>
+
+            <section className="grid gap-6 lg:grid-cols-2">
+                <ListaAniversariantes itens={props.dados?.aniversariantes ?? []} />
+                <ListaClientesSemRetorno itens={props.dados?.clientesSemRetorno ?? []} />
+            </section>
+        </section>
+    )
+}
+
+function ListaSugestoes(props: { itens: any[] }) {
+    return (
+        <div className="rounded border border-zinc-800 bg-zinc-950 p-5">
+            <h2 className="text-xl font-bold text-zinc-100">Sugestões</h2>
+            <div className="mt-4 grid gap-3">
+                {props.itens.map((item) => (
+                    <div key={item.tipo} className="rounded border border-zinc-800 p-3">
+                        <p className="font-semibold text-zinc-100">{item.titulo}</p>
+                        <p className="text-sm text-zinc-400">{item.descricao}</p>
+                    </div>
+                ))}
+            </div>
+        </div>
+    )
+}
+
+function ListaConfirmacoes(props: { itens: any[] }) {
+    return (
+        <div className="rounded border border-zinc-800 bg-zinc-950 p-5">
+            <h2 className="text-xl font-bold text-zinc-100">Confirmações próximas</h2>
+            <div className="mt-4 grid gap-3">
+                {props.itens.map((item) => (
+                    <div key={item.id} className="rounded border border-zinc-800 p-3">
+                        <p className="font-semibold text-zinc-100">
+                            {dataHora(item.data)} | {item.usuario?.nome}
+                        </p>
+                        <p className="text-sm text-zinc-400">
+                            {item.profissional?.nome} | {item.servicos?.map((s: any) => s.nome).join(', ')}
+                        </p>
+                    </div>
+                ))}
+                {props.itens.length === 0 && <Vazio texto="Sem confirmações pendentes nas próximas 48 horas." />}
+            </div>
+        </div>
+    )
+}
+
+function ListaLembretes(props: { itens: any[]; onStatus: (id: number, status: string) => void }) {
+    return (
+        <div className="rounded border border-zinc-800 bg-zinc-950 p-5">
+            <h2 className="text-xl font-bold text-zinc-100">Lembretes</h2>
+            <div className="mt-4 grid gap-3">
+                {props.itens.map((item) => (
+                    <div key={item.id} className="rounded border border-zinc-800 p-3">
+                        <p className="font-semibold text-zinc-100">
+                            {item.tipo} | {item.usuario?.nome ?? 'Geral'}
+                        </p>
+                        <p className="text-sm text-zinc-400">{item.mensagem}</p>
+                        <p className="text-sm text-zinc-500">
+                            {item.canal} | {dataHora(item.dataPrevista)} | {item.status}
+                        </p>
+                        <div className="mt-3 flex gap-2">
+                            <button type="button" onClick={() => props.onStatus(item.id, 'ENVIADO')} className="rounded bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-300">
+                                Enviado
+                            </button>
+                            <button type="button" onClick={() => props.onStatus(item.id, 'CANCELADO')} className="rounded bg-red-500/15 px-3 py-2 text-sm font-semibold text-red-300">
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                ))}
+                {props.itens.length === 0 && <Vazio texto="Nenhum lembrete pendente." />}
+            </div>
+        </div>
+    )
+}
+
+function ListaAniversariantes(props: { itens: any[] }) {
+    return (
+        <ListaSimples
+            titulo="Aniversariantes"
+            vazio="Nenhum aniversário nos próximos 30 dias."
+            itens={props.itens}
+            detalhe={(item) => `${data(item.proximoAniversario)} | faltam ${item.diasAteAniversario} dia(s)`}
+        />
+    )
+}
+
+function ListaClientesSemRetorno(props: { itens: any[] }) {
+    return (
+        <ListaSimples
+            titulo="Clientes sem retorno"
+            vazio="Nenhum cliente acima do limite de retorno."
+            itens={props.itens}
+            detalhe={(item) => `Último atendimento em ${data(item.ultimoAtendimento)} | ${item.diasSemRetorno} dia(s)`}
+        />
+    )
+}
+
+function ListaSimples(props: {
+    titulo: string
+    vazio: string
+    itens: any[]
+    detalhe: (item: any) => string
+}) {
+    return (
+        <div className="rounded border border-zinc-800 bg-zinc-950 p-5">
+            <h2 className="text-xl font-bold text-zinc-100">{props.titulo}</h2>
+            <div className="mt-4 grid gap-3">
+                {props.itens.map((item) => (
+                    <div key={item.id} className="rounded border border-zinc-800 p-3">
+                        <p className="font-semibold text-zinc-100">{item.nome}</p>
+                        <p className="text-sm text-zinc-400">{props.detalhe(item)}</p>
+                        {item.telefone && <p className="text-sm text-zinc-500">{item.telefone}</p>}
+                    </div>
+                ))}
+                {props.itens.length === 0 && <Vazio texto={props.vazio} />}
+            </div>
+        </div>
     )
 }
 
@@ -666,5 +910,13 @@ function dataHora(valor: string) {
         month: '2-digit',
         hour: '2-digit',
         minute: '2-digit',
+    })
+}
+
+function data(valor: string) {
+    return new Date(valor).toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
     })
 }
