@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
 
+const TIME_ZONE_PADRAO = 'America/Sao_Paulo';
+
 @Injectable()
 export class PublicoPrisma {
   constructor(private readonly prisma: PrismaService) {}
@@ -203,9 +205,9 @@ export class PublicoPrisma {
   }
 
   private statusOperacional(horarios: any[]) {
-    const agora = new Date();
-    const diaSemana = agora.getDay();
-    const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
+    const agora = this.obterAgoraLocal();
+    const diaSemana = agora.diaSemana;
+    const minutosAgora = agora.minutos;
     const horarioHoje = horarios.find((horario) => horario.diaSemana === diaSemana);
 
     if (!horarioHoje) {
@@ -236,6 +238,28 @@ export class PublicoPrisma {
     }
 
     return { status: 'FECHADA', label: 'Fechada agora' };
+  }
+
+  private obterAgoraLocal() {
+    const partes = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: TIME_ZONE_PADRAO,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(new Date());
+
+    const valor = (tipo: string) => partes.find((parte) => parte.type === tipo)?.value ?? '00';
+    const ano = Number(valor('year'));
+    const mes = Number(valor('month'));
+    const dia = Number(valor('day'));
+
+    return {
+      diaSemana: new Date(ano, mes - 1, dia).getDay(),
+      minutos: Number(valor('hour')) * 60 + Number(valor('minute')),
+    };
   }
 
   private minutos(horario: string) {

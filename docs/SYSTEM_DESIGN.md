@@ -99,6 +99,13 @@ Regras:
 - Servicos, profissionais, agendamentos, clientes e financeiro devem sempre filtrar por `barbeariaId`.
 - Nova barbearia criada pelo onboarding deve nascer sem servicos/profissionais copiados da barbearia padrao.
 
+## Horarios E Fuso
+
+- Status publico de funcionamento deve calcular "agora" com fuso explicito `America/Sao_Paulo`.
+- Nao usar `new Date().getHours()` diretamente para decidir `ABERTA` ou `FECHADA`; container ou host podem estar em UTC.
+- O filtro `abertaAgora=true` de `GET /public/barbearias` depende desse mesmo calculo.
+- Horarios de agenda e horarios publicos precisam comparar dia da semana e minutos do dia no mesmo fuso.
+
 ## Papeis E Acesso
 
 Estado atual:
