@@ -40,6 +40,7 @@ export default function useFormAuth() {
 
     async function login() {
         const token = await httpPost('auth/login', { email, senha })
+        if (typeof token !== 'string' || !token) return
         iniciarSessao(token)
     }
 

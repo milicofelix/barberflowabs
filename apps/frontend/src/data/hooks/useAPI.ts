@@ -14,13 +14,17 @@ export default function useAPI() {
             const uri = caminho.startsWith('/') ? caminho : `/${caminho}`
             const urlCompleta = `${URL_BASE}${uri}`
 
-            const resposta = await fetch(urlCompleta, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'x-barbearia-slug': BARBEARIA_SLUG,
-                },
-            })
-            return extrairDados(resposta)
+            try {
+                const resposta = await fetch(urlCompleta, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'x-barbearia-slug': BARBEARIA_SLUG,
+                    },
+                })
+                return extrairDados(resposta)
+            } catch (e) {
+                return erroConexao(urlCompleta)
+            }
         },
         [token]
     )
@@ -30,16 +34,20 @@ export default function useAPI() {
             const uri = caminho.startsWith('/') ? caminho : `/${caminho}`
             const urlCompleta = `${URL_BASE}${uri}`
 
-            const resposta = await fetch(urlCompleta, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                    'x-barbearia-slug': BARBEARIA_SLUG,
-                },
-                body: JSON.stringify(body),
-            })
-            return extrairDados(resposta)
+            try {
+                const resposta = await fetch(urlCompleta, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                        'x-barbearia-slug': BARBEARIA_SLUG,
+                    },
+                    body: JSON.stringify(body),
+                })
+                return extrairDados(resposta)
+            } catch (e) {
+                return erroConexao(urlCompleta)
+            }
         },
         [token]
     )
@@ -49,16 +57,20 @@ export default function useAPI() {
             const uri = caminho.startsWith('/') ? caminho : `/${caminho}`
             const urlCompleta = `${URL_BASE}${uri}`
 
-            const resposta = await fetch(urlCompleta, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                    'x-barbearia-slug': BARBEARIA_SLUG,
-                },
-                body: JSON.stringify(body),
-            })
-            return extrairDados(resposta)
+            try {
+                const resposta = await fetch(urlCompleta, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                        'x-barbearia-slug': BARBEARIA_SLUG,
+                    },
+                    body: JSON.stringify(body),
+                })
+                return extrairDados(resposta)
+            } catch (e) {
+                return erroConexao(urlCompleta)
+            }
         },
         [token]
     )
@@ -68,14 +80,18 @@ export default function useAPI() {
             const uri = caminho.startsWith('/') ? caminho : `/${caminho}`
             const urlCompleta = `${URL_BASE}${uri}`
 
-            const resposta = await fetch(urlCompleta, {
-                method: 'DELETE',
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'x-barbearia-slug': BARBEARIA_SLUG,
-                },
-            })
-            return extrairDados(resposta)
+            try {
+                const resposta = await fetch(urlCompleta, {
+                    method: 'DELETE',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'x-barbearia-slug': BARBEARIA_SLUG,
+                    },
+                })
+                return extrairDados(resposta)
+            } catch (e) {
+                return erroConexao(urlCompleta)
+            }
         },
         [token]
     )
@@ -87,6 +103,13 @@ export default function useAPI() {
             return JSON.parse(conteudo)
         } catch (e) {
             return conteudo
+        }
+    }
+
+    function erroConexao(url: string) {
+        return {
+            statusCode: 0,
+            message: `Não foi possível conectar à API em ${url}`,
         }
     }
 

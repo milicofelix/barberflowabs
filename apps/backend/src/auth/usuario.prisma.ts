@@ -21,7 +21,7 @@ export class UsuarioPrisma implements RepositorioUsuario {
   }
 
   async buscarPorEmail(email: string): Promise<Usuario | null> {
-    return this.prisma.usuario.findUnique({
+    const usuario = await this.prisma.usuario.findUnique({
       where: { email },
       select: {
         id: true,
@@ -34,5 +34,20 @@ export class UsuarioPrisma implements RepositorioUsuario {
         papel: true,
       },
     });
+
+    if (!usuario) return null;
+
+    return {
+      ...usuario,
+      papel: this.normalizarPapel(usuario.papel, usuario.barbeiro),
+    };
+  }
+
+  private normalizarPapel(papel: string | null | undefined, barbeiro: boolean): Usuario['papel'] {
+    if (papel === 'SUPER_ADMIN' || papel === 'BARBER' || papel === 'CUSTOMER') {
+      return papel;
+    }
+
+    return barbeiro ? 'BARBER' : 'CUSTOMER';
   }
 }
