@@ -31,6 +31,7 @@ export class UsuarioPrisma implements RepositorioUsuario {
         senha: true,
         telefone: true,
         barbeiro: true,
+        papel: true,
       },
     });
   }

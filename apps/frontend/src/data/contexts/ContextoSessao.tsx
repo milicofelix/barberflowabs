@@ -4,6 +4,8 @@ import { createContext, useCallback, useEffect, useState } from 'react'
 import cookie from 'js-cookie'
 import { jwtDecode } from 'jwt-decode'
 
+const URL_BASE = process.env.NEXT_PUBLIC_API_URL
+
 interface Sessao {
     token: string | null
     usuario: Usuario | null
@@ -26,10 +28,18 @@ export function ProvedorSessao(props: any) {
     const [carregando, setCarregando] = useState(true)
     const [sessao, setSessao] = useState<Sessao>({ token: null, usuario: null })
 
-    const carregarSessao = useCallback(function () {
+    const carregarSessao = useCallback(async function () {
         try {
             setCarregando(true)
             const sessao = obterSessao()
+            const tokenAtualizado = sessao.token ? await renovarToken(sessao.token) : null
+
+            if (tokenAtualizado) {
+                cookie.set(nomeCookie, tokenAtualizado, { expires: 1 })
+                setSessao(obterSessao(tokenAtualizado))
+                return
+            }
+
             setSessao(sessao)
         } finally {
             setCarregando(false)
@@ -42,7 +52,7 @@ export function ProvedorSessao(props: any) {
 
     function iniciarSessao(token: string) {
         cookie.set(nomeCookie, token, { expires: 1 })
-        const sessao = obterSessao()
+        const sessao = obterSessao(token)
         setSessao(sessao)
     }
 
@@ -51,8 +61,8 @@ export function ProvedorSessao(props: any) {
         setSessao({ token: null, usuario: null })
     }
 
-    function obterSessao(): Sessao {
-        const token = cookie.get(nomeCookie)
+    function obterSessao(tokenRecebido?: string): Sessao {
+        const token = tokenRecebido ?? cookie.get(nomeCookie)
 
         if (!token) {
             return { token: null, usuario: null }
@@ -81,6 +91,22 @@ export function ProvedorSessao(props: any) {
             }
         } catch (e) {
             return { token: null, usuario: null }
+        }
+    }
+
+    async function renovarToken(token: string) {
+        if (!URL_BASE) return null
+
+        try {
+            const resposta = await fetch(`${URL_BASE}/auth/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token }),
+            })
+            const texto = await resposta.text()
+            return resposta.ok && texto ? texto : null
+        } catch (e) {
+            return null
         }
     }
 

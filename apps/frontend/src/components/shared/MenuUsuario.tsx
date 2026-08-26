@@ -20,6 +20,7 @@ import Link from 'next/link'
 
 export default function MenuUsuario() {
     const { usuario, encerrarSessao } = useSessao()
+    const superAdmin = usuario?.role === 'SUPER_ADMIN' || usuario?.papel === 'SUPER_ADMIN'
 
     return usuario ? (
         <DropdownMenu>
@@ -63,7 +64,7 @@ export default function MenuUsuario() {
                         </Link>
                     </DropdownMenuItem>
                 )}
-                {(usuario.barbeiro || usuario.role === 'SUPER_ADMIN') && (
+                {(usuario.barbeiro || superAdmin) && (
                     <DropdownMenuItem>
                         <Link href="/billing" className="flex gap-2">
                             <IconCreditCard size={18} />
@@ -71,7 +72,7 @@ export default function MenuUsuario() {
                         </Link>
                     </DropdownMenuItem>
                 )}
-                {usuario.role === 'SUPER_ADMIN' && (
+                {superAdmin && (
                     <DropdownMenuItem>
                         <Link href="/admin" className="flex gap-2">
                             <IconShieldLock size={18} />

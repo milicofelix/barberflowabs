@@ -389,6 +389,12 @@ Melhorias futuras:
 - Integrar checkout, webhooks e status de assinatura com gateway real.
 - Criar telas de upgrade contextual quando um limite for atingido.
 
+## Proximas Fases
+
+O detalhamento do dono do app, aprovacao de barbearias e marketplace publico com mapa esta em:
+
+- `docs/ROADMAP_ADMIN_MARKETPLACE.md`
+
 ## Checklist De Validacao Manual
 
 Use este checklist apos cada fase importante.

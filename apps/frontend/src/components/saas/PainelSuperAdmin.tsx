@@ -12,19 +12,35 @@ export default function PainelSuperAdmin() {
     const [barbearias, setBarbearias] = useState<any[]>([])
     const [auditoria, setAuditoria] = useState<any[]>([])
     const [mensagem, setMensagem] = useState('')
+    const [carregando, setCarregando] = useState(true)
+    const [acessoNegado, setAcessoNegado] = useState(false)
+    const [diagnostico, setDiagnostico] = useState<any>(null)
 
     const carregar = useCallback(async function carregar() {
-        const [dadosBarbearias, dadosAuditoria] = await Promise.all([
+        setCarregando(true)
+        setAcessoNegado(false)
+        const [dadosMe, dadosBarbearias, dadosAuditoria] = await Promise.all([
+            httpGet('/saas/admin/me'),
             httpGet('/saas/admin/barbearias'),
             httpGet('/saas/admin/auditoria'),
         ])
+        const negado = dadosBarbearias?.statusCode === 403 || dadosAuditoria?.statusCode === 403
+        setDiagnostico(dadosMe?.statusCode ? null : dadosMe)
+        setAcessoNegado(negado)
         setBarbearias(Array.isArray(dadosBarbearias) ? dadosBarbearias : [])
         setAuditoria(Array.isArray(dadosAuditoria) ? dadosAuditoria : [])
+        setCarregando(false)
     }, [httpGet])
 
     useEffect(() => {
-        if (usuario?.role === 'SUPER_ADMIN') carregar()
-    }, [carregar, usuario?.role])
+        if (usuario) {
+            carregar()
+            return
+        }
+
+        setCarregando(false)
+        setAcessoNegado(true)
+    }, [carregar, usuario])
 
     async function alterarStatus(id: number, novoStatus: string) {
         setMensagem('')
@@ -34,8 +50,12 @@ export default function PainelSuperAdmin() {
         setMensagem('Status atualizado.')
     }
 
-    if (usuario?.role !== 'SUPER_ADMIN') {
-        return <p className="rounded border border-zinc-800 bg-zinc-950 p-5 text-zinc-300">Acesso restrito.</p>
+    if (carregando) {
+        return <p className="rounded border border-zinc-800 bg-zinc-950 p-5 text-zinc-300">Carregando admin SaaS...</p>
+    }
+
+    if (acessoNegado || !usuario) {
+        return <DiagnosticoAcesso diagnostico={diagnostico} />
     }
 
     return (
@@ -90,6 +110,35 @@ export default function PainelSuperAdmin() {
             {mensagem && <p className="text-sm text-zinc-300">{mensagem}</p>}
         </div>
     )
+}
+
+function DiagnosticoAcesso({ diagnostico }: { diagnostico: any }) {
+    return (
+        <div className="rounded border border-zinc-800 bg-zinc-950 p-5 text-zinc-300">
+            <h2 className="text-xl font-bold text-zinc-100">Acesso restrito</h2>
+            <div className="mt-4 grid gap-2 text-sm">
+                <LinhaDiagnostico label="E-mail" valor={diagnostico?.email ?? '-'} />
+                <LinhaDiagnostico label="Role no token" valor={diagnostico?.role ?? '-'} />
+                <LinhaDiagnostico label="Papel no banco" valor={diagnostico?.papel ?? '-'} />
+                <LinhaDiagnostico label="Super admin por banco" valor={simNao(diagnostico?.superAdminPorBanco)} />
+                <LinhaDiagnostico label="Super admin por env" valor={simNao(diagnostico?.superAdminPorEnv)} />
+                <LinhaDiagnostico label="Env configurado" valor={simNao(diagnostico?.superAdminEmailsConfigurado)} />
+            </div>
+        </div>
+    )
+}
+
+function LinhaDiagnostico(props: { label: string; valor: string }) {
+    return (
+        <p className="flex flex-wrap justify-between gap-3 border-b border-zinc-800 pb-2">
+            <span className="text-zinc-500">{props.label}</span>
+            <strong className="text-zinc-200">{props.valor}</strong>
+        </p>
+    )
+}
+
+function simNao(valor: boolean) {
+    return valor ? 'sim' : 'não'
 }
 
 function UsoLimite(props: { label: string; dados: any; chave: 'profissionais' | 'unidades' | 'servicos' }) {

@@ -68,6 +68,26 @@ export class SaasController {
     return this.repo.listarBarbeariasAdmin();
   }
 
+  @Get('admin/me')
+  diagnosticoAdmin(@UsuarioLogado() usuario: Usuario) {
+    const emailsSuperAdmin = this.emailsSuperAdmin();
+    const emailNormalizado = usuario?.email?.trim().toLowerCase();
+
+    return {
+      id: usuario?.id,
+      nome: usuario?.nome,
+      email: usuario?.email,
+      barbeiro: usuario?.barbeiro ?? false,
+      papel: usuario?.papel,
+      role: usuario?.role,
+      superAdminPorBanco:
+        usuario?.papel === 'SUPER_ADMIN' || usuario?.role === 'SUPER_ADMIN',
+      superAdminPorEnv: !!emailNormalizado && emailsSuperAdmin.includes(emailNormalizado),
+      superAdmin: this.ehSuperAdmin(usuario),
+      superAdminEmailsConfigurado: emailsSuperAdmin.length > 0,
+    };
+  }
+
   @Put('admin/barbearias/:id/status')
   atualizarStatusBarbearia(
     @Param('id') id: string,
@@ -103,14 +123,31 @@ export class SaasController {
   }
 
   private validarBarbeiro(usuario: Usuario) {
-    if (!usuario?.barbeiro && usuario?.role !== 'SUPER_ADMIN') {
+    if (!usuario?.barbeiro && !this.ehSuperAdmin(usuario)) {
       throw new ForbiddenException('Apenas responsáveis pela barbearia podem acessar billing');
     }
   }
 
   private validarSuperAdmin(usuario: Usuario) {
-    if (usuario?.role !== 'SUPER_ADMIN' && usuario?.papel !== 'SUPER_ADMIN') {
+    if (!this.ehSuperAdmin(usuario)) {
       throw new ForbiddenException('Apenas super administradores podem acessar esta área');
     }
+  }
+
+  private ehSuperAdmin(usuario: Usuario) {
+    const emailNormalizado = usuario?.email?.trim().toLowerCase();
+
+    return (
+      usuario?.role === 'SUPER_ADMIN' ||
+      usuario?.papel === 'SUPER_ADMIN' ||
+      (!!emailNormalizado && this.emailsSuperAdmin().includes(emailNormalizado))
+    );
+  }
+
+  private emailsSuperAdmin() {
+    return (process.env.SUPER_ADMIN_EMAILS ?? '')
+      .split(',')
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean);
   }
 }

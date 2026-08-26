@@ -6,8 +6,9 @@ import useSessao from '@/data/hooks/useSessao'
 
 export default function Page() {
     const { usuario } = useSessao()
+    const superAdmin = usuario?.role === 'SUPER_ADMIN' || usuario?.papel === 'SUPER_ADMIN'
 
-    if (!usuario?.barbeiro && usuario?.role !== 'SUPER_ADMIN') {
+    if (!usuario?.barbeiro && !superAdmin) {
         return (
             <div className="flex flex-col gap-5">
                 <CabecalhoComTitulo

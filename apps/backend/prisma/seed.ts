@@ -3,6 +3,10 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 const BARBEARIA_PADRAO_ID = 1;
+const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS ?? 'marcao@barberflowabs.app')
+  .split(',')
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
 
 async function seed() {
   await prisma.barbearia.upsert({
@@ -83,6 +87,7 @@ async function seed() {
       senha,
       telefone: '(11) 99999-9999',
       barbeiro: true,
+      papel: 'SUPER_ADMIN',
     },
     {
       nome: 'Leonardo Leitão',
@@ -91,10 +96,19 @@ async function seed() {
       senha,
       telefone: '(11) 99999-9999',
       barbeiro: false,
+      papel: 'CUSTOMER',
     },
   ];
 
   await prisma.usuario.createMany({ data: usuarios as any, skipDuplicates: true });
+
+  await prisma.usuario.updateMany({
+    where: { email: { in: SUPER_ADMIN_EMAILS } },
+    data: {
+      barbeiro: true,
+      papel: 'SUPER_ADMIN',
+    },
+  });
 }
 
 seed();
