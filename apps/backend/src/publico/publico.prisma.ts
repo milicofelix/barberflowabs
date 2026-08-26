@@ -6,7 +6,7 @@ export class PublicoPrisma {
   constructor(private readonly prisma: PrismaService) {}
 
   async buscarBarbeariaPorSlug(slug: string) {
-    const barbearia = await this.prisma.barbearia.findFirst({
+    const barbearia: any = await this.prisma.barbearia.findFirst({
       where: {
         slug,
         reviewStatus: 'APPROVED',
@@ -69,14 +69,14 @@ export class PublicoPrisma {
       },
       aceitaAgendamentoOnline: barbearia.aceitaAgendamentoOnline,
       destaque: barbearia.destaque,
-      statusOperacional: this.statusOperacional(barbearia.horariosFuncionamento),
-      servicos: barbearia.servicos.map((servico: any) => ({
+      statusOperacional: this.statusOperacional(barbearia.horariosFuncionamento ?? []),
+      servicos: (barbearia.servicos ?? []).map((servico: any) => ({
         ...servico,
         preco: Number(servico.preco),
         duracaoMinutos: servico.qtdeSlots * 15,
       })),
-      profissionais: barbearia.profissionais,
-      horariosFuncionamento: barbearia.horariosFuncionamento,
+      profissionais: barbearia.profissionais ?? [],
+      horariosFuncionamento: barbearia.horariosFuncionamento ?? [],
     };
   }
 
