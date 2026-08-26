@@ -7,7 +7,18 @@ const URL_BASE = process.env.NEXT_PUBLIC_API_URL
 const BARBEARIA_SLUG = process.env.NEXT_PUBLIC_BARBEARIA_SLUG ?? 'barber-flow-abs'
 
 export default function useAPI() {
-    const { token } = useSessao()
+    const { token, usuario } = useSessao()
+
+    const headersTenant = useCallback(
+        function headersTenant() {
+            return {
+                Authorization: `Bearer ${token}`,
+                'x-barbearia-slug': BARBEARIA_SLUG,
+                ...(usuario?.barbeariaId ? { 'x-barbearia-id': String(usuario.barbeariaId) } : {}),
+            }
+        },
+        [token, usuario?.barbeariaId]
+    )
 
     const httpGet = useCallback(
         async function (caminho: string) {
@@ -16,17 +27,14 @@ export default function useAPI() {
 
             try {
                 const resposta = await fetch(urlCompleta, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'x-barbearia-slug': BARBEARIA_SLUG,
-                    },
+                    headers: headersTenant(),
                 })
                 return extrairDados(resposta)
             } catch (e) {
                 return erroConexao(urlCompleta)
             }
         },
-        [token]
+        [headersTenant]
     )
 
     const httpPost = useCallback(
@@ -39,8 +47,7 @@ export default function useAPI() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`,
-                        'x-barbearia-slug': BARBEARIA_SLUG,
+                        ...headersTenant(),
                     },
                     body: JSON.stringify(body),
                 })
@@ -49,7 +56,7 @@ export default function useAPI() {
                 return erroConexao(urlCompleta)
             }
         },
-        [token]
+        [headersTenant]
     )
 
     const httpPut = useCallback(
@@ -62,8 +69,7 @@ export default function useAPI() {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`,
-                        'x-barbearia-slug': BARBEARIA_SLUG,
+                        ...headersTenant(),
                     },
                     body: JSON.stringify(body),
                 })
@@ -72,7 +78,7 @@ export default function useAPI() {
                 return erroConexao(urlCompleta)
             }
         },
-        [token]
+        [headersTenant]
     )
 
     const httpDelete = useCallback(
@@ -83,17 +89,14 @@ export default function useAPI() {
             try {
                 const resposta = await fetch(urlCompleta, {
                     method: 'DELETE',
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        'x-barbearia-slug': BARBEARIA_SLUG,
-                    },
+                    headers: headersTenant(),
                 })
                 return extrairDados(resposta)
             } catch (e) {
                 return erroConexao(urlCompleta)
             }
         },
-        [token]
+        [headersTenant]
     )
 
     async function extrairDados(resposta: Response) {

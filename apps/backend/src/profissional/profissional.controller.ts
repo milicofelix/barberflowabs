@@ -16,8 +16,8 @@ export class ProfissionalController {
   ) {}
 
   @Get()
-  async obterProfissionais(@Req() req: any) {
-    const barbeariaId = await this.tenant.resolverBarbeariaId(req);
+  async obterProfissionais(@Req() req: any, @UsuarioLogado() usuario?: Usuario) {
+    const barbeariaId = usuario?.barbeariaId ?? (await this.tenant.resolverBarbeariaId(req));
     return this.repo.buscarTodos(barbeariaId);
   }
 

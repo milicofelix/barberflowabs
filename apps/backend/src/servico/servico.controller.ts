@@ -16,8 +16,8 @@ export class ServicoController {
   ) {}
 
   @Get()
-  async obterServicos(@Req() req: any) {
-    const barbeariaId = await this.tenant.resolverBarbeariaId(req);
+  async obterServicos(@Req() req: any, @UsuarioLogado() usuario?: Usuario) {
+    const barbeariaId = usuario?.barbeariaId ?? (await this.tenant.resolverBarbeariaId(req));
     return this.repo.buscarTodos(barbeariaId);
   }
 

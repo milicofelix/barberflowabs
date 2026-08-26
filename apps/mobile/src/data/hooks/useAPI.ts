@@ -5,21 +5,29 @@ const URL_BASE = process.env.API_URL
 const BARBEARIA_SLUG = process.env.BARBEARIA_SLUG ?? 'barber-flow-abs'
 
 export default function useAPI() {
-    const { token } = useSessao()
+    const { token, usuario } = useSessao()
+
+    const headersTenant = useCallback(
+        function headersTenant() {
+            return {
+                Authorization: `Bearer ${token}`,
+                'x-barbearia-slug': BARBEARIA_SLUG,
+                ...(usuario?.barbeariaId ? { 'x-barbearia-id': String(usuario.barbeariaId) } : {}),
+            }
+        },
+        [token, usuario?.barbeariaId]
+    )
 
     const httpGet = useCallback(
         async function (caminho: string) {
             const uri = caminho.startsWith('/') ? caminho : `/${caminho}`
             const urlCompleta = `${URL_BASE}${uri}`
             const resposta = await fetch(urlCompleta, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'x-barbearia-slug': BARBEARIA_SLUG,
-                },
+                headers: headersTenant(),
             })
             return extrairDados(resposta)
         },
-        [token]
+        [headersTenant]
     )
 
     const httpPost = useCallback(
@@ -32,8 +40,7 @@ export default function useAPI() {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`,
-                        'x-barbearia-slug': BARBEARIA_SLUG,
+                        ...headersTenant(),
                     },
                     body: JSON.stringify(body),
                 })
@@ -43,7 +50,7 @@ export default function useAPI() {
                 return null
             }
         },
-        [token]
+        [headersTenant]
     )
 
     async function extrairDados(resposta: Response) {

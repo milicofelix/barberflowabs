@@ -72,6 +72,8 @@ Checklist:
   - `PUT /saas/admin/barbearias/:id/reprovar`
 - [x] Registrar auditoria em cada decisao.
 - [x] Atualizar painel admin com fila de aprovacao.
+- [x] Garantir que barbearias novas iniciem sem servicos/profissionais demo.
+- [x] Priorizar `barbeariaId` da sessao nas chamadas logadas de servicos/profissionais.
 - [ ] Bloquear barbearias nao aprovadas da busca publica quando os endpoints publicos forem criados.
 
 Validacao manual:
