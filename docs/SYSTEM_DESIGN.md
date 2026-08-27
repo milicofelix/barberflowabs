@@ -96,6 +96,7 @@ Regras:
 
 - Rotas autenticadas de barbeiro/dono devem priorizar `usuario.barbeariaId`.
 - Rotas autenticadas de cliente, como agendamento e historico do cliente, devem resolver a barbearia pelo tenant publico selecionado (`x-barbearia-slug`).
+- Cliente logado sem barbearia selecionada deve ser conduzido ao marketplace publico antes de abrir formulario de agendamento.
 - `x-barbearia-id` so deve ser enviado pelo frontend para usuarios operacionais da barbearia; cliente usa slug publico selecionado.
 - `x-barbearia-slug` e `x-barbearia-id` ajudam na resolucao inicial, mas nao devem permitir que barbeiro/dono acesse dados de outra barbearia quando esta logado.
 - Servicos, profissionais, agendamentos, clientes e financeiro devem sempre filtrar por `barbeariaId`.

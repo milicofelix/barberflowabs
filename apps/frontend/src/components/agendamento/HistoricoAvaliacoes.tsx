@@ -32,14 +32,14 @@ export default function HistoricoAvaliacoes() {
     return (
         <section className="mt-10 grid gap-4">
             <div>
-                <h2 className="text-2xl font-black text-zinc-100">Meus atendimentos</h2>
-                <p className="mt-1 text-sm text-zinc-400">Avalie atendimentos concluídos e acompanhe seus próximos horários.</p>
+                <h2 className="text-2xl font-black text-zinc-100">Meus horários</h2>
+                <p className="mt-1 text-sm text-zinc-400">Acompanhe seus agendamentos e avalie serviços já concluídos.</p>
             </div>
 
-            {carregando && <p className="rounded border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-400">Carregando atendimentos...</p>}
+            {carregando && <p className="rounded border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-400">Carregando horários...</p>}
 
             {!carregando && agendamentos.length === 0 && (
-                <p className="rounded border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-400">Nenhum atendimento encontrado.</p>
+                <p className="rounded border border-zinc-800 bg-zinc-900 p-4 text-sm text-zinc-400">Nenhum horário encontrado.</p>
             )}
 
             <div className="grid gap-3">

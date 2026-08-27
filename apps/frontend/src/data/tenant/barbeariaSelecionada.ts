@@ -16,6 +16,13 @@ export function obterBarbeariaSelecionada() {
     return window.localStorage.getItem(CHAVE_STORAGE) || BARBEARIA_PADRAO
 }
 
+export function temBarbeariaSelecionada() {
+    if (typeof window === 'undefined') return false
+
+    const slugUrl = new URLSearchParams(window.location.search).get('barbearia')
+    return Boolean(slugUrl || window.localStorage.getItem(CHAVE_STORAGE))
+}
+
 export function salvarBarbeariaSelecionada(slug: string) {
     if (typeof window === 'undefined') return
 

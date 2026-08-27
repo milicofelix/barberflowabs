@@ -15,6 +15,7 @@ import {
     IconSettings,
     IconShieldLock,
     IconTool,
+    IconMapPin,
 } from '@tabler/icons-react'
 import Link from 'next/link'
 
@@ -22,6 +23,7 @@ export default function MenuUsuario() {
     const { usuario, encerrarSessao } = useSessao()
     const superAdmin = usuario?.role === 'SUPER_ADMIN' || usuario?.papel === 'SUPER_ADMIN'
     const responsavelBarbearia = !!usuario?.barbeiro && !superAdmin
+    const cliente = !usuario?.barbeiro && !superAdmin
 
     return usuario ? (
         <DropdownMenu>
@@ -47,9 +49,17 @@ export default function MenuUsuario() {
                 )}
                 {!superAdmin && (
                     <DropdownMenuItem>
+                        <Link href="/barbearias" className="flex gap-2">
+                            <IconMapPin size={18} />
+                            <span>Barbearias</span>
+                        </Link>
+                    </DropdownMenuItem>
+                )}
+                {cliente && (
+                    <DropdownMenuItem>
                         <Link href="/agendamento" className="flex gap-2">
                             <IconCalendar size={18} />
-                            <span>Agendar</span>
+                            <span>Meus horários</span>
                         </Link>
                     </DropdownMenuItem>
                 )}
