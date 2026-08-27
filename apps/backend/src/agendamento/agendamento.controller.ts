@@ -156,9 +156,10 @@ export class AgendamentoController {
     validarNumeroInteiroPositivo(id, 'Agendamento');
     const barbeariaId = await this.resolverBarbeariaAgendamento(req, usuario);
     let agendamento: Agendamento | null;
+    const podeCancelarComoBarbeiro = !!usuario.barbeiro && usuario.barbeariaId === barbeariaId;
 
     try {
-      agendamento = await this.repo.cancelar(Number(id), usuario.id!, barbeariaId, !!usuario.barbeiro);
+      agendamento = await this.repo.cancelar(Number(id), usuario.id!, barbeariaId, podeCancelarComoBarbeiro);
     } catch (error: any) {
       throw new BadRequestException(error?.message ?? 'Não foi possível cancelar o agendamento');
     }
@@ -185,10 +186,6 @@ export class AgendamentoController {
   }
 
   private async resolverBarbeariaAgendamento(req: any, usuario: Usuario) {
-    if (usuario?.barbeiro && usuario.barbeariaId) {
-      return usuario.barbeariaId;
-    }
-
     return this.tenant.resolverBarbeariaId(req);
   }
 

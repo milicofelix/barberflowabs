@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import useSessao from './useSessao'
-import { EVENTO_BARBEARIA_SELECIONADA, obterBarbeariaSelecionada } from '../tenant/barbeariaSelecionada'
+import {
+    estaNoFluxoDeAgendamentoCliente,
+    EVENTO_BARBEARIA_SELECIONADA,
+    obterBarbeariaSelecionada,
+} from '../tenant/barbeariaSelecionada'
 
 const URL_BASE = process.env.NEXT_PUBLIC_API_URL
 
@@ -24,10 +28,12 @@ export default function useAPI() {
 
     const headersTenant = useCallback(
         function headersTenant() {
+            const fluxoCliente = estaNoFluxoDeAgendamentoCliente()
+
             return {
                 Authorization: `Bearer ${token}`,
                 'x-barbearia-slug': barbeariaSlug,
-                ...(usuario?.barbeiro && usuario?.barbeariaId ? { 'x-barbearia-id': String(usuario.barbeariaId) } : {}),
+                ...(usuario?.barbeiro && usuario?.barbeariaId && !fluxoCliente ? { 'x-barbearia-id': String(usuario.barbeariaId) } : {}),
             }
         },
         [barbeariaSlug, token, usuario?.barbeariaId, usuario?.barbeiro]

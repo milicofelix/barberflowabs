@@ -69,10 +69,6 @@ export class AgendaController {
   }
 
   private async resolverBarbeariaAgenda(req: any, usuario: Usuario) {
-    if (usuario?.barbeiro && usuario.barbeariaId) {
-      return usuario.barbeariaId;
-    }
-
     return this.tenant.resolverBarbeariaId(req);
   }
 

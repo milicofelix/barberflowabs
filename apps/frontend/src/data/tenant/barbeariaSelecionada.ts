@@ -23,6 +23,12 @@ export function temBarbeariaSelecionada() {
     return Boolean(slugUrl || window.localStorage.getItem(CHAVE_STORAGE))
 }
 
+export function estaNoFluxoDeAgendamentoCliente() {
+    if (typeof window === 'undefined') return false
+
+    return window.location.pathname.startsWith('/agendamento')
+}
+
 export function salvarBarbeariaSelecionada(slug: string) {
     if (typeof window === 'undefined') return
 
