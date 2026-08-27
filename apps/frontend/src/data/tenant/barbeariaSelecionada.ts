@@ -10,7 +10,6 @@ export function obterBarbeariaSelecionada() {
 
     const slugUrl = new URLSearchParams(window.location.search).get('barbearia')
     if (slugUrl) {
-        salvarBarbeariaSelecionada(slugUrl)
         return slugUrl
     }
 
@@ -22,6 +21,9 @@ export function salvarBarbeariaSelecionada(slug: string) {
 
     const slugLimpo = slug?.trim()
     if (!slugLimpo) return
+
+    const slugAtual = window.localStorage.getItem(CHAVE_STORAGE)
+    if (slugAtual === slugLimpo) return
 
     window.localStorage.setItem(CHAVE_STORAGE, slugLimpo)
     window.dispatchEvent(new CustomEvent(EVENTO_BARBEARIA_SELECIONADA, { detail: slugLimpo }))

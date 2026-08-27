@@ -11,11 +11,12 @@ export default function useAPI() {
     const [barbeariaSlug, setBarbeariaSlug] = useState(obterBarbeariaSelecionada)
 
     useEffect(() => {
-        function atualizar() {
-            setBarbeariaSlug(obterBarbeariaSelecionada())
+        function atualizar(evento: Event) {
+            const slug = (evento as CustomEvent<string>).detail
+            setBarbeariaSlug(slug || obterBarbeariaSelecionada())
         }
 
-        atualizar()
+        setBarbeariaSlug(obterBarbeariaSelecionada())
         window.addEventListener(EVENTO_BARBEARIA_SELECIONADA, atualizar)
 
         return () => window.removeEventListener(EVENTO_BARBEARIA_SELECIONADA, atualizar)
