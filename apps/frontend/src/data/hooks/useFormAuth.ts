@@ -2,7 +2,11 @@ import { useEffect, useState } from 'react'
 import useAPI from './useAPI'
 import useSessao from './useSessao'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { extrairBarbeariaDoDestino, salvarBarbeariaSelecionada } from '../tenant/barbeariaSelecionada'
+import {
+    extrairBarbeariaDoDestino,
+    normalizarDestinoInterno,
+    salvarBarbeariaSelecionada,
+} from '../tenant/barbeariaSelecionada'
 
 export default function useFormAuth() {
     const [modo, setModo] = useState<'login' | 'cadastro'>('login')
@@ -27,7 +31,7 @@ export default function useFormAuth() {
     useEffect(() => {
         if (usuario?.email) {
             const superAdmin = usuario.role === 'SUPER_ADMIN' || usuario.papel === 'SUPER_ADMIN'
-            router.push(destino ? destino : superAdmin ? '/admin' : '/')
+            router.replace(normalizarDestinoInterno(destino) ?? (superAdmin ? '/admin' : '/'))
         }
     }, [usuario, router, destino])
 

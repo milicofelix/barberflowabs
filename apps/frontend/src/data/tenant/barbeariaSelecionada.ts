@@ -37,3 +37,19 @@ export function extrairBarbeariaDoDestino(destino: string | null) {
         return null
     }
 }
+
+export function normalizarDestinoInterno(destino: string | null) {
+    if (!destino) return null
+
+    try {
+        const url = new URL(destino, window.location.origin)
+        const caminho = `${url.pathname}${url.search}`
+
+        if (!caminho.startsWith('/')) return null
+        if (url.pathname === '/entrar') return null
+
+        return caminho
+    } catch (e) {
+        return destino.startsWith('/') && !destino.startsWith('/entrar') ? destino : null
+    }
+}
