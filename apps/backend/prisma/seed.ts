@@ -295,6 +295,28 @@ async function seed() {
 
   await prisma.usuario.createMany({ data: usuarios as any, skipDuplicates: true });
 
+  const clientePadrao = await prisma.usuario.findUnique({
+    where: { email: 'leonardo@formacao.dev' },
+    select: { id: true },
+  });
+
+  if (clientePadrao) {
+    await (prisma as any).clienteBarbearia.upsert({
+      where: {
+        barbeariaId_usuarioId: {
+          barbeariaId: BARBEARIA_PADRAO_ID,
+          usuarioId: clientePadrao.id,
+        },
+      },
+      update: {},
+      create: {
+        barbeariaId: BARBEARIA_PADRAO_ID,
+        usuarioId: clientePadrao.id,
+        origem: 'SEED',
+      },
+    });
+  }
+
   await prisma.usuario.updateMany({
     where: { email: { in: SUPER_ADMIN_EMAILS } },
     data: {
@@ -431,7 +453,7 @@ async function seedBarbeariasZonaLeste() {
       },
     });
 
-    await prisma.usuario.upsert({
+    const clienteDemo = await prisma.usuario.upsert({
       where: { email: `cliente.${item.slug}@barberflowabs.app` },
       update: {
         nome: `Cliente ${item.bairro}`,
@@ -447,6 +469,22 @@ async function seedBarbeariasZonaLeste() {
         barbeariaId: barbearia.id,
         barbeiro: false,
         papel: 'CUSTOMER',
+      },
+      select: { id: true },
+    });
+
+    await (prisma as any).clienteBarbearia.upsert({
+      where: {
+        barbeariaId_usuarioId: {
+          barbeariaId: barbearia.id,
+          usuarioId: clienteDemo.id,
+        },
+      },
+      update: {},
+      create: {
+        barbeariaId: barbearia.id,
+        usuarioId: clienteDemo.id,
+        origem: 'SEED',
       },
     });
 

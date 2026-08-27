@@ -93,6 +93,25 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
           },
         },
       });
+
+      await (tx as any).clienteBarbearia.upsert({
+        where: {
+          barbeariaId_usuarioId: {
+            barbeariaId,
+            usuarioId: agendamento.usuario.id!,
+          },
+        },
+        update: {
+          ultimoAgendamentoEm: agendamento.data,
+        },
+        create: {
+          barbeariaId,
+          usuarioId: agendamento.usuario.id!,
+          origem: 'AGENDAMENTO',
+          primeiroAgendamentoEm: agendamento.data,
+          ultimoAgendamentoEm: agendamento.data,
+        },
+      });
     });
   }
 

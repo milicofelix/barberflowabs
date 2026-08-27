@@ -22,7 +22,7 @@ export class GestaoPrisma {
         this.prisma.agendamento.count({
           where: { barbeariaId, data: { gte: inicio, lte: fim } },
         }),
-        this.prisma.usuario.count({ where: { barbeariaId, barbeiro: false } }),
+        (this.prisma as any).clienteBarbearia.count({ where: { barbeariaId } }),
         this.somarReceitas(barbeariaId, inicio, fim),
         this.somarReceitas(barbeariaId, inicioMes, fim),
         this.somarLancamentos(barbeariaId, 'DESPESA', inicioMes, fim),
@@ -40,32 +40,63 @@ export class GestaoPrisma {
   }
 
   async listarClientes(barbeariaId: number) {
-    const clientes = await this.prisma.usuario.findMany({
-      where: { barbeariaId, barbeiro: false },
+    const clientes = await (this.prisma as any).clienteBarbearia.findMany({
+      where: { barbeariaId },
       select: {
         id: true,
-        nome: true,
-        email: true,
-        telefone: true,
-        dataNascimento: true,
-        _count: { select: { agendamentos: true } },
+        primeiroAgendamentoEm: true,
+        ultimoAgendamentoEm: true,
+        usuario: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+            telefone: true,
+            dataNascimento: true,
+            barbeiro: true,
+            papel: true,
+          },
+        },
       },
-      orderBy: { nome: 'asc' },
+      orderBy: { usuario: { nome: 'asc' } },
     });
 
-    return clientes.map((cliente) => ({
-      id: cliente.id,
-      nome: cliente.nome,
-      email: cliente.email,
-      telefone: cliente.telefone,
-      dataNascimento: cliente.dataNascimento?.toISOString().slice(0, 10) ?? null,
-      totalAgendamentos: cliente._count.agendamentos,
-    }));
+    return Promise.all(
+      clientes.map(async (relacao: any) => {
+        const totalAgendamentos = await this.prisma.agendamento.count({
+          where: { barbeariaId, usuarioId: relacao.usuario.id },
+        });
+
+        return {
+          id: relacao.usuario.id,
+          relacaoId: relacao.id,
+          nome: relacao.usuario.nome,
+          email: relacao.usuario.email,
+          telefone: relacao.usuario.telefone,
+          dataNascimento: relacao.usuario.dataNascimento?.toISOString().slice(0, 10) ?? null,
+          cadastroOperacional: relacao.usuario.barbeiro || relacao.usuario.papel === 'BARBER' || relacao.usuario.papel === 'SUPER_ADMIN',
+          primeiroAgendamentoEm: relacao.primeiroAgendamentoEm,
+          ultimoAgendamentoEm: relacao.ultimoAgendamentoEm,
+          totalAgendamentos,
+        };
+      }),
+    );
   }
 
   async historicoCliente(id: number, barbeariaId: number) {
+    const relacao = await (this.prisma as any).clienteBarbearia.findUnique({
+      where: { barbeariaId_usuarioId: { barbeariaId, usuarioId: id } },
+      select: { id: true, usuario: { select: { barbeiro: true, papel: true } } },
+    });
+
+    if (!relacao) return null;
+
+    if (relacao.usuario.barbeiro || relacao.usuario.papel === 'BARBER' || relacao.usuario.papel === 'SUPER_ADMIN') {
+      throw new Error('Este cliente possui cadastro operacional e deve editar seus dados na própria conta');
+    }
+
     const cliente = await this.prisma.usuario.findFirst({
-      where: { id, barbeariaId, barbeiro: false },
+      where: { id },
       select: {
         id: true,
         nome: true,
@@ -73,6 +104,7 @@ export class GestaoPrisma {
         telefone: true,
         dataNascimento: true,
         agendamentos: {
+          where: { barbeariaId },
           include: {
             profissional: { select: { id: true, nome: true } },
             servicos: { select: { id: true, nome: true, preco: true } },
@@ -94,33 +126,51 @@ export class GestaoPrisma {
   }
 
   async criarCliente(barbeariaId: number, dados: any) {
-    const cliente = await this.prisma.usuario.create({
+    const dataNascimento = dados.dataNascimento ? new Date(`${dados.dataNascimento}T00:00:00.000Z`) : null;
+    const existente = await this.prisma.usuario.findUnique({
+      where: { email: dados.email },
+      select: { id: true, nome: true, email: true, telefone: true, dataNascimento: true, barbeiro: true },
+    });
+
+    const cliente = existente ?? (await this.prisma.usuario.create({
       data: {
-        barbeariaId,
+        barbeariaId: null,
         nome: dados.nome,
         email: dados.email,
         telefone: dados.telefone || null,
-        dataNascimento: dados.dataNascimento ? new Date(`${dados.dataNascimento}T00:00:00.000Z`) : null,
+        dataNascimento,
         senha: dados.senha,
         barbeiro: false,
+        papel: 'CUSTOMER',
       },
-      select: { id: true, nome: true, email: true, telefone: true, dataNascimento: true },
+      select: { id: true, nome: true, email: true, telefone: true, dataNascimento: true, barbeiro: true },
+    }));
+
+    await (this.prisma as any).clienteBarbearia.upsert({
+      where: { barbeariaId_usuarioId: { barbeariaId, usuarioId: cliente.id } },
+      update: {},
+      create: {
+        barbeariaId,
+        usuarioId: cliente.id,
+        origem: 'GESTAO',
+      },
     });
 
     return {
       ...cliente,
+      barbeiro: undefined,
       dataNascimento: cliente.dataNascimento?.toISOString().slice(0, 10) ?? null,
       totalAgendamentos: 0,
     };
   }
 
   async atualizarCliente(id: number, barbeariaId: number, dados: any) {
-    const cliente = await this.prisma.usuario.findFirst({
-      where: { id, barbeariaId, barbeiro: false },
+    const relacao = await (this.prisma as any).clienteBarbearia.findUnique({
+      where: { barbeariaId_usuarioId: { barbeariaId, usuarioId: id } },
       select: { id: true },
     });
 
-    if (!cliente) return null;
+    if (!relacao) return null;
 
     const atualizado = await this.prisma.usuario.update({
       where: { id },
@@ -141,13 +191,16 @@ export class GestaoPrisma {
   }
 
   async excluirCliente(id: number, barbeariaId: number) {
-    const cliente = await this.prisma.usuario.findFirst({
-      where: { id, barbeariaId, barbeiro: false },
+    const cliente = await (this.prisma as any).clienteBarbearia.findUnique({
+      where: { barbeariaId_usuarioId: { barbeariaId, usuarioId: id } },
       select: { id: true },
     });
 
     if (!cliente) return null;
-    return this.prisma.usuario.delete({ where: { id }, select: { id: true } });
+    return (this.prisma as any).clienteBarbearia.delete({
+      where: { barbeariaId_usuarioId: { barbeariaId, usuarioId: id } },
+      select: { id: true },
+    });
   }
 
   async listarAgendamentos(barbeariaId: number, data: string) {
@@ -275,21 +328,25 @@ export class GestaoPrisma {
     const limiteRetorno = this.somarDias(agora, -DIAS_RETORNO_RISCO);
 
     const [clientes, agendamentosConfirmacao, lembretes] = await Promise.all([
-      this.prisma.usuario.findMany({
-        where: { barbeariaId, barbeiro: false },
+      (this.prisma as any).clienteBarbearia.findMany({
+        where: { barbeariaId },
         select: {
-          id: true,
-          nome: true,
-          email: true,
-          telefone: true,
-          dataNascimento: true,
-          agendamentos: {
-            where: { status: { in: STATUS_ATENDIDOS } },
-            select: { id: true, data: true, status: true },
-            orderBy: { data: 'desc' },
+          usuario: {
+            select: {
+              id: true,
+              nome: true,
+              email: true,
+              telefone: true,
+              dataNascimento: true,
+              agendamentos: {
+                where: { barbeariaId, status: { in: STATUS_ATENDIDOS } },
+                select: { id: true, data: true, status: true },
+                orderBy: { data: 'desc' },
+              },
+            },
           },
         },
-        orderBy: { nome: 'asc' },
+        orderBy: { usuario: { nome: 'asc' } },
       }),
       this.prisma.agendamento.findMany({
         where: {
@@ -312,14 +369,16 @@ export class GestaoPrisma {
       }),
     ]);
 
-    const aniversariantes = clientes
+    const clientesRelacionamento = clientes.map((relacao: any) => relacao.usuario);
+
+    const aniversariantes = clientesRelacionamento
       .filter((cliente) => cliente.dataNascimento)
       .map((cliente) => this.normalizarAniversariante(cliente, agora))
       .filter((cliente) => cliente.diasAteAniversario <= DIAS_ANIVERSARIO)
       .sort((a, b) => a.diasAteAniversario - b.diasAteAniversario);
 
-    const clientesComAtendimento = clientes.filter((cliente) => cliente.agendamentos.length > 0);
-    const clientesRecorrentes = clientes.filter((cliente) => cliente.agendamentos.length >= 2);
+    const clientesComAtendimento = clientesRelacionamento.filter((cliente) => cliente.agendamentos.length > 0);
+    const clientesRecorrentes = clientesRelacionamento.filter((cliente) => cliente.agendamentos.length >= 2);
     const clientesSemRetorno = clientesComAtendimento
       .filter((cliente) => cliente.agendamentos[0].data < limiteRetorno)
       .map((cliente) => ({
@@ -334,7 +393,7 @@ export class GestaoPrisma {
 
     return {
       metricas: {
-        totalClientes: clientes.length,
+        totalClientes: clientesRelacionamento.length,
         clientesAtendidos: clientesComAtendimento.length,
         clientesRecorrentes: clientesRecorrentes.length,
         clientesSemRetorno: clientesSemRetorno.length,
@@ -362,8 +421,8 @@ export class GestaoPrisma {
 
   async criarLembrete(barbeariaId: number, dados: any) {
     if (dados.usuarioId) {
-      const cliente = await this.prisma.usuario.findFirst({
-        where: { id: Number(dados.usuarioId), barbeariaId, barbeiro: false },
+      const cliente = await (this.prisma as any).clienteBarbearia.findUnique({
+        where: { barbeariaId_usuarioId: { barbeariaId, usuarioId: Number(dados.usuarioId) } },
         select: { id: true },
       });
       if (!cliente) return null;

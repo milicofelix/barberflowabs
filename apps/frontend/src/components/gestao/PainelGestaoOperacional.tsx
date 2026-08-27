@@ -433,9 +433,11 @@ function PainelClientes(props: any) {
                             <p className="text-sm text-zinc-500">{cliente.totalAgendamentos} agendamentos</p>
                         </button>
                         <div className="mt-3 flex gap-2">
-                            <button type="button" onClick={() => props.onEditar({ ...cliente, senha: '' })} className="rounded bg-zinc-800 p-2 text-zinc-200">
-                                <IconPencil size={18} />
-                            </button>
+                            {!cliente.cadastroOperacional && (
+                                <button type="button" onClick={() => props.onEditar({ ...cliente, senha: '' })} className="rounded bg-zinc-800 p-2 text-zinc-200">
+                                    <IconPencil size={18} />
+                                </button>
+                            )}
                             <button type="button" onClick={() => props.onExcluir(cliente.id)} className="rounded bg-red-500/15 p-2 text-red-400">
                                 <IconTrash size={18} />
                             </button>

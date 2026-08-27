@@ -75,10 +75,17 @@ export class GestaoController {
     validarNumeroInteiroPositivo(id, 'Cliente');
     this.validarCliente(dados, false);
 
-    const cliente = await this.repo.atualizarCliente(Number(id), usuario.barbeariaId, {
-      ...dados,
-      senha: dados.senha ? await this.cripto.criptografar(dados.senha) : undefined,
-    });
+    let cliente: any;
+
+    try {
+      cliente = await this.repo.atualizarCliente(Number(id), usuario.barbeariaId, {
+        ...dados,
+        senha: dados.senha ? await this.cripto.criptografar(dados.senha) : undefined,
+      });
+    } catch (error: any) {
+      throw new ForbiddenException(error?.message ?? 'Cliente não pode ser alterado por esta barbearia');
+    }
+
     if (!cliente) throw new NotFoundException('Cliente não encontrado');
     return cliente;
   }

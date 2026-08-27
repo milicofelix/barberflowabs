@@ -102,6 +102,9 @@ Regras:
 - `x-barbearia-slug` e `x-barbearia-id` ajudam na resolucao inicial, mas nao devem permitir que barbeiro/dono acesse dados de outra barbearia quando esta logado.
 - Servicos, profissionais, agendamentos, clientes e financeiro devem sempre filtrar por `barbeariaId`.
 - Nova barbearia criada pelo onboarding deve nascer sem servicos/profissionais copiados da barbearia padrao.
+- `Usuario.barbeariaId` nao representa carteira de clientes no marketplace. Cliente pode pertencer a varias barbearias pela tabela `ClienteBarbearia`.
+- Ao concluir um agendamento, o usuario deve ser vinculado automaticamente como cliente da barbearia agendada.
+- Um usuario `BARBER` tambem pode existir como cliente em outra barbearia pela tabela `ClienteBarbearia`; papel operacional nao deve impedir essa associacao.
 
 ## Horarios E Fuso
 

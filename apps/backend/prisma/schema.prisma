@@ -27,6 +27,7 @@ model Usuario {
   lembretesRelacionamento LembreteRelacionamento[]
   avaliacoes Avaliacao[]
   denunciasRevisadas DenunciaPerfilPublico[] @relation("DenunciaPerfilRevisor")
+  barbeariasCliente ClienteBarbearia[]
 
   @@index([barbeariaId])
   @@map("usuarios")
@@ -137,8 +138,27 @@ model Barbearia {
   lembretesRelacionamento LembreteRelacionamento[]
   avaliacoes             Avaliacao[]
   denunciasPerfil        DenunciaPerfilPublico[]
+  clientes                ClienteBarbearia[]
 
   @@map("barbearias")
+}
+
+model ClienteBarbearia {
+  id          Int       @id @default(autoincrement())
+  barbeariaId Int
+  usuarioId   Int
+  origem      String    @default("AGENDAMENTO")
+  primeiroAgendamentoEm DateTime?
+  ultimoAgendamentoEm   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  barbearia Barbearia @relation(fields: [barbeariaId], references: [id])
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id])
+
+  @@unique([barbeariaId, usuarioId])
+  @@index([usuarioId])
+  @@map("clientes_barbearias")
 }
 
 model Unidade {
