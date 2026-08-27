@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import useAPI from './useAPI'
 import useSessao from './useSessao'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { extrairBarbeariaDoDestino, salvarBarbeariaSelecionada } from '../tenant/barbeariaSelecionada'
 
 export default function useFormAuth() {
     const [modo, setModo] = useState<'login' | 'cadastro'>('login')
@@ -16,14 +17,19 @@ export default function useFormAuth() {
 
     const router = useRouter()
     const param = useSearchParams()
+    const destino = param.get('destino')
+
+    useEffect(() => {
+        const barbearia = extrairBarbeariaDoDestino(destino)
+        if (barbearia) salvarBarbeariaSelecionada(barbearia)
+    }, [destino])
 
     useEffect(() => {
         if (usuario?.email) {
-            const destino = param.get('destino') as string
             const superAdmin = usuario.role === 'SUPER_ADMIN' || usuario.papel === 'SUPER_ADMIN'
             router.push(destino ? destino : superAdmin ? '/admin' : '/')
         }
-    }, [usuario, router, param])
+    }, [usuario, router, destino])
 
     function alterarModo() {
         setModo(modo === 'login' ? 'cadastro' : 'login')

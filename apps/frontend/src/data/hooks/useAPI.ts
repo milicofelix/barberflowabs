@@ -1,23 +1,35 @@
 'use client'
 
-import { useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import useSessao from './useSessao'
+import { EVENTO_BARBEARIA_SELECIONADA, obterBarbeariaSelecionada } from '../tenant/barbeariaSelecionada'
 
 const URL_BASE = process.env.NEXT_PUBLIC_API_URL
-const BARBEARIA_SLUG = process.env.NEXT_PUBLIC_BARBEARIA_SLUG ?? 'barber-flow-abs'
 
 export default function useAPI() {
     const { token, usuario } = useSessao()
+    const [barbeariaSlug, setBarbeariaSlug] = useState(obterBarbeariaSelecionada)
+
+    useEffect(() => {
+        function atualizar() {
+            setBarbeariaSlug(obterBarbeariaSelecionada())
+        }
+
+        atualizar()
+        window.addEventListener(EVENTO_BARBEARIA_SELECIONADA, atualizar)
+
+        return () => window.removeEventListener(EVENTO_BARBEARIA_SELECIONADA, atualizar)
+    }, [])
 
     const headersTenant = useCallback(
         function headersTenant() {
             return {
                 Authorization: `Bearer ${token}`,
-                'x-barbearia-slug': BARBEARIA_SLUG,
-                ...(usuario?.barbeariaId ? { 'x-barbearia-id': String(usuario.barbeariaId) } : {}),
+                'x-barbearia-slug': barbeariaSlug,
+                ...(usuario?.barbeiro && usuario?.barbeariaId ? { 'x-barbearia-id': String(usuario.barbeariaId) } : {}),
             }
         },
-        [token, usuario?.barbeariaId]
+        [barbeariaSlug, token, usuario?.barbeariaId, usuario?.barbeiro]
     )
 
     const httpGet = useCallback(

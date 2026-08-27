@@ -115,10 +115,10 @@ Checklist:
   - fechada
   - abre em breve
 - [x] Adicionar chamada para agendamento usando o slug escolhido na URL.
+- [x] Fazer o fluxo autenticado de agendamento consumir o slug da URL como tenant selecionado.
 
 Melhorias futuras:
 
-- Fazer o fluxo autenticado de agendamento consumir o slug da URL como tenant selecionado.
 - Permitir a barbearia editar seus dados publicos pela tela de configuracoes.
 - Adicionar imagens reais por barbearia.
 - Melhorar status operacional considerando fuso horario da barbearia.

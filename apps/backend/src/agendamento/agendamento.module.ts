@@ -5,11 +5,12 @@ import { AuthMiddleware } from 'src/auth/auth.middleware';
 import { DbModule } from 'src/db/db.module';
 import { AgendamentoPrisma } from './agendamento.prisma';
 import { SaasModule } from 'src/saas/saas.module';
+import { TenantService } from 'src/shared/tenant.service';
 
 @Module({
   imports: [AuthModule, DbModule, SaasModule],
   controllers: [AgendamentoController],
-  providers: [AgendamentoPrisma],
+  providers: [AgendamentoPrisma, TenantService],
 })
 export class AgendamentoModule {
   configure(consumer: MiddlewareConsumer) {

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Star } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
+import { salvarBarbeariaSelecionada } from '@/data/tenant/barbeariaSelecionada'
 
 const URL_BASE = process.env.NEXT_PUBLIC_API_URL
 
@@ -41,8 +42,9 @@ export default function PerfilPublicoBarbearia({ slug }: { slug: string }) {
     }, [slug])
 
     useEffect(() => {
+        salvarBarbeariaSelecionada(slug)
         carregar()
-    }, [carregar])
+    }, [carregar, slug])
 
     async function enviarDenuncia() {
         setMensagemDenuncia('')

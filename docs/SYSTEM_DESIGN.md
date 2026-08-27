@@ -94,8 +94,10 @@ Campos esperados nas entidades operacionais:
 
 Regras:
 
-- Rotas autenticadas devem priorizar `usuario.barbeariaId`.
-- `x-barbearia-slug` e `x-barbearia-id` ajudam na resolucao inicial, mas nao devem permitir acessar dados de outra barbearia quando usuario esta logado.
+- Rotas autenticadas de barbeiro/dono devem priorizar `usuario.barbeariaId`.
+- Rotas autenticadas de cliente, como agendamento e historico do cliente, devem resolver a barbearia pelo tenant publico selecionado (`x-barbearia-slug`).
+- `x-barbearia-id` so deve ser enviado pelo frontend para usuarios operacionais da barbearia; cliente usa slug publico selecionado.
+- `x-barbearia-slug` e `x-barbearia-id` ajudam na resolucao inicial, mas nao devem permitir que barbeiro/dono acesse dados de outra barbearia quando esta logado.
 - Servicos, profissionais, agendamentos, clientes e financeiro devem sempre filtrar por `barbeariaId`.
 - Nova barbearia criada pelo onboarding deve nascer sem servicos/profissionais copiados da barbearia padrao.
 

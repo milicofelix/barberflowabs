@@ -15,6 +15,7 @@ import {
   NotFoundException,
   Param,
   Post,
+  Req,
 } from '@nestjs/common';
 
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
@@ -25,35 +26,40 @@ import {
   validarNumeroInteiroPositivo,
 } from 'src/shared/validacao';
 import { PlanoLimitesService } from 'src/saas/plano-limites.service';
+import { TenantService } from 'src/shared/tenant.service';
 
 @Controller('agendamentos')
 export class AgendamentoController {
   constructor(
     private readonly repo: AgendamentoPrisma,
     private readonly limites: PlanoLimitesService,
+    private readonly tenant: TenantService,
   ) {}
 
   @Post()
   async novoAgendamento(
     @Body() dados: CriarAgendamentoDto,
     @UsuarioLogado() usuario: Usuario,
+    @Req() req: any,
   ) {
     this.validarNovoAgendamento(dados);
-    await this.limites.validarBarbeariaOperacional(usuario.barbeariaId);
+    const barbeariaId = await this.resolverBarbeariaAgendamento(req, usuario);
+    await this.limites.validarBarbeariaOperacional(barbeariaId);
 
     const agendamento: Agendamento = {
       ...(dados as any),
-      barbeariaId: usuario.barbeariaId,
+      barbeariaId,
       data: new Date(dados.data),
-      usuario,
+      usuario: { ...usuario, barbeariaId },
     };
     const casoDeUso = new NovoAgendamento(this.repo);
     await casoDeUso.executar({ agendamento, usuario });
   }
 
   @Get()
-  buscarAgendamentosCliente(@UsuarioLogado() usuario: Usuario) {
-    return this.repo.buscarPorEmail(usuario.email, usuario.barbeariaId);
+  async buscarAgendamentosCliente(@UsuarioLogado() usuario: Usuario, @Req() req: any) {
+    const barbeariaId = await this.resolverBarbeariaAgendamento(req, usuario);
+    return this.repo.buscarPorEmail(usuario.email, barbeariaId);
   }
 
   @Post(':id/avaliacao')
@@ -85,18 +91,20 @@ export class AgendamentoController {
   }
 
   @Get(':profissional/:data')
-  buscarAgendaProfissionalPorDia(
+  async buscarAgendaProfissionalPorDia(
     @Param('profissional') profissional: string,
     @Param('data') data: string,
     @UsuarioLogado() usuario: Usuario,
+    @Req() req: any,
   ) {
     validarNumeroInteiroPositivo(profissional, 'Profissional');
     validarData(data);
+    const barbeariaId = await this.resolverBarbeariaAgendamento(req, usuario);
 
     return this.repo.buscarPorProfissionalEData(
       +profissional,
       new Date(data),
-      usuario.barbeariaId,
+      barbeariaId,
     );
   }
 
@@ -105,14 +113,16 @@ export class AgendamentoController {
     @Param('profissional') profissional: string,
     @Param('data') dataParam: string,
     @UsuarioLogado() usuario: Usuario,
+    @Req() req: any,
   ) {
     validarNumeroInteiroPositivo(profissional, 'Profissional');
     validarData(dataParam);
+    const barbeariaId = await this.resolverBarbeariaAgendamento(req, usuario);
 
     const agendamentos = await this.repo.buscarPorProfissionalEData(
       +profissional,
       new Date(dataParam),
-      usuario.barbeariaId,
+      barbeariaId,
     );
 
     return agendamentos
@@ -159,6 +169,14 @@ export class AgendamentoController {
     dados.servicos.forEach((servico) => {
       validarNumeroInteiroPositivo(servico?.id, 'Serviço');
     });
+  }
+
+  private async resolverBarbeariaAgendamento(req: any, usuario: Usuario) {
+    if (usuario?.barbeiro && usuario.barbeariaId) {
+      return usuario.barbeariaId;
+    }
+
+    return this.tenant.resolverBarbeariaId(req);
   }
 
   private validarAvaliacao(dados: AvaliarAgendamentoDto) {

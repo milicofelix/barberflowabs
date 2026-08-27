@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, ForbiddenException, Get, Param, Put, Query, Body } from '@nestjs/common';
+import { BadRequestException, Controller, ForbiddenException, Get, Param, Put, Query, Body, Req } from '@nestjs/common';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import { Usuario } from '@barbabrutal/core';
 import {
@@ -9,10 +9,14 @@ import {
 } from 'src/shared/validacao';
 import { AgendaPrisma } from './agenda.prisma';
 import { ConfiguracaoAgendaDto } from './agenda.dto';
+import { TenantService } from 'src/shared/tenant.service';
 
 @Controller('agenda')
 export class AgendaController {
-  constructor(private readonly repo: AgendaPrisma) {}
+  constructor(
+    private readonly repo: AgendaPrisma,
+    private readonly tenant: TenantService,
+  ) {}
 
   @Get('configuracao/horarios')
   buscarConfiguracao(@UsuarioLogado() usuario: Usuario) {
@@ -31,11 +35,12 @@ export class AgendaController {
   }
 
   @Get('horarios/:data')
-  buscarHorariosDisponiveis(
+  async buscarHorariosDisponiveis(
     @Param('data') data: string,
     @Query('profissionalId') profissionalId: string | undefined,
     @Query('unidadeId') unidadeId: string | undefined,
     @UsuarioLogado() usuario: Usuario,
+    @Req() req: any,
   ) {
     validarData(data);
 
@@ -47,8 +52,10 @@ export class AgendaController {
       validarNumeroInteiroPositivo(unidadeId, 'Unidade');
     }
 
+    const barbeariaId = await this.resolverBarbeariaAgenda(req, usuario);
+
     return this.repo.buscarHorariosDisponiveis({
-      barbeariaId: usuario.barbeariaId,
+      barbeariaId,
       data,
       profissionalId: profissionalId ? Number(profissionalId) : undefined,
       unidadeId: unidadeId ? Number(unidadeId) : undefined,
@@ -59,6 +66,14 @@ export class AgendaController {
     if (!usuario.barbeiro) {
       throw new ForbiddenException('Apenas barbeiros podem alterar configurações da agenda');
     }
+  }
+
+  private async resolverBarbeariaAgenda(req: any, usuario: Usuario) {
+    if (usuario?.barbeiro && usuario.barbeariaId) {
+      return usuario.barbeariaId;
+    }
+
+    return this.tenant.resolverBarbeariaId(req);
   }
 
   private validarConfiguracao(dados: ConfiguracaoAgendaDto) {
