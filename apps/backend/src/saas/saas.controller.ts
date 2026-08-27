@@ -224,6 +224,12 @@ export class SaasController {
     return this.repo.listarAuditoriaAdmin();
   }
 
+  @Get('admin/notificacoes')
+  listarNotificacoesAdmin(@UsuarioLogado() usuario: Usuario) {
+    this.validarSuperAdmin(usuario);
+    return this.repo.listarNotificacoesAdmin();
+  }
+
   private validarOnboarding(dados: OnboardingSaasDto) {
     validarTextoObrigatorio(dados?.barbearia?.nome, 'Nome da barbearia');
     validarTextoObrigatorio(dados?.barbearia?.slug, 'Slug da barbearia');

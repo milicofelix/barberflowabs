@@ -9,7 +9,7 @@ interface CabecalhoComTituloProps {
 export default function CabecalhoComTitulo(props: CabecalhoComTituloProps) {
     return (
         <div className="relative h-[180px]">
-            <Image src="/banners/principal.webp" fill alt="Barbearia" className="object-cover" />
+            <Image src="/banners/principal.png" fill alt="Barbearia" className="object-cover" />
             <div
                 className="
                     flex flex-col

@@ -19,6 +19,7 @@ export default function PainelSuperAdmin() {
     const [barbearias, setBarbearias] = useState<any[]>([])
     const [pendentes, setPendentes] = useState<any[]>([])
     const [auditoria, setAuditoria] = useState<any[]>([])
+    const [notificacoes, setNotificacoes] = useState<any[]>([])
     const [planos, setPlanos] = useState<any[]>([])
     const [mensagem, setMensagem] = useState('')
     const [motivoRevisao, setMotivoRevisao] = useState('')
@@ -31,12 +32,13 @@ export default function PainelSuperAdmin() {
     const carregar = useCallback(async function carregar() {
         setCarregando(true)
         setAcessoNegado(false)
-        const [dadosMe, dadosBarbearias, dadosPendentes, dadosAuditoria, dadosPlanos] = await Promise.all([
+        const [dadosMe, dadosBarbearias, dadosPendentes, dadosAuditoria, dadosPlanos, dadosNotificacoes] = await Promise.all([
             httpGet('/saas/admin/me'),
             httpGet('/saas/admin/barbearias'),
             httpGet('/saas/admin/barbearias/pendentes'),
             httpGet('/saas/admin/auditoria'),
             httpGet('/saas/admin/planos'),
+            httpGet('/saas/admin/notificacoes'),
         ])
         const negado = dadosBarbearias?.statusCode === 403 || dadosAuditoria?.statusCode === 403
         setDiagnostico(dadosMe?.statusCode ? null : dadosMe)
@@ -45,6 +47,7 @@ export default function PainelSuperAdmin() {
         setPendentes(Array.isArray(dadosPendentes) ? dadosPendentes : [])
         setAuditoria(Array.isArray(dadosAuditoria) ? dadosAuditoria : [])
         setPlanos(Array.isArray(dadosPlanos) ? dadosPlanos : [])
+        setNotificacoes(Array.isArray(dadosNotificacoes) ? dadosNotificacoes : [])
         setCarregando(false)
     }, [httpGet])
 
@@ -173,6 +176,22 @@ export default function PainelSuperAdmin() {
                         />
                     ))}
                     {planos.length === 0 && <p className="text-sm text-zinc-400">Nenhum plano cadastrado.</p>}
+                </div>
+            </section>
+
+            <section className="rounded border border-zinc-800 bg-zinc-950 p-5">
+                <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h2 className="text-xl font-bold text-zinc-100">Notificações</h2>
+                        <p className="text-sm text-zinc-400">Eventos que precisam da atenção do dono da plataforma</p>
+                    </div>
+                    <span className="text-sm font-semibold text-yellow-400">{notificacoes.length} recente(s)</span>
+                </div>
+                <div className="mt-4 grid gap-3">
+                    {notificacoes.map((notificacao) => (
+                        <NotificacaoAdmin key={notificacao.id} notificacao={notificacao} />
+                    ))}
+                    {notificacoes.length === 0 && <p className="text-sm text-zinc-400">Sem notificações recentes.</p>}
                 </div>
             </section>
 
@@ -402,6 +421,29 @@ function PlanoAdmin(props: {
                     className="input"
                 />
             </label>
+        </div>
+    )
+}
+
+function NotificacaoAdmin({ notificacao }: { notificacao: any }) {
+    const detalhes = notificacao.detalhes ?? {}
+
+    return (
+        <div className="rounded border border-yellow-400/20 bg-zinc-900 p-4">
+            <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                <div>
+                    <p className="font-bold text-zinc-100">{detalhes.titulo ?? notificacao.acao}</p>
+                    <p className="mt-1 text-sm text-zinc-400">{detalhes.mensagem ?? 'Evento registrado para acompanhamento.'}</p>
+                    <p className="mt-2 text-xs text-zinc-500">
+                        {notificacao.usuario?.email ?? '-'} | {formatarData(notificacao.createdAt)}
+                    </p>
+                </div>
+                {detalhes.barbeariaSlug && (
+                    <span className="rounded border border-zinc-700 px-2 py-1 text-xs font-semibold text-zinc-300">
+                        {detalhes.barbeariaSlug}
+                    </span>
+                )}
+            </div>
         </div>
     )
 }

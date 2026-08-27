@@ -111,6 +111,24 @@ export class SaasPrisma {
         },
       });
 
+      await tx.logAuditoria.create({
+        data: {
+          barbeariaId: null,
+          usuarioId: dono.id,
+          acao: 'SAAS_ADMIN_NOTIFICATION',
+          entidade: 'Barbearia',
+          entidadeId: String(barbearia.id),
+          detalhes: {
+            tipo: 'NOVO_CADASTRO_BARBEARIA',
+            titulo: 'Nova barbearia aguardando aprovação',
+            mensagem: `${barbearia.nome} concluiu o cadastro público e precisa de revisão.`,
+            barbeariaId: barbearia.id,
+            barbeariaSlug: barbearia.slug,
+            planoSlug,
+          },
+        },
+      });
+
       return { barbearia, dono };
     });
   }
@@ -288,6 +306,18 @@ export class SaasPrisma {
       },
       orderBy: { createdAt: 'desc' },
       take: 100,
+    });
+  }
+
+  listarNotificacoesAdmin() {
+    return this.prisma.logAuditoria.findMany({
+      where: { acao: 'SAAS_ADMIN_NOTIFICATION' },
+      include: {
+        barbearia: { select: { id: true, nome: true, slug: true, reviewStatus: true, status: true } },
+        usuario: { select: { id: true, nome: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
     });
   }
 

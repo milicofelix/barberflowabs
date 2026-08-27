@@ -4,7 +4,7 @@ import Logo from './Logo'
 export default function Processando() {
     return (
         <div className="h-screen">
-            <Image src="/banners/principal.webp" fill alt="Banner" />
+            <Image src="/banners/principal.png" fill alt="Banner" />
             <div
                 className="
                     flex flex-col justify-center items-center

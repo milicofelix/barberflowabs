@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
 
-const STATUS_BLOQUEADOS = ['SUSPENDED', 'CANCELED'];
+const STATUS_BLOQUEADOS = ['PAST_DUE', 'SUSPENDED', 'CANCELED'];
 
 @Injectable()
 export class PlanoLimitesService {

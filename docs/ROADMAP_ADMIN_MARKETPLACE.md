@@ -244,7 +244,7 @@ Objetivo: fechar o ciclo comercial com aprovacao, cobranca e comunicacao.
 
 Checklist:
 
-- [ ] Enviar notificacao para o dono do app em novos cadastros.
+- [x] Enviar notificacao interna para o dono do app em novos cadastros.
 - [x] Criar tela de detalhes comerciais da barbearia.
 - [x] Criar notas internas admin.
 - [x] Criar status de lead/comercial:
@@ -257,9 +257,10 @@ Checklist:
 - [x] Permitir que o dono do software gerencie preco e limites dos planos no Admin SaaS.
 - [x] Separar `SUPER_ADMIN` de tenant operacional de barbearia.
 - [ ] Integrar pagamento real.
-- [ ] Bloquear recursos conforme inadimplencia real.
+- [x] Bloquear recursos operacionais para barbearias com status `PAST_DUE`.
+- [ ] Bloquear recursos conforme inadimplencia real vinda do gateway.
 
-Observacao: o primeiro recorte da A6 adiciona gestao comercial manual no Admin SaaS. Notificacao real, gateway de pagamento e bloqueio por inadimplencia ficam para recortes seguintes.
+Observacao: a A6 agora possui notificacao interna no Admin SaaS, gestao comercial manual e bloqueio operacional por status. Notificacao externa, gateway de pagamento e inadimplencia automatica ficam para recortes seguintes.
 
 Validacao manual:
 

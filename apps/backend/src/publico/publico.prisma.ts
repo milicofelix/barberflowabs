@@ -335,6 +335,7 @@ export class PublicoPrisma {
   }
 
   private imagemCapa(imagem?: string | null) {
-    return imagem && imagem !== '/banner.png' ? imagem : '/banners/principal.webp';
+    if (imagem === '/banners/principal.webp') return '/banners/principal.png';
+    return imagem && imagem !== '/banner.png' ? imagem : '/banners/principal.png';
   }
 }

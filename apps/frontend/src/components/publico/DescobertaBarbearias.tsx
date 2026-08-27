@@ -90,7 +90,7 @@ export default function DescobertaBarbearias() {
         <main className="min-h-screen bg-zinc-950 text-zinc-100">
             <section
                 className="bg-cover bg-center"
-                style={{ backgroundImage: 'linear-gradient(90deg, rgba(0,0,0,.92), rgba(0,0,0,.58)), url(/banners/principal.webp)' }}
+                style={{ backgroundImage: 'linear-gradient(90deg, rgba(0,0,0,.92), rgba(0,0,0,.58)), url(/banners/principal.png)' }}
             >
                 <div className="container flex min-h-[340px] flex-col justify-end gap-5 py-10">
                     <span className="w-fit rounded border border-yellow-400/50 px-3 py-2 text-sm font-bold text-yellow-300">
@@ -199,7 +199,7 @@ function BarbeariaCard({ barbearia }: { barbearia: any }) {
 
     return (
         <article className="grid overflow-hidden rounded border border-zinc-800 bg-zinc-900 md:grid-cols-[180px_1fr]">
-            <div className="min-h-[180px] bg-cover bg-center" style={{ backgroundImage: `url(${barbearia.imagemCapaURL || '/banners/principal.webp'})` }} />
+            <div className="min-h-[180px] bg-cover bg-center" style={{ backgroundImage: `url(${barbearia.imagemCapaURL || '/banners/principal.png'})` }} />
             <div className="grid gap-4 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>

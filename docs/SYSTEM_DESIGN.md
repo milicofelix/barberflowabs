@@ -158,6 +158,7 @@ Admin SaaS:
 - `GET /saas/admin/me`
 - `GET /saas/admin/planos`
 - `PUT /saas/admin/planos/:id`
+- `GET /saas/admin/notificacoes`
 - `GET /saas/admin/barbearias`
 - `GET /saas/admin/barbearias/pendentes`
 - `PUT /saas/admin/barbearias/:id/status`

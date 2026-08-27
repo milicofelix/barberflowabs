@@ -107,7 +107,7 @@ export default function FormularioPerfilPublicoBarbearia() {
 
             <div className="grid gap-4 lg:grid-cols-2">
                 <Campo texto="Nome público" valor={perfil.nomePublico} onChange={(valor) => atualizar('nomePublico', valor)} />
-                <Campo texto="Imagem de capa" valor={perfil.imagemCapaURL} onChange={(valor) => atualizar('imagemCapaURL', valor)} placeholder="/banners/principal.webp" />
+                <Campo texto="Imagem de capa" valor={perfil.imagemCapaURL} onChange={(valor) => atualizar('imagemCapaURL', valor)} placeholder="/banners/principal.png" />
                 <Campo texto="Telefone público" valor={perfil.telefone} onChange={(valor) => atualizar('telefone', valor)} />
                 <Campo texto="E-mail público" valor={perfil.email} onChange={(valor) => atualizar('email', valor)} />
             </div>
@@ -229,7 +229,7 @@ function normalizarPerfil(dados: any) {
         ...dados,
         nomePublico: dados?.nomePublico ?? dados?.nome ?? '',
         descricaoPublica: dados?.descricaoPublica ?? '',
-        imagemCapaURL: dados?.imagemCapaURL ?? '/banners/principal.webp',
+        imagemCapaURL: dados?.imagemCapaURL ?? '/banners/principal.png',
         telefone: dados?.telefone ?? '',
         email: dados?.email ?? '',
         endereco: dados?.endereco ?? '',

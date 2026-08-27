@@ -379,7 +379,7 @@ Concluido:
 - Super Admin passou a receber a mesma visao de limites por barbearia.
 - Criacao de servicos respeita `limiteServicos`.
 - Criacao de profissionais respeita `limiteUsuarios`, usado no MVP como limite de equipe/profissionais.
-- Barbearias com status `SUSPENDED` ou `CANCELED` ficam impedidas de:
+- Barbearias com status `PAST_DUE`, `SUSPENDED` ou `CANCELED` ficam impedidas de:
   - criar agendamentos
   - criar/editar/excluir servicos
   - criar/editar/excluir profissionais
