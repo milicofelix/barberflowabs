@@ -2,7 +2,6 @@ import {
   Usuario,
   Agendamento,
   NovoAgendamento,
-  ExcluirAgendamento,
   TEMPO_SLOT,
 } from '@barbabrutal/core';
 import {
@@ -52,8 +51,13 @@ export class AgendamentoController {
       data: new Date(dados.data),
       usuario: { ...usuario, barbeariaId },
     };
-    const casoDeUso = new NovoAgendamento(this.repo);
-    await casoDeUso.executar({ agendamento, usuario });
+
+    try {
+      const casoDeUso = new NovoAgendamento(this.repo);
+      await casoDeUso.executar({ agendamento, usuario });
+    } catch (error: any) {
+      throw new ConflictException(error?.message ?? 'Não foi possível criar o agendamento');
+    }
   }
 
   @Get()
@@ -147,14 +151,23 @@ export class AgendamentoController {
   async excluirAgendamento(
     @Param('id') id: string,
     @UsuarioLogado() usuario: Usuario,
+    @Req() req: any,
   ) {
     validarNumeroInteiroPositivo(id, 'Agendamento');
+    const barbeariaId = await this.resolverBarbeariaAgendamento(req, usuario);
+    let agendamento: Agendamento | null;
 
-    const casoDeUso = new ExcluirAgendamento(this.repo);
-    await casoDeUso.executar({
-      id: +id,
-      usuario,
-    });
+    try {
+      agendamento = await this.repo.cancelar(Number(id), usuario.id!, barbeariaId, !!usuario.barbeiro);
+    } catch (error: any) {
+      throw new BadRequestException(error?.message ?? 'Não foi possível cancelar o agendamento');
+    }
+
+    if (!agendamento) {
+      throw new NotFoundException('Agendamento não encontrado para cancelamento');
+    }
+
+    return agendamento;
   }
 
   private validarNovoAgendamento(dados: CriarAgendamentoDto) {

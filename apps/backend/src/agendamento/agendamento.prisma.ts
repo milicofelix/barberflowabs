@@ -4,6 +4,8 @@ import Agendamento from '@barbabrutal/core/src/agendamento/model/Agendamento';
 import RepositorioAgendamento from '@barbabrutal/core/src/agendamento/provider/RepositorioAgendamento';
 import { DEFAULT_BARBEARIA_ID } from 'src/shared/tenant';
 
+const STATUS_AGENDAMENTO_ATIVO = ['AGENDADO', 'CONFIRMADO', 'CHECKIN'];
+
 @Injectable()
 export class AgendamentoPrisma implements RepositorioAgendamento {
   constructor(private readonly prisma: PrismaService) {}
@@ -53,18 +55,44 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
 
     const valorTotal = servicos.reduce((total, servico) => total + Number(servico.preco), 0);
 
-    await this.prisma.agendamento.create({
-      data: {
-        barbearia: { connect: { id: barbeariaId } },
-        data: agendamento.data,
-        status: 'AGENDADO',
-        valorTotal,
-        usuario: { connect: { id: agendamento.usuario.id } },
-        profissional: { connect: { id: agendamento.profissional.id } },
-        servicos: {
-          connect: servicoIds.map((id) => ({ id })),
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRawUnsafe(
+        'SELECT id FROM profissionais WHERE id = ? AND barbeariaId = ? FOR UPDATE',
+        agendamento.profissional.id,
+        barbeariaId,
+      );
+
+      const conflito = await tx.agendamento.findFirst({
+        where: {
+          barbeariaId,
+          profissionalId: agendamento.profissional.id,
+          data: agendamento.data,
+          status: { in: STATUS_AGENDAMENTO_ATIVO },
         },
-      },
+        select: { usuarioId: true },
+      });
+
+      if (conflito?.usuarioId === agendamento.usuario.id) {
+        throw new Error('Você já possui um agendamento ativo para esse horário');
+      }
+
+      if (conflito) {
+        throw new Error('Esse horário acabou de ser reservado por outro cliente');
+      }
+
+      await tx.agendamento.create({
+        data: {
+          barbearia: { connect: { id: barbeariaId } },
+          data: agendamento.data,
+          status: 'AGENDADO',
+          valorTotal,
+          usuario: { connect: { id: agendamento.usuario.id } },
+          profissional: { connect: { id: agendamento.profissional.id } },
+          servicos: {
+            connect: servicoIds.map((id) => ({ id })),
+          },
+        },
+      });
     });
   }
 
@@ -107,6 +135,7 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
       where: {
         barbeariaId,
         profissionalId: profissional,
+        status: { in: STATUS_AGENDAMENTO_ATIVO },
         data: { gte: inicioDoDia, lte: fimDoDia },
       },
       include: this.includeAgendamento(),
@@ -116,10 +145,36 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
   }
 
   async excluir(id: number): Promise<void> {
-    await this.prisma.agendamento.delete({
+    await this.prisma.agendamento.update({
       where: { id },
-      include: { servicos: true },
+      data: { status: 'CANCELADO' },
     });
+  }
+
+  async cancelar(id: number, usuarioId: number, barbeariaId: number, barbeiro: boolean) {
+    const agendamento = await this.prisma.agendamento.findFirst({
+      where: {
+        id,
+        barbeariaId,
+        status: { in: ['AGENDADO', 'CONFIRMADO'] },
+        ...(barbeiro ? {} : { usuarioId }),
+      },
+      select: { id: true, data: true },
+    });
+
+    if (!agendamento) return null;
+
+    if (agendamento.data.getTime() <= Date.now()) {
+      throw new Error('Não é possível cancelar um horário que já passou');
+    }
+
+    const cancelado = await this.prisma.agendamento.update({
+      where: { id },
+      data: { status: 'CANCELADO' },
+      include: this.includeAgendamento(),
+    } as any);
+
+    return this.normalizarAgendamento(cancelado);
   }
 
   async avaliar(id: number, usuarioId: number, nota: number, comentario?: string) {

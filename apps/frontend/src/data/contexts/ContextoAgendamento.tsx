@@ -17,6 +17,8 @@ export interface ContextoAgendamentoProps {
     dataValida: Date | null
     horariosOcupados: string[]
     horariosDisponiveis: HorariosDisponiveis
+    mensagem: string
+    agendando: boolean
     selecionarProfissional: (profissional: Profissional | null) => void
     selecionarServicos: (servicos: Servico[]) => void
     selecionarData: (data: Date) => void
@@ -48,6 +50,8 @@ export function ProvedorAgendamento(props: any) {
     const [profissional, setProfissional] = useState<Profissional | null>(null)
     const [servicos, setServicos] = useState<Servico[]>([])
     const [data, setData] = useState<Date>(DateUtils.hojeComHoraZerada())
+    const [mensagem, setMensagem] = useState('')
+    const [agendando, setAgendando] = useState(false)
 
     const dia = formatarDia(data)
     const todosHorariosDisponiveis = [...horariosDisponiveis.manha, ...horariosDisponiveis.tardeNoite]
@@ -68,15 +72,29 @@ export function ProvedorAgendamento(props: any) {
     }
 
     async function agendar() {
-        await httpPost('/agendamentos', {
-            data,
-            usuario,
-            profissional,
-            servicos,
-        })
+        if (agendando || !podeAgendar()) return
 
-        router.push('/agendamento/sucesso')
-        limpar()
+        setAgendando(true)
+        setMensagem('')
+
+        try {
+            const resposta = await httpPost('/agendamentos', {
+                data,
+                usuario,
+                profissional,
+                servicos,
+            })
+
+            if (resposta?.statusCode) {
+                setMensagem(resposta.message ?? 'Não foi possível criar o agendamento.')
+                return
+            }
+
+            router.push('/agendamento/sucesso')
+            limpar()
+        } finally {
+            setAgendando(false)
+        }
     }
 
     function limpar() {
@@ -155,6 +173,8 @@ export function ProvedorAgendamento(props: any) {
                 },
                 horariosOcupados,
                 horariosDisponiveis,
+                mensagem,
+                agendando,
                 selecionarProfissional: setProfissional,
                 selecionarServicos: setServicos,
                 selecionarData: setData,

@@ -167,7 +167,13 @@ Agendamentos:
 - `GET /agendamentos`
 - `POST /agendamentos/:id/avaliacao`
 - `GET /agendamentos/ocupacao/:profissional/:data`
-- `DELETE /agendamentos/:id`
+- `DELETE /agendamentos/:id`: cancela o horario do cliente, mantendo o registro com status `CANCELADO`.
+
+Regras de agendamento:
+
+- Nao pode existir mais de um agendamento ativo para a mesma barbearia, profissional e data/hora.
+- Status considerados ativos para bloqueio de horario: `AGENDADO`, `CONFIRMADO` e `CHECKIN`.
+- A criacao de agendamento deve serializar a reserva por profissional antes de gravar, evitando duplo clique ou duas requisicoes simultaneas no mesmo horario.
 
 Admin SaaS:
 

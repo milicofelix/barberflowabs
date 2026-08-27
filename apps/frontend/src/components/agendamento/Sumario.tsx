@@ -3,7 +3,7 @@ import { MoedaUtils, Profissional, Servico } from '@barbabrutal/core'
 import { IconCalendar } from '@tabler/icons-react'
 
 export default function Sumario() {
-    const { profissional, servicos, dataValida, precoTotal, duracaoTotal, podeAgendar, agendar } =
+    const { profissional, servicos, dataValida, precoTotal, duracaoTotal, podeAgendar, agendar, mensagem, agendando } =
         useAgendamento()
 
     return (
@@ -19,14 +19,15 @@ export default function Sumario() {
             <div className="p-5">
                 <button
                     onClick={agendar}
-                    disabled={!podeAgendar()}
+                    disabled={!podeAgendar() || agendando}
                     className={`
                         button w-full bg-yellow-400 text-black
-                        ${!podeAgendar() ? 'cursor-not-allowed opacity-50' : ''}
+                        ${!podeAgendar() || agendando ? 'cursor-not-allowed opacity-50' : ''}
                     `}
                 >
-                    Finalizar Agendamento
+                    {agendando ? 'Agendando...' : 'Finalizar Agendamento'}
                 </button>
+                {mensagem && <p className="mt-3 text-sm text-red-300">{mensagem}</p>}
             </div>
         </div>
     )
