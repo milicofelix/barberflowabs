@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
     title: 'Barber Flow ABS',
-    description: 'Barbearia mais brutal da cidade!',
+    description: 'Marketplace e gestão online para barbearias.',
 }
 
 export default function RootLayout({

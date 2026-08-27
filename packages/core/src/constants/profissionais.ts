@@ -3,54 +3,54 @@ import { Profissional } from "../profissional";
 const profissionais: Profissional[] = [
   {
     id: 1,
-    nome: "Marcão Machadada",
+    nome: "Marcos Almeida",
     descricao:
-      "Salve, salve, galera! Sou o Marcão Machadada, o único cabeleireiro que pode transformar uma juba de leão em um corte digno de um rei com um único movimento de tesoura.",
+      "Especialista em cortes masculinos clássicos, acabamento com máquina e atendimento consultivo.",
     imagemURL: "/profissionais/profissional-1.jpg",
     avaliacao: 5,
     quantidadeAvaliacoes: 87,
   },
   {
     id: 2,
-    nome: "Beto Brutal",
+    nome: "Roberto Lima",
     descricao:
-      "Quando o assunto é barba, ninguém faz melhor que Beto Brutal! Suas lâminas afiadas são lendárias e seu estilo é inconfundível. Para um visual marcante e robusto, ele é o seu homem!",
+      "Profissional focado em barba, desenho, aparo e finalização para diferentes estilos.",
     imagemURL: "/profissionais/profissional-2.jpg",
     avaliacao: 4.5,
     quantidadeAvaliacoes: 39,
   },
   {
     id: 3,
-    nome: "Kathya Tesourada",
+    nome: "Kathya Martins",
     descricao:
-      "Kathya não tem medo de tesourar! Com precisão e ousadia, ela transforma qualquer cabelo em uma obra-prima rústica. Seu lema? Corte raiz sem perder a feminilidade!",
+      "Atendimento preciso em cortes modernos, visagismo e finalizações personalizadas.",
     imagemURL: "/profissionais/profissional-3.jpg",
     avaliacao: 5,
     quantidadeAvaliacoes: 91,
   },
   {
     id: 4,
-    nome: "Sérgio Serrador",
+    nome: "Sérgio Rocha",
     descricao:
-      "Sérgio é conhecido por sua técnica impecável e estilo único. Com sua serra (ou melhor, tesoura) em mãos, ele cria visuais que impressionam. Barba bem-feita é com ele mesmo!",
+      "Experiência em cortes degradê, barba alinhada e acabamento detalhado.",
     imagemURL: "/profissionais/profissional-4.jpg",
     avaliacao: 4.5,
     quantidadeAvaliacoes: 29,
   },
   {
     id: 5,
-    nome: "Rafa Raspa Tudo",
+    nome: "Rafael Souza",
     descricao:
-      "Para aqueles que preferem um look mais rente, Rafa é o especialista! Sua máquina raspa tudo com precisão, deixando um acabamento perfeito. Raspar é a sua arte!",
+      "Especialista em máquina, cortes baixos e manutenção rápida com acabamento limpo.",
     imagemURL: "/profissionais/profissional-5.jpg",
     avaliacao: 4.5,
     quantidadeAvaliacoes: 44,
   },
   {
     id: 6,
-    nome: "Fernanda Faísca",
+    nome: "Fernanda Costa",
     descricao:
-      "Fernanda traz um toque de brilho e energia a cada corte. Com suas lâminas ágeis, ela faz milagres em qualquer tipo de cabelo. Precisa de um look cheio de faísca? É com ela mesmo!",
+      "Profissional com foco em atendimento personalizado, cortes versáteis e finalização cuidadosa.",
     imagemURL: "/profissionais/profissional-6.jpg",
     avaliacao: 5,
     quantidadeAvaliacoes: 46,

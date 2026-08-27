@@ -17,24 +17,24 @@ export default function Slogan() {
                 <div className="flex flex-col justify-center items-center flex-1 gap-5">
                     <h1 className="flex flex-col items-center">
                         <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-thin tracking-wider">
-                            Transformações
+                            Encontre sua
                         </span>
                         <span className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-gradient">
-                            Lendárias
+                            Barbearia
                         </span>
                     </h1>
                     <p className="text-base sm:text-lg font-extralight">
-                        🤘 Seu estilo é o nosso rock! 🤘
+                        Compare barbearias, escolha um profissional e agende seu horário online.
                     </p>
                     <Link
-                        href="/agendamento"
+                        href="/barbearias"
                         className="
                             bg-gradient-to-r from-green-500 to-green-600
                             text-white font-semibold text-base md:text-lg
                             px-4 py-2 rounded-sm hover:from-green-600 hover:to-green-700 
                         "
                     >
-                        Agendar Agora
+                        Ver Barbearias
                     </Link>
                 </div>
             </div>

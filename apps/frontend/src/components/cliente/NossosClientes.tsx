@@ -17,9 +17,9 @@ export default function NossosClientes() {
     return (
         <div className="flex flex-col gap-y-16">
             <TituloSecao
-                tag="Clientes"
-                principal="Quem Manda Aqui"
-                secundario="Nossos clientes são os chefes! Aqui, eles mandam, desmandam e ainda saem com estilo de rockstar!"
+                tag="Experiência"
+                principal="Clientes Que Agendam Online"
+                secundario="A plataforma aproxima clientes e barbearias com busca por localização, agenda online e avaliações reais."
             />
             <div className="h-[900px] w-full">
                 <LayoutGrid cards={cards} />

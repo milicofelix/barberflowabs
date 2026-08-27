@@ -213,26 +213,26 @@ var clientes = [
   {
     id: 1,
     imagemURL: "/clientes/cliente-1.jpg",
-    nome: "Ricardo Soundbar",
-    testemunho: 'Chega falando alto e ocupando espa\xE7o com seu tamanho de viking, mas que tem um cora\xE7\xE3o do tamanho de seu topete! Um verdadeiro gigante gente boa, ele sempre diz: "Os caras aqui s\xE3o brutais no corte e na amizade! Servi\xE7o top, recomendo de olhos fechados!"'
+    nome: "Ricardo Santos",
+    testemunho: "Consegui encontrar uma barbearia perto de casa, comparar hor\xE1rios dispon\xEDveis e agendar em poucos minutos. O atendimento foi pontual e bem organizado."
   },
   {
     id: 2,
     imagemURL: "/clientes/cliente-2.jpg",
-    nome: 'Tiaguinho - "O Atacante"',
-    testemunho: 'Fan\xE1tico por futebol! Ele sempre chega animado, pronto para bater um papo e discutir o \xFAltimo jogo. Tiaguinho sempre diz: "Cortar cabelo aqui \xE9 muito legal, mas eu prefiro fazer gol!"'
+    nome: "Tiago Oliveira",
+    testemunho: "Gostei de ver os servi\xE7os, pre\xE7os e profissionais antes de marcar. Ficou mais f\xE1cil escolher a barbearia certa para o que eu precisava."
   },
   {
     id: 3,
     imagemURL: "/clientes/cliente-3.jpg",
     nome: "Patr\xEDcia",
-    testemunho: 'Nossa cliente com o cabelo mais vermelho do bairro e uma paix\xE3o por doramas que n\xE3o tem fim! Patr\xEDcia diz: "Aqui \xE9 meu lugar favorito! Saio com o cabelo perfeito e ainda compartilho todos os dramas dos doramas. Servi\xE7o top demais!"'
+    testemunho: "A experi\xEAncia foi simples do in\xEDcio ao fim. Escolhi o hor\xE1rio pelo celular, recebi a confirma\xE7\xE3o e acompanhei tudo na minha \xE1rea de cliente."
   },
   {
     id: 4,
     imagemURL: "/clientes/cliente-4.jpg",
     nome: "Sr. Carlos",
-    testemunho: 'Nosso cliente mais velho e cheio de hist\xF3rias incr\xEDveis que nunca se repetem! Ele anima a barbearia com suas aventuras e sabedoria. Sr. Carlos diz: "A Barber Flow ABS \xE9 raiz, me lembra a barbearia que eu ia quando era moleque. Servi\xE7o excelente e hist\xF3rias boas garantidas"'
+    testemunho: "Uso para manter meus hor\xE1rios em dia. A plataforma ajuda a encontrar profissionais pr\xF3ximos e evita liga\xE7\xF5es para confirmar disponibilidade."
   }
 ];
 var clientes_default = clientes;
@@ -241,48 +241,48 @@ var clientes_default = clientes;
 var profissionais = [
   {
     id: 1,
-    nome: "Marc\xE3o Machadada",
-    descricao: "Salve, salve, galera! Sou o Marc\xE3o Machadada, o \xFAnico cabeleireiro que pode transformar uma juba de le\xE3o em um corte digno de um rei com um \xFAnico movimento de tesoura.",
+    nome: "Marcos Almeida",
+    descricao: "Especialista em cortes masculinos cl\xE1ssicos, acabamento com m\xE1quina e atendimento consultivo.",
     imagemURL: "/profissionais/profissional-1.jpg",
     avaliacao: 5,
     quantidadeAvaliacoes: 87
   },
   {
     id: 2,
-    nome: "Beto Brutal",
-    descricao: "Quando o assunto \xE9 barba, ningu\xE9m faz melhor que Beto Brutal! Suas l\xE2minas afiadas s\xE3o lend\xE1rias e seu estilo \xE9 inconfund\xEDvel. Para um visual marcante e robusto, ele \xE9 o seu homem!",
+    nome: "Roberto Lima",
+    descricao: "Profissional focado em barba, desenho, aparo e finaliza\xE7\xE3o para diferentes estilos.",
     imagemURL: "/profissionais/profissional-2.jpg",
     avaliacao: 4.5,
     quantidadeAvaliacoes: 39
   },
   {
     id: 3,
-    nome: "Kathya Tesourada",
-    descricao: "Kathya n\xE3o tem medo de tesourar! Com precis\xE3o e ousadia, ela transforma qualquer cabelo em uma obra-prima r\xFAstica. Seu lema? Corte raiz sem perder a feminilidade!",
+    nome: "Kathya Martins",
+    descricao: "Atendimento preciso em cortes modernos, visagismo e finaliza\xE7\xF5es personalizadas.",
     imagemURL: "/profissionais/profissional-3.jpg",
     avaliacao: 5,
     quantidadeAvaliacoes: 91
   },
   {
     id: 4,
-    nome: "S\xE9rgio Serrador",
-    descricao: "S\xE9rgio \xE9 conhecido por sua t\xE9cnica impec\xE1vel e estilo \xFAnico. Com sua serra (ou melhor, tesoura) em m\xE3os, ele cria visuais que impressionam. Barba bem-feita \xE9 com ele mesmo!",
+    nome: "S\xE9rgio Rocha",
+    descricao: "Experi\xEAncia em cortes degrad\xEA, barba alinhada e acabamento detalhado.",
     imagemURL: "/profissionais/profissional-4.jpg",
     avaliacao: 4.5,
     quantidadeAvaliacoes: 29
   },
   {
     id: 5,
-    nome: "Rafa Raspa Tudo",
-    descricao: "Para aqueles que preferem um look mais rente, Rafa \xE9 o especialista! Sua m\xE1quina raspa tudo com precis\xE3o, deixando um acabamento perfeito. Raspar \xE9 a sua arte!",
+    nome: "Rafael Souza",
+    descricao: "Especialista em m\xE1quina, cortes baixos e manuten\xE7\xE3o r\xE1pida com acabamento limpo.",
     imagemURL: "/profissionais/profissional-5.jpg",
     avaliacao: 4.5,
     quantidadeAvaliacoes: 44
   },
   {
     id: 6,
-    nome: "Fernanda Fa\xEDsca",
-    descricao: "Fernanda traz um toque de brilho e energia a cada corte. Com suas l\xE2minas \xE1geis, ela faz milagres em qualquer tipo de cabelo. Precisa de um look cheio de fa\xEDsca? \xC9 com ela mesmo!",
+    nome: "Fernanda Costa",
+    descricao: "Profissional com foco em atendimento personalizado, cortes vers\xE1teis e finaliza\xE7\xE3o cuidadosa.",
     imagemURL: "/profissionais/profissional-6.jpg",
     avaliacao: 5,
     quantidadeAvaliacoes: 46
@@ -294,48 +294,48 @@ var profissionais_default = profissionais;
 var servicos = [
   {
     id: 1,
-    nome: "Corte Viking",
-    descricao: "Venha receber um corte de Viking, com l\xE2mina na pele e estilo de guerreiro. Saia pronto para enfrentar qualquer batalha com um visual que imp\xF5e respeito.",
+    nome: "Corte Social",
+    descricao: "Corte masculino alinhado, com acabamento preciso e pensado para o dia a dia.",
     preco: 55,
     qtdeSlots: 3,
     imagemURL: "/servicos/corte-de-cabelo.jpg"
   },
   {
     id: 2,
-    nome: "Barba de Lenhador",
-    descricao: "Venha dar um trato na sua barba de lenhador, com aparo preciso e estilo de macho raiz. Saia com uma barba que imp\xF5e respeito e faz tremer at\xE9 as \xE1rvores.",
+    nome: "Barba Completa",
+    descricao: "Aparo, desenho e finaliza\xE7\xE3o da barba para manter o visual bem cuidado.",
     preco: 45,
     qtdeSlots: 2,
     imagemURL: "/servicos/corte-de-barba.jpg"
   },
   {
     id: 3,
-    nome: "Garras Brutais",
-    descricao: "Venha transformar suas patas de urso em garras de lobo. Nosso servi\xE7o de Manicure & Pedicure para homens \xE9 t\xE3o bruto quanto voc\xEA, mas com um toque de classe.",
+    nome: "Manicure e Pedicure",
+    descricao: "Cuidado completo para m\xE3os e p\xE9s, com higiene, conforto e acabamento profissional.",
     preco: 40,
     qtdeSlots: 2,
     imagemURL: "/servicos/manicure-pedicure.jpg"
   },
   {
     id: 4,
-    nome: "Combo Alpha",
-    descricao: 'Nosso combo "Alpha" inclui um corte de cabelo de Viking, uma barba de lenhador e manicure & pedicure de gladiador. Saia pronto para enfrentar qualquer batalha com estilo e unhas afiadas.',
+    nome: "Combo Corte e Barba",
+    descricao: "Corte e barba no mesmo atendimento para quem busca praticidade e resultado completo.",
     preco: 95,
     qtdeSlots: 2,
     imagemURL: "/servicos/combo.jpg"
   },
   {
     id: 5,
-    nome: "Pequeno Ca\xE7ador",
-    descricao: "Transforme seu pequeno aventureiro em um mini ca\xE7ador, com um corte cheio de atitude e estilo. Cabelo afiado como uma guitarra e maneiro como uma Harley.",
+    nome: "Corte Infantil",
+    descricao: "Atendimento infantil com cuidado, paci\xEAncia e um corte adequado para cada idade.",
     preco: 60,
     qtdeSlots: 2,
     imagemURL: "/servicos/corte-infantil.jpg"
   },
   {
     id: 6,
-    nome: "Noivo Raiz",
-    descricao: "Prepare-se para o grande dia com um tratamento digno de um verdadeiro guerreiro da estrada. Corte de cabelo afiado, barba de lenhador e manicure de motoqueiro, tudo enquanto voc\xEA relaxa ao som de rock pesado.",
+    nome: "Dia do Noivo",
+    descricao: "Pacote especial para prepara\xE7\xE3o do noivo, com corte, barba e cuidados de apresenta\xE7\xE3o.",
     preco: 189,
     qtdeSlots: 5,
     imagemURL: "/servicos/dia-de-noivo.jpg"

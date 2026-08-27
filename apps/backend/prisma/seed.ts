@@ -274,7 +274,7 @@ async function seed() {
 
   const usuarios: Array<Usuario & { barbeariaId?: number | null }> = [
     {
-      nome: 'Marcão Machadada',
+      nome: 'Administrador Barber Flow ABS',
       barbeariaId: null,
       email: 'marcao@barberflowabs.app',
       senha,

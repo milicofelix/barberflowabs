@@ -38,10 +38,9 @@ export default function Autenticacao({ navigation }: any) {
                 <View style={styles.overlay}>
                     <View style={styles.conteudo}>
                         <Text style={styles.marca}>Barber Flow ABS</Text>
-                        <Text style={styles.titulo}>DO CLASSICO AO ROCK</Text>
+                        <Text style={styles.titulo}>AGENDE COM FACILIDADE</Text>
                         <Text style={styles.descricao}>
-                            Cabelo afiado, barba de lenhador e mãos de motoqueiro, tudo ao som de
-                            rock pesado!
+                            Encontre barbearias, escolha serviços e acompanhe seus horários em um só lugar.
                         </Text>
                         <View style={styles.formulario}>
                             {modo === 'cadastro' && (
