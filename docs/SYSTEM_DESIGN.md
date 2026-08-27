@@ -124,6 +124,18 @@ Regra de transicao:
 - Donos/responsaveis de barbearia usam `BARBER` com `barbeiro=true` e `barbeariaId` definido.
 - Depois de alterar papel ou token, fazer logout/login ou chamar refresh.
 
+## Planos E Pagamento
+
+- Planos comerciais iniciais: `Mensal`, `Trimestral` e `Anual`.
+- O campo tecnico atual `precoMensal` representa o valor cobrado no ciclo enquanto nao houver migration dedicada para renomear o campo.
+- Mensal parte de R$ 49,90.
+- Trimestral e Anual comunicam desconto e previsibilidade em relacao ao mensal.
+- Pagamento inicial deve ser tratado como PIX.
+- Enquanto nao houver gateway, troca de plano apenas atualiza a assinatura e o fim do periodo conforme o ciclo:
+  - Mensal: 30 dias.
+  - Trimestral: 90 dias.
+  - Anual: 365 dias.
+
 ## Contratos Principais De API
 
 Publico:

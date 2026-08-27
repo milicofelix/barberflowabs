@@ -356,7 +356,7 @@ function PlanoAdmin(props: {
                     />
                 </label>
                 <label className="grid gap-1 text-sm text-zinc-400">
-                    Mensalidade
+                    Valor do ciclo
                     <input
                         type="number"
                         min="0"
@@ -421,6 +421,9 @@ function PlanoAdmin(props: {
                     className="input"
                 />
             </label>
+            <p className="mt-2 text-xs font-semibold text-zinc-500">
+                {plano.ciclo?.cobranca ?? 'Pagamento via PIX'}{Number(plano.economiaPercentual ?? 0) > 0 ? ` | ${plano.economiaPercentual}% de desconto` : ''}
+            </p>
         </div>
     )
 }

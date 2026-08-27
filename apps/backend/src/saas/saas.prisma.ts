@@ -11,13 +11,13 @@ export class SaasPrisma {
     return this.prisma.planoAssinatura.findMany({
       where: { ativo: true },
       orderBy: { precoMensal: 'asc' },
-    });
+    }).then((planos) => planos.map((plano) => this.normalizarPlano(plano)));
   }
 
   listarPlanosAdmin() {
     return this.prisma.planoAssinatura.findMany({
       orderBy: { precoMensal: 'asc' },
-    });
+    }).then((planos) => planos.map((plano) => this.normalizarPlano(plano)));
   }
 
   async atualizarPlanoAdmin(id: number, usuarioId: number, dados: any) {
@@ -38,15 +38,12 @@ export class SaasPrisma {
       nome: plano.nome,
       slug: plano.slug,
     });
-    return {
-      ...plano,
-      precoMensal: Number(plano.precoMensal),
-    };
+    return this.normalizarPlano(plano);
   }
 
   async onboarding(dados: any) {
     const slug = this.normalizarSlug(dados.barbearia.slug);
-    const planoSlug = dados.planoSlug || 'starter';
+    const planoSlug = dados.planoSlug || 'mensal';
     const [barbeariaExistente, usuarioExistente, plano] = await Promise.all([
       this.prisma.barbearia.findUnique({ where: { slug } }),
       this.prisma.usuario.findUnique({ where: { email: dados.dono.email } }),
@@ -155,13 +152,13 @@ export class SaasPrisma {
       update: {
         planoId: plano.id,
         status: 'ACTIVE',
-        currentPeriodEnd: this.adicionarDias(new Date(), 30),
+        currentPeriodEnd: this.adicionarDias(new Date(), this.diasDoPlano(plano.slug)),
       },
       create: {
         barbeariaId,
         planoId: plano.id,
         status: 'ACTIVE',
-        currentPeriodEnd: this.adicionarDias(new Date(), 30),
+        currentPeriodEnd: this.adicionarDias(new Date(), this.diasDoPlano(plano.slug)),
       },
       include: { plano: true },
     });
@@ -172,7 +169,10 @@ export class SaasPrisma {
     });
 
     await this.registrarAuditoria(barbeariaId, usuarioId, 'BILLING_CHANGE_PLAN', 'AssinaturaBarbearia', assinatura.id, { planoSlug });
-    return assinatura;
+    return {
+      ...assinatura,
+      plano: this.normalizarPlano(assinatura.plano),
+    };
   }
 
   async listarBarbeariasAdmin() {
@@ -377,13 +377,62 @@ export class SaasPrisma {
       assinatura: barbearia.assinatura
         ? {
             ...barbearia.assinatura,
-            plano: {
-              ...barbearia.assinatura.plano,
-              precoMensal: Number(barbearia.assinatura.plano.precoMensal),
-            },
+            plano: this.normalizarPlano(barbearia.assinatura.plano),
           }
         : null,
     };
+  }
+
+  private normalizarPlano(plano: any) {
+    const recursos = Array.isArray(plano.recursos) ? plano.recursos : [];
+    const ciclo = this.cicloDoPlano(plano.slug);
+
+    return {
+      ...plano,
+      recursos,
+      ciclo,
+      formaPagamento: 'PIX',
+      precoMensal: Number(plano.precoMensal),
+      valorDoCiclo: Number(plano.precoMensal),
+      economiaPercentual: ciclo.economiaPercentual,
+    };
+  }
+
+  private cicloDoPlano(slug: string) {
+    if (slug === 'trimestral') {
+      return {
+        tipo: 'TRIMESTRAL',
+        meses: 3,
+        dias: 90,
+        label: 'Trimestral',
+        cobranca: 'Pagamento a cada 3 meses via PIX',
+        economiaPercentual: 10,
+      };
+    }
+
+    if (slug === 'anual') {
+      return {
+        tipo: 'ANUAL',
+        meses: 12,
+        dias: 365,
+        label: 'Anual',
+        cobranca: 'Pagamento anual via PIX',
+        economiaPercentual: 20,
+      };
+    }
+
+    return {
+      tipo: 'MENSAL',
+      meses: 1,
+      dias: 30,
+      label: 'Mensal',
+      cobranca: 'Pagamento mensal via PIX',
+      economiaPercentual: 0,
+    };
+  }
+
+  private diasDoPlano(slug: string) {
+    return this.cicloDoPlano(slug).dias;
   }
 
   private adicionarDias(data: Date, dias: number) {

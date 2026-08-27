@@ -6,6 +6,7 @@ Este plano organiza a evolucao do Barber Flow ABS para um SaaS com dono do app, 
 
 - Ter um usuario dono do app com acesso administrativo confiavel.
 - Aprovar, reprovar, suspender e auditar cadastros de barbearias.
+- Vender planos por ciclo: Mensal, Trimestral e Anual, inicialmente via PIX.
 - Criar uma vitrine publica onde clientes encontrem barbearias proximas.
 - Permitir busca por mapa, raio, status de funcionamento, servicos e reputacao.
 - Manter o isolamento multi-tenant e evitar depender de ajustes manuais no banco.

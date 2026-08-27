@@ -9,6 +9,10 @@ Este roadmap consolida o plano para transformar o projeto atual em um SaaS multi
 - O `docker-compose.yml` deste projeto deve apontar para o container MySQL externo, sem criar um MySQL local.
 - Nome publico do produto: `Barber Flow ABS`.
 - Slug padrao de desenvolvimento: `barber-flow-abs`.
+- Planos comerciais iniciais: `Mensal`, `Trimestral` e `Anual`.
+- Mensal a partir de R$ 49,90.
+- Pagamento inicial dos planos: PIX.
+- Planos Trimestral e Anual devem comunicar vantagem por desconto/previsibilidade em relacao ao mensal.
 - Pacotes tecnicos `@barbabrutal/core` e `@barbabrutal/ui` devem ser preservados ate haver uma fase propria de migracao tecnica, para evitar quebra dos workspaces.
 - Gerenciador de pacotes preferencial: Yarn.
 - Portas de desenvolvimento:

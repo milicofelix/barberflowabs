@@ -143,7 +143,42 @@ const nomesProfissionais = [
   'Lucas Pereira',
 ];
 
+const planosAssinatura = [
+  {
+    nome: 'Mensal',
+    slug: 'mensal',
+    descricao: 'Plano de entrada para validar a operação com baixo compromisso. Cobrança mensal via PIX a partir de R$ 49,90.',
+    precoMensal: 49.9,
+    limiteUsuarios: 3,
+    limiteUnidades: 1,
+    limiteServicos: 20,
+    recursos: ['agenda', 'clientes', 'caixa', 'pix', 'ciclo_mensal'],
+  },
+  {
+    nome: 'Trimestral',
+    slug: 'trimestral',
+    descricao: 'Ideal para manter a barbearia ativa por mais tempo, com desconto em relação ao pagamento mensal e cobrança via PIX a cada 3 meses.',
+    precoMensal: 134.7,
+    limiteUsuarios: 3,
+    limiteUnidades: 1,
+    limiteServicos: 20,
+    recursos: ['agenda', 'clientes', 'caixa', 'pix', 'ciclo_trimestral', 'desconto_10'],
+  },
+  {
+    nome: 'Anual',
+    slug: 'anual',
+    descricao: 'Melhor custo-benefício para quem já decidiu usar o Barber Flow ABS: maior desconto, previsibilidade anual e pagamento via PIX.',
+    precoMensal: 479.04,
+    limiteUsuarios: 3,
+    limiteUnidades: 1,
+    limiteServicos: 20,
+    recursos: ['agenda', 'clientes', 'caixa', 'pix', 'ciclo_anual', 'desconto_20'],
+  },
+];
+
 async function seed() {
+  await seedPlanosAssinatura();
+
   await prisma.barbearia.upsert({
     where: { id: BARBEARIA_PADRAO_ID },
     update: {
@@ -272,8 +307,23 @@ async function seed() {
   await seedBarbeariasZonaLeste();
 }
 
+async function seedPlanosAssinatura() {
+  for (const plano of planosAssinatura) {
+    await prisma.planoAssinatura.upsert({
+      where: { slug: plano.slug },
+      update: plano,
+      create: plano,
+    });
+  }
+
+  await prisma.planoAssinatura.updateMany({
+    where: { slug: { in: ['starter', 'professional', 'scale'] } },
+    data: { ativo: false },
+  });
+}
+
 async function seedBarbeariasZonaLeste() {
-  const plano = await prisma.planoAssinatura.findUnique({ where: { slug: 'professional' } });
+  const plano = await prisma.planoAssinatura.findUnique({ where: { slug: 'trimestral' } });
 
   for (const [indice, item] of barbeariasZonaLeste.entries()) {
     const barbearia = await prisma.barbearia.upsert({

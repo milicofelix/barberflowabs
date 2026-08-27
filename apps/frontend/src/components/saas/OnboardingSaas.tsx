@@ -13,7 +13,7 @@ const cadastroInicial = {
     emailDono: '',
     telefoneDono: '',
     senha: '',
-    planoSlug: 'starter',
+    planoSlug: 'mensal',
 }
 
 export default function OnboardingSaas() {
@@ -65,7 +65,7 @@ export default function OnboardingSaas() {
                     <span className="text-sm font-semibold text-yellow-400">Barber Flow ABS</span>
                     <h1 className="mt-3 text-4xl font-black">Crie sua barbearia em modo SaaS</h1>
                     <p className="mt-3 text-zinc-400">
-                        Trial de 14 dias com agenda, clientes, caixa e gestão operacional.
+                        Trial de 14 dias com agenda, clientes, caixa e gestão operacional. Depois do trial, o pagamento inicial é via PIX.
                     </p>
                 </header>
 
@@ -109,7 +109,13 @@ export default function OnboardingSaas() {
                             >
                                 <strong className="text-lg">{plano.nome}</strong>
                                 <p className="mt-1 text-sm opacity-80">{plano.descricao}</p>
-                                <p className="mt-3 text-2xl font-black">{moeda(plano.precoMensal)}</p>
+                                <p className="mt-3 text-2xl font-black">{moeda(plano.valorDoCiclo ?? plano.precoMensal)}</p>
+                                <p className="mt-1 text-sm font-semibold opacity-80">{plano.ciclo?.cobranca ?? 'Pagamento via PIX'}</p>
+                                {Number(plano.economiaPercentual ?? 0) > 0 && (
+                                    <p className="mt-2 text-sm font-bold opacity-90">
+                                        Economize {plano.economiaPercentual}% em relação ao mensal
+                                    </p>
+                                )}
                             </button>
                         ))}
                     </div>
