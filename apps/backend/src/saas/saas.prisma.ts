@@ -321,6 +321,40 @@ export class SaasPrisma {
     });
   }
 
+  listarDenunciasPerfilAdmin() {
+    return (this.prisma as any).denunciaPerfilPublico.findMany({
+      include: {
+        barbearia: { select: { id: true, nome: true, slug: true, reviewStatus: true, status: true } },
+        revisadoPor: { select: { id: true, nome: true, email: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    });
+  }
+
+  async revisarDenunciaPerfilAdmin(id: number, usuarioId: number, dados: any) {
+    const denuncia = await (this.prisma as any).denunciaPerfilPublico.update({
+      where: { id },
+      data: {
+        status: dados.status,
+        resolucao: this.textoOuNulo(dados.resolucao),
+        revisadoPorId: usuarioId,
+        revisadoEm: new Date(),
+      },
+      include: {
+        barbearia: { select: { id: true, nome: true, slug: true } },
+        revisadoPor: { select: { id: true, nome: true, email: true } },
+      },
+    });
+
+    await this.registrarAuditoria(null, usuarioId, 'ADMIN_REVIEW_PUBLIC_PROFILE_REPORT', 'DenunciaPerfilPublico', id, {
+      status: dados.status,
+      barbeariaId: denuncia.barbeariaId,
+      barbeariaSlug: denuncia.barbearia?.slug,
+    });
+    return denuncia;
+  }
+
   private async registrarAuditoria(
     barbeariaId: number | null,
     usuarioId: number,

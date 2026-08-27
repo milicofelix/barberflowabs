@@ -10,6 +10,13 @@ export default function PerfilPublicoBarbearia({ slug }: { slug: string }) {
     const [barbearia, setBarbearia] = useState<any>(null)
     const [carregando, setCarregando] = useState(true)
     const [erro, setErro] = useState('')
+    const [denuncia, setDenuncia] = useState({
+        nome: '',
+        email: '',
+        motivo: 'Dados incorretos',
+        mensagem: '',
+    })
+    const [mensagemDenuncia, setMensagemDenuncia] = useState('')
 
     const carregar = useCallback(async function carregar() {
         try {
@@ -36,6 +43,29 @@ export default function PerfilPublicoBarbearia({ slug }: { slug: string }) {
     useEffect(() => {
         carregar()
     }, [carregar])
+
+    async function enviarDenuncia() {
+        setMensagemDenuncia('')
+
+        try {
+            const resposta = await fetch(`${URL_BASE}/public/barbearias/${slug}/denuncias`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(denuncia),
+            })
+            const dados = await resposta.json()
+
+            if (!resposta.ok) {
+                setMensagemDenuncia(dados?.message ?? 'Não foi possível enviar a denúncia.')
+                return
+            }
+
+            setDenuncia({ nome: '', email: '', motivo: 'Dados incorretos', mensagem: '' })
+            setMensagemDenuncia(dados?.mensagem ?? 'Denúncia recebida para revisão.')
+        } catch (e) {
+            setMensagemDenuncia('Não foi possível conectar à API.')
+        }
+    }
 
     if (carregando) {
         return <div className="container py-10 text-zinc-300">Carregando barbearia...</div>
@@ -94,6 +124,12 @@ export default function PerfilPublicoBarbearia({ slug }: { slug: string }) {
                 </section>
                 <ListaProfissionais profissionais={barbearia.profissionais ?? []} />
                 <ListaAvaliacoes avaliacoes={barbearia.avaliacoes ?? []} />
+                <DenunciaPerfil
+                    denuncia={denuncia}
+                    mensagem={mensagemDenuncia}
+                    onChange={(campo, valor) => setDenuncia((atual) => ({ ...atual, [campo]: valor }))}
+                    onEnviar={enviarDenuncia}
+                />
             </div>
         </div>
     )
@@ -178,6 +214,62 @@ function ListaAvaliacoes({ avaliacoes }: { avaliacoes: any[] }) {
                 {avaliacoes.length === 0 && <Vazio texto="Esta barbearia ainda não possui avaliações." />}
             </div>
         </section>
+    )
+}
+
+function DenunciaPerfil(props: {
+    denuncia: any
+    mensagem: string
+    onChange: (campo: string, valor: string) => void
+    onEnviar: () => void
+}) {
+    return (
+        <section className="rounded border border-zinc-800 bg-zinc-900 p-5">
+            <h2 className="text-2xl font-black">Reportar perfil</h2>
+            <p className="mt-2 text-sm text-zinc-400">
+                Use este canal para avisar sobre dados incorretos, conteúdo inadequado ou problemas neste perfil público.
+            </p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <CampoDenuncia label="Nome" value={props.denuncia.nome} onChange={(valor) => props.onChange('nome', valor)} />
+                <CampoDenuncia label="E-mail" value={props.denuncia.email} onChange={(valor) => props.onChange('email', valor)} />
+                <label className="grid gap-2 text-sm text-zinc-400 md:col-span-2">
+                    Motivo
+                    <select
+                        value={props.denuncia.motivo}
+                        onChange={(e) => props.onChange('motivo', e.target.value)}
+                        className="input"
+                    >
+                        <option>Dados incorretos</option>
+                        <option>Localização incorreta</option>
+                        <option>Conteúdo inadequado</option>
+                        <option>Barbearia não existe</option>
+                        <option>Outro motivo</option>
+                    </select>
+                </label>
+                <label className="grid gap-2 text-sm text-zinc-400 md:col-span-2">
+                    Mensagem
+                    <textarea
+                        value={props.denuncia.mensagem}
+                        onChange={(e) => props.onChange('mensagem', e.target.value)}
+                        rows={4}
+                        className="input min-h-28"
+                    />
+                </label>
+            </div>
+            <button type="button" onClick={props.onEnviar} className="mt-4 rounded bg-zinc-100 px-4 py-3 font-bold text-zinc-950">
+                Enviar para revisão
+            </button>
+            {props.mensagem && <p className="mt-3 text-sm text-zinc-300">{props.mensagem}</p>}
+        </section>
+    )
+}
+
+function CampoDenuncia(props: { label: string; value: string; onChange: (valor: string) => void }) {
+    return (
+        <label className="grid gap-2 text-sm text-zinc-400">
+            {props.label}
+            <input value={props.value} onChange={(e) => props.onChange(e.target.value)} className="input" />
+        </label>
     )
 }
 

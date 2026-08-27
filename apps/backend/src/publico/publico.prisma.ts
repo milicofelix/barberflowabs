@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
 
 const TIME_ZONE_PADRAO = 'America/Sao_Paulo';
@@ -204,6 +204,55 @@ export class PublicoPrisma {
     };
   }
 
+  async denunciarPerfil(slug: string, dados: any) {
+    const barbearia = await this.prisma.barbearia.findFirst({
+      where: {
+        slug,
+        reviewStatus: 'APPROVED',
+        status: { notIn: ['SUSPENDED', 'CANCELED'] },
+      } as any,
+      select: { id: true, nome: true, slug: true },
+    });
+
+    if (!barbearia) throw new NotFoundException('Barbearia não encontrada');
+
+    const denuncia = await (this.prisma as any).denunciaPerfilPublico.create({
+      data: {
+        barbeariaId: barbearia.id,
+        nome: this.textoOuNulo(dados.nome),
+        email: this.textoOuNulo(dados.email),
+        motivo: dados.motivo.trim(),
+        mensagem: dados.mensagem.trim(),
+        status: 'PENDENTE',
+      },
+    });
+
+    await this.prisma.logAuditoria.create({
+      data: {
+        barbeariaId: null,
+        usuarioId: null,
+        acao: 'PUBLIC_PROFILE_REPORT',
+        entidade: 'DenunciaPerfilPublico',
+        entidadeId: String(denuncia.id),
+        detalhes: {
+          tipo: 'DENUNCIA_PERFIL_PUBLICO',
+          titulo: 'Denúncia de perfil público recebida',
+          mensagem: `${barbearia.nome} recebeu uma denúncia pública para revisão.`,
+          barbeariaId: barbearia.id,
+          barbeariaSlug: barbearia.slug,
+          denunciaId: denuncia.id,
+          motivo: denuncia.motivo,
+        },
+      },
+    });
+
+    return {
+      id: denuncia.id,
+      status: denuncia.status,
+      mensagem: 'Denúncia recebida para revisão.',
+    };
+  }
+
   private statusOperacional(horarios: any[]) {
     const agora = this.obterAgoraLocal();
     const diaSemana = agora.diaSemana;
@@ -337,5 +386,10 @@ export class PublicoPrisma {
   private imagemCapa(imagem?: string | null) {
     if (imagem === '/banners/principal.webp') return '/banners/principal.png';
     return imagem && imagem !== '/banner.png' ? imagem : '/banners/principal.png';
+  }
+
+  private textoOuNulo(valor?: string | null) {
+    const texto = typeof valor === 'string' ? valor.trim() : '';
+    return texto || null;
   }
 }

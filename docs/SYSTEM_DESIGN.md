@@ -142,6 +142,7 @@ Publico:
 
 - `GET /public/barbearias`
 - `GET /public/barbearias/:slug`
+- `POST /public/barbearias/:slug/denuncias`
 
 Barbearia:
 
@@ -171,6 +172,8 @@ Admin SaaS:
 - `GET /saas/admin/planos`
 - `PUT /saas/admin/planos/:id`
 - `GET /saas/admin/notificacoes`
+- `GET /saas/admin/denuncias-perfil`
+- `PUT /saas/admin/denuncias-perfil/:id`
 - `GET /saas/admin/barbearias`
 - `GET /saas/admin/barbearias/pendentes`
 - `PUT /saas/admin/barbearias/:id/status`

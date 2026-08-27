@@ -12,6 +12,7 @@ const statusComercial = [
     { valor: 'RECUSADO', label: 'Recusado' },
     { valor: 'CONVERTIDO', label: 'Convertido' },
 ]
+const statusDenuncia = ['PENDENTE', 'EM_ANALISE', 'RESOLVIDA', 'DESCARTADA']
 
 export default function PainelSuperAdmin() {
     const { usuario } = useSessao()
@@ -20,6 +21,7 @@ export default function PainelSuperAdmin() {
     const [pendentes, setPendentes] = useState<any[]>([])
     const [auditoria, setAuditoria] = useState<any[]>([])
     const [notificacoes, setNotificacoes] = useState<any[]>([])
+    const [denuncias, setDenuncias] = useState<any[]>([])
     const [planos, setPlanos] = useState<any[]>([])
     const [mensagem, setMensagem] = useState('')
     const [motivoRevisao, setMotivoRevisao] = useState('')
@@ -28,17 +30,19 @@ export default function PainelSuperAdmin() {
     const [diagnostico, setDiagnostico] = useState<any>(null)
     const [comercial, setComercial] = useState<Record<number, any>>({})
     const [planosEditados, setPlanosEditados] = useState<Record<number, any>>({})
+    const [denunciasEditadas, setDenunciasEditadas] = useState<Record<number, any>>({})
 
     const carregar = useCallback(async function carregar() {
         setCarregando(true)
         setAcessoNegado(false)
-        const [dadosMe, dadosBarbearias, dadosPendentes, dadosAuditoria, dadosPlanos, dadosNotificacoes] = await Promise.all([
+        const [dadosMe, dadosBarbearias, dadosPendentes, dadosAuditoria, dadosPlanos, dadosNotificacoes, dadosDenuncias] = await Promise.all([
             httpGet('/saas/admin/me'),
             httpGet('/saas/admin/barbearias'),
             httpGet('/saas/admin/barbearias/pendentes'),
             httpGet('/saas/admin/auditoria'),
             httpGet('/saas/admin/planos'),
             httpGet('/saas/admin/notificacoes'),
+            httpGet('/saas/admin/denuncias-perfil'),
         ])
         const negado = dadosBarbearias?.statusCode === 403 || dadosAuditoria?.statusCode === 403
         setDiagnostico(dadosMe?.statusCode ? null : dadosMe)
@@ -48,6 +52,7 @@ export default function PainelSuperAdmin() {
         setAuditoria(Array.isArray(dadosAuditoria) ? dadosAuditoria : [])
         setPlanos(Array.isArray(dadosPlanos) ? dadosPlanos : [])
         setNotificacoes(Array.isArray(dadosNotificacoes) ? dadosNotificacoes : [])
+        setDenuncias(Array.isArray(dadosDenuncias) ? dadosDenuncias : [])
         setCarregando(false)
     }, [httpGet])
 
@@ -150,6 +155,28 @@ export default function PainelSuperAdmin() {
         }))
     }
 
+    function atualizarDenuncia(id: number, campo: string, valor: string) {
+        setDenunciasEditadas((atual) => ({
+            ...atual,
+            [id]: {
+                ...(atual[id] ?? {}),
+                [campo]: valor,
+            },
+        }))
+    }
+
+    async function revisarDenuncia(denuncia: any) {
+        setMensagem('')
+        const dados = denunciasEditadas[denuncia.id] ?? {}
+        const resposta = await httpPut(`/saas/admin/denuncias-perfil/${denuncia.id}`, {
+            status: dados.status ?? denuncia.status,
+            resolucao: dados.resolucao ?? denuncia.resolucao ?? '',
+        })
+        if (resposta?.statusCode) return setMensagem(resposta.message)
+        await carregar()
+        setMensagem('Denúncia atualizada.')
+    }
+
     if (carregando) {
         return <p className="rounded border border-zinc-800 bg-zinc-950 p-5 text-zinc-300">Carregando admin SaaS...</p>
     }
@@ -192,6 +219,30 @@ export default function PainelSuperAdmin() {
                         <NotificacaoAdmin key={notificacao.id} notificacao={notificacao} />
                     ))}
                     {notificacoes.length === 0 && <p className="text-sm text-zinc-400">Sem notificações recentes.</p>}
+                </div>
+            </section>
+
+            <section className="rounded border border-zinc-800 bg-zinc-950 p-5">
+                <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h2 className="text-xl font-bold text-zinc-100">Denúncias de perfis</h2>
+                        <p className="text-sm text-zinc-400">Revisão de dados públicos, localização e conteúdo reportado por clientes</p>
+                    </div>
+                    <span className="text-sm font-semibold text-yellow-400">
+                        {denuncias.filter((item) => item.status !== 'RESOLVIDA' && item.status !== 'DESCARTADA').length} aberta(s)
+                    </span>
+                </div>
+                <div className="mt-4 grid gap-3">
+                    {denuncias.map((denuncia) => (
+                        <DenunciaAdmin
+                            key={denuncia.id}
+                            denuncia={denuncia}
+                            editada={denunciasEditadas[denuncia.id] ?? {}}
+                            onChange={atualizarDenuncia}
+                            onSalvar={revisarDenuncia}
+                        />
+                    ))}
+                    {denuncias.length === 0 && <p className="text-sm text-zinc-400">Nenhuma denúncia recebida.</p>}
                 </div>
             </section>
 
@@ -451,6 +502,62 @@ function NotificacaoAdmin({ notificacao }: { notificacao: any }) {
     )
 }
 
+function DenunciaAdmin(props: {
+    denuncia: any
+    editada: any
+    onChange: (id: number, campo: string, valor: string) => void
+    onSalvar: (denuncia: any) => void
+}) {
+    const denuncia = props.denuncia
+
+    return (
+        <div className="rounded border border-zinc-800 bg-zinc-900 p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-bold text-zinc-100">{denuncia.barbearia?.nome ?? 'Barbearia'}</h3>
+                        <span className={classeStatusDenuncia(denuncia.status)}>{denuncia.status}</span>
+                    </div>
+                    <p className="mt-1 text-sm text-zinc-400">
+                        {denuncia.barbearia?.slug ?? '-'} | {denuncia.motivo} | {formatarData(denuncia.createdAt)}
+                    </p>
+                    <p className="mt-3 text-sm text-zinc-300">{denuncia.mensagem}</p>
+                    {(denuncia.nome || denuncia.email) && (
+                        <p className="mt-2 text-xs text-zinc-500">
+                            Reportado por {denuncia.nome ?? 'anônimo'} {denuncia.email ? `| ${denuncia.email}` : ''}
+                        </p>
+                    )}
+                </div>
+                <div className="grid gap-2 lg:w-80">
+                    <select
+                        value={props.editada.status ?? denuncia.status}
+                        onChange={(e) => props.onChange(denuncia.id, 'status', e.target.value)}
+                        className="input"
+                    >
+                        {statusDenuncia.map((item) => (
+                            <option key={item}>{item}</option>
+                        ))}
+                    </select>
+                    <textarea
+                        value={props.editada.resolucao ?? denuncia.resolucao ?? ''}
+                        onChange={(e) => props.onChange(denuncia.id, 'resolucao', e.target.value)}
+                        placeholder="Resolução interna"
+                        rows={3}
+                        className="input min-h-24"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => props.onSalvar(denuncia)}
+                        className="rounded bg-zinc-100 px-4 py-2 text-sm font-bold text-zinc-950"
+                    >
+                        Salvar revisão
+                    </button>
+                </div>
+            </div>
+        </div>
+    )
+}
+
 function BarbeariaPendente(props: {
     barbearia: any
     onAprovar: (id: number) => void
@@ -547,4 +654,12 @@ function dataInput(valor?: string | null) {
 
 function valorComercial(comercial: Record<number, any>, barbearia: any, campo: string, fallback: string) {
     return comercial[barbearia.id]?.[campo] ?? fallback
+}
+
+function classeStatusDenuncia(status: string) {
+    const base = 'rounded px-2 py-1 text-xs font-bold'
+    if (status === 'PENDENTE') return `${base} bg-yellow-400 text-black`
+    if (status === 'EM_ANALISE') return `${base} bg-sky-500/20 text-sky-200`
+    if (status === 'RESOLVIDA') return `${base} bg-emerald-500/20 text-emerald-200`
+    return `${base} bg-zinc-700 text-zinc-200`
 }

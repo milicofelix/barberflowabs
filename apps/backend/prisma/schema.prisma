@@ -26,6 +26,7 @@ model Usuario {
   logsAuditoria LogAuditoria[]
   lembretesRelacionamento LembreteRelacionamento[]
   avaliacoes Avaliacao[]
+  denunciasRevisadas DenunciaPerfilPublico[] @relation("DenunciaPerfilRevisor")
 
   @@index([barbeariaId])
   @@map("usuarios")
@@ -135,6 +136,7 @@ model Barbearia {
   logsAuditoria          LogAuditoria[]
   lembretesRelacionamento LembreteRelacionamento[]
   avaliacoes             Avaliacao[]
+  denunciasPerfil        DenunciaPerfilPublico[]
 
   @@map("barbearias")
 }
@@ -313,4 +315,25 @@ model Avaliacao {
   @@index([profissionalId, status])
   @@index([usuarioId])
   @@map("avaliacoes")
+}
+
+model DenunciaPerfilPublico {
+  id            Int       @id @default(autoincrement())
+  barbeariaId   Int
+  nome          String?
+  email         String?
+  motivo        String
+  mensagem      String    @db.Text
+  status        String    @default("PENDENTE")
+  resolucao     String?   @db.Text
+  revisadoPorId Int?
+  revisadoEm    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  barbearia     Barbearia @relation(fields: [barbeariaId], references: [id])
+  revisadoPor   Usuario?  @relation("DenunciaPerfilRevisor", fields: [revisadoPorId], references: [id])
+
+  @@index([barbeariaId, status, createdAt])
+  @@index([revisadoPorId])
+  @@map("denuncias_perfil_publico")
 }

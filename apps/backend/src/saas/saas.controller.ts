@@ -26,12 +26,14 @@ import {
   AtualizarDestaqueBarbeariaDto,
   AtualizarStatusBarbeariaDto,
   OnboardingSaasDto,
+  RevisarDenunciaPerfilDto,
   RevisarBarbeariaDto,
 } from './saas.dto';
 import { SaasPrisma } from './saas.prisma';
 
 const STATUS_BARBEARIA = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'CANCELED'];
 const STATUS_COMERCIAL = ['NOVO', 'EM_CONTATO', 'APROVADO', 'RECUSADO', 'CONVERTIDO'];
+const STATUS_DENUNCIA = ['PENDENTE', 'EM_ANALISE', 'RESOLVIDA', 'DESCARTADA'];
 
 @Controller('saas')
 export class SaasController {
@@ -228,6 +230,28 @@ export class SaasController {
   listarNotificacoesAdmin(@UsuarioLogado() usuario: Usuario) {
     this.validarSuperAdmin(usuario);
     return this.repo.listarNotificacoesAdmin();
+  }
+
+  @Get('admin/denuncias-perfil')
+  listarDenunciasPerfil(@UsuarioLogado() usuario: Usuario) {
+    this.validarSuperAdmin(usuario);
+    return this.repo.listarDenunciasPerfilAdmin();
+  }
+
+  @Put('admin/denuncias-perfil/:id')
+  revisarDenunciaPerfil(
+    @Param('id') id: string,
+    @Body() dados: RevisarDenunciaPerfilDto,
+    @UsuarioLogado() usuario: Usuario,
+  ) {
+    this.validarSuperAdmin(usuario);
+    validarNumeroInteiroPositivo(id, 'Denúncia');
+
+    if (!STATUS_DENUNCIA.includes(dados?.status)) {
+      throw new BadRequestException('Status da denúncia inválido');
+    }
+
+    return this.repo.revisarDenunciaPerfilAdmin(Number(id), usuario.id!, dados);
   }
 
   private validarOnboarding(dados: OnboardingSaasDto) {

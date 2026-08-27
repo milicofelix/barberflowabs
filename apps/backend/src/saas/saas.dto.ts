@@ -46,3 +46,8 @@ export interface AtualizarPlanoAdminDto {
   limiteServicos?: number;
   ativo?: boolean;
 }
+
+export interface RevisarDenunciaPerfilDto {
+  status: string;
+  resolucao?: string | null;
+}

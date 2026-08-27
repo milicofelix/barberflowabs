@@ -210,7 +210,7 @@ Validacao manual:
 
 ## Fase A5 - Qualidade, Reputacao E Destaques
 
-Status: concluida parcialmente para o MVP.
+Status: concluida para o MVP.
 
 Objetivo: melhorar ranking e confianca da busca publica.
 
@@ -226,9 +226,9 @@ Checklist:
   - aberta agora
   - destaque
   - avaliacao
-- [ ] Criar denuncia/revisao de perfil publico.
+- [x] Criar denuncia/revisao de perfil publico.
 
-Observacao: a avaliacao do MVP fica disponivel no historico do cliente em `/agendamento` para atendimentos com status `CONCLUIDO`. Cada agendamento pode receber uma unica avaliacao. Denuncias e moderacao granular de comentarios ficam para uma evolucao futura.
+Observacao: a avaliacao do MVP fica disponivel no historico do cliente em `/agendamento` para atendimentos com status `CONCLUIDO`. Cada agendamento pode receber uma unica avaliacao. Denuncias de perfil publico entram pela pagina da barbearia e sao revisadas no Admin SaaS.
 
 Validacao manual:
 
@@ -236,6 +236,8 @@ Validacao manual:
 - Registrar avaliacao.
 - Conferir media no perfil e no mapa.
 - Marcar barbearia como destaque no admin.
+- Enviar denuncia pelo perfil publico.
+- Revisar denuncia no Admin SaaS.
 
 ## Fase A6 - Operacao Comercial Do SaaS
 

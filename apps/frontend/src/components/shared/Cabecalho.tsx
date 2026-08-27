@@ -7,8 +7,8 @@ import MenuUsuario from './MenuUsuario'
 export default function Cabecalho() {
     const { usuario } = useSessao()
     return (
-        <header className="flex items-center h-24 bg-black/60 self-stretch">
-            <nav className="flex items-center justify-between container">
+        <header className="flex h-36 items-start self-stretch bg-black/45">
+            <nav className="container flex items-start justify-between pt-8">
                 <Logo />
                 <div>
                     {usuario ? (
