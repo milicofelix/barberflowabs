@@ -34,7 +34,7 @@ export default function Sumario({ navigation }: any) {
                     style={styles.botao}
                     onPress={async () => {
                         await agendar()
-                        navigation.navigate('Inicio')
+                        navigation.navigate('Abas', { screen: 'Inicio' })
                     }}
                 >
                     <Text style={styles.textoBotao}>Finalizar Agendamento</Text>
