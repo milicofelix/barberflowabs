@@ -14,6 +14,10 @@ services:
       JWT_SECRET: ${JWT_SECRET:-barberflow_abs_dev_secret}
       SUPER_ADMIN_EMAILS: ${SUPER_ADMIN_EMAILS:-marcao@barberflowabs.app}
       EXPO_DEVTOOLS_LISTEN_ADDRESS: 0.0.0.0
+      # O Expo usa esta variavel para anunciar ao celular o IP da maquina host,
+      # em vez do IP interno do container (por exemplo, 172.24.0.4).
+      REACT_NATIVE_PACKAGER_HOSTNAME: ${EXPO_PACKAGER_HOSTNAME:-}
+      API_URL: ${API_URL:-http://localhost:4000}
       RCT_METRO_PORT: 8081
       # Ajuda file watchers de Next/Nest/Expo a perceber alterações em bind mounts.
       WATCHPACK_POLLING: "true"

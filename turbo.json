@@ -1,7 +1,13 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
-  "globalEnv": ["DATABASE_URL", "JWT_SECRET"],
+  "globalEnv": [
+    "DATABASE_URL",
+    "JWT_SECRET",
+    "REACT_NATIVE_PACKAGER_HOSTNAME",
+    "API_URL",
+    "BARBEARIA_SLUG"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
