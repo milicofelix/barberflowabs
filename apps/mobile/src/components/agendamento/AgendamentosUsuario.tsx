@@ -1,13 +1,14 @@
 import { Agendamento } from '@barbabrutal/core'
 import { StyleSheet, Text, View, Image } from 'react-native'
 import AgendamentoItem from './AgendamentoItem'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import useAPI from '../../data/hooks/useAPI'
 import useSessao from '@/src/data/hooks/useSessao'
 import Carregando from '../shared/Carregando'
 import EstadoErro from '../shared/EstadoErro'
 import EstadoVazio from '../shared/EstadoVazio'
 import { mensagemDoErro } from '@/src/data/hooks/useAPI'
+import useBarbearia from '@/src/data/hooks/useBarbearia'
 
 export default function AgendamentosUsuario() {
     const [agendamentos, setAgendamentos] = useState<Agendamento[]>([])
@@ -15,13 +16,14 @@ export default function AgendamentosUsuario() {
     const [erro, setErro] = useState<string | null>(null)
     const { httpGet } = useAPI()
     const { usuario } = useSessao()
+    const { barbearia, carregando: carregandoBarbearia } = useBarbearia()
 
-    useEffect(() => {
-        carregarAgendamentos()
-    }, [usuario])
-
-    async function carregarAgendamentos() {
-        if (!usuario?.email) return
+    const carregarAgendamentos = useCallback(async () => {
+        if (!usuario?.email || !barbearia) {
+            setAgendamentos([])
+            setCarregando(false)
+            return
+        }
         try {
             setCarregando(true)
             setErro(null)
@@ -32,11 +34,20 @@ export default function AgendamentosUsuario() {
         } finally {
             setCarregando(false)
         }
-    }
+    }, [barbearia, httpGet, usuario?.email])
+
+    useEffect(() => {
+        if (!carregandoBarbearia) carregarAgendamentos()
+    }, [carregandoBarbearia, carregarAgendamentos])
 
     function renderizarConteudo() {
-        if (carregando) return <Carregando mensagem="Buscando seus agendamentos..." />
+        if (carregando || carregandoBarbearia) return <Carregando mensagem="Buscando seus agendamentos..." />
         if (erro) return <EstadoErro mensagem={erro} tentarNovamente={carregarAgendamentos} />
+
+        if (!barbearia) {
+            return <EstadoVazio titulo="Escolha uma barbearia"
+                descricao="Use a aba Descobrir para selecionar onde deseja agendar." />
+        }
 
         if (agendamentos.length > 0) {
             return (
@@ -65,7 +76,7 @@ export default function AgendamentosUsuario() {
 
     return (
         <View style={styles.container}>
-            <Image source={require('@/assets/images/inicio/logo-brutal.png')} style={styles.logo} />
+            <Image source={require('@/assets/images/brand/logo-mark-transparent.png')} style={styles.logo} />
             <Text style={styles.titulo}>Fala, {usuario?.nome}!</Text>
             {renderizarConteudo()}
         </View>

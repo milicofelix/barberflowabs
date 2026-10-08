@@ -6,6 +6,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import type { ComponentProps } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import Agendamento from './Agendamento'
+import Descoberta from './Descoberta'
 import Inicio from './Inicio'
 import { Administracao, Configuracoes, Operacao } from './ModuloEmPreparacao'
 import AbaPerfilUsuario from './Usuario'
@@ -17,8 +18,8 @@ function opcoesAba(label: string, icone: NomeIcone) {
     return {
         tabBarIcon: ({ focused }: { focused: boolean }) => (
             <View style={styles.tabScreen}>
-                <Ionicons name={icone} size={24} color={focused ? '#29A7EA' : '#9DA2AE'} />
-                <Text style={[styles.tabScreenText, { color: focused ? '#29A7EA' : '#9DA2AE' }]}>
+                <Ionicons name={icone} size={22} color={focused ? '#E7B84B' : '#8E9AAF'} />
+                <Text style={[styles.tabScreenText, { color: focused ? '#E7B84B' : '#8E9AAF' }]}>
                     {label}
                 </Text>
             </View>
@@ -38,13 +39,14 @@ export default function Abas() {
             screenOptions={{
                 headerShown: false,
                 tabBarShowLabel: false,
-                tabBarActiveBackgroundColor: '#222',
-                tabBarInactiveBackgroundColor: '#222',
-                tabBarStyle: { backgroundColor: '#222' },
+                tabBarActiveBackgroundColor: '#081426',
+                tabBarInactiveBackgroundColor: '#081426',
+                tabBarStyle: { backgroundColor: '#081426', borderTopColor: '#26364E' },
             }}
         >
             {cliente ? (
                 <>
+                    <Tab.Screen name="Descobrir" component={Descoberta} options={opcoesAba('Descobrir', 'search-outline')} />
                     <Tab.Screen name="Inicio" component={Inicio} options={opcoesAba('Início', 'home-outline')} />
                     <Tab.Screen
                         name="Agendamento"
@@ -85,5 +87,5 @@ export default function Abas() {
 
 const styles = StyleSheet.create({
     tabScreen: { flexDirection: 'column', alignItems: 'center' },
-    tabScreenText: { fontSize: 12 },
+    tabScreenText: { fontSize: 10, fontWeight: '700' },
 })

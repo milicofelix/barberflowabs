@@ -1,25 +1,34 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "Barber Flow ABS",
+    "slug": "barber-flow-abs",
+    "description": "Agendamentos simples e gestão inteligente para barbearias.",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "barberflowabs",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#081426",
+      "dark": {
+        "image": "./assets/images/splash.png",
+        "backgroundColor": "#040A13"
+      }
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.barberflowabs.app"
     },
     "android": {
+      "package": "com.barberflowabs.app",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
+        "foregroundImage": "./assets/images/brand/android-foreground.png",
+        "monochromeImage": "./assets/images/brand/monochrome-icon.png",
+        "backgroundColor": "#081426"
+      },
+      "edgeToEdgeEnabled": true
     },
     "web": {
       "bundler": "metro",
@@ -28,7 +37,25 @@
     },
     "plugins": [
       "expo-font",
-      "expo-splash-screen",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#081426",
+          "dark": {
+            "image": "./assets/images/splash.png",
+            "backgroundColor": "#040A13"
+          }
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Permita que o Barber Flow ABS use sua localização para encontrar barbearias próximas."
+        }
+      ],
       "expo-status-bar",
       "expo-web-browser"
     ]

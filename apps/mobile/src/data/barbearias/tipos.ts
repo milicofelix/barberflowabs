@@ -1,0 +1,89 @@
+export interface EnderecoBarbearia {
+    logradouro?: string | null
+    bairro?: string | null
+    cidade?: string | null
+    estado?: string | null
+    latitude?: number | null
+    longitude?: number | null
+}
+
+export interface StatusOperacional {
+    status: 'ABERTA' | 'ABRE_EM_BREVE' | 'INTERVALO' | 'FECHADA'
+    label: string
+}
+
+export interface ServicoPublico {
+    id: number
+    nome: string
+    descricao?: string | null
+    preco: number
+    qtdeSlots: number
+    duracaoMinutos: number
+    imagemURL?: string | null
+}
+
+export interface ProfissionalPublico {
+    id: number
+    nome: string
+    descricao?: string | null
+    imagemURL?: string | null
+    avaliacao?: number | null
+    quantidadeAvaliacoes?: number
+}
+
+export interface AvaliacaoPublica {
+    id: number
+    nota: number
+    comentario?: string | null
+    criadoEm: string
+    cliente?: string | null
+    profissional?: string | null
+}
+
+export interface HorarioFuncionamento {
+    diaSemana: number
+    inicio: string
+    fim: string
+    intervaloInicio?: string | null
+    intervaloFim?: string | null
+}
+
+export interface BarbeariaResumo {
+    id: number
+    nome: string
+    slug: string
+    telefone?: string | null
+    email?: string | null
+    descricao?: string | null
+    imagemCapaURL?: string | null
+    endereco: EnderecoBarbearia
+    aceitaAgendamentoOnline: boolean
+    destaque: boolean
+    distanciaKm: number | null
+    statusOperacional: StatusOperacional
+    avaliacaoMedia: number | null
+    quantidadeAvaliacoes: number
+    servicos: ServicoPublico[]
+}
+
+export interface BarbeariaPerfil extends Omit<BarbeariaResumo, 'distanciaKm'> {
+    profissionais: ProfissionalPublico[]
+    avaliacoes: AvaliacaoPublica[]
+    horariosFuncionamento: HorarioFuncionamento[]
+}
+
+export interface BarbeariaSelecionada {
+    id: number
+    nome: string
+    slug: string
+    cidade?: string | null
+}
+
+export function resumirSelecao(barbearia: BarbeariaResumo | BarbeariaPerfil): BarbeariaSelecionada {
+    return {
+        id: barbearia.id,
+        nome: barbearia.nome,
+        slug: barbearia.slug,
+        cidade: barbearia.endereco?.cidade,
+    }
+}

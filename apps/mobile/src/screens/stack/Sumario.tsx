@@ -6,6 +6,7 @@ import type { StackParamList } from '@/src/navigation/types'
 import { useState } from 'react'
 import EstadoErro from '@/src/components/shared/EstadoErro'
 import { mensagemDoErro } from '@/src/data/hooks/useAPI'
+import useBarbearia from '@/src/data/hooks/useBarbearia'
 
 type Props = NativeStackScreenProps<StackParamList, 'Sumario'>
 
@@ -13,6 +14,7 @@ export default function Sumario({ navigation }: Props) {
     const { data, profissional, servicos, duracaoTotal, precoTotal, agendar } = useAgendamento()
     const [processando, setProcessando] = useState(false)
     const [erro, setErro] = useState<string | null>(null)
+    const { barbearia } = useBarbearia()
 
     async function finalizar() {
         if (processando) return
@@ -34,6 +36,9 @@ export default function Sumario({ navigation }: Props) {
             <View style={styles.card}>
                 <Text style={styles.titulo}>Resumo do Agendamento</Text>
                 <Text style={styles.subtitulo}>Será um prazer atendê-lo!</Text>
+
+                <Text style={styles.label}>BARBEARIA</Text>
+                <Text style={styles.valor}>{barbearia?.nome ?? 'Não selecionada'}</Text>
 
                 <Text style={styles.label}>PROFISSIONAL</Text>
                 <Text style={styles.valor}>{profissional?.nome}</Text>

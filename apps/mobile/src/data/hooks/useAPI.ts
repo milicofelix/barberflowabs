@@ -1,5 +1,6 @@
 import { useCallback } from 'react'
 import useSessao from './useSessao'
+import useBarbearia from './useBarbearia'
 
 const URL_BASE = process.env.API_URL
 const BARBEARIA_SLUG = process.env.BARBEARIA_SLUG ?? 'barber-flow-abs'
@@ -35,16 +36,19 @@ export function mensagemDoErro(erro: unknown) {
 
 export default function useAPI() {
     const { token, usuario, encerrarSessao } = useSessao()
+    const { barbearia } = useBarbearia()
 
     const executar = useCallback(
         async function executar<T>(metodo: 'GET' | 'POST' | 'PUT' | 'DELETE', caminho: string, body?: unknown) {
             if (!URL_BASE) throw new ErroAPI('A URL da API não foi configurada.', 0)
 
             const uri = caminho.startsWith('/') ? caminho : `/${caminho}`
-            const headers: Record<string, string> = {
-                'x-barbearia-slug': BARBEARIA_SLUG,
-                ...(usuario?.barbeariaId ? { 'x-barbearia-id': String(usuario.barbeariaId) } : {}),
-            }
+            const papel = usuario?.role ?? usuario?.papel
+            const cliente = !usuario || papel === 'CUSTOMER'
+            const barbeariaId = cliente ? barbearia?.id : usuario?.barbeariaId
+            const headers: Record<string, string> = barbeariaId
+                ? { 'x-barbearia-id': String(barbeariaId) }
+                : { 'x-barbearia-slug': barbearia?.slug ?? BARBEARIA_SLUG }
             if (token) headers.Authorization = `Bearer ${token}`
             if (body !== undefined) headers['Content-Type'] = 'application/json'
 
@@ -78,7 +82,7 @@ export default function useAPI() {
 
             return dados as T
         },
-        [encerrarSessao, token, usuario?.barbeariaId]
+        [barbearia?.id, barbearia?.slug, encerrarSessao, token, usuario?.barbeariaId, usuario?.papel, usuario?.role]
     )
 
     const httpGet = useCallback(<T,>(caminho: string) => executar<T>('GET', caminho), [executar])

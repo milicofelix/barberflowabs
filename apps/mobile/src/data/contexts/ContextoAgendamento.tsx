@@ -2,6 +2,7 @@ import { AgendaUtils, DateUtils, Horarios, Profissional, Servico } from '@barbab
 import { createContext, useCallback, useEffect, useState } from 'react'
 import useAPI from '../hooks/useAPI'
 import useSessao from '../hooks/useSessao'
+import useBarbearia from '../hooks/useBarbearia'
 
 interface HorariosDisponiveis {
     manha: string[]
@@ -37,6 +38,7 @@ function formatarDia(data: Date) {
 export function ProvedorAgendamento(props: any) {
     const { httpPost, httpGet } = useAPI()
     const { usuario } = useSessao()
+    const { barbearia } = useBarbearia()
 
     const [horariosOcupados, setHorariosOcupados] = useState<string[]>([])
     const [horariosDisponiveis, setHorariosDisponiveis] = useState<HorariosDisponiveis>(
@@ -125,6 +127,12 @@ export function ProvedorAgendamento(props: any) {
         },
         [httpGet]
     )
+
+    useEffect(() => {
+        setProfissional(null)
+        setServicos([])
+        setData(DateUtils.hojeComHoraZerada())
+    }, [barbearia?.id])
 
     useEffect(() => {
         if (!dia || !profissional) {
