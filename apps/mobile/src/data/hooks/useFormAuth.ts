@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import useAPI from './useAPI'
+import useAPI, { mensagemDoErro } from './useAPI'
 import useSessao from './useSessao'
 
 export default function useFormAuth() {
@@ -9,22 +9,30 @@ export default function useFormAuth() {
     const [email, setEmail] = useState('')
     const [senha, setSenha] = useState('')
     const [erros, setErros] = useState<any>({})
+    const [processando, setProcessando] = useState(false)
+    const [erroGeral, setErroGeral] = useState<string | null>(null)
 
     const { httpPost } = useAPI()
     const { iniciarSessao } = useSessao()
 
     function alterarModo() {
+        setErroGeral(null)
         setModo(modo === 'login' ? 'cadastro' : 'login')
     }
 
     async function submeter() {
-        if (modo === 'login' && validar()) {
+        if (!validar() || processando) return
+
+        try {
+            setProcessando(true)
+            setErroGeral(null)
+            if (modo === 'cadastro') await registrar()
             await login()
             limparFormulario()
-        } else if (validar()) {
-            await registrar()
-            await login()
-            limparFormulario()
+        } catch (erro) {
+            setErroGeral(mensagemDoErro(erro))
+        } finally {
+            setProcessando(false)
         }
     }
 
@@ -39,8 +47,9 @@ export default function useFormAuth() {
     }
 
     async function login() {
-        const token = await httpPost('auth/login', { email, senha })
-        iniciarSessao(token)
+        const token = await httpPost<string>('auth/login', { email, senha })
+        if (!token || typeof token !== 'string') throw new Error('Não foi possível iniciar a sessão.')
+        await iniciarSessao(token)
     }
 
     async function registrar() {
@@ -60,6 +69,8 @@ export default function useFormAuth() {
         email,
         senha,
         erros,
+        erroGeral,
+        processando,
         alterarNome: setNome,
         alterarEmail: setEmail,
         alterarSenha: setSenha,

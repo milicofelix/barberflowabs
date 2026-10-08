@@ -1,97 +1,147 @@
-'use client'
-import { createContext, useCallback, useEffect, useState } from 'react'
-import { jwtDecode } from 'jwt-decode'
 import { Usuario } from '@barbabrutal/core'
+import { jwtDecode } from 'jwt-decode'
+import { createContext, useCallback, useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import useLocalStorage from '../hooks/useLocalStorage'
+
+const URL_BASE = process.env.API_URL
+const TOKEN_NOME = '_barberflowabs_token'
+
+interface TokenPayload {
+    id: number
+    barbeariaId?: number | null
+    nome: string
+    email: string
+    barbeiro?: boolean
+    papel?: Usuario['papel'] | 'BARBERSHOP_OWNER' | 'APP_OWNER'
+    role?: Usuario['role'] | 'BARBERSHOP_OWNER' | 'APP_OWNER'
+    telefone?: string
+    exp?: number
+}
 
 interface Sessao {
     token: string | null
     usuario: Usuario | null
 }
 
-interface ContextoSessaoProps {
+interface ContextoSessaoProps extends Sessao {
     carregando: boolean
-    token: string | null
-    usuario: Usuario | null
     iniciarSessao: (token: string) => Promise<void>
+    renovarSessao: () => Promise<boolean>
     encerrarSessao: () => Promise<void>
 }
 
-const ContextoSessao = createContext<ContextoSessaoProps>({} as any)
+const ContextoSessao = createContext<ContextoSessaoProps>({} as ContextoSessaoProps)
 export default ContextoSessao
 
-export function ProvedorSessao(props: any) {
-    const tokenNome = '_barberflowabs_token'
-    const { get, set, remove } = useLocalStorage()
+function decodificarSessao(token: string): Sessao | null {
+    try {
+        const payload = jwtDecode<TokenPayload>(token)
+        if (!payload.email || !payload.exp || payload.exp <= Date.now() / 1000) return null
 
+        return {
+            token,
+            usuario: {
+                id: payload.id,
+                barbeariaId: payload.barbeariaId ?? undefined,
+                nome: payload.nome,
+                email: payload.email,
+                barbeiro: payload.barbeiro,
+                papel: payload.papel as Usuario['papel'],
+                role: payload.role as Usuario['role'],
+                telefone: payload.telefone,
+            },
+        }
+    } catch {
+        return null
+    }
+}
+
+export function ProvedorSessao({ children }: { children: ReactNode }) {
+    const { get, set, remove } = useLocalStorage()
     const [carregando, setCarregando] = useState(true)
     const [sessao, setSessao] = useState<Sessao>({ token: null, usuario: null })
 
-    const obterSessao = useCallback(
-        async function (): Promise<Sessao> {
-            const token = await get(tokenNome)
-
-            if (!token) {
-                return { token: null, usuario: null }
-            }
-
-            try {
-                const payload: any = jwtDecode(token)
-                const valido = payload.exp! > Date.now() / 1000
-
-                if (!valido) {
-                    return { token: null, usuario: null }
-                }
-
-                return {
-                    token,
-                    usuario: {
-                        id: payload.id,
-                        barbeariaId: payload.barbeariaId,
-                        nome: payload.nome,
-                        email: payload.email,
-                        barbeiro: payload.barbeiro,
-                        papel: payload.papel ?? payload.role,
-                        role: payload.role,
-                        telefone: payload.telefone,
-                    },
-                }
-            } catch (e) {
-                return { token: null, usuario: null }
-            }
-        },
-        [get]
-    )
+    const encerrarSessao = useCallback(async () => {
+        await remove(TOKEN_NOME)
+        setSessao({ token: null, usuario: null })
+    }, [remove])
 
     const iniciarSessao = useCallback(
-        async function (token: string) {
-            await set(tokenNome, token)
-            const sessao = await obterSessao()
-            setSessao(sessao)
-        },
-        [obterSessao, set]
-    )
-
-    const encerrarSessao = useCallback(
-        async function () {
-            await remove(tokenNome)
-            setSessao({ token: null, usuario: null })
-        },
-        [remove]
-    )
-
-    const carregarSessao = useCallback(
-        async function () {
-            try {
-                setCarregando(true)
-                const sessao = await obterSessao()
-                setSessao(sessao)
-            } finally {
-                setCarregando(false)
+        async (token: string) => {
+            const novaSessao = decodificarSessao(token)
+            if (!novaSessao) {
+                await encerrarSessao()
+                throw new Error('O servidor retornou uma sessão inválida.')
             }
+
+            await set(TOKEN_NOME, token)
+            setSessao(novaSessao)
         },
-        [obterSessao]
+        [encerrarSessao, set]
     )
+
+    const renovarToken = useCallback(async (token: string) => {
+        if (!URL_BASE) throw new Error('A URL da API não foi configurada.')
+
+        const resposta = await fetch(`${URL_BASE}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token }),
+        })
+        if (resposta.status === 401) return null
+        if (!resposta.ok) throw new Error('Não foi possível renovar a sessão.')
+
+        const tokenAtualizado = await resposta.text()
+        return tokenAtualizado || null
+    }, [])
+
+    const renovarSessao = useCallback(async () => {
+        const tokenAtual = sessao.token ?? (await get(TOKEN_NOME))
+        if (!tokenAtual || !decodificarSessao(tokenAtual)) {
+            await encerrarSessao()
+            return false
+        }
+
+        try {
+            const tokenAtualizado = await renovarToken(tokenAtual)
+            if (!tokenAtualizado) {
+                await encerrarSessao()
+                return false
+            }
+
+            await iniciarSessao(tokenAtualizado)
+            return true
+        } catch {
+            setSessao(decodificarSessao(tokenAtual)!)
+            return true
+        }
+    }, [encerrarSessao, get, iniciarSessao, renovarToken, sessao.token])
+
+    const carregarSessao = useCallback(async () => {
+        try {
+            setCarregando(true)
+            const token = await get(TOKEN_NOME)
+            if (!token || !decodificarSessao(token)) {
+                await encerrarSessao()
+                return
+            }
+
+            try {
+                const tokenAtualizado = await renovarToken(token)
+                if (!tokenAtualizado) {
+                    await encerrarSessao()
+                    return
+                }
+
+                await iniciarSessao(tokenAtualizado)
+            } catch {
+                setSessao(decodificarSessao(token)!)
+            }
+        } finally {
+            setCarregando(false)
+        }
+    }, [encerrarSessao, get, iniciarSessao, renovarToken])
 
     useEffect(() => {
         carregarSessao()
@@ -104,10 +154,11 @@ export function ProvedorSessao(props: any) {
                 token: sessao.token,
                 usuario: sessao.usuario,
                 iniciarSessao,
+                renovarSessao,
                 encerrarSessao,
             }}
         >
-            {props.children}
+            {children}
         </ContextoSessao.Provider>
     )
 }

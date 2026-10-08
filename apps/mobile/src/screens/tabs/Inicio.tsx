@@ -1,5 +1,6 @@
 import AgendamentosUsuario from '@/src/components/agendamento/AgendamentosUsuario'
-import { View, ImageBackground, SafeAreaView, ScrollView, StyleSheet } from 'react-native'
+import { View, ImageBackground, ScrollView, StyleSheet } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function Inicio() {
     return (

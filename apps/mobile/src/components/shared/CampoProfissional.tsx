@@ -2,6 +2,9 @@ import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
 import { Profissional } from '@barbabrutal/core'
 import useProfissionais from '@/src/data/hooks/useProfissionais'
 import imagens from '@/src/data/constants/imagens'
+import Carregando from './Carregando'
+import EstadoErro from './EstadoErro'
+import EstadoVazio from './EstadoVazio'
 
 interface CampoProfissionalProps {
     value: Profissional | null
@@ -10,7 +13,13 @@ interface CampoProfissionalProps {
 
 export default function CampoProfissional(props: CampoProfissionalProps) {
     const { value, onChange } = props
-    const { profissionais } = useProfissionais()
+    const { profissionais, carregando, erro, carregarProfissionais } = useProfissionais()
+
+    if (carregando) return <Carregando mensagem="Buscando profissionais..." />
+    if (erro) return <EstadoErro mensagem={erro} tentarNovamente={carregarProfissionais} />
+    if (profissionais.length === 0) {
+        return <EstadoVazio titulo="Nenhum profissional disponível" />
+    }
 
     function renderizarProfissional(p: Profissional) {
         return (

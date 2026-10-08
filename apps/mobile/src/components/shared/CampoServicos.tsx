@@ -2,6 +2,9 @@ import { Image, StyleSheet, Text, Pressable, View } from 'react-native'
 import { Servico } from '@barbabrutal/core'
 import useServicos from '@/src/data/hooks/useServicos'
 import imagens from '@/src/data/constants/imagens'
+import Carregando from './Carregando'
+import EstadoErro from './EstadoErro'
+import EstadoVazio from './EstadoVazio'
 
 interface ServicosInputProps {
     value: Servico[]
@@ -36,7 +39,16 @@ function Opcao(props: { servico: Servico; onClick: (s: Servico) => void; selecio
 
 export default function ServicosInput(props: ServicosInputProps) {
     const { value, onChange } = props
-    const { servicos: todosOsServicos } = useServicos()
+    const {
+        servicos: todosOsServicos,
+        carregando,
+        erro,
+        carregarServicos,
+    } = useServicos()
+
+    if (carregando) return <Carregando mensagem="Buscando serviços..." />
+    if (erro) return <EstadoErro mensagem={erro} tentarNovamente={carregarServicos} />
+    if (todosOsServicos.length === 0) return <EstadoVazio titulo="Nenhum serviço disponível" />
 
     function alternarMarcacaoServico(servico: Servico) {
         const encontrado = value.find((s) => s.id === servico.id)

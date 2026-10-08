@@ -1,13 +1,13 @@
 import PerfilUsuario from '@/src/components/usuario/PerfilUsuario'
 import useSessao from '@/src/data/hooks/useSessao'
-import { SafeAreaView, StyleSheet, View } from 'react-native'
+import { StyleSheet, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
-export default function Usuario({ navigation }: any) {
+export default function Usuario() {
     const { usuario, encerrarSessao } = useSessao()
 
     async function logout() {
         await encerrarSessao()
-        navigation.replace('Autenticacao')
     }
 
     return (

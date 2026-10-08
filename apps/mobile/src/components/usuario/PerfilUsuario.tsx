@@ -1,6 +1,7 @@
 import { StyleSheet, View, Image, Text, Pressable } from 'react-native'
 import { Usuario } from '@barbabrutal/core'
 import React from 'react'
+import { resolverPerfil } from '@/src/data/auth/perfis'
 
 export interface PerfilUsuarioProps {
     usuario: Usuario
@@ -8,11 +9,21 @@ export interface PerfilUsuarioProps {
 }
 
 export default function PerfilUsuario(props: PerfilUsuarioProps) {
+    const perfil = resolverPerfil(props.usuario)
+    const nomePerfil = {
+        CUSTOMER: 'Cliente',
+        BARBER: 'Profissional',
+        BARBERSHOP_OWNER: 'Responsável pela barbearia',
+        SUPER_ADMIN: 'Administrador do software',
+        APP_OWNER: 'Dono do software',
+    }[perfil ?? 'CUSTOMER']
+
     return (
         <View style={styles.container}>
             <Image source={require('@/assets/images/avatar.png')} style={styles.avatar} />
             <Text style={styles.destaque}>Fala, {props.usuario?.nome}!</Text>
             <Text style={styles.texto}>E-mail: {props.usuario?.email.toLowerCase()}</Text>
+            <Text style={styles.perfil}>{nomePerfil}</Text>
             <Pressable style={styles.botao} onPress={props.logout}>
                 <Text style={styles.textoBotao}>SAIR</Text>
             </Pressable>
@@ -44,6 +55,12 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '400',
         color: '#A9A9A9',
+    },
+    perfil: {
+        marginTop: 10,
+        color: '#facc15',
+        fontSize: 14,
+        fontWeight: '700',
     },
     botao: {
         margin: 30,

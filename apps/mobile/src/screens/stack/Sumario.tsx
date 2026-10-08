@@ -1,9 +1,33 @@
-import { StyleSheet, Text, Pressable, View } from 'react-native'
+import { ActivityIndicator, StyleSheet, Text, Pressable, View } from 'react-native'
 import { DateUtils, MoedaUtils } from '@barbabrutal/core'
 import useAgendamento from '../../data/hooks/useAgendamento'
+import type { NativeStackScreenProps } from '@react-navigation/native-stack'
+import type { StackParamList } from '@/src/navigation/types'
+import { useState } from 'react'
+import EstadoErro from '@/src/components/shared/EstadoErro'
+import { mensagemDoErro } from '@/src/data/hooks/useAPI'
 
-export default function Sumario({ navigation }: any) {
+type Props = NativeStackScreenProps<StackParamList, 'Sumario'>
+
+export default function Sumario({ navigation }: Props) {
     const { data, profissional, servicos, duracaoTotal, precoTotal, agendar } = useAgendamento()
+    const [processando, setProcessando] = useState(false)
+    const [erro, setErro] = useState<string | null>(null)
+
+    async function finalizar() {
+        if (processando) return
+
+        try {
+            setProcessando(true)
+            setErro(null)
+            await agendar()
+            navigation.navigate('Abas', { screen: 'Inicio' })
+        } catch (erro) {
+            setErro(mensagemDoErro(erro))
+        } finally {
+            setProcessando(false)
+        }
+    }
 
     return (
         <View style={styles.container}>
@@ -30,14 +54,18 @@ export default function Sumario({ navigation }: any) {
                 <Text style={styles.valorTotalLabel}>VALOR TOTAL</Text>
                 <Text style={styles.valorTotal}>{MoedaUtils.formatar(precoTotal())}</Text>
 
+                {erro ? <EstadoErro mensagem={erro} /> : null}
+
                 <Pressable
-                    style={styles.botao}
-                    onPress={async () => {
-                        await agendar()
-                        navigation.navigate('Abas', { screen: 'Inicio' })
-                    }}
+                    style={[styles.botao, processando && styles.botaoDesabilitado]}
+                    onPress={finalizar}
+                    disabled={processando}
                 >
-                    <Text style={styles.textoBotao}>Finalizar Agendamento</Text>
+                    {processando ? (
+                        <ActivityIndicator color="#fff" />
+                    ) : (
+                        <Text style={styles.textoBotao}>Finalizar Agendamento</Text>
+                    )}
                 </Pressable>
             </View>
         </View>
@@ -110,4 +138,5 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
+    botaoDesabilitado: { opacity: 0.65 },
 })

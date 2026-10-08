@@ -106,7 +106,7 @@ export function ProvedorAgendamento(props: any) {
     const obterHorariosOcupados = useCallback(
         async function (dia: string, profissional: Profissional): Promise<string[]> {
             if (!dia || !profissional) return []
-            const ocupacao = await httpGet(`agendamentos/ocupacao/${profissional!.id}/${dia}`)
+            const ocupacao = await httpGet<string[]>(`agendamentos/ocupacao/${profissional!.id}/${dia}`)
             return ocupacao ?? []
         },
         [httpGet]
@@ -120,7 +120,7 @@ export function ProvedorAgendamento(props: any) {
             if (!dia) return AgendaUtils.horariosDoDia()
 
             const profissionalQuery = profissional ? `?profissionalId=${profissional.id}` : ''
-            const horarios = await httpGet(`agenda/horarios/${dia}${profissionalQuery}`)
+            const horarios = await httpGet<HorariosDisponiveis>(`agenda/horarios/${dia}${profissionalQuery}`)
             return horarios?.manha && horarios?.tardeNoite ? horarios : AgendaUtils.horariosDoDia()
         },
         [httpGet]
@@ -131,11 +131,13 @@ export function ProvedorAgendamento(props: any) {
             setHorariosOcupados([])
             return
         }
-        obterHorariosOcupados(dia, profissional).then(setHorariosOcupados)
+        obterHorariosOcupados(dia, profissional).then(setHorariosOcupados).catch(() => setHorariosOcupados([]))
     }, [dia, profissional, obterHorariosOcupados])
 
     useEffect(() => {
-        obterHorariosDisponiveis(dia, profissional).then(setHorariosDisponiveis)
+        obterHorariosDisponiveis(dia, profissional)
+            .then(setHorariosDisponiveis)
+            .catch(() => setHorariosDisponiveis(AgendaUtils.horariosDoDia()))
     }, [dia, profissional, obterHorariosDisponiveis])
 
     return (

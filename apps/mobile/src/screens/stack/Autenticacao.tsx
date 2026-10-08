@@ -2,30 +2,28 @@ import CampoEmail from '@/src/components/shared/CampoEmail'
 import CampoSenha from '@/src/components/shared/CampoSenha'
 import CampoTexto from '@/src/components/shared/CampoTexto'
 import useFormAuth from '@/src/data/hooks/useFormAuth'
-import useSessao from '@/src/data/hooks/useSessao'
-import { useEffect } from 'react'
-import { View, Text, StyleSheet, ImageBackground, Pressable, Platform } from 'react-native'
+import EstadoErro from '@/src/components/shared/EstadoErro'
+import type { NativeStackScreenProps } from '@react-navigation/native-stack'
+import type { StackParamList } from '@/src/navigation/types'
+import { View, Text, StyleSheet, ImageBackground, Pressable, Platform, ActivityIndicator } from 'react-native'
 
-export default function Autenticacao({ navigation }: any) {
-    const { usuario } = useSessao()
+type Props = NativeStackScreenProps<StackParamList, 'Autenticacao'>
+
+export default function Autenticacao(_: Props) {
     const {
         nome,
         email,
         senha,
         modo,
         erros,
+        erroGeral,
+        processando,
         alterarNome,
         alterarEmail,
         alterarSenha,
         alterarModo,
         submeter,
     } = useFormAuth()
-
-    useEffect(() => {
-        if (usuario) {
-            navigation?.replace('Abas')
-        }
-    }, [usuario])
 
     return (
         <View style={styles.container}>
@@ -67,8 +65,19 @@ export default function Autenticacao({ navigation }: any) {
                                 error={erros.senha}
                             />
                         </View>
-                        <Pressable style={styles.button} onPress={submeter}>
-                            <Text style={styles.buttonText}>Entrar</Text>
+                        {erroGeral ? <EstadoErro mensagem={erroGeral} /> : null}
+                        <Pressable
+                            style={[styles.button, processando && styles.buttonDesabilitado]}
+                            onPress={submeter}
+                            disabled={processando}
+                        >
+                            {processando ? (
+                                <ActivityIndicator color="#fff" />
+                            ) : (
+                                <Text style={styles.buttonText}>
+                                    {modo === 'login' ? 'Entrar' : 'Cadastrar'}
+                                </Text>
+                            )}
                         </Pressable>
                         <Pressable onPress={() => alterarModo()} style={styles.alternarModo}>
                             <Text style={styles.linkText}>
@@ -154,6 +163,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '700',
     },
+    buttonDesabilitado: { opacity: 0.65 },
     alternarModo: {
         paddingTop: 25,
         paddingHorizontal: 12,
