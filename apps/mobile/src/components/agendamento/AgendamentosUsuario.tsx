@@ -9,8 +9,10 @@ import EstadoErro from '../shared/EstadoErro'
 import EstadoVazio from '../shared/EstadoVazio'
 import { mensagemDoErro } from '@/src/data/hooks/useAPI'
 import useBarbearia from '@/src/data/hooks/useBarbearia'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 export default function AgendamentosUsuario() {
+    const { cores } = useTema()
     const [agendamentos, setAgendamentos] = useState<Agendamento[]>([])
     const [carregando, setCarregando] = useState(true)
     const [erro, setErro] = useState<string | null>(null)
@@ -52,7 +54,7 @@ export default function AgendamentosUsuario() {
         if (agendamentos.length > 0) {
             return (
                 <View>
-                    <Text style={styles.subtitulo}>Aqui estão seus últimos agendamentos:</Text>
+                    <Text style={[styles.subtitulo, { color: cores.texto }]}>Aqui estão seus últimos agendamentos:</Text>
                     {[...agendamentos]
                         .reverse()
                         .map((a: Agendamento) => <AgendamentoItem agendamento={a} key={a.id} />)}
@@ -82,7 +84,7 @@ export default function AgendamentosUsuario() {
                 resizeMode="contain"
                 accessibilityLabel="Logo UniFlow ABS"
             />
-            <Text style={styles.titulo}>Fala, {usuario?.nome}!</Text>
+            <Text style={[styles.titulo, { color: cores.texto }]}>Fala, {usuario?.nome}!</Text>
             {renderizarConteudo()}
         </View>
     )

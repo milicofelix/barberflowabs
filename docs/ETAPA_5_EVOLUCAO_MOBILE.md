@@ -48,3 +48,20 @@ O modulo de operacao concentra resumo diario, agenda filtrada por profissional, 
 ## Observacao De Execucao
 
 Nenhum teste, build, lint, typecheck, formatador, migration, seed, instalacao de dependencia ou reinicio de servico foi executado nesta etapa, conforme a politica do projeto. A verificacao funcional permanece manual e deve ser feita somente quando solicitada.
+
+## Ajustes De Tema E Disponibilidade
+
+O aplicativo agora oferece tema escuro e claro. O botao flutuante no topo alterna entre sol e lua, e a escolha fica salva no aparelho.
+
+Validacao manual sugerida:
+
+1. Abra o aplicativo e toque no icone de sol ou lua no canto superior direito.
+2. Percorra login, descoberta, agendamento, perfil, operacao, configuracoes e administracao.
+3. Confirme que fundos, cartoes, campos, textos e navegacao acompanham o tema escolhido.
+4. Feche e abra novamente o Expo Go e confirme que o tema escolhido foi preservado.
+5. Crie um agendamento com um profissional, data e horario conhecidos.
+6. Volte ao fluxo de agendamento, escolha o mesmo estabelecimento, profissional e data.
+7. Confirme que o horario aparece riscado como **Ocupado** e nao responde ao toque.
+8. Se um servico ultrapassar o fim do expediente, confirme que o slot aparece como **Indisponivel**.
+
+O endpoint de ocupacao agora formata os horarios explicitamente no fuso `America/Sao_Paulo`, evitando a diferenca entre o horario gravado e o horario exibido pelo dispositivo.

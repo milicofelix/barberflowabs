@@ -5,12 +5,14 @@ import CampoServicos from '../shared/CampoServicos'
 import Passos from '../shared/Passos'
 import React from 'react'
 import useAgendamento from '../../data/hooks/useAgendamento'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 export interface FormularioAgendamentoProps {
     finalizar: () => void
 }
 
 export default function FormularioAgendamento(props: FormularioAgendamentoProps) {
+    const { cores } = useTema()
     const {
         profissional,
         servicos,
@@ -26,7 +28,7 @@ export default function FormularioAgendamento(props: FormularioAgendamentoProps)
 
     return (
         <View style={styles.container}>
-            <Text style={styles.titulo}>Agende seu horário</Text>
+            <Text style={[styles.titulo, { color: cores.texto }]}>Agende seu horário</Text>
             <Passos
                 labels={['Profissional', 'Serviços', 'Horário']}
                 permiteProximoPasso={[!!profissional, servicos.length > 0, podeAgendar()]}

@@ -2,6 +2,7 @@ import { StyleSheet, View, Image, Text, Pressable } from 'react-native'
 import { Usuario } from '@barbabrutal/core'
 import React from 'react'
 import { resolverPerfil } from '@/src/data/auth/perfis'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 export interface PerfilUsuarioProps {
     usuario: Usuario
@@ -9,6 +10,7 @@ export interface PerfilUsuarioProps {
 }
 
 export default function PerfilUsuario(props: PerfilUsuarioProps) {
+    const { cores } = useTema()
     const perfil = resolverPerfil(props.usuario)
     const nomePerfil = {
         CUSTOMER: 'Cliente',
@@ -21,8 +23,8 @@ export default function PerfilUsuario(props: PerfilUsuarioProps) {
     return (
         <View style={styles.container}>
             <Image source={require('@/assets/images/avatar.png')} style={styles.avatar} />
-            <Text style={styles.destaque}>Fala, {props.usuario?.nome}!</Text>
-            <Text style={styles.texto}>E-mail: {props.usuario?.email.toLowerCase()}</Text>
+            <Text style={[styles.destaque, { color: cores.texto }]}>Fala, {props.usuario?.nome}!</Text>
+            <Text style={[styles.texto, { color: cores.textoSecundario }]}>E-mail: {props.usuario?.email.toLowerCase()}</Text>
             <Text style={styles.perfil}>{nomePerfil}</Text>
             <Pressable style={styles.botao} onPress={props.logout}>
                 <Text style={styles.textoBotao}>SAIR</Text>

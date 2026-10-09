@@ -5,6 +5,7 @@ import imagens from '@/src/data/constants/imagens'
 import Carregando from './Carregando'
 import EstadoErro from './EstadoErro'
 import EstadoVazio from './EstadoVazio'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 interface ServicosInputProps {
     value: Servico[]
@@ -12,12 +13,14 @@ interface ServicosInputProps {
 }
 
 function Opcao(props: { servico: Servico; onClick: (s: Servico) => void; selecionado?: boolean }) {
+    const { cores } = useTema()
     return (
         <View
             key={props.servico.id}
             style={{
                 ...styles.servicoCard,
-                backgroundColor: props.selecionado ? '#22c55e' : '#18181b',
+                backgroundColor: props.selecionado ? cores.sucesso : cores.superficie,
+                borderColor: cores.borda,
             }}
         >
             <Pressable
@@ -30,7 +33,7 @@ function Opcao(props: { servico: Servico; onClick: (s: Servico) => void; selecio
                         style={styles.imagemServico}
                         source={imagens.servicos.find((s) => s.id === props.servico.id)?.imagem}
                     />
-                    <Text style={styles.textoServico}>{props.servico.nome}</Text>
+                    <Text style={[styles.textoServico, { color: props.selecionado ? '#FFFFFF' : cores.texto }]}>{props.servico.nome}</Text>
                 </View>
             </Pressable>
         </View>
@@ -86,6 +89,7 @@ const styles = StyleSheet.create({
     },
     servicoCard: {
         borderRadius: 8,
+        borderWidth: 1,
         padding: 2,
     },
     textoServico: {

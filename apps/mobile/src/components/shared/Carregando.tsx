@@ -1,14 +1,16 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 interface CarregandoProps {
     mensagem?: string
 }
 
 export default function Carregando({ mensagem = 'Carregando...' }: CarregandoProps) {
+    const { cores } = useTema()
     return (
-        <View style={styles.container} accessibilityRole="progressbar">
-            <ActivityIndicator size="large" color="#29A7EA" />
-            <Text style={styles.texto}>{mensagem}</Text>
+        <View style={[styles.container, { backgroundColor: cores.fundo }]} accessibilityRole="progressbar">
+            <ActivityIndicator size="large" color={cores.destaque} />
+            <Text style={[styles.texto, { color: cores.textoSecundario }]}>{mensagem}</Text>
         </View>
     )
 }

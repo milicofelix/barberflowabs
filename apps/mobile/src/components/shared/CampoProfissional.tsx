@@ -5,6 +5,7 @@ import imagens from '@/src/data/constants/imagens'
 import Carregando from './Carregando'
 import EstadoErro from './EstadoErro'
 import EstadoVazio from './EstadoVazio'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 interface CampoProfissionalProps {
     value: Profissional | null
@@ -12,6 +13,7 @@ interface CampoProfissionalProps {
 }
 
 export default function CampoProfissional(props: CampoProfissionalProps) {
+    const { cores } = useTema()
     const { value, onChange } = props
     const { profissionais, carregando, erro, carregarProfissionais } = useProfissionais()
 
@@ -27,7 +29,8 @@ export default function CampoProfissional(props: CampoProfissionalProps) {
                 key={p?.id}
                 style={{
                     ...styles.profissionalContainer,
-                    backgroundColor: value?.id === p?.id ? '#22c55e' : '#18181b',
+                    backgroundColor: value?.id === p?.id ? cores.sucesso : cores.superficie,
+                    borderColor: cores.borda,
                 }}
             >
                 <Pressable onPress={() => onChange(p)}>
@@ -36,7 +39,7 @@ export default function CampoProfissional(props: CampoProfissionalProps) {
                             style={{ width: 100, height: 100, borderRadius: 6 }}
                             source={imagens.profissionais.find((pr) => pr.id === p.id)?.imagem}
                         />
-                        <Text style={{ color: 'white', paddingVertical: 5 }}>
+                        <Text style={{ color: value?.id === p?.id ? '#FFFFFF' : cores.texto, paddingVertical: 5 }}>
                             {p.nome.split(' ')[0]}
                         </Text>
                     </View>
@@ -62,6 +65,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 8,
+        borderWidth: 1,
         padding: 2,
     },
 })

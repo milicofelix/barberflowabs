@@ -174,7 +174,7 @@ export class AgendamentoController {
         );
         return [...horariosOcupados, ...horarios];
       }, [])
-      .map((d) => d.toTimeString().slice(0, 5));
+      .map((data) => this.formatarHorarioLocal(data));
   }
 
   @Delete(':id')
@@ -203,6 +203,15 @@ export class AgendamentoController {
 
   private async resolverBarbeariaAgendamento(req: any, usuario: Usuario) {
     return this.tenant.resolverBarbeariaId(req);
+  }
+
+  private formatarHorarioLocal(data: Date) {
+    return new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).format(data);
   }
 
   private validarAvaliacao(dados: AvaliarAgendamentoDto) {

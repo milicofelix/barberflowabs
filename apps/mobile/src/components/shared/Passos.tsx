@@ -1,5 +1,6 @@
 import { StyleSheet, Text, Pressable, View } from 'react-native'
 import React, { useState } from 'react'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 export interface PassosProps {
     labels: string[]
@@ -10,6 +11,7 @@ export interface PassosProps {
 }
 
 export default function Passos(props: PassosProps) {
+    const { cores } = useTema()
     const [passoAtual, setPassoAtual] = useState(0)
 
     function semPassoAnterior() {
@@ -38,15 +40,15 @@ export default function Passos(props: PassosProps) {
                         <View
                             style={{
                                 ...styles.passoNumero,
-                                backgroundColor: i <= passoAtual ? '#e4e4e7' : '#71717a',
+                                backgroundColor: i <= passoAtual ? cores.destaque : cores.superficieElevada,
                             }}
                         >
-                            <Text>{i + 1}</Text>
+                            <Text style={{ color: i <= passoAtual ? cores.destaqueTexto : cores.textoSecundario }}>{i + 1}</Text>
                         </View>
                         <Text
                             style={{
                                 ...styles.passoTexto,
-                                color: i <= passoAtual ? 'white' : '#3f3f46',
+                                color: i <= passoAtual ? cores.texto : cores.textoSecundario,
                             }}
                         >
                             {label}
@@ -70,13 +72,15 @@ export default function Passos(props: PassosProps) {
                     <View
                         style={{
                             ...styles.botao,
-                            backgroundColor: desabilitar ? '#18181b' : destaque ? '#EAB308' : '#27272a',
+                            backgroundColor: desabilitar ? cores.superficieElevada : destaque ? cores.destaque : cores.superficie,
+                            borderColor: cores.borda,
+                            borderWidth: 1,
                         }}
                     >
                         <Text
                             style={{
                                 ...styles.botaoTexto,
-                                color: desabilitar ? '#3f3f46' : destaque ? 'black' : 'white',
+                                color: desabilitar ? cores.textoSecundario : destaque ? cores.destaqueTexto : cores.texto,
                             }}
                         >
                             {texto}

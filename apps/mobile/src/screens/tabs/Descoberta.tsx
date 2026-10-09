@@ -14,11 +14,13 @@ import * as Location from 'expo-location'
 import { useState } from 'react'
 import { FlatList, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 type Props = BottomTabScreenProps<AbasParamList, 'Descobrir'>
 const RAIOS = [2, 5, 10, 25]
 
 export default function Descoberta({ navigation }: Props) {
+    const { cores } = useTema()
     const { barbearia: selecionado } = useBarbearia()
     const [filtros, setFiltros] = useState<FiltrosMarketplace>(FILTROS_INICIAIS)
     const [mostrarFiltros, setMostrarFiltros] = useState(false)
@@ -40,16 +42,16 @@ export default function Descoberta({ navigation }: Props) {
         } finally { setLocalizando(false) }
     }
 
-    return <SafeAreaView style={styles.safeArea} edges={['top']}>
+    return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}>
         <FlatList data={mostrarMapa ? [] : marketplace.itens} keyExtractor={(item) => String(item.id)}
             contentContainerStyle={styles.lista} keyboardShouldPersistTaps="handled"
             ListHeaderComponent={<View>
                 <Text style={styles.sobretitulo}>MARKETPLACE UNIFLOW ABS</Text>
-                <Text style={styles.titulo}>Encontre o cuidado ideal para você</Text>
-                <Text style={styles.descricao}>Explore estabelecimentos, especialidades, preços e horários disponíveis.</Text>
-                <View style={styles.busca}><Ionicons name="search-outline" size={21} color="#748197" />
+                <Text style={[styles.titulo, { color: cores.texto }]}>Encontre o cuidado ideal para você</Text>
+                <Text style={[styles.descricao, { color: cores.textoSecundario }]}>Explore estabelecimentos, especialidades, preços e horários disponíveis.</Text>
+                <View style={[styles.busca, { backgroundColor: cores.campo, borderColor: cores.borda, borderWidth: 1 }]}><Ionicons name="search-outline" size={21} color={cores.textoSecundario} />
                     <TextInput value={filtros.busca} onChangeText={(v) => atualizar('busca', v)}
-                        placeholder="Estabelecimento, bairro ou cidade" placeholderTextColor="#748197" style={styles.buscaInput} /></View>
+                        placeholder="Estabelecimento, bairro ou cidade" placeholderTextColor={cores.textoSecundario} style={[styles.buscaInput, { color: cores.campoTexto }]} /></View>
                 <View style={styles.acoes}>
                     <Botao icone="options-outline" texto="Filtros" acao={() => setMostrarFiltros(!mostrarFiltros)} />
                     <Botao icone="map-outline" texto={mostrarMapa ? 'Lista' : 'Mapa'} acao={() => setMostrarMapa(!mostrarMapa)} />
@@ -78,11 +80,13 @@ function Categorias({ categorias, selecionada, selecionar }: any) {
 }
 
 function Filtros({ filtros, atualizar }: { filtros: FiltrosMarketplace; atualizar: <K extends keyof FiltrosMarketplace>(campo: K, valor: FiltrosMarketplace[K]) => void }) {
-    return <View style={styles.filtros}>
-        <TextInput style={styles.input} value={filtros.cidade} onChangeText={(v) => atualizar('cidade', v)} placeholder="Cidade" placeholderTextColor="#748197" />
-        <TextInput style={styles.input} value={filtros.especialidade} onChangeText={(v) => atualizar('especialidade', v)} placeholder="Especialidade" placeholderTextColor="#748197" />
-        <TextInput style={styles.input} value={filtros.precoMax} onChangeText={(v) => atualizar('precoMax', v.replace(/[^0-9.,]/g, '').replace(',', '.'))} placeholder="Preço máximo" keyboardType="decimal-pad" placeholderTextColor="#748197" />
-        <TextInput style={styles.input} value={filtros.disponivelEm} onChangeText={(v) => atualizar('disponivelEm', v)} placeholder="Disponível em: 2026-10-15T14:00:00-03:00" placeholderTextColor="#748197" autoCapitalize="none" />
+    const { cores } = useTema()
+    const inputTema = { backgroundColor: cores.campo, color: cores.campoTexto, borderColor: cores.borda }
+    return <View style={[styles.filtros, { backgroundColor: cores.superficie }]}>
+        <TextInput style={[styles.input, inputTema]} value={filtros.cidade} onChangeText={(v) => atualizar('cidade', v)} placeholder="Cidade" placeholderTextColor={cores.textoSecundario} />
+        <TextInput style={[styles.input, inputTema]} value={filtros.especialidade} onChangeText={(v) => atualizar('especialidade', v)} placeholder="Especialidade" placeholderTextColor={cores.textoSecundario} />
+        <TextInput style={[styles.input, inputTema]} value={filtros.precoMax} onChangeText={(v) => atualizar('precoMax', v.replace(/[^0-9.,]/g, '').replace(',', '.'))} placeholder="Preço máximo" keyboardType="decimal-pad" placeholderTextColor={cores.textoSecundario} />
+        <TextInput style={[styles.input, inputTema]} value={filtros.disponivelEm} onChangeText={(v) => atualizar('disponivelEm', v)} placeholder="Disponível em: 2026-10-15T14:00:00-03:00" placeholderTextColor={cores.textoSecundario} autoCapitalize="none" />
         <View style={styles.linha}><Text style={styles.label}>Aberto agora</Text><Switch value={filtros.abertaAgora} onValueChange={(v) => atualizar('abertaAgora', v)} /></View>
         <Text style={styles.label}>Avaliação mínima</Text><View style={styles.chips}>{[0, 4, 4.5].map((nota) => <Chip key={nota} texto={nota ? `${nota}+` : 'Todas'} ativo={filtros.notaMin === nota} acao={() => atualizar('notaMin', nota)} />)}</View>
         <Text style={styles.label}>Distância {filtros.posicao ? `· até ${filtros.raioKm} km` : '· use sua localização'}</Text>
@@ -91,10 +95,12 @@ function Filtros({ filtros, atualizar }: { filtros: FiltrosMarketplace; atualiza
 }
 
 function Botao({ icone, texto, acao }: { icone: any; texto: string; acao: () => void }) {
-    return <Pressable style={styles.botao} onPress={acao}><Ionicons name={icone} size={17} color="#E7B84B" /><Text style={styles.botaoTexto}>{texto}</Text></Pressable>
+    const { cores } = useTema()
+    return <Pressable style={[styles.botao, { borderColor: cores.borda }]} onPress={acao}><Ionicons name={icone} size={17} color={cores.destaque} /><Text style={[styles.botaoTexto, { color: cores.texto }]}>{texto}</Text></Pressable>
 }
 function Chip({ texto, ativo, acao }: { texto: string; ativo: boolean; acao: () => void }) {
-    return <Pressable onPress={acao} style={[styles.chip, ativo && styles.chipAtivo]}><Text style={[styles.chipTexto, ativo && styles.chipTextoAtivo]}>{texto}</Text></Pressable>
+    const { cores } = useTema()
+    return <Pressable onPress={acao} style={[styles.chip, { borderColor: cores.borda }, ativo && { backgroundColor: cores.destaque, borderColor: cores.destaque }]}><Text style={[styles.chipTexto, { color: ativo ? cores.destaqueTexto : cores.texto }]}>{texto}</Text></Pressable>
 }
 
 const styles = StyleSheet.create({

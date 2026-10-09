@@ -7,14 +7,16 @@ import useConfiguracoesEstabelecimento from '@/src/data/hooks/useConfiguracoesEs
 import type { ReactNode } from 'react'
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 export default function Configuracoes() {
+    const { cores } = useTema()
     const dados = useConfiguracoesEstabelecimento()
     if (dados.carregando) return <Carregando mensagem="Carregando configurações..." />
-    if (!dados.perfil || !dados.agenda) return <SafeAreaView style={styles.safeArea}><EstadoErro mensagem={dados.erro ?? 'Configuração indisponível'} tentarNovamente={dados.carregar} /></SafeAreaView>
+    if (!dados.perfil || !dados.agenda) return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]}><EstadoErro mensagem={dados.erro ?? 'Configuração indisponível'} tentarNovamente={dados.carregar} /></SafeAreaView>
     const atualizarPerfil = (campo: string, valor: any) => dados.setPerfil((atual) => atual ? { ...atual, [campo]: valor } : atual)
-    return <SafeAreaView style={styles.safeArea} edges={['top']}><ScrollView contentContainerStyle={styles.conteudo} keyboardShouldPersistTaps="handled">
-        <Text style={styles.sobretitulo}>CONFIGURAÇÕES</Text><Text style={styles.titulo}>Seu estabelecimento</Text>
+    return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}><ScrollView contentContainerStyle={styles.conteudo} keyboardShouldPersistTaps="handled">
+        <Text style={styles.sobretitulo}>CONFIGURAÇÕES</Text><Text style={[styles.titulo, { color: cores.texto }]}>Seu estabelecimento</Text>
         <Secao titulo="Identidade pública">
             <CampoTexto label="Nome público" value={dados.perfil.nomePublico ?? ''} onChangeText={(v) => atualizarPerfil('nomePublico', v)} />
             <CampoTexto label="Descrição" value={dados.perfil.descricaoPublica ?? ''} onChangeText={(v) => atualizarPerfil('descricaoPublica', v)} multiline />
@@ -44,7 +46,8 @@ export default function Configuracoes() {
 }
 
 function Secao({ titulo, children }: { titulo: string; children: ReactNode }) {
-    return <View style={styles.secao}><Text style={styles.secaoTitulo}>{titulo}</Text>{children}</View>
+    const { cores } = useTema()
+    return <View style={[styles.secao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}><Text style={[styles.secaoTitulo, { color: cores.texto }]}>{titulo}</Text>{children}</View>
 }
 const styles = StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: '#081426' }, conteudo: { padding: 18, paddingBottom: 42, gap: 14 }, sobretitulo: { color: '#E7B84B', fontSize: 12, fontWeight: '800', letterSpacing: 1.2 }, titulo: { color: '#FFF', fontSize: 29, fontWeight: '900' },

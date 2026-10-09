@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 interface EstadoVazioProps {
     titulo: string
@@ -8,13 +9,14 @@ interface EstadoVazioProps {
 }
 
 export default function EstadoVazio({ titulo, descricao, acaoLabel, onAcao }: EstadoVazioProps) {
+    const { cores } = useTema()
     return (
         <View style={styles.container}>
-            <Text style={styles.titulo}>{titulo}</Text>
-            {descricao ? <Text style={styles.descricao}>{descricao}</Text> : null}
+            <Text style={[styles.titulo, { color: cores.texto }]}>{titulo}</Text>
+            {descricao ? <Text style={[styles.descricao, { color: cores.textoSecundario }]}>{descricao}</Text> : null}
             {acaoLabel && onAcao ? (
-                <Pressable style={styles.botao} onPress={onAcao}>
-                    <Text style={styles.botaoTexto}>{acaoLabel}</Text>
+                <Pressable style={[styles.botao, { backgroundColor: cores.destaque }]} onPress={onAcao}>
+                    <Text style={[styles.botaoTexto, { color: cores.destaqueTexto }]}>{acaoLabel}</Text>
                 </Pressable>
             ) : null}
         </View>

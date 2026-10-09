@@ -7,10 +7,12 @@ import { useState } from 'react'
 import EstadoErro from '@/src/components/shared/EstadoErro'
 import { mensagemDoErro } from '@/src/data/hooks/useAPI'
 import useBarbearia from '@/src/data/hooks/useBarbearia'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 type Props = NativeStackScreenProps<StackParamList, 'Sumario'>
 
 export default function Sumario({ navigation }: Props) {
+    const { cores } = useTema()
     const { data, profissional, servicos, duracaoTotal, precoTotal, agendar } = useAgendamento()
     const [processando, setProcessando] = useState(false)
     const [erro, setErro] = useState<string | null>(null)
@@ -32,32 +34,32 @@ export default function Sumario({ navigation }: Props) {
     }
 
     return (
-        <View style={styles.container}>
-            <View style={styles.card}>
-                <Text style={styles.titulo}>Resumo do Agendamento</Text>
-                <Text style={styles.subtitulo}>Será um prazer atendê-lo!</Text>
+        <View style={[styles.container, { backgroundColor: cores.fundo }]}>
+            <View style={[styles.card, { backgroundColor: cores.superficie, borderColor: cores.borda, borderWidth: 1 }]}>
+                <Text style={[styles.titulo, { color: cores.texto }]}>Resumo do Agendamento</Text>
+                <Text style={[styles.subtitulo, { color: cores.textoSecundario }]}>Será um prazer atendê-lo!</Text>
 
                 <Text style={styles.label}>BARBEARIA</Text>
-                <Text style={styles.valor}>{barbearia?.nome ?? 'Não selecionada'}</Text>
+                <Text style={[styles.valor, { color: cores.texto }]}>{barbearia?.nome ?? 'Não selecionada'}</Text>
 
                 <Text style={styles.label}>PROFISSIONAL</Text>
-                <Text style={styles.valor}>{profissional?.nome}</Text>
+                <Text style={[styles.valor, { color: cores.texto }]}>{profissional?.nome}</Text>
 
                 <Text style={styles.label}>SERVIÇOS</Text>
                 {servicos.map((s, index) => (
-                    <Text key={index} style={styles.servico}>
+                    <Text key={index} style={[styles.servico, { color: cores.texto }]}>
                         {index + 1}. {s.nome}
                     </Text>
                 ))}
 
                 <Text style={styles.label}>DURAÇÃO</Text>
-                <Text style={styles.valor}>{duracaoTotal()}</Text>
+                <Text style={[styles.valor, { color: cores.texto }]}>{duracaoTotal()}</Text>
 
                 <Text style={styles.label}>HORÁRIO</Text>
-                <Text style={styles.valor}>{data && DateUtils.formatarDataEHora(data)}</Text>
+                <Text style={[styles.valor, { color: cores.texto }]}>{data && DateUtils.formatarDataEHora(data)}</Text>
 
                 <Text style={styles.valorTotalLabel}>VALOR TOTAL</Text>
-                <Text style={styles.valorTotal}>{MoedaUtils.formatar(precoTotal())}</Text>
+                <Text style={[styles.valorTotal, { color: cores.texto }]}>{MoedaUtils.formatar(precoTotal())}</Text>
 
                 {erro ? <EstadoErro mensagem={erro} /> : null}
 

@@ -1,6 +1,7 @@
 import { AgendaUtils, DateUtils, Horarios } from '@barbabrutal/core'
 import { useEffect, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 export interface HorariosDisponiveis {
     manha: string[]
@@ -16,6 +17,7 @@ interface CampoHorarioProps {
 }
 
 export default function CampoHorario(props: CampoHorarioProps) {
+    const { cores } = useTema()
     const [horaSelecionada, setHoraSelecionada] = useState<string | null>(null)
     const { manha, tardeNoite } = props.horariosDisponiveis ?? AgendaUtils.horariosDoDia()
     const { horariosOcupados } = props
@@ -32,50 +34,31 @@ export default function CampoHorario(props: CampoHorarioProps) {
     }, [dia])
 
     function renderizarHorario(horario: string) {
-        const horariosSelecionados = new Horarios(
-            horaSelecionada!,
+        const intervalo = new Horarios(
+            horario,
             props.qtdeHorarios,
             horariosOcupados,
             todosHorariosDisponiveis
         )
-        const selecionado = horariosSelecionados.todos.includes(horario)
-
-        const corBotao = () => {
-            if (selecionado) {
-                return horariosSelecionados.ocupado || horariosSelecionados.incompleto
-                    ? '#ef4444'
-                    : '#16a34a'
-            } else {
-                return '#18181b'
-            }
-        }
+        const indisponivel = intervalo.ocupado || intervalo.incompleto
+        const selecionado = horaSelecionada === horario && !indisponivel
 
         return (
             <Pressable
                 key={horario}
+                disabled={indisponivel}
+                accessibilityState={{ disabled: indisponivel, selected: selecionado }}
+                accessibilityLabel={indisponivel ? `${horario}, horário indisponível` : horario}
                 onPress={function () {
                     setHoraSelecionada(horario)
-                    const horarios = new Horarios(
-                        horario!,
-                        props.qtdeHorarios,
-                        horariosOcupados,
-                        todosHorariosDisponiveis
-                    )
-
-                    if (horarios.ocupado || horarios.incompleto) {
-                        props.onChange(DateUtils.aplicarHorario(props.value, '00:00'))
-                    } else {
-                        props.onChange(DateUtils.aplicarHorario(props.value, horario))
-                    }
+                    props.onChange(DateUtils.aplicarHorario(props.value, horario))
                 }}
-                style={{
-                    ...styles.horaContainer,
-                    backgroundColor: corBotao(),
-                }}
+                style={[styles.horaContainer, { backgroundColor: cores.superficie, borderColor: cores.borda },
+                    selecionado && { backgroundColor: cores.sucesso }, indisponivel && styles.horaIndisponivel]}
             >
                 <View style={styles.horaConteudo}>
-                    <Text style={{ color: '#e4e4e7' }}>
-                        {horariosOcupados.includes(horario) ? 'X' : horario}
+                    <Text style={[styles.horaTexto, { color: selecionado ? '#FFFFFF' : cores.texto }, indisponivel && styles.textoIndisponivel]}>
+                        {intervalo.ocupado ? `${horario} · Ocupado` : intervalo.incompleto ? `${horario} · Indisponível` : horario}
                     </Text>
                 </View>
             </Pressable>
@@ -85,11 +68,11 @@ export default function CampoHorario(props: CampoHorarioProps) {
     return (
         <View style={styles.container}>
             <View>
-                <Text style={styles.horasTexto}>Manhã</Text>
+                <Text style={[styles.horasTexto, { color: cores.texto }]}>Manhã</Text>
                 <View style={styles.horasConteudo}>{manha.map(renderizarHorario)}</View>
             </View>
             <View>
-                <Text style={styles.horasTexto}>Tarde & Noite</Text>
+                <Text style={[styles.horasTexto, { color: cores.texto }]}>Tarde & Noite</Text>
                 <View style={styles.horasConteudo}>{tardeNoite.map(renderizarHorario)}</View>
             </View>
         </View>
@@ -123,6 +106,9 @@ const styles = StyleSheet.create({
         borderColor: '#27272a',
         padding: 10,
         borderRadius: 6,
-        width: 90,
+        minWidth: 96,
     },
+    horaIndisponivel: { opacity: 0.42, backgroundColor: '#475467' },
+    horaTexto: { fontSize: 12, fontWeight: '700' },
+    textoIndisponivel: { textDecorationLine: 'line-through' },
 })

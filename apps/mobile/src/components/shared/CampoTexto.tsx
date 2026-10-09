@@ -1,5 +1,6 @@
 import { forwardRef, ReactNode } from 'react'
 import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 export interface CampoTextoProps extends Omit<TextInputProps, 'style' | 'onChangeText' | 'value'> {
     label: string
@@ -13,15 +14,16 @@ const CampoTexto = forwardRef<TextInput, CampoTextoProps>(function CampoTexto(
     { label, error, acaoDireita, ...inputProps },
     ref
 ) {
+    const { cores } = useTema()
     return (
         <View style={styles.campo}>
-            <Text style={styles.label}>{label}</Text>
-            <View style={[styles.inputContainer, error ? styles.inputError : null]}>
+            <Text style={[styles.label, { color: cores.texto }]}>{label}</Text>
+            <View style={[styles.inputContainer, { backgroundColor: cores.campo, borderColor: cores.borda }, error ? styles.inputError : null]}>
                 <TextInput
                     {...inputProps}
                     ref={ref}
-                    style={styles.input}
-                    placeholderTextColor="#78869A"
+                    style={[styles.input, { color: cores.campoTexto }]}
+                    placeholderTextColor={cores.textoSecundario}
                     accessibilityLabel={label}
                 />
                 {acaoDireita ? <View style={styles.acaoDireita}>{acaoDireita}</View> : null}

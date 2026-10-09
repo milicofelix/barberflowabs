@@ -8,15 +8,17 @@ import type { SecaoOperacao } from '@/src/data/operacao/tipos'
 import { useState } from 'react'
 import { RefreshControl, ScrollView, StyleSheet, Text, TextInput } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 export default function Operacao() {
+    const { cores } = useTema()
     const [secao, setSecao] = useState<SecaoOperacao>('RESUMO')
     const dados = useOperacao()
-    return <SafeAreaView style={styles.safeArea} edges={['top']}><ScrollView contentContainerStyle={styles.conteudo}
+    return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}><ScrollView contentContainerStyle={styles.conteudo}
         refreshControl={<RefreshControl refreshing={dados.carregando} onRefresh={dados.recarregar} tintColor="#E7B84B" />}>
-        <Text style={styles.sobretitulo}>OPERAÇÃO DO ESTABELECIMENTO</Text><Text style={styles.titulo}>Gestão diária</Text>
+        <Text style={styles.sobretitulo}>OPERAÇÃO DO ESTABELECIMENTO</Text><Text style={[styles.titulo, { color: cores.texto }]}>Gestão diária</Text>
         <SeletorOperacao atual={secao} selecionar={setSecao} />
-        {secao === 'AGENDA' ? <TextInput style={styles.data} value={dados.data} onChangeText={dados.setData} placeholder="AAAA-MM-DD" placeholderTextColor="#748197" /> : null}
+        {secao === 'AGENDA' ? <TextInput style={[styles.data, { backgroundColor: cores.campo, color: cores.campoTexto, borderColor: cores.borda }]} value={dados.data} onChangeText={dados.setData} placeholder="AAAA-MM-DD" placeholderTextColor={cores.textoSecundario} /> : null}
         {dados.erro ? <EstadoErro mensagem={dados.erro} tentarNovamente={dados.recarregar} /> : null}
         {dados.carregando && !dados.dashboard ? <Carregando mensagem="Carregando operação..." /> : null}
         {!dados.carregando && secao === 'RESUMO' ? <ResumoOperacao dados={dados.dashboard} /> : null}

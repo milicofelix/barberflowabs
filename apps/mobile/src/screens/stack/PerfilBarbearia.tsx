@@ -13,11 +13,13 @@ import { useCallback, useEffect, useState } from 'react'
 import type { ComponentProps, ReactNode } from 'react'
 import { ActivityIndicator, ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 type Props = NativeStackScreenProps<StackParamList, 'PerfilBarbearia'>
 const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
 
 export default function PerfilBarbearia({ route, navigation }: Props) {
+    const { cores } = useTema()
     const { httpGet } = useAPI()
     const { barbearia: selecionada, selecionarBarbearia } = useBarbearia()
     const [barbearia, setBarbearia] = useState<EstabelecimentoPerfil | null>(null)
@@ -57,14 +59,14 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
     }
 
     if (carregando) return <Carregando mensagem="Carregando perfil do estabelecimento..." />
-    if (erro || !barbearia) return <SafeAreaView style={styles.telaEstado}><EstadoErro mensagem={erro ?? 'Estabelecimento não encontrado.'} tentarNovamente={carregar} /></SafeAreaView>
+    if (erro || !barbearia) return <SafeAreaView style={[styles.telaEstado, { backgroundColor: cores.fundo }]}><EstadoErro mensagem={erro ?? 'Estabelecimento não encontrado.'} tentarNovamente={carregar} /></SafeAreaView>
 
     const endereco = [barbearia.endereco?.logradouro, barbearia.endereco?.bairro, barbearia.endereco?.cidade, barbearia.endereco?.estado].filter(Boolean).join(' · ')
     const imagem = barbearia.imagemCapaURL?.startsWith('http') ? { uri: barbearia.imagemCapaURL } : require('@/assets/images/inicio/fundo.png')
     const estaSelecionada = selecionada?.id === barbearia.id
 
     return (
-        <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+        <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['bottom']}>
             <ScrollView contentContainerStyle={styles.conteudo}>
                 <ImageBackground source={imagem} style={styles.hero} imageStyle={styles.heroImagem}>
                     <View style={styles.heroOverlay}>
@@ -76,7 +78,7 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
                     </View>
                 </ImageBackground>
 
-                <View style={styles.informacoes}>
+                <View style={[styles.informacoes, { borderBottomColor: cores.borda }]}>
                     {barbearia.avaliacaoMedia != null ? <Info icone="star" texto={`${barbearia.avaliacaoMedia} · ${barbearia.quantidadeAvaliacoes} avaliações`} /> : null}
                     {endereco ? <Info icone="location-outline" texto={endereco} /> : null}
                     {barbearia.telefone ? <Info icone="call-outline" texto={barbearia.telefone} /> : null}
@@ -86,18 +88,18 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
 
                 <Secao titulo="Serviços">
                     {barbearia.servicos.length ? barbearia.servicos.map((servico) => (
-                        <View key={servico.id} style={styles.itemCard}>
-                            <View style={styles.itemCabecalho}><Text style={styles.itemTitulo}>{servico.nome}</Text><Text style={styles.preco}>{moeda(servico.preco)}</Text></View>
-                            {servico.descricao ? <Text style={styles.itemDescricao}>{servico.descricao}</Text> : null}
-                            <Text style={styles.itemMeta}>{servico.duracaoMinutos} minutos</Text>
+                        <View key={servico.id} style={[styles.itemCard, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
+                            <View style={styles.itemCabecalho}><Text style={[styles.itemTitulo, { color: cores.texto }]}>{servico.nome}</Text><Text style={styles.preco}>{moeda(servico.preco)}</Text></View>
+                            {servico.descricao ? <Text style={[styles.itemDescricao, { color: cores.textoSecundario }]}>{servico.descricao}</Text> : null}
+                            <Text style={[styles.itemMeta, { color: cores.textoSecundario }]}>{servico.duracaoMinutos} minutos</Text>
                         </View>
                     )) : <EstadoVazio titulo="Nenhum serviço disponível" descricao="O estabelecimento ainda não publicou seus serviços." />}
                 </Secao>
 
                 <Secao titulo="Profissionais">
                     {barbearia.profissionais.length ? barbearia.profissionais.map((profissional) => (
-                        <View key={profissional.id} style={styles.itemCard}>
-                            <Text style={styles.itemTitulo}>{profissional.nome}</Text>
+                        <View key={profissional.id} style={[styles.itemCard, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
+                            <Text style={[styles.itemTitulo, { color: cores.texto }]}>{profissional.nome}</Text>
                             {profissional.descricao ? <Text style={styles.itemDescricao}>{profissional.descricao}</Text> : null}
                             {profissional.avaliacao != null ? <Text style={styles.itemMeta}>★ {Number(profissional.avaliacao).toFixed(1)} · {profissional.quantidadeAvaliacoes ?? 0} avaliações</Text> : null}
                         </View>
@@ -105,11 +107,11 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
                 </Secao>
 
                 <Secao titulo="Horários">
-                    <View style={styles.itemCard}>
+                    <View style={[styles.itemCard, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
                         {barbearia.horariosFuncionamento.length ? barbearia.horariosFuncionamento.map((horario) => (
                             <View key={horario.diaSemana} style={styles.horarioLinha}>
                                 <Text style={styles.horarioDia}>{DIAS[horario.diaSemana] ?? '-'}</Text>
-                                <Text style={styles.horarioValor}>{horario.inicio} às {horario.fim}</Text>
+                                <Text style={[styles.horarioValor, { color: cores.texto }]}>{horario.inicio} às {horario.fim}</Text>
                             </View>
                         )) : <Text style={styles.itemDescricao}>Horários ainda não configurados.</Text>}
                     </View>
@@ -117,7 +119,7 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
 
                 <Secao titulo="Avaliações">
                     {barbearia.avaliacoes.length ? barbearia.avaliacoes.map((avaliacao) => (
-                        <View key={avaliacao.id} style={styles.itemCard}>
+                        <View key={avaliacao.id} style={[styles.itemCard, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
                             <Text style={styles.avaliacaoNota}>{'★'.repeat(Math.max(1, Math.min(5, Math.round(avaliacao.nota))))}</Text>
                             <Text style={styles.itemDescricao}>{avaliacao.comentario || 'Cliente não deixou comentário.'}</Text>
                             <Text style={styles.itemMeta}>{avaliacao.cliente ?? 'Cliente'} · {avaliacao.profissional ?? 'Profissional'}</Text>
@@ -131,7 +133,7 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
                 </Pressable>
             </ScrollView>
 
-            <View style={styles.rodapeFixo}>
+            <View style={[styles.rodapeFixo, { backgroundColor: cores.fundo, borderTopColor: cores.borda }]}>
                 <Pressable onPress={agendarAqui} disabled={!barbearia.aceitaAgendamentoOnline || selecionando}
                     style={[styles.agendar, (!barbearia.aceitaAgendamentoOnline || selecionando) && styles.agendarDesabilitado]}>
                     {selecionando ? <ActivityIndicator color="#081426" /> : <Text style={styles.agendarTexto}>{estaSelecionada ? 'Continuar agendamento' : 'Agendar neste estabelecimento'}</Text>}
@@ -144,11 +146,13 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
 }
 
 function Info({ icone, texto }: { icone: ComponentProps<typeof Ionicons>['name']; texto: string }) {
-    return <View style={styles.info}><Ionicons name={icone} size={18} color="#E7B84B" /><Text style={styles.infoTexto}>{texto}</Text></View>
+    const { cores } = useTema()
+    return <View style={styles.info}><Ionicons name={icone} size={18} color={cores.destaque} /><Text style={[styles.infoTexto, { color: cores.textoSecundario }]}>{texto}</Text></View>
 }
 
 function Secao({ titulo, children }: { titulo: string; children: ReactNode }) {
-    return <View style={styles.secao}><Text style={styles.secaoTitulo}>{titulo}</Text><View style={styles.secaoConteudo}>{children}</View></View>
+    const { cores } = useTema()
+    return <View style={styles.secao}><Text style={[styles.secaoTitulo, { color: cores.texto }]}>{titulo}</Text><View style={styles.secaoConteudo}>{children}</View></View>
 }
 
 function moeda(valor: number) {

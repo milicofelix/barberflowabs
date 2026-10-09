@@ -7,17 +7,19 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import useBarbearia from '@/src/data/hooks/useBarbearia'
 import Carregando from '@/src/components/shared/Carregando'
 import EstadoVazio from '@/src/components/shared/EstadoVazio'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 type Props = BottomTabScreenProps<AbasParamList, 'Agendamento'>
 
 export default function Agendamento({ navigation }: Props) {
+    const { cores } = useTema()
     const { barbearia, carregando } = useBarbearia()
 
     if (carregando) return <Carregando mensagem="Carregando sua barbearia..." />
 
     if (!barbearia) {
         return (
-            <SafeAreaView style={styles.container}>
+            <SafeAreaView style={[styles.container, { backgroundColor: cores.fundo }]}>
                 <View style={styles.vazio}>
                     <EstadoVazio
                         titulo="Escolha uma barbearia"
@@ -31,12 +33,12 @@ export default function Agendamento({ navigation }: Props) {
     }
 
     return (
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[styles.container, { backgroundColor: cores.fundo }]}>
             <ScrollView contentContainerStyle={styles.scroll}>
-                <View style={styles.tenant}>
+                <View style={[styles.tenant, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
                     <Text style={styles.tenantLabel}>AGENDANDO EM</Text>
-                    <Text style={styles.tenantNome}>{barbearia.nome}</Text>
-                    <Text style={styles.tenantCidade}>{barbearia.cidade || 'Localização em atualização'}</Text>
+                    <Text style={[styles.tenantNome, { color: cores.texto }]}>{barbearia.nome}</Text>
+                    <Text style={[styles.tenantCidade, { color: cores.textoSecundario }]}>{barbearia.cidade || 'Localização em atualização'}</Text>
                     <Text style={styles.trocar} onPress={() => navigation.navigate('Descobrir')}>Trocar barbearia</Text>
                 </View>
                 <FormularioAgendamento

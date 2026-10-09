@@ -1,5 +1,6 @@
 import type { SecaoOperacao } from '@/src/data/operacao/tipos'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 const SECOES: Array<{ id: SecaoOperacao; nome: string }> = [
     { id: 'RESUMO', nome: 'Resumo' }, { id: 'AGENDA', nome: 'Agenda' },
@@ -7,13 +8,15 @@ const SECOES: Array<{ id: SecaoOperacao; nome: string }> = [
 ]
 
 export function SeletorOperacao({ atual, selecionar }: { atual: SecaoOperacao; selecionar: (secao: SecaoOperacao) => void }) {
-    return <View style={styles.seletor}>{SECOES.map((secao) => <Pressable key={secao.id} onPress={() => selecionar(secao.id)}
-        style={[styles.aba, atual === secao.id && styles.abaAtiva]}><Text style={[styles.abaTexto, atual === secao.id && styles.abaTextoAtivo]}>{secao.nome}</Text></Pressable>)}</View>
+    const { cores } = useTema()
+    return <View style={[styles.seletor, { backgroundColor: cores.superficie }]}>{SECOES.map((secao) => <Pressable key={secao.id} onPress={() => selecionar(secao.id)}
+        style={[styles.aba, atual === secao.id && { backgroundColor: cores.destaque }]}><Text style={[styles.abaTexto, { color: atual === secao.id ? cores.destaqueTexto : cores.textoSecundario }]}>{secao.nome}</Text></Pressable>)}</View>
 }
 
 export function CartaoMetrica({ titulo, valor, destaque }: { titulo: string; valor: string | number; destaque?: boolean }) {
-    return <View style={[styles.metrica, destaque && styles.metricaDestaque]}><Text style={styles.metricaTitulo}>{titulo}</Text>
-        <Text style={[styles.metricaValor, destaque && styles.valorDestaque]}>{valor}</Text></View>
+    const { cores } = useTema()
+    return <View style={[styles.metrica, { backgroundColor: cores.superficie, borderColor: destaque ? cores.destaque : cores.borda }]}><Text style={[styles.metricaTitulo, { color: cores.textoSecundario }]}>{titulo}</Text>
+        <Text style={[styles.metricaValor, { color: destaque ? cores.destaque : cores.texto }]}>{valor}</Text></View>
 }
 
 export const moeda = (valor: number) => Number(valor ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })

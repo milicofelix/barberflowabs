@@ -1,5 +1,6 @@
 import type { HorarioFuncionamento } from '@/src/data/hooks/useConfiguracoesEstabelecimento'
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 const DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function HorariosAgenda({ horarios, alterar }: Props) {
+    const { cores } = useTema()
     function atualizar(indice: number, campo: keyof HorarioFuncionamento, valor: string | boolean) {
         alterar(horarios.map((horario, atual) => atual === indice ? { ...horario, [campo]: valor } : horario))
     }
@@ -24,9 +26,9 @@ export default function HorariosAgenda({ horarios, alterar }: Props) {
             <Pressable onPress={() => atualizar(indice, 'ativo', horario.ativo === false)} style={[styles.dia, horario.ativo !== false && styles.diaAtivo]}>
                 <Text style={styles.diaTexto}>{DIAS[horario.diaSemana]}</Text>
             </Pressable>
-            <TextInput value={horario.inicio} onChangeText={(valor) => atualizar(indice, 'inicio', valor)} style={styles.horario} maxLength={5} keyboardType="numbers-and-punctuation" />
+            <TextInput value={horario.inicio} onChangeText={(valor) => atualizar(indice, 'inicio', valor)} style={[styles.horario, { color: cores.campoTexto, backgroundColor: cores.campo, borderColor: cores.borda }]} maxLength={5} keyboardType="numbers-and-punctuation" />
             <Text style={styles.separador}>até</Text>
-            <TextInput value={horario.fim} onChangeText={(valor) => atualizar(indice, 'fim', valor)} style={styles.horario} maxLength={5} keyboardType="numbers-and-punctuation" />
+            <TextInput value={horario.fim} onChangeText={(valor) => atualizar(indice, 'fim', valor)} style={[styles.horario, { color: cores.campoTexto, backgroundColor: cores.campo, borderColor: cores.borda }]} maxLength={5} keyboardType="numbers-and-punctuation" />
         </View>)}
         {horarios.length < 7 ? <Pressable onPress={adicionar} style={styles.adicionar}><Text style={styles.adicionarTexto}>+ Adicionar dia de funcionamento</Text></Pressable> : null}
     </View>

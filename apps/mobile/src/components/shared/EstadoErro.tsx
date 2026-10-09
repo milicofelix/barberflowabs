@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 interface EstadoErroProps {
     mensagem: string
@@ -6,13 +7,14 @@ interface EstadoErroProps {
 }
 
 export default function EstadoErro({ mensagem, tentarNovamente }: EstadoErroProps) {
+    const { cores } = useTema()
     return (
         <View style={styles.container} accessibilityRole="alert">
-            <Text style={styles.titulo}>Algo não saiu como esperado</Text>
-            <Text style={styles.mensagem}>{mensagem}</Text>
+            <Text style={[styles.titulo, { color: cores.perigo }]}>Algo não saiu como esperado</Text>
+            <Text style={[styles.mensagem, { color: cores.texto }]}>{mensagem}</Text>
             {tentarNovamente ? (
-                <Pressable style={styles.botao} onPress={tentarNovamente}>
-                    <Text style={styles.botaoTexto}>Tentar novamente</Text>
+                <Pressable style={[styles.botao, { borderColor: cores.perigo }]} onPress={tentarNovamente}>
+                    <Text style={[styles.botaoTexto, { color: cores.perigo }]}>Tentar novamente</Text>
                 </Pressable>
             ) : null}
         </View>

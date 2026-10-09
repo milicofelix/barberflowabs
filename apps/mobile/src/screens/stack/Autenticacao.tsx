@@ -20,10 +20,12 @@ import {
     View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 type Props = NativeStackScreenProps<StackParamList, 'Autenticacao'>
 
 export default function Autenticacao({ navigation }: Props) {
+    const { cores } = useTema()
     const {
         nome, email, telefone, senha, confirmacaoSenha, modo, erros, erroGeral, sucesso, processando,
         alterarNome, alterarEmail, alterarTelefone, alterarSenha, alterarConfirmacaoSenha, alterarModo, submeter,
@@ -35,7 +37,7 @@ export default function Autenticacao({ navigation }: Props) {
     const cadastro = modo === 'cadastro'
 
     return (
-        <SafeAreaView style={styles.safeArea} edges={['top', 'right', 'bottom', 'left']}>
+        <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top', 'right', 'bottom', 'left']}>
             <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
                 <ScrollView
                     contentContainerStyle={styles.scroll}
@@ -52,28 +54,28 @@ export default function Autenticacao({ navigation }: Props) {
                         />
                     </View>
 
-                    <View style={styles.cartao}>
-                        <View style={styles.seletorModo}>
+                    <View style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda, borderWidth: 1 }]}>
+                        <View style={[styles.seletorModo, { backgroundColor: cores.superficieElevada }]}>
                             <Pressable
                                 onPress={cadastro ? alterarModo : undefined}
-                                style={[styles.opcaoModo, !cadastro && styles.opcaoModoAtiva]}
+                                style={[styles.opcaoModo, !cadastro && { backgroundColor: cores.campo }]}
                                 accessibilityRole="tab"
                                 accessibilityState={{ selected: !cadastro }}
                             >
-                                <Text style={[styles.textoModo, !cadastro && styles.textoModoAtivo]}>Entrar</Text>
+                                <Text style={[styles.textoModo, { color: !cadastro ? cores.texto : cores.textoSecundario }]}>Entrar</Text>
                             </Pressable>
                             <Pressable
                                 onPress={!cadastro ? alterarModo : undefined}
-                                style={[styles.opcaoModo, cadastro && styles.opcaoModoAtiva]}
+                                style={[styles.opcaoModo, cadastro && { backgroundColor: cores.campo }]}
                                 accessibilityRole="tab"
                                 accessibilityState={{ selected: cadastro }}
                             >
-                                <Text style={[styles.textoModo, cadastro && styles.textoModoAtivo]}>Criar conta</Text>
+                                <Text style={[styles.textoModo, { color: cadastro ? cores.texto : cores.textoSecundario }]}>Criar conta</Text>
                             </Pressable>
                         </View>
 
-                        <Text style={styles.titulo}>{cadastro ? 'Comece sua jornada' : 'Que bom ter você aqui'}</Text>
-                        <Text style={styles.descricao}>
+                        <Text style={[styles.titulo, { color: cores.texto }]}>{cadastro ? 'Comece sua jornada' : 'Que bom ter você aqui'}</Text>
+                        <Text style={[styles.descricao, { color: cores.textoSecundario }]}>
                             {cadastro
                                 ? 'Crie sua conta para encontrar serviços e organizar seus agendamentos.'
                                 : 'Entre para acessar seus horários e continuar cuidando do seu estilo.'}
@@ -152,7 +154,7 @@ export default function Autenticacao({ navigation }: Props) {
                         </Pressable>
 
                         <Pressable onPress={alterarModo} style={styles.alternarModo} disabled={processando}>
-                            <Text style={styles.alternarModoTexto}>
+                            <Text style={[styles.alternarModoTexto, { color: cores.textoSecundario }]}>
                                 {cadastro ? 'Já possui uma conta? ' : 'Ainda não possui uma conta? '}
                                 <Text style={styles.alternarModoDestaque}>{cadastro ? 'Entrar' : 'Criar conta'}</Text>
                             </Text>
@@ -161,7 +163,7 @@ export default function Autenticacao({ navigation }: Props) {
                             <Text style={styles.estabelecimentoTexto}>Quero cadastrar meu estabelecimento</Text>
                         </Pressable> : null}
                     </View>
-                    <Text style={styles.rodape}>Agendamentos simples. Experiências memoráveis.</Text>
+                    <Text style={[styles.rodape, { color: cores.textoSecundario }]}>Agendamentos simples. Experiências memoráveis.</Text>
                 </ScrollView>
             </KeyboardAvoidingView>
         </SafeAreaView>
