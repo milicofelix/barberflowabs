@@ -54,27 +54,26 @@ Status: implementacao backend concluida em 2026-10-09; migration pendente de apl
 - [x] Bloqueios e prevencao transacional de conflitos de profissional e recurso.
 - [x] Contratos e validacao manual documentados.
 
-## Etapa 4 - Equipes E Capacidade Operacional
+## Etapa 4 - Onboarding E Marketplace
+
+Status: implementacao concluida em 2026-10-09; instalacao da dependencia do mapa e validacao manual pendentes.
+
+- [x] Onboarding com tipo de estabelecimento, modelo de atendimento, segmentos e especialidades.
+- [x] Responsavel criado com perfil `BARBERSHOP_OWNER`.
+- [x] Marketplace publico por categoria e especialidade.
+- [x] Filtros por localizacao, avaliacao, preco, funcionamento e disponibilidade de profissional.
+- [x] Perfis publicos consumidos pelo contrato externo de estabelecimentos.
+- [x] Lista e mapa nativo no mobile.
+- [x] Paginacao e ordenacao preparadas na API.
+
+## Etapa 5 - Equipes E Capacidade Operacional
 
 - Papeis e permissoes detalhados de equipe.
 - Escalas individuais por profissional.
 - Manutencao e indisponibilidade programada de recursos.
 - Capacidade simultanea por unidade e regras de excecao.
 
-## Etapa 5 - Onboarding Multissegmento
-
-- Selecao de segmento e modelo de atendimento.
-- Configuracao guiada de catalogo, profissionais, recursos e horarios.
-- Separacao entre adesao ao SaaS e publicacao no marketplace.
-
-## Etapa 6 - Marketplace Multissegmento
-
-- Busca por categoria, especialidade, localizacao, preco e disponibilidade.
-- Perfil publico generalizado.
-- Reavaliacao do mapa nativo mobile.
-- Moderacao, reputacao e denuncia adaptadas ao novo dominio.
-
-## Etapa 7 - Mobile Operacional
+## Etapa 6 - Mobile Operacional
 
 - Retomar operacao, configuracoes e administracao no dominio generalizado.
 - Atualizar identidade somente apos aprovacao da marca definitiva.

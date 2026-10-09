@@ -3,6 +3,12 @@
 import useAPI from '@/data/hooks/useAPI'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { Campo, GrupoOpcoes, Selecao } from './CamposOnboarding'
+import {
+    MODELOS_ATENDIMENTO_ONBOARDING,
+    TIPOS_ESTABELECIMENTO_ONBOARDING,
+} from './onboarding.config'
+import type { SegmentoOnboarding } from './onboarding.config'
 
 const cadastroInicial = {
     nomeBarbearia: '',
@@ -14,17 +20,23 @@ const cadastroInicial = {
     telefoneDono: '',
     senha: '',
     planoSlug: 'mensal',
+    tipoEstabelecimento: 'BARBEARIA',
+    modeloAtendimento: 'PRESENCIAL',
+    segmentoIds: [] as number[],
+    especialidadeIds: [] as number[],
 }
 
 export default function OnboardingSaas() {
     const { httpGet, httpPost } = useAPI()
     const [planos, setPlanos] = useState<any[]>([])
+    const [segmentos, setSegmentos] = useState<SegmentoOnboarding[]>([])
     const [form, setForm] = useState(cadastroInicial)
     const [mensagem, setMensagem] = useState('')
     const [criado, setCriado] = useState<any>(null)
 
     useEffect(() => {
         httpGet('/saas/planos').then((dados) => setPlanos(Array.isArray(dados) ? dados : []))
+        httpGet('/catalogo/segmentos').then((dados) => setSegmentos(Array.isArray(dados) ? dados : []))
     }, [httpGet])
 
     function alterar(campo: string, valor: string) {
@@ -32,6 +44,17 @@ export default function OnboardingSaas() {
             ...atual,
             [campo]: valor,
             ...(campo === 'nomeBarbearia' ? { slug: slugify(valor) } : {}),
+        }))
+    }
+
+    function alternarId(campo: 'segmentoIds' | 'especialidadeIds', id: number) {
+        setForm((atual) => ({
+            ...atual,
+            [campo]: atual[campo].includes(id) ? atual[campo].filter((item) => item !== id) : [...atual[campo], id],
+            ...(campo === 'segmentoIds' && atual.segmentoIds.includes(id)
+                ? { especialidadeIds: atual.especialidadeIds.filter((especialidadeId) =>
+                    segmentos.some((segmento) => segmento.id !== id && segmento.especialidades.some((item) => item.id === especialidadeId))) }
+                : {}),
         }))
     }
 
@@ -44,6 +67,10 @@ export default function OnboardingSaas() {
                 slug: form.slug,
                 email: form.emailBarbearia,
                 telefone: form.telefoneBarbearia,
+                tipoEstabelecimento: form.tipoEstabelecimento,
+                modeloAtendimento: form.modeloAtendimento,
+                segmentoIds: form.segmentoIds,
+                especialidadeIds: form.especialidadeIds,
             },
             dono: {
                 nome: form.nomeDono,
@@ -55,27 +82,36 @@ export default function OnboardingSaas() {
 
         if (resposta?.statusCode) return setMensagem(resposta.message)
         setCriado(resposta)
-        setMensagem('Barbearia criada com trial ativo.')
+        setMensagem('Estabelecimento criado com trial ativo e enviado para revisão.')
     }
 
     return (
         <div className="min-h-screen bg-zinc-950 text-zinc-100">
             <main className="container flex flex-col gap-8 py-12">
                 <header className="max-w-3xl">
-                    <span className="text-sm font-semibold text-yellow-400">Barber Flow ABS</span>
-                    <h1 className="mt-3 text-4xl font-black">Crie sua barbearia em modo SaaS</h1>
+                    <span className="text-sm font-semibold text-yellow-400">UniFlow ABS</span>
+                    <h1 className="mt-3 text-4xl font-black">Cadastre seu estabelecimento</h1>
                     <p className="mt-3 text-zinc-400">
-                        Trial de 14 dias com agenda, clientes, caixa e gestão operacional. Depois do trial, o pagamento inicial é via PIX.
+                        Uma plataforma para serviços de beleza, estética e bem-estar, com trial de 14 dias.
                     </p>
                 </header>
 
                 <section className="grid gap-6 lg:grid-cols-[1fr_420px]">
                     <div className="grid gap-4 rounded border border-zinc-800 bg-zinc-900 p-5">
-                        <h2 className="text-xl font-bold">Dados da barbearia</h2>
-                        <Campo label="Nome da barbearia" value={form.nomeBarbearia} onChange={(v) => alterar('nomeBarbearia', v)} />
+                        <h2 className="text-xl font-bold">Dados do estabelecimento</h2>
+                        <Campo label="Nome do estabelecimento" value={form.nomeBarbearia} onChange={(v) => alterar('nomeBarbearia', v)} />
                         <Campo label="Slug" value={form.slug} onChange={(v) => alterar('slug', v)} />
-                        <Campo label="E-mail da barbearia" value={form.emailBarbearia} onChange={(v) => alterar('emailBarbearia', v)} />
-                        <Campo label="Telefone da barbearia" value={form.telefoneBarbearia} onChange={(v) => alterar('telefoneBarbearia', v)} />
+                        <Campo label="E-mail do estabelecimento" value={form.emailBarbearia} onChange={(v) => alterar('emailBarbearia', v)} />
+                        <Campo label="Telefone do estabelecimento" value={form.telefoneBarbearia} onChange={(v) => alterar('telefoneBarbearia', v)} />
+
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <Selecao label="Tipo" value={form.tipoEstabelecimento} onChange={(v) => alterar('tipoEstabelecimento', v)} opcoes={TIPOS_ESTABELECIMENTO_ONBOARDING} />
+                            <Selecao label="Atendimento" value={form.modeloAtendimento} onChange={(v) => alterar('modeloAtendimento', v)} opcoes={MODELOS_ATENDIMENTO_ONBOARDING} />
+                        </div>
+                        <GrupoOpcoes titulo="Segmentos" itens={segmentos} selecionados={form.segmentoIds}
+                            alternar={(id) => alternarId('segmentoIds', id)} />
+                        <GrupoOpcoes titulo="Especialidades" itens={segmentos.filter((item) => form.segmentoIds.includes(item.id)).flatMap((item) => item.especialidades)}
+                            selecionados={form.especialidadeIds} alternar={(id) => alternarId('especialidadeIds', id)} />
 
                         <h2 className="mt-4 text-xl font-bold">Responsável</h2>
                         <Campo label="Nome" value={form.nomeDono} onChange={(v) => alterar('nomeDono', v)} />
@@ -122,20 +158,6 @@ export default function OnboardingSaas() {
                 </section>
             </main>
         </div>
-    )
-}
-
-function Campo(props: { label: string; value: string; type?: string; onChange: (valor: string) => void }) {
-    return (
-        <label className="flex flex-col gap-2 text-sm text-zinc-400">
-            {props.label}
-            <input
-                type={props.type ?? 'text'}
-                value={props.value}
-                onChange={(e) => props.onChange(e.target.value)}
-                className="input"
-            />
-        </label>
     )
 }
 

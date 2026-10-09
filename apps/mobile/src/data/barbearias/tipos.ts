@@ -20,7 +20,12 @@ export interface ServicoPublico {
     qtdeSlots: number
     duracaoMinutos: number
     imagemURL?: string | null
+    especialidades?: EspecialidadePublica[]
 }
+
+export interface SegmentoPublico { id: number; slug: string; nome: string; principal?: boolean }
+export interface EspecialidadePublica { id: number; slug: string; nome: string; segmento?: SegmentoPublico }
+export interface CategoriaMarketplace extends SegmentoPublico { descricao?: string | null; especialidades: EspecialidadePublica[] }
 
 export interface ProfissionalPublico {
     id: number
@@ -64,6 +69,20 @@ export interface BarbeariaResumo {
     avaliacaoMedia: number | null
     quantidadeAvaliacoes: number
     servicos: ServicoPublico[]
+    tipoEstabelecimento?: string
+    modeloAtendimento?: string
+    segmentos?: SegmentoPublico[]
+    especialidades?: EspecialidadePublica[]
+    precoInicial?: number
+    disponivelEm?: string | null
+}
+
+export type EstabelecimentoResumo = BarbeariaResumo
+export type EstabelecimentoPerfil = BarbeariaPerfil
+
+export interface ResultadoMarketplace {
+    itens: EstabelecimentoResumo[]
+    paginacao: { pagina: number; limite: number; total: number; paginas: number }
 }
 
 export interface BarbeariaPerfil extends Omit<BarbeariaResumo, 'distanciaKm'> {

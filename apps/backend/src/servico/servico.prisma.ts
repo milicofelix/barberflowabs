@@ -12,10 +12,7 @@ export class ServicoPrisma implements RepositorioServico {
     const servicos = await this.prisma.servico.findMany({
       where: { barbeariaId },
     });
-    return servicos.map((servico) => ({
-      ...servico,
-      preco: Number(servico.preco),
-    }));
+    return servicos.map((servico) => this.normalizar(servico));
   }
 
   async criar(barbeariaId: number, dados: CriarServicoDto): Promise<Servico> {
@@ -26,7 +23,7 @@ export class ServicoPrisma implements RepositorioServico {
       },
     });
 
-    return { ...servico, preco: Number(servico.preco) };
+    return this.normalizar(servico);
   }
 
   async atualizar(id: number, barbeariaId: number, dados: CriarServicoDto): Promise<Servico> {
@@ -35,12 +32,20 @@ export class ServicoPrisma implements RepositorioServico {
       data: dados,
     });
 
-    return { ...servico, preco: Number(servico.preco) };
+    return this.normalizar(servico);
   }
 
   async excluir(id: number, barbeariaId: number): Promise<void> {
     await this.prisma.servico.delete({
       where: { id, barbeariaId },
     });
+  }
+
+  private normalizar(servico: any): Servico {
+    return {
+      ...servico,
+      preco: Number(servico.preco),
+      modeloAtendimento: servico.modeloAtendimento as Servico['modeloAtendimento'],
+    };
   }
 }

@@ -36,7 +36,7 @@ function Navegacao() {
                             name="PerfilBarbearia"
                             component={PerfilBarbearia}
                             options={{
-                                title: 'Perfil da barbearia',
+                                title: 'Perfil do estabelecimento',
                                 headerBackTitle: 'Descobrir',
                                 headerStyle: { backgroundColor: '#081426' },
                                 headerTintColor: '#FFFFFF',

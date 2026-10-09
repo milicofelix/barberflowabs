@@ -44,7 +44,9 @@ export class MotorAgendaConsultaPrisma {
 
     const modelo = params.modeloAtendimento ?? this.modeloPadrao(estabelecimento.modeloAtendimento);
     const unidadeId = await this.resolverUnidade(params.barbeariaId, params.unidadeId, modelo);
-    const porId = new Map(servicosEncontrados.map((servico: ServicoAgenda) => [servico.id, servico]));
+    const porId = new Map<number, ServicoAgenda>(
+      (servicosEncontrados as ServicoAgenda[]).map((servico) => [servico.id, servico]),
+    );
 
     return {
       barbeariaId: params.barbeariaId,

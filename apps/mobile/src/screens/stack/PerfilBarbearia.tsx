@@ -2,7 +2,7 @@ import DenunciaPerfil from '@/src/components/barbearias/DenunciaPerfil'
 import Carregando from '@/src/components/shared/Carregando'
 import EstadoErro from '@/src/components/shared/EstadoErro'
 import EstadoVazio from '@/src/components/shared/EstadoVazio'
-import type { BarbeariaPerfil } from '@/src/data/barbearias/tipos'
+import type { EstabelecimentoPerfil } from '@/src/data/barbearias/tipos'
 import { resumirSelecao } from '@/src/data/barbearias/tipos'
 import useAPI, { mensagemDoErro } from '@/src/data/hooks/useAPI'
 import useBarbearia from '@/src/data/hooks/useBarbearia'
@@ -20,7 +20,7 @@ const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sáb
 export default function PerfilBarbearia({ route, navigation }: Props) {
     const { httpGet } = useAPI()
     const { barbearia: selecionada, selecionarBarbearia } = useBarbearia()
-    const [barbearia, setBarbearia] = useState<BarbeariaPerfil | null>(null)
+    const [barbearia, setBarbearia] = useState<EstabelecimentoPerfil | null>(null)
     const [carregando, setCarregando] = useState(true)
     const [selecionando, setSelecionando] = useState(false)
     const [erro, setErro] = useState<string | null>(null)
@@ -30,7 +30,7 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
         try {
             setCarregando(true)
             setErro(null)
-            setBarbearia(await httpGet<BarbeariaPerfil>(`/public/barbearias/${encodeURIComponent(route.params.slug)}`, {
+            setBarbearia(await httpGet<EstabelecimentoPerfil>(`/public/estabelecimentos/${encodeURIComponent(route.params.slug)}`, {
                 escopoTenant: 'nenhum',
             }))
         } catch (e) {
@@ -56,8 +56,8 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
         }
     }
 
-    if (carregando) return <Carregando mensagem="Carregando perfil da barbearia..." />
-    if (erro || !barbearia) return <SafeAreaView style={styles.telaEstado}><EstadoErro mensagem={erro ?? 'Barbearia não encontrada.'} tentarNovamente={carregar} /></SafeAreaView>
+    if (carregando) return <Carregando mensagem="Carregando perfil do estabelecimento..." />
+    if (erro || !barbearia) return <SafeAreaView style={styles.telaEstado}><EstadoErro mensagem={erro ?? 'Estabelecimento não encontrado.'} tentarNovamente={carregar} /></SafeAreaView>
 
     const endereco = [barbearia.endereco?.logradouro, barbearia.endereco?.bairro, barbearia.endereco?.cidade, barbearia.endereco?.estado].filter(Boolean).join(' · ')
     const imagem = barbearia.imagemCapaURL?.startsWith('http') ? { uri: barbearia.imagemCapaURL } : require('@/assets/images/inicio/fundo.png')
@@ -80,7 +80,8 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
                     {barbearia.avaliacaoMedia != null ? <Info icone="star" texto={`${barbearia.avaliacaoMedia} · ${barbearia.quantidadeAvaliacoes} avaliações`} /> : null}
                     {endereco ? <Info icone="location-outline" texto={endereco} /> : null}
                     {barbearia.telefone ? <Info icone="call-outline" texto={barbearia.telefone} /> : null}
-                    {estaSelecionada ? <View style={styles.selecionada}><Ionicons name="checkmark-circle" size={20} color="#48C78E" /><Text style={styles.selecionadaTexto}>Sua barbearia selecionada</Text></View> : null}
+                    {barbearia.segmentos?.length ? <Info icone="sparkles-outline" texto={barbearia.segmentos.map((item) => item.nome).join(' · ')} /> : null}
+                    {estaSelecionada ? <View style={styles.selecionada}><Ionicons name="checkmark-circle" size={20} color="#48C78E" /><Text style={styles.selecionadaTexto}>Estabelecimento selecionado</Text></View> : null}
                 </View>
 
                 <Secao titulo="Serviços">
@@ -90,7 +91,7 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
                             {servico.descricao ? <Text style={styles.itemDescricao}>{servico.descricao}</Text> : null}
                             <Text style={styles.itemMeta}>{servico.duracaoMinutos} minutos</Text>
                         </View>
-                    )) : <EstadoVazio titulo="Nenhum serviço disponível" descricao="A barbearia ainda não publicou seus serviços." />}
+                    )) : <EstadoVazio titulo="Nenhum serviço disponível" descricao="O estabelecimento ainda não publicou seus serviços." />}
                 </Secao>
 
                 <Secao titulo="Profissionais">
@@ -133,7 +134,7 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
             <View style={styles.rodapeFixo}>
                 <Pressable onPress={agendarAqui} disabled={!barbearia.aceitaAgendamentoOnline || selecionando}
                     style={[styles.agendar, (!barbearia.aceitaAgendamentoOnline || selecionando) && styles.agendarDesabilitado]}>
-                    {selecionando ? <ActivityIndicator color="#081426" /> : <Text style={styles.agendarTexto}>{estaSelecionada ? 'Continuar agendamento' : 'Agendar nesta barbearia'}</Text>}
+                    {selecionando ? <ActivityIndicator color="#081426" /> : <Text style={styles.agendarTexto}>{estaSelecionada ? 'Continuar agendamento' : 'Agendar neste estabelecimento'}</Text>}
                 </Pressable>
                 {!barbearia.aceitaAgendamentoOnline ? <Text style={styles.indisponivel}>Agendamento online indisponível.</Text> : null}
             </View>

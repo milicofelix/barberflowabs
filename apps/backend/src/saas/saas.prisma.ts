@@ -44,15 +44,26 @@ export class SaasPrisma {
   async onboarding(dados: any) {
     const slug = this.normalizarSlug(dados.barbearia.slug);
     const planoSlug = dados.planoSlug || 'mensal';
-    const [barbeariaExistente, usuarioExistente, plano] = await Promise.all([
+    const [barbeariaExistente, usuarioExistente, plano, segmentos, especialidades] = await Promise.all([
       this.prisma.barbearia.findUnique({ where: { slug } }),
       this.prisma.usuario.findUnique({ where: { email: dados.dono.email } }),
       this.prisma.planoAssinatura.findUnique({ where: { slug: planoSlug } }),
+      (this.prisma as any).segmento.count({ where: { id: { in: dados.barbearia.segmentoIds }, ativo: true } }),
+      (this.prisma as any).especialidade.count({
+        where: {
+          id: { in: dados.barbearia.especialidadeIds },
+          segmentoId: { in: dados.barbearia.segmentoIds },
+          ativo: true,
+        },
+      }),
     ]);
 
     if (barbeariaExistente) throw new ConflictException('Slug já está em uso');
     if (usuarioExistente) throw new ConflictException('E-mail do responsável já está em uso');
     if (!plano) throw new BadRequestException('Plano inválido');
+    if (segmentos !== dados.barbearia.segmentoIds.length || especialidades !== dados.barbearia.especialidadeIds.length) {
+      throw new BadRequestException('Segmentos ou especialidades incompatíveis');
+    }
 
     const trialEndsAt = this.adicionarDias(new Date(), TRIAL_DIAS);
 
@@ -63,6 +74,8 @@ export class SaasPrisma {
           slug,
           email: dados.barbearia.email?.trim() || null,
           telefone: dados.barbearia.telefone?.trim() || null,
+          tipoEstabelecimento: dados.barbearia.tipoEstabelecimento,
+          modeloAtendimento: dados.barbearia.modeloAtendimento,
           status: 'TRIAL',
           reviewStatus: 'PENDING_REVIEW',
           reviewReason: 'Cadastro realizado pelo onboarding público.',
@@ -80,6 +93,15 @@ export class SaasPrisma {
               trialEndsAt,
             },
           },
+          segmentos: {
+            create: dados.barbearia.segmentoIds.map((segmentoId: number, indice: number) => ({
+              segmentoId,
+              principal: indice === 0,
+            })),
+          },
+          especialidades: {
+            create: dados.barbearia.especialidadeIds.map((especialidadeId: number) => ({ especialidadeId })),
+          },
         } as any,
         include: { assinatura: { include: { plano: true } }, unidades: true },
       });
@@ -92,7 +114,7 @@ export class SaasPrisma {
           telefone: dados.dono.telefone?.trim() || null,
           senha: dados.dono.senha,
           barbeiro: true,
-          papel: 'BARBER',
+          papel: 'BARBERSHOP_OWNER',
         },
         select: { id: true, nome: true, email: true, telefone: true, barbeiro: true, papel: true },
       });
@@ -104,7 +126,14 @@ export class SaasPrisma {
           acao: 'SAAS_ONBOARDING',
           entidade: 'Barbearia',
           entidadeId: String(barbearia.id),
-          detalhes: { planoSlug, reviewStatus: 'PENDING_REVIEW' },
+          detalhes: {
+            planoSlug,
+            reviewStatus: 'PENDING_REVIEW',
+            tipoEstabelecimento: dados.barbearia.tipoEstabelecimento,
+            modeloAtendimento: dados.barbearia.modeloAtendimento,
+            segmentoIds: dados.barbearia.segmentoIds,
+            especialidadeIds: dados.barbearia.especialidadeIds,
+          },
         },
       });
 

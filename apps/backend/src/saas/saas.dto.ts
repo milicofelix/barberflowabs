@@ -4,6 +4,10 @@ export interface OnboardingSaasDto {
     slug: string;
     email?: string;
     telefone?: string;
+    tipoEstabelecimento: string;
+    modeloAtendimento: string;
+    segmentoIds: number[];
+    especialidadeIds: number[];
   };
   dono: {
     nome: string;

@@ -30,6 +30,7 @@ import {
   RevisarBarbeariaDto,
 } from './saas.dto';
 import { SaasPrisma } from './saas.prisma';
+import { MODELOS_ATENDIMENTO, TIPOS_ESTABELECIMENTO } from 'src/estabelecimento/estabelecimento.constants';
 
 const STATUS_BARBEARIA = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'CANCELED'];
 const STATUS_COMERCIAL = ['NOVO', 'EM_CONTATO', 'APROVADO', 'RECUSADO', 'CONVERTIDO'];
@@ -255,15 +256,30 @@ export class SaasController {
   }
 
   private validarOnboarding(dados: OnboardingSaasDto) {
-    validarTextoObrigatorio(dados?.barbearia?.nome, 'Nome da barbearia');
-    validarTextoObrigatorio(dados?.barbearia?.slug, 'Slug da barbearia');
+    validarTextoObrigatorio(dados?.barbearia?.nome, 'Nome do estabelecimento');
+    validarTextoObrigatorio(dados?.barbearia?.slug, 'Slug do estabelecimento');
     validarTextoObrigatorio(dados?.dono?.nome, 'Nome do responsável');
     validarEmail(dados?.dono?.email);
     validarSenha(dados?.dono?.senha);
 
     if (dados.barbearia.email) {
-      validarEmail(dados.barbearia.email, 'E-mail da barbearia');
+      validarEmail(dados.barbearia.email, 'E-mail do estabelecimento');
     }
+    if (!TIPOS_ESTABELECIMENTO.includes(dados?.barbearia?.tipoEstabelecimento as any)) {
+      throw new BadRequestException('Tipo de estabelecimento inválido');
+    }
+    if (!MODELOS_ATENDIMENTO.includes(dados?.barbearia?.modeloAtendimento as any)) {
+      throw new BadRequestException('Modelo de atendimento inválido');
+    }
+    this.validarIdsOnboarding(dados?.barbearia?.segmentoIds, 'Segmentos');
+    this.validarIdsOnboarding(dados?.barbearia?.especialidadeIds, 'Especialidades');
+  }
+
+  private validarIdsOnboarding(ids: number[], campo: string) {
+    if (!Array.isArray(ids) || !ids.length || ids.some((id) => !Number.isInteger(Number(id)) || Number(id) <= 0)) {
+      throw new BadRequestException(`${campo} inválidos`);
+    }
+    if (new Set(ids.map(Number)).size !== ids.length) throw new BadRequestException(`${campo} repetidos`);
   }
 
   private validarPlanoAdmin(dados: AtualizarPlanoAdminDto) {
