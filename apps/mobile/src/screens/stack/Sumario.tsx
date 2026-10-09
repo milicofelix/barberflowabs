@@ -39,26 +39,26 @@ export default function Sumario({ navigation }: Props) {
                 <Text style={[styles.titulo, { color: cores.texto }]}>Resumo do Agendamento</Text>
                 <Text style={[styles.subtitulo, { color: cores.textoSecundario }]}>Será um prazer atendê-lo!</Text>
 
-                <Text style={styles.label}>BARBEARIA</Text>
+                <Text style={[styles.label, { color: cores.textoSecundario }]}>BARBEARIA</Text>
                 <Text style={[styles.valor, { color: cores.texto }]}>{barbearia?.nome ?? 'Não selecionada'}</Text>
 
-                <Text style={styles.label}>PROFISSIONAL</Text>
+                <Text style={[styles.label, { color: cores.textoSecundario }]}>PROFISSIONAL</Text>
                 <Text style={[styles.valor, { color: cores.texto }]}>{profissional?.nome}</Text>
 
-                <Text style={styles.label}>SERVIÇOS</Text>
+                <Text style={[styles.label, { color: cores.textoSecundario }]}>SERVIÇOS</Text>
                 {servicos.map((s, index) => (
                     <Text key={index} style={[styles.servico, { color: cores.texto }]}>
                         {index + 1}. {s.nome}
                     </Text>
                 ))}
 
-                <Text style={styles.label}>DURAÇÃO</Text>
+                <Text style={[styles.label, { color: cores.textoSecundario }]}>DURAÇÃO</Text>
                 <Text style={[styles.valor, { color: cores.texto }]}>{duracaoTotal()}</Text>
 
-                <Text style={styles.label}>HORÁRIO</Text>
+                <Text style={[styles.label, { color: cores.textoSecundario }]}>HORÁRIO</Text>
                 <Text style={[styles.valor, { color: cores.texto }]}>{data && DateUtils.formatarDataEHora(data)}</Text>
 
-                <Text style={styles.valorTotalLabel}>VALOR TOTAL</Text>
+                <Text style={[styles.valorTotalLabel, { color: cores.textoSecundario }]}>VALOR TOTAL</Text>
                 <Text style={[styles.valorTotal, { color: cores.texto }]}>{MoedaUtils.formatar(precoTotal())}</Text>
 
                 {erro ? <EstadoErro mensagem={erro} /> : null}

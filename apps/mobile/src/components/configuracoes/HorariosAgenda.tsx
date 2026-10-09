@@ -27,7 +27,7 @@ export default function HorariosAgenda({ horarios, alterar }: Props) {
                 <Text style={styles.diaTexto}>{DIAS[horario.diaSemana]}</Text>
             </Pressable>
             <TextInput value={horario.inicio} onChangeText={(valor) => atualizar(indice, 'inicio', valor)} style={[styles.horario, { color: cores.campoTexto, backgroundColor: cores.campo, borderColor: cores.borda }]} maxLength={5} keyboardType="numbers-and-punctuation" />
-            <Text style={styles.separador}>até</Text>
+            <Text style={[styles.separador, { color: cores.textoSecundario }]}>até</Text>
             <TextInput value={horario.fim} onChangeText={(valor) => atualizar(indice, 'fim', valor)} style={[styles.horario, { color: cores.campoTexto, backgroundColor: cores.campo, borderColor: cores.borda }]} maxLength={5} keyboardType="numbers-and-punctuation" />
         </View>)}
         {horarios.length < 7 ? <Pressable onPress={adicionar} style={styles.adicionar}><Text style={styles.adicionarTexto}>+ Adicionar dia de funcionamento</Text></Pressable> : null}

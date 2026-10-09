@@ -3,6 +3,7 @@ import useAPI, { mensagemDoErro } from '@/src/data/hooks/useAPI'
 import { useState } from 'react'
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 const MOTIVOS = ['Dados incorretos', 'Localização incorreta', 'Conteúdo inadequado', 'Barbearia não existe', 'Outro motivo']
 
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export default function DenunciaPerfil({ slug, nomeBarbearia, aberto, fechar }: Props) {
+    const { cores } = useTema()
     const { httpPost } = useAPI()
     const [nome, setNome] = useState('')
     const [email, setEmail] = useState('')
@@ -59,30 +61,30 @@ export default function DenunciaPerfil({ slug, nomeBarbearia, aberto, fechar }: 
 
     return (
         <Modal visible={aberto} animationType="slide" presentationStyle="pageSheet" onRequestClose={encerrar}>
-            <SafeAreaView style={styles.safeArea}>
+            <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]}>
                 <ScrollView contentContainerStyle={styles.conteudo} keyboardShouldPersistTaps="handled">
                     <View style={styles.cabecalho}>
                         <View style={styles.cabecalhoTexto}>
                             <Text style={styles.sobretitulo}>CANAL DE CONFIANÇA</Text>
-                            <Text style={styles.titulo}>Reportar perfil</Text>
+                            <Text style={[styles.titulo, { color: cores.texto }]}>Reportar perfil</Text>
                         </View>
                         <Pressable onPress={encerrar} hitSlop={12}><Text style={styles.fechar}>Fechar</Text></Pressable>
                     </View>
-                    <Text style={styles.descricao}>Avise sobre informações incorretas ou conteúdo inadequado em {nomeBarbearia}.</Text>
+                    <Text style={[styles.descricao, { color: cores.textoSecundario }]}>Avise sobre informações incorretas ou conteúdo inadequado em {nomeBarbearia}.</Text>
                     <Campo label="Nome (opcional)" value={nome} onChangeText={setNome} autoCapitalize="words" />
                     <Campo label="E-mail (opcional)" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-                    <Text style={styles.label}>Motivo</Text>
+                    <Text style={[styles.label, { color: cores.texto }]}>Motivo</Text>
                     <View style={styles.motivos}>
                         {MOTIVOS.map((item) => (
-                            <Pressable key={item} onPress={() => setMotivo(item)} style={[styles.motivo, motivo === item && styles.motivoAtivo]}>
-                                <Text style={[styles.motivoTexto, motivo === item && styles.motivoTextoAtivo]}>{item}</Text>
+                            <Pressable key={item} onPress={() => setMotivo(item)} style={[styles.motivo, { borderColor: cores.borda }, motivo === item && { backgroundColor: cores.destaque, borderColor: cores.destaque }]}>
+                                <Text style={[styles.motivoTexto, { color: motivo === item ? cores.destaqueTexto : cores.texto }]}>{item}</Text>
                             </Pressable>
                         ))}
                     </View>
-                    <Text style={styles.label}>Mensagem</Text>
+                    <Text style={[styles.label, { color: cores.texto }]}>Mensagem</Text>
                     <TextInput value={mensagem} onChangeText={(valor) => { setMensagem(valor); setErro(null) }}
                         multiline numberOfLines={5} maxLength={1000} textAlignVertical="top"
-                        placeholder="Conte o que precisa ser revisado..." placeholderTextColor="#78869A" style={[styles.input, styles.textarea]} />
+                        placeholder="Conte o que precisa ser revisado..." placeholderTextColor={cores.textoSecundario} style={[styles.input, styles.textarea, { backgroundColor: cores.campo, color: cores.campoTexto, borderColor: cores.borda, borderWidth: 1 }]} />
                     <Text style={styles.contador}>{mensagem.length}/1000</Text>
                     {erro ? <Text style={styles.erro}>{erro}</Text> : null}
                     {sucesso ? <FeedbackSucesso mensagem={sucesso} /> : null}
@@ -96,9 +98,10 @@ export default function DenunciaPerfil({ slug, nomeBarbearia, aberto, fechar }: 
 }
 
 function Campo(props: { label: string; value: string; onChangeText: (valor: string) => void; keyboardType?: 'email-address'; autoCapitalize?: 'none' | 'words' }) {
+    const { cores } = useTema()
     const { label, ...inputProps } = props
-    return <View><Text style={styles.label}>{label}</Text><TextInput {...inputProps}
-        placeholderTextColor="#78869A" style={styles.input} /></View>
+    return <View><Text style={[styles.label, { color: cores.texto }]}>{label}</Text><TextInput {...inputProps}
+        placeholderTextColor={cores.textoSecundario} style={[styles.input, { backgroundColor: cores.campo, color: cores.campoTexto, borderColor: cores.borda, borderWidth: 1 }]} /></View>
 }
 
 const styles = StyleSheet.create({

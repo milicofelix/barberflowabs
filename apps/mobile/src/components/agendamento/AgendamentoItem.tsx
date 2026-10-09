@@ -1,11 +1,13 @@
 import { Agendamento, DateUtils, MoedaUtils } from '@barbabrutal/core'
 import { StyleSheet, Text, View } from 'react-native'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 interface AgendamentoItemProps {
     agendamento: Agendamento
 }
 
 export default function AgendamentoItem(props: AgendamentoItemProps) {
+    const { cores } = useTema()
     function precoTotal() {
         return props.agendamento.servicos.reduce((acc, servico) => acc + servico.preco!, 0)
     }
@@ -19,14 +21,14 @@ export default function AgendamentoItem(props: AgendamentoItemProps) {
     }
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.profissional}>{props.agendamento.profissional.nome}</Text>
-            <Text style={styles.data}>
+        <View style={[styles.container, { backgroundColor: cores.superficie, borderColor: cores.destaque }]}>
+            <Text style={[styles.profissional, { color: cores.texto }]}>{props.agendamento.profissional.nome}</Text>
+            <Text style={[styles.data, { color: cores.destaque }]}>
                 {props.agendamento.data &&
                     DateUtils.formatarDataEHora(new Date(props.agendamento.data))}
             </Text>
-            <Text style={styles.servicos}>{renderizarServicos()}</Text>
-            <Text style={styles.preco}>{MoedaUtils.formatar(precoTotal())}</Text>
+            <Text style={[styles.servicos, { color: cores.textoSecundario }]}>{renderizarServicos()}</Text>
+            <Text style={[styles.preco, { color: cores.texto }]}>{MoedaUtils.formatar(precoTotal())}</Text>
         </View>
     )
 }

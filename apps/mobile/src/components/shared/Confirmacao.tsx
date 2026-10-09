@@ -1,4 +1,5 @@
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 interface ConfirmacaoProps {
     visivel: boolean
@@ -11,18 +12,19 @@ interface ConfirmacaoProps {
 }
 
 export default function Confirmacao(props: ConfirmacaoProps) {
+    const { cores } = useTema()
     return (
         <Modal transparent animationType="fade" visible={props.visivel} onRequestClose={props.onCancelar}>
-            <View style={styles.fundo}>
-                <View style={styles.card}>
-                    <Text style={styles.titulo}>{props.titulo}</Text>
-                    <Text style={styles.mensagem}>{props.mensagem}</Text>
+            <View style={[styles.fundo, { backgroundColor: cores.sobreposicao }]}>
+                <View style={[styles.card, { backgroundColor: cores.superficie, borderColor: cores.borda, borderWidth: 1 }]}>
+                    <Text style={[styles.titulo, { color: cores.texto }]}>{props.titulo}</Text>
+                    <Text style={[styles.mensagem, { color: cores.textoSecundario }]}>{props.mensagem}</Text>
                     <View style={styles.acoes}>
-                        <Pressable style={styles.cancelar} onPress={props.onCancelar}>
-                            <Text style={styles.cancelarTexto}>{props.cancelarLabel ?? 'Cancelar'}</Text>
+                        <Pressable style={[styles.cancelar, { borderColor: cores.borda }]} onPress={props.onCancelar}>
+                            <Text style={[styles.cancelarTexto, { color: cores.texto }]}>{props.cancelarLabel ?? 'Cancelar'}</Text>
                         </Pressable>
-                        <Pressable style={styles.confirmar} onPress={props.onConfirmar}>
-                            <Text style={styles.confirmarTexto}>{props.confirmarLabel ?? 'Confirmar'}</Text>
+                        <Pressable style={[styles.confirmar, { backgroundColor: cores.destaque }]} onPress={props.onConfirmar}>
+                            <Text style={[styles.confirmarTexto, { color: cores.destaqueTexto }]}>{props.confirmarLabel ?? 'Confirmar'}</Text>
                         </Pressable>
                     </View>
                 </View>

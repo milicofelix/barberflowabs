@@ -25,15 +25,15 @@ export function AgendaOperacao({ itens, alterarStatus }: {
     const profissionais = Array.from(new Map(itens.filter((item) => item.profissional).map((item) => [item.profissional!.id, item.profissional!])).values())
     const agenda = profissionalId ? itens.filter((item) => item.profissional?.id === profissionalId) : itens
     return <View style={styles.lista}><View style={styles.filtrosAgenda}>
-        <Pressable onPress={() => setProfissionalId(null)} style={[styles.chip, profissionalId === null && styles.chipAtivo]}><Text style={styles.chipTexto}>TODOS</Text></Pressable>
-        {profissionais.map((profissional) => <Pressable key={profissional.id} onPress={() => setProfissionalId(profissional.id)} style={[styles.chip, profissionalId === profissional.id && styles.chipAtivo]}><Text style={styles.chipTexto}>{profissional.nome.toUpperCase()}</Text></Pressable>)}
+        <Pressable onPress={() => setProfissionalId(null)} style={[styles.chip, { borderColor: cores.borda }, profissionalId === null && styles.chipAtivo]}><Text style={[styles.chipTexto, { color: cores.texto }]}>TODOS</Text></Pressable>
+        {profissionais.map((profissional) => <Pressable key={profissional.id} onPress={() => setProfissionalId(profissional.id)} style={[styles.chip, { borderColor: cores.borda }, profissionalId === profissional.id && styles.chipAtivo]}><Text style={[styles.chipTexto, { color: cores.texto }]}>{profissional.nome.toUpperCase()}</Text></Pressable>)}
     </View>{agenda.map((item) => <View key={item.id} style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
         <Text style={[styles.titulo, { color: cores.texto }]}>{item.usuario?.nome ?? 'Cliente'}</Text>
         <Text style={[styles.descricao, { color: cores.textoSecundario }]}>{item.profissional?.nome ?? 'Profissional'} · {new Date(item.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Text>
         <Text style={[styles.descricao, { color: cores.textoSecundario }]}>{item.servicos?.map((servico) => servico.nome).join(' · ')}</Text>
         <View style={styles.acoes}>{['CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'NO_SHOW'].map((status) =>
-            <Pressable key={status} onPress={() => alterarStatus(item.id, status)} style={[styles.chip, item.status === status && styles.chipAtivo]}>
-                <Text style={styles.chipTexto}>{status.replace('_', ' ')}</Text></Pressable>)}</View>
+            <Pressable key={status} onPress={() => alterarStatus(item.id, status)} style={[styles.chip, { borderColor: cores.borda }, item.status === status && styles.chipAtivo]}>
+                <Text style={[styles.chipTexto, { color: cores.texto }]}>{status.replace('_', ' ')}</Text></Pressable>)}</View>
     </View>)}</View>
 }
 
@@ -69,7 +69,7 @@ export function FinanceiroOperacao({ itens, criar, data }: {
         if (criado) { setDescricao(''); setValor('') }
     }
     return <View style={styles.lista}><View style={[styles.formulario, { backgroundColor: cores.superficie }]}><Text style={[styles.subtitulo, { color: cores.texto }]}>Novo lançamento</Text>
-        <View style={styles.acoes}>{(['RECEITA', 'DESPESA'] as const).map((item) => <Pressable key={item} onPress={() => setTipo(item)} style={[styles.chip, tipo === item && styles.chipAtivo]}><Text style={styles.chipTexto}>{item}</Text></Pressable>)}</View>
+        <View style={styles.acoes}>{(['RECEITA', 'DESPESA'] as const).map((item) => <Pressable key={item} onPress={() => setTipo(item)} style={[styles.chip, { borderColor: cores.borda }, tipo === item && styles.chipAtivo]}><Text style={[styles.chipTexto, { color: cores.texto }]}>{item}</Text></Pressable>)}</View>
         <CampoTexto label="Descrição" value={descricao} onChangeText={setDescricao} />
         <CampoTexto label="Valor" value={valor} onChangeText={setValor} keyboardType="decimal-pad" /><Botao texto="Registrar lançamento" acao={submeter} /></View>
         {itens.map((item) => <View key={item.id} style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}><Text style={[styles.titulo, { color: cores.texto }]}>{item.descricao}</Text>

@@ -100,8 +100,8 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
                     {barbearia.profissionais.length ? barbearia.profissionais.map((profissional) => (
                         <View key={profissional.id} style={[styles.itemCard, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
                             <Text style={[styles.itemTitulo, { color: cores.texto }]}>{profissional.nome}</Text>
-                            {profissional.descricao ? <Text style={styles.itemDescricao}>{profissional.descricao}</Text> : null}
-                            {profissional.avaliacao != null ? <Text style={styles.itemMeta}>★ {Number(profissional.avaliacao).toFixed(1)} · {profissional.quantidadeAvaliacoes ?? 0} avaliações</Text> : null}
+                            {profissional.descricao ? <Text style={[styles.itemDescricao, { color: cores.textoSecundario }]}>{profissional.descricao}</Text> : null}
+                            {profissional.avaliacao != null ? <Text style={[styles.itemMeta, { color: cores.textoSecundario }]}>★ {Number(profissional.avaliacao).toFixed(1)} · {profissional.quantidadeAvaliacoes ?? 0} avaliações</Text> : null}
                         </View>
                     )) : <EstadoVazio titulo="Nenhum profissional publicado" />}
                 </Secao>
@@ -109,11 +109,11 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
                 <Secao titulo="Horários">
                     <View style={[styles.itemCard, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
                         {barbearia.horariosFuncionamento.length ? barbearia.horariosFuncionamento.map((horario) => (
-                            <View key={horario.diaSemana} style={styles.horarioLinha}>
-                                <Text style={styles.horarioDia}>{DIAS[horario.diaSemana] ?? '-'}</Text>
+                            <View key={horario.diaSemana} style={[styles.horarioLinha, { borderBottomColor: cores.borda }]}>
+                                <Text style={[styles.horarioDia, { color: cores.textoSecundario }]}>{DIAS[horario.diaSemana] ?? '-'}</Text>
                                 <Text style={[styles.horarioValor, { color: cores.texto }]}>{horario.inicio} às {horario.fim}</Text>
                             </View>
-                        )) : <Text style={styles.itemDescricao}>Horários ainda não configurados.</Text>}
+                        )) : <Text style={[styles.itemDescricao, { color: cores.textoSecundario }]}>Horários ainda não configurados.</Text>}
                     </View>
                 </Secao>
 
@@ -121,15 +121,15 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
                     {barbearia.avaliacoes.length ? barbearia.avaliacoes.map((avaliacao) => (
                         <View key={avaliacao.id} style={[styles.itemCard, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
                             <Text style={styles.avaliacaoNota}>{'★'.repeat(Math.max(1, Math.min(5, Math.round(avaliacao.nota))))}</Text>
-                            <Text style={styles.itemDescricao}>{avaliacao.comentario || 'Cliente não deixou comentário.'}</Text>
-                            <Text style={styles.itemMeta}>{avaliacao.cliente ?? 'Cliente'} · {avaliacao.profissional ?? 'Profissional'}</Text>
+                            <Text style={[styles.itemDescricao, { color: cores.textoSecundario }]}>{avaliacao.comentario || 'Cliente não deixou comentário.'}</Text>
+                            <Text style={[styles.itemMeta, { color: cores.textoSecundario }]}>{avaliacao.cliente ?? 'Cliente'} · {avaliacao.profissional ?? 'Profissional'}</Text>
                         </View>
                     )) : <EstadoVazio titulo="Ainda não há avaliações" />}
                 </Secao>
 
                 <Pressable style={styles.reportar} onPress={() => setDenunciaAberta(true)}>
-                    <Ionicons name="flag-outline" size={18} color="#AEBBCE" />
-                    <Text style={styles.reportarTexto}>Reportar informações deste perfil</Text>
+                    <Ionicons name="flag-outline" size={18} color={cores.textoSecundario} />
+                    <Text style={[styles.reportarTexto, { color: cores.textoSecundario }]}>Reportar informações deste perfil</Text>
                 </Pressable>
             </ScrollView>
 

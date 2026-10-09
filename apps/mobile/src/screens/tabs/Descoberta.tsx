@@ -61,7 +61,7 @@ export default function Descoberta({ navigation }: Props) {
                     selecionar={(segmento: string) => atualizar('segmento', segmento)} />
                 {mostrarFiltros ? <Filtros filtros={filtros} atualizar={atualizar} /> : null}
                 {selecionado ? <Text style={styles.selecao}>✓ Selecionado: {selecionado.nome}</Text> : null}
-                <Text style={styles.contagem}>{marketplace.carregando ? 'Buscando...' : `${marketplace.paginacao.total} resultado(s)`}</Text>
+                <Text style={[styles.contagem, { color: cores.textoSecundario }]}>{marketplace.carregando ? 'Buscando...' : `${marketplace.paginacao.total} resultado(s)`}</Text>
                 {marketplace.erro ? <EstadoErro mensagem={marketplace.erro} tentarNovamente={marketplace.recarregar} /> : null}
                 {marketplace.carregando ? <Carregando mensagem="Consultando o marketplace..." /> : null}
                 {!marketplace.carregando && mostrarMapa ? <MapaMarketplace estabelecimentos={marketplace.itens} abrir={abrir} /> : null}
@@ -87,9 +87,9 @@ function Filtros({ filtros, atualizar }: { filtros: FiltrosMarketplace; atualiza
         <TextInput style={[styles.input, inputTema]} value={filtros.especialidade} onChangeText={(v) => atualizar('especialidade', v)} placeholder="Especialidade" placeholderTextColor={cores.textoSecundario} />
         <TextInput style={[styles.input, inputTema]} value={filtros.precoMax} onChangeText={(v) => atualizar('precoMax', v.replace(/[^0-9.,]/g, '').replace(',', '.'))} placeholder="Preço máximo" keyboardType="decimal-pad" placeholderTextColor={cores.textoSecundario} />
         <TextInput style={[styles.input, inputTema]} value={filtros.disponivelEm} onChangeText={(v) => atualizar('disponivelEm', v)} placeholder="Disponível em: 2026-10-15T14:00:00-03:00" placeholderTextColor={cores.textoSecundario} autoCapitalize="none" />
-        <View style={styles.linha}><Text style={styles.label}>Aberto agora</Text><Switch value={filtros.abertaAgora} onValueChange={(v) => atualizar('abertaAgora', v)} /></View>
-        <Text style={styles.label}>Avaliação mínima</Text><View style={styles.chips}>{[0, 4, 4.5].map((nota) => <Chip key={nota} texto={nota ? `${nota}+` : 'Todas'} ativo={filtros.notaMin === nota} acao={() => atualizar('notaMin', nota)} />)}</View>
-        <Text style={styles.label}>Distância {filtros.posicao ? `· até ${filtros.raioKm} km` : '· use sua localização'}</Text>
+        <View style={styles.linha}><Text style={[styles.label, { color: cores.texto }]}>Aberto agora</Text><Switch value={filtros.abertaAgora} onValueChange={(v) => atualizar('abertaAgora', v)} /></View>
+        <Text style={[styles.label, { color: cores.texto }]}>Avaliação mínima</Text><View style={styles.chips}>{[0, 4, 4.5].map((nota) => <Chip key={nota} texto={nota ? `${nota}+` : 'Todas'} ativo={filtros.notaMin === nota} acao={() => atualizar('notaMin', nota)} />)}</View>
+        <Text style={[styles.label, { color: cores.texto }]}>Distância {filtros.posicao ? `· até ${filtros.raioKm} km` : '· use sua localização'}</Text>
         <View style={styles.chips}>{RAIOS.map((raio) => <Chip key={raio} texto={`${raio} km`} ativo={filtros.raioKm === raio} acao={() => atualizar('raioKm', raio)} />)}</View>
     </View>
 }

@@ -4,7 +4,6 @@ import type { AbasParamList } from '@/src/navigation/types'
 import { Ionicons } from '@expo/vector-icons'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import type { ComponentProps } from 'react'
-import { StyleSheet, Text, View } from 'react-native'
 import Agendamento from './Agendamento'
 import Descoberta from './Descoberta'
 import Inicio from './Inicio'
@@ -19,14 +18,9 @@ type NomeIcone = ComponentProps<typeof Ionicons>['name']
 
 function opcoesAba(label: string, icone: NomeIcone, ativo: string, inativo: string) {
     return {
-        tabBarIcon: ({ focused }: { focused: boolean }) => (
-            <View style={styles.tabScreen}>
-                <Ionicons name={icone} size={22} color={focused ? ativo : inativo} />
-                <Text style={[styles.tabScreenText, { color: focused ? ativo : inativo }]}>
-                    {label}
-                </Text>
-            </View>
-        ),
+        tabBarAccessibilityLabel: label,
+        tabBarIcon: ({ focused }: { focused: boolean }) =>
+            <Ionicons name={focused ? icone.replace('-outline', '') as NomeIcone : icone} size={27} color={focused ? ativo : inativo} />,
     }
 }
 
@@ -44,7 +38,7 @@ export default function Abas() {
                 tabBarShowLabel: false,
                 tabBarActiveBackgroundColor: cores.tabBar,
                 tabBarInactiveBackgroundColor: cores.tabBar,
-                tabBarStyle: { backgroundColor: cores.tabBar, borderTopColor: cores.borda },
+                tabBarStyle: { backgroundColor: cores.tabBar, borderTopColor: cores.borda, height: 64, paddingTop: 7, paddingBottom: 7 },
             }}
         >
             <Tab.Screen name="Descobrir" component={Descoberta} options={opcoesAba('Descobrir', 'search-outline', cores.destaque, cores.textoSecundario)} />
@@ -84,7 +78,3 @@ export default function Abas() {
     )
 }
 
-const styles = StyleSheet.create({
-    tabScreen: { flexDirection: 'column', alignItems: 'center' },
-    tabScreenText: { fontSize: 10, fontWeight: '700' },
-})

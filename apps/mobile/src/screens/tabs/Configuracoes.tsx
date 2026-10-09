@@ -30,15 +30,15 @@ export default function Configuracoes() {
             <CampoTexto label="Estado" value={dados.perfil.estado ?? ''} onChangeText={(v) => atualizarPerfil('estado', v)} maxLength={2} autoCapitalize="characters" />
         </Secao>
         <Secao titulo="Agenda">
-            <View style={styles.linha}><Text style={styles.label}>Aceitar agendamento online</Text><Switch value={dados.perfil.aceitaAgendamentoOnline} onValueChange={(v) => atualizarPerfil('aceitaAgendamentoOnline', v)} /></View>
+            <View style={styles.linha}><Text style={[styles.label, { color: cores.texto }]}>Aceitar agendamento online</Text><Switch value={dados.perfil.aceitaAgendamentoOnline} onValueChange={(v) => atualizarPerfil('aceitaAgendamentoOnline', v)} /></View>
             <CampoTexto label="Antecedência mínima em minutos" value={String(dados.agenda.antecedenciaMinutos)} keyboardType="number-pad"
                 onChangeText={(v) => dados.setAgenda((atual) => atual ? { ...atual, antecedenciaMinutos: Number(v.replace(/\D/g, '')) || 0 } : atual)} />
             <HorariosAgenda horarios={dados.agenda.horarios} alterar={(horarios) => dados.setAgenda((atual) => atual ? { ...atual, horarios } : atual)} />
         </Secao>
         <Secao titulo="Classificação">
             <Text style={styles.valor}>{dados.catalogo?.tipoEstabelecimento ?? 'Não definida'} · {dados.catalogo?.modeloAtendimento ?? 'Não definido'}</Text>
-            <Text style={styles.ajuda}>Segmentos: {dados.catalogo?.segmentos?.map((item: any) => item.segmento?.nome).join(', ') || 'nenhum'}</Text>
-            <Text style={styles.ajuda}>Especialidades: {dados.catalogo?.especialidades?.map((item: any) => item.especialidade?.nome).join(', ') || 'nenhuma'}</Text>
+            <Text style={[styles.ajuda, { color: cores.textoSecundario }]}>Segmentos: {dados.catalogo?.segmentos?.map((item: any) => item.segmento?.nome).join(', ') || 'nenhum'}</Text>
+            <Text style={[styles.ajuda, { color: cores.textoSecundario }]}>Especialidades: {dados.catalogo?.especialidades?.map((item: any) => item.especialidade?.nome).join(', ') || 'nenhuma'}</Text>
         </Secao>
         {dados.erro ? <EstadoErro mensagem={dados.erro} /> : null}{dados.sucesso ? <FeedbackSucesso mensagem={dados.sucesso} /> : null}
         <Pressable style={styles.botao} onPress={dados.salvar} disabled={dados.salvando}><Text style={styles.botaoTexto}>{dados.salvando ? 'Salvando...' : 'Salvar configurações'}</Text></Pressable>

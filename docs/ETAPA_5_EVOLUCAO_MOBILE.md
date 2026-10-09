@@ -65,3 +65,12 @@ Validacao manual sugerida:
 8. Se um servico ultrapassar o fim do expediente, confirme que o slot aparece como **Indisponivel**.
 
 O endpoint de ocupacao agora formata os horarios explicitamente no fuso `America/Sao_Paulo`, evitando a diferenca entre o horario gravado e o horario exibido pelo dispositivo.
+
+### Revisao De Contraste E Menu
+
+- textos secundarios de profissionais, horarios, avaliacoes, configuracoes, filtros e confirmacoes usam as cores semanticas do tema;
+- cartoes de agendamentos e o formulario de denuncia acompanham os modos claro e escuro;
+- o menu inferior exibe apenas icones maiores, com versao preenchida no item ativo;
+- os nomes das abas continuam disponiveis para leitores de tela, mas nao ocupam espaco visual.
+
+No modo claro, valide especialmente as descricoes dos profissionais, os dias de funcionamento, os filtros do marketplace, o resumo do agendamento e os agendamentos anteriores.
