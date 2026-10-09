@@ -1,5 +1,4 @@
 import { AgendaUtils, DateUtils, Horarios } from '@barbabrutal/core'
-import { useEffect, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import useTema from '@/src/data/contexts/ContextoTema'
 
@@ -18,20 +17,19 @@ interface CampoHorarioProps {
 
 export default function CampoHorario(props: CampoHorarioProps) {
     const { cores } = useTema()
-    const [horaSelecionada, setHoraSelecionada] = useState<string | null>(null)
     const { manha, tardeNoite } = props.horariosDisponiveis ?? AgendaUtils.horariosDoDia()
     const { horariosOcupados } = props
     const todosHorariosDisponiveis = [...manha, ...tardeNoite]
-
-    const dia = props.value.toISOString().slice(0, 10) ?? ''
-
-    useEffect(() => {
-        const horarioAtual = props.value.toLocaleString('pt-BR', {
-            hour: '2-digit',
-            minute: '2-digit',
-        })
-        setHoraSelecionada(horarioAtual)
-    }, [dia])
+    const horaSelecionada = props.value.toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit',
+    })
+    const intervaloSelecionado = new Horarios(
+        horaSelecionada,
+        props.qtdeHorarios,
+        horariosOcupados,
+        todosHorariosDisponiveis
+    )
 
     function renderizarHorario(horario: string) {
         const intervalo = new Horarios(
@@ -41,24 +39,32 @@ export default function CampoHorario(props: CampoHorarioProps) {
             todosHorariosDisponiveis
         )
         const indisponivel = intervalo.ocupado || intervalo.incompleto
-        const selecionado = horaSelecionada === horario && !indisponivel
+        const selecionado = intervaloSelecionado.completo
+            && !intervaloSelecionado.ocupado
+            && intervaloSelecionado.todos.includes(horario)
 
         return (
             <Pressable
                 key={horario}
                 disabled={indisponivel}
                 accessibilityState={{ disabled: indisponivel, selected: selecionado }}
-                accessibilityLabel={indisponivel ? `${horario}, horário indisponível` : horario}
+                accessibilityLabel={
+                    selecionado
+                        ? `${horario}, parte do período selecionado`
+                        : indisponivel
+                            ? `${horario}, horário indisponível`
+                            : horario
+                }
                 onPress={function () {
-                    setHoraSelecionada(horario)
                     props.onChange(DateUtils.aplicarHorario(props.value, horario))
                 }}
                 style={[styles.horaContainer, { backgroundColor: cores.superficie, borderColor: cores.borda },
-                    selecionado && { backgroundColor: cores.sucesso }, indisponivel && styles.horaIndisponivel]}
+                    indisponivel && styles.horaIndisponivel,
+                    selecionado && { backgroundColor: cores.sucesso, opacity: 1 }]}
             >
                 <View style={styles.horaConteudo}>
-                    <Text style={[styles.horaTexto, { color: selecionado ? '#FFFFFF' : cores.texto }, indisponivel && styles.textoIndisponivel]}>
-                        {intervalo.ocupado ? `${horario} · Ocupado` : intervalo.incompleto ? `${horario} · Indisponível` : horario}
+                    <Text style={[styles.horaTexto, { color: selecionado ? '#FFFFFF' : cores.texto }, indisponivel && !selecionado && styles.textoIndisponivel]}>
+                        {selecionado ? horario : intervalo.ocupado ? `${horario} · Ocupado` : intervalo.incompleto ? `${horario} · Indisponível` : horario}
                     </Text>
                 </View>
             </Pressable>

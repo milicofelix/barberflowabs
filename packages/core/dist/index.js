@@ -83,131 +83,6 @@ var ExcluirAgendamento = class {
   }
 };
 
-// src/utils/AgendaUtils.ts
-var AgendaUtils = class {
-  static horariosDoDia() {
-    return {
-      manha: this.gerarHorarios([8, 9, 10, 11]),
-      tardeNoite: this.gerarHorarios([13, 14, 15, 16, 17, 18, 19, 20])
-    };
-  }
-  static duracaoTotal(servicos2) {
-    const duracao = servicos2.reduce((total, servico) => total + servico.qtdeSlots * 15, 0);
-    const horas = Math.floor(duracao / 60);
-    const minutos = duracao % 60;
-    return `${horas}h ${minutos.toString().padStart(2, "0")}m`;
-  }
-  static gerarHorarios(horas) {
-    return horas.reduce((horarios, hora) => {
-      const horariosDaHora = this.minutos.map((minuto) => {
-        const horaFormatada = hora.toString().padStart(2, "0");
-        const minutoFormatado = minuto.toString().padStart(2, "0");
-        return `${horaFormatada}:${minutoFormatado}`;
-      });
-      return [...horarios, ...horariosDaHora];
-    }, []);
-  }
-};
-AgendaUtils.minutos = [0, 15, 30, 45];
-
-// src/utils/DateUtils.ts
-var DateUtils = class _DateUtils {
-  static hojeComHoraZerada() {
-    const hoje = /* @__PURE__ */ new Date();
-    hoje.setHours(0, 0, 0, 0);
-    return hoje;
-  }
-  static proximosDias(qtde, incluirHoje = true) {
-    const dias = [];
-    const hoje = _DateUtils.hojeComHoraZerada();
-    if (incluirHoje) {
-      dias.push(hoje);
-    }
-    for (let i = 1; dias.length < qtde; i++) {
-      const dia = new Date(hoje);
-      dia.setDate(hoje.getDate() + i);
-      dias.push(dia);
-    }
-    return dias;
-  }
-  static aplicarHorario(data, horario) {
-    const novaData = new Date(data);
-    const [hora, minuto] = horario.split(":").map(Number);
-    novaData.setHours(hora, minuto, 0, 0);
-    return novaData;
-  }
-  static formatarData(data, localizacao = "pt-BR") {
-    return data.toLocaleDateString(localizacao, {
-      year: "numeric",
-      month: "long",
-      day: "numeric"
-    });
-  }
-  static formatarDataEHora(data, localizacao = "pt-BR") {
-    return data.toLocaleDateString(localizacao, {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "numeric",
-      minute: "numeric"
-    });
-  }
-};
-
-// src/utils/MoedaUtils.ts
-var MoedaUtils = class {
-  static formatar(valor, locale = "pt-BR", moeda = "BRL") {
-    return Intl.NumberFormat(locale, {
-      style: "currency",
-      currency: moeda,
-      minimumFractionDigits: 2
-    }).format(valor);
-  }
-};
-
-// src/agendamento/model/Horarios.ts
-var Horarios = class {
-  constructor(inicio, qtde, horariosOcupados, horariosDisponiveis) {
-    this.inicio = inicio;
-    this.qtde = qtde;
-    this.horariosOcupados = horariosOcupados;
-    this.horariosDisponiveis = horariosDisponiveis;
-  }
-  get todos() {
-    if (this.horariosDisponiveis?.length) {
-      const indiceDisponivel = this.horariosDisponiveis.indexOf(this.inicio);
-      return indiceDisponivel >= 0 ? this.horariosDisponiveis.slice(indiceDisponivel, indiceDisponivel + this.qtde) : [];
-    }
-    const { manha, tardeNoite } = AgendaUtils.horariosDoDia();
-    const horarios = manha.includes(this.inicio) ? manha : tardeNoite;
-    const indice = horarios.indexOf(this.inicio);
-    return horarios.slice(indice, indice + this.qtde);
-  }
-  get completo() {
-    return this.todos.length === this.qtde;
-  }
-  get incompleto() {
-    return !this.completo;
-  }
-  get ocupado() {
-    return this.todos.some((h) => this.horariosOcupados.includes(h));
-  }
-};
-
-// src/agendamento/service/NovoAgendamento.ts
-var NovoAgendamento = class {
-  constructor(repo) {
-    this.repo = repo;
-  }
-  async executar(entrada) {
-    const { usuario, agendamento } = entrada;
-    if (usuario.id !== agendamento.usuario.id) {
-      throw new Error("N\xE3o \xE9 poss\xEDvel criar um agendamento para outro usu\xE1rio.");
-    }
-    await this.repo.criar(agendamento);
-  }
-};
-
 // src/constants/clientes.ts
 var clientes = [
   {
@@ -345,6 +220,152 @@ var servicos_default = servicos;
 
 // src/constants/index.ts
 var TEMPO_SLOT = 15;
+
+// src/utils/AgendaUtils.ts
+var AgendaUtils = class {
+  static horariosDoDia() {
+    return {
+      manha: this.gerarHorarios([8, 9, 10, 11]),
+      tardeNoite: this.gerarHorarios([13, 14, 15, 16, 17, 18, 19, 20])
+    };
+  }
+  static duracaoTotal(servicos2) {
+    const duracao = this.duracaoEmMinutos(servicos2);
+    const horas = Math.floor(duracao / 60);
+    const minutos = duracao % 60;
+    return `${horas}h ${minutos.toString().padStart(2, "0")}m`;
+  }
+  static qtdeHorarios(servicos2) {
+    return Math.ceil(this.duracaoEmMinutos(servicos2) / this.tempoSlot);
+  }
+  static duracaoEmMinutos(servicos2) {
+    return servicos2.reduce((total, servico) => {
+      const duracao = Number(servico.duracaoMinutos);
+      return total + (duracao > 0 ? duracao : servico.qtdeSlots * this.tempoSlot);
+    }, 0);
+  }
+  static gerarHorarios(horas) {
+    return horas.reduce((horarios, hora) => {
+      const horariosDaHora = this.minutos.map((minuto) => {
+        const horaFormatada = hora.toString().padStart(2, "0");
+        const minutoFormatado = minuto.toString().padStart(2, "0");
+        return `${horaFormatada}:${minutoFormatado}`;
+      });
+      return [...horarios, ...horariosDaHora];
+    }, []);
+  }
+};
+AgendaUtils.tempoSlot = 15;
+AgendaUtils.minutos = [0, 15, 30, 45];
+
+// src/utils/DateUtils.ts
+var DateUtils = class _DateUtils {
+  static hojeComHoraZerada() {
+    const hoje = /* @__PURE__ */ new Date();
+    hoje.setHours(0, 0, 0, 0);
+    return hoje;
+  }
+  static proximosDias(qtde, incluirHoje = true) {
+    const dias = [];
+    const hoje = _DateUtils.hojeComHoraZerada();
+    if (incluirHoje) {
+      dias.push(hoje);
+    }
+    for (let i = 1; dias.length < qtde; i++) {
+      const dia = new Date(hoje);
+      dia.setDate(hoje.getDate() + i);
+      dias.push(dia);
+    }
+    return dias;
+  }
+  static aplicarHorario(data, horario) {
+    const novaData = new Date(data);
+    const [hora, minuto] = horario.split(":").map(Number);
+    novaData.setHours(hora, minuto, 0, 0);
+    return novaData;
+  }
+  static formatarData(data, localizacao = "pt-BR") {
+    return data.toLocaleDateString(localizacao, {
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
+  }
+  static formatarDataEHora(data, localizacao = "pt-BR") {
+    return data.toLocaleDateString(localizacao, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric"
+    });
+  }
+};
+
+// src/utils/MoedaUtils.ts
+var MoedaUtils = class {
+  static formatar(valor, locale = "pt-BR", moeda = "BRL") {
+    return Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: moeda,
+      minimumFractionDigits: 2
+    }).format(valor);
+  }
+};
+
+// src/agendamento/model/Horarios.ts
+var Horarios = class {
+  constructor(inicio, qtde, horariosOcupados, horariosDisponiveis) {
+    this.inicio = inicio;
+    this.qtde = qtde;
+    this.horariosOcupados = horariosOcupados;
+    this.horariosDisponiveis = horariosDisponiveis;
+  }
+  get todos() {
+    if (this.horariosDisponiveis) {
+      return this.horariosConsecutivos(this.horariosDisponiveis);
+    }
+    const { manha, tardeNoite } = AgendaUtils.horariosDoDia();
+    const horarios = manha.includes(this.inicio) ? manha : tardeNoite;
+    return this.horariosConsecutivos(horarios);
+  }
+  get completo() {
+    return this.todos.length === this.qtde;
+  }
+  get incompleto() {
+    return !this.completo;
+  }
+  get ocupado() {
+    return this.todos.some((h) => this.horariosOcupados.includes(h));
+  }
+  horariosConsecutivos(horariosDisponiveis) {
+    const [hora, minuto] = this.inicio.split(":").map(Number);
+    if (!Number.isInteger(hora) || !Number.isInteger(minuto)) return [];
+    const inicioEmMinutos = hora * 60 + minuto;
+    const horarios = [];
+    for (let indice = 0; indice < this.qtde; indice++) {
+      const totalMinutos = inicioEmMinutos + indice * TEMPO_SLOT;
+      const horario = `${Math.floor(totalMinutos / 60).toString().padStart(2, "0")}:${(totalMinutos % 60).toString().padStart(2, "0")}`;
+      if (!horariosDisponiveis.includes(horario)) break;
+      horarios.push(horario);
+    }
+    return horarios;
+  }
+};
+
+// src/agendamento/service/NovoAgendamento.ts
+var NovoAgendamento = class {
+  constructor(repo) {
+    this.repo = repo;
+  }
+  async executar(entrada) {
+    const { usuario, agendamento } = entrada;
+    if (usuario.id !== agendamento.usuario.id) {
+      throw new Error("N\xE3o \xE9 poss\xEDvel criar um agendamento para outro usu\xE1rio.");
+    }
+    await this.repo.criar(agendamento);
+  }
+};
 
 // src/agendamento/service/ObterHorariosOcupados.ts
 var ObterHorariosOcupados = class {

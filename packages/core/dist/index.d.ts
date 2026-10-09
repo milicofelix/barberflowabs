@@ -101,6 +101,7 @@ declare class Horarios {
     get completo(): boolean;
     get incompleto(): boolean;
     get ocupado(): boolean;
+    private horariosConsecutivos;
 }
 
 type Entrada$2 = {
@@ -186,6 +187,7 @@ declare class LoginUsuario implements CasoDeUso<Entrada, Usuario> {
 }
 
 declare class AgendaUtils {
+    private static readonly tempoSlot;
     private static minutos;
     static horariosDoDia(): {
         manha: string[];
@@ -193,7 +195,13 @@ declare class AgendaUtils {
     };
     static duracaoTotal(servicos: {
         qtdeSlots: number;
+        duracaoMinutos?: number;
     }[]): string;
+    static qtdeHorarios(servicos: {
+        qtdeSlots: number;
+        duracaoMinutos?: number;
+    }[]): number;
+    private static duracaoEmMinutos;
     static gerarHorarios(horas: number[]): string[];
 }
 

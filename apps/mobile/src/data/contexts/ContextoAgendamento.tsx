@@ -63,7 +63,7 @@ export function ProvedorAgendamento(props: any) {
     }
 
     function qtdeHorarios() {
-        return servicos.reduce((qtde, servico) => qtde + servico.qtdeSlots, 0)
+        return AgendaUtils.qtdeHorarios(servicos)
     }
 
     async function agendar() {

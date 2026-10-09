@@ -162,6 +162,18 @@ Atenção: o envio válido cria um registro real de denúncia no ambiente atual.
 
 Resultado esperado: o agendamento é criado usando o `x-barbearia-slug` da barbearia selecionada, inclusive quando o usuário autenticado também possui perfil operacional em outra barbearia.
 
+### 8.1 Validar duração e blocos do agendamento
+
+1. Escolher um serviço cuja duração seja de 45 minutos, como **Corte social**.
+2. Selecionar um horário livre, por exemplo `10:00`.
+3. Confirmar que `10:00`, `10:15` e `10:30` ficam destacados como um único período.
+4. Confirmar que um início sem três blocos consecutivos aparece como **Indisponível**.
+5. Finalizar o agendamento e voltar ao mesmo profissional e dia.
+6. Confirmar que os três blocos aparecem como ocupados e não podem ser selecionados novamente.
+7. Abrir o mesmo dia na web e confirmar que o período ocupado é idêntico.
+
+Resultado esperado: mobile, web e backend calculam a quantidade de blocos pela duração real do serviço, usando blocos consecutivos de 15 minutos.
+
 ### 9. Validar troca e persistência
 
 1. Na aba **Agendar**, tocar em **Trocar barbearia**.

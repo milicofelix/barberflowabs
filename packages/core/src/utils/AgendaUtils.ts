@@ -1,4 +1,5 @@
 export default class AgendaUtils {
+    private static readonly tempoSlot = 15
     private static minutos = [0, 15, 30, 45]
 
     static horariosDoDia() {
@@ -8,11 +9,24 @@ export default class AgendaUtils {
         }
     }
 
-    static duracaoTotal(servicos: { qtdeSlots: number }[]) {
-        const duracao = servicos.reduce((total, servico) => total + servico.qtdeSlots * 15, 0)
+    static duracaoTotal(servicos: { qtdeSlots: number; duracaoMinutos?: number }[]) {
+        const duracao = this.duracaoEmMinutos(servicos)
         const horas = Math.floor(duracao / 60)
         const minutos = duracao % 60
         return `${horas}h ${minutos.toString().padStart(2, '0')}m`
+    }
+
+    static qtdeHorarios(servicos: { qtdeSlots: number; duracaoMinutos?: number }[]) {
+        return Math.ceil(this.duracaoEmMinutos(servicos) / this.tempoSlot)
+    }
+
+    private static duracaoEmMinutos(
+        servicos: { qtdeSlots: number; duracaoMinutos?: number }[]
+    ) {
+        return servicos.reduce((total, servico) => {
+            const duracao = Number(servico.duracaoMinutos)
+            return total + (duracao > 0 ? duracao : servico.qtdeSlots * this.tempoSlot)
+        }, 0)
     }
 
     static gerarHorarios(horas: number[]): string[] {
