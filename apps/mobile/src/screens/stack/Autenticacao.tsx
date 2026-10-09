@@ -48,10 +48,8 @@ export default function Autenticacao(_: Props) {
                             source={require('@/assets/images/brand/logo-mark-transparent.png')}
                             style={styles.logo}
                             resizeMode="contain"
-                            accessibilityLabel="Logo Barber Flow ABS"
+                            accessibilityLabel="Logo UniFlow ABS"
                         />
-                        <Text style={styles.marca}>Barber Flow ABS</Text>
-                        <Text style={styles.assinatura}>Sua rotina de cuidado, no seu tempo.</Text>
                     </View>
 
                     <View style={styles.cartao}>
@@ -172,9 +170,7 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     scroll: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, paddingVertical: 28 },
     cabecalho: { alignItems: 'center', marginBottom: 22 },
-    logo: { width: 112, height: 112 },
-    marca: { color: '#FFFFFF', fontSize: 29, fontWeight: '800', letterSpacing: 0.3, marginTop: 4 },
-    assinatura: { color: '#BBC6D6', fontSize: 14, lineHeight: 20, marginTop: 5, textAlign: 'center' },
+    logo: { width: 230, height: 174 },
     cartao: { width: '100%', maxWidth: 460, borderRadius: 24, backgroundColor: '#FFFFFF', padding: 22,
         shadowColor: '#000000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.24,
         shadowRadius: 24, elevation: 10 },

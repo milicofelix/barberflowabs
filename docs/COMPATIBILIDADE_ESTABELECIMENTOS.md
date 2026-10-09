@@ -48,6 +48,8 @@ Registros existentes recebem `BARBEARIA` e `PRESENCIAL`. O segmento `barbearia` 
 - `estabelecimentos_especialidades`: associacao entre a tabela legada e especialidades.
 - `requisitos`: instrucoes ou condicoes reutilizaveis.
 - `servicos_requisitos`: requisitos associados a um servico.
+- `profissionais_especialidades`: especialidades exercidas por cada profissional.
+- `servicos_especialidades`: especialidades atendidas por cada servico.
 
 As tabelas de associacao preservam `barbeariaId` de proposito. A troca desse nome ocorrera somente depois que todos os consumidores e consultas estiverem no contrato canonico.
 

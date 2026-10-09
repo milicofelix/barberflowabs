@@ -29,12 +29,25 @@ interface Servico {
     preco: number;
     qtdeSlots: number;
     imagemURL: string;
+    duracaoMinutos?: number;
+    preparoAntesMinutos?: number;
+    preparoDepoisMinutos?: number;
+    deslocamentoMinutos?: number;
+    modeloAtendimento?: 'PRESENCIAL' | 'DOMICILIAR' | 'HIBRIDO';
+    observacoes?: string | null;
 }
 
 interface Agendamento {
     id: number;
     barbeariaId?: number;
     data: Date;
+    dataFim?: Date;
+    inicioOcupacao?: Date;
+    fimOcupacao?: Date;
+    unidadeId?: number | null;
+    modeloAtendimento?: 'PRESENCIAL' | 'DOMICILIAR' | 'HIBRIDO';
+    enderecoAtendimento?: string | null;
+    deslocamentoMinutos?: number;
     usuario: Usuario;
     profissional: Partial<Profissional>;
     servicos: Partial<Servico>[];

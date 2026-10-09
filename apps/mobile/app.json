@@ -25,7 +25,6 @@
       "package": "com.barberflowabs.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/brand/android-foreground.png",
-        "monochromeImage": "./assets/images/brand/monochrome-icon.png",
         "backgroundColor": "#081426"
       },
       "edgeToEdgeEnabled": true

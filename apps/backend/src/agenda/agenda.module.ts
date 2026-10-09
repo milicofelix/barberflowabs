@@ -5,9 +5,10 @@ import { DbModule } from 'src/db/db.module';
 import { AgendaController } from './agenda.controller';
 import { AgendaPrisma } from './agenda.prisma';
 import { TenantService } from 'src/shared/tenant.service';
+import { MotorAgendaModule } from 'src/motor-agenda/motor-agenda.module';
 
 @Module({
-  imports: [AuthModule, DbModule],
+  imports: [AuthModule, DbModule, MotorAgendaModule],
   controllers: [AgendaController],
   providers: [AgendaPrisma, TenantService],
 })

@@ -6,4 +6,10 @@ export default interface Servico {
     preco: number
     qtdeSlots: number
     imagemURL: string
+    duracaoMinutos?: number
+    preparoAntesMinutos?: number
+    preparoDepoisMinutos?: number
+    deslocamentoMinutos?: number
+    modeloAtendimento?: 'PRESENCIAL' | 'DOMICILIAR' | 'HIBRIDO'
+    observacoes?: string | null
 }

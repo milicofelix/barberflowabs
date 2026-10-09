@@ -30,24 +30,36 @@ Status: implementacao concluida em 2026-10-09; migration pendente de aplicacao m
 
 ## Etapa 2 - Segmentos, Especialidades E Catalogo
 
-- Categorias e subcategorias de estabelecimentos.
-- Multiplas especialidades por estabelecimento e profissional.
-- Servicos com duracao, preco, imagens e requisitos.
-- Configuracao por segmento sem duplicacao de modulos.
+Status: implementacao backend concluida em 2026-10-09; migration pendente de aplicacao manual no ambiente.
 
-## Etapa 3 - Profissionais, Equipes E Recursos
+- [x] Categorias e subcategorias de estabelecimentos.
+- [x] Multiplas especialidades por estabelecimento, profissional e servico.
+- [x] Servicos com duracao, preco, imagens, observacoes e requisitos.
+- [x] Atendimento presencial, domiciliar ou hibrido.
+- [x] Configuracao por segmento sem duplicacao de modulos.
+- [x] Isolamento de tenant nas associacoes operacionais.
+- [x] Contratos e roteiro manual de validacao documentados.
 
-- Vinculos entre profissionais, especialidades e servicos.
-- Papeis e permissoes de equipe.
-- Salas, cadeiras, macas e equipamentos reservaveis.
-- Atendimento fisico, domiciliar ou hibrido.
+## Etapa 3 - Motor Universal De Agenda
 
-## Etapa 4 - Motor Universal De Agendamentos
+Status: implementacao backend concluida em 2026-10-09; migration pendente de aplicacao manual no ambiente.
 
-- Duracoes variaveis e multiplos servicos.
-- Preparacao e intervalo entre atendimentos.
-- Disponibilidade de profissional e recurso.
-- Reagendamento, bloqueios e prevencao transacional de conflitos.
+- [x] Duracoes reais e multiplos servicos ordenados.
+- [x] Preparacao anterior, posterior e entre servicos.
+- [x] Habilitacao entre profissional e servico.
+- [x] Unidade e atendimento fisico, domiciliar ou hibrido.
+- [x] Deslocamento para atendimento domiciliar.
+- [x] Salas, cadeiras, macas e equipamentos reservaveis por capacidade.
+- [x] Reagendamento com historico.
+- [x] Bloqueios e prevencao transacional de conflitos de profissional e recurso.
+- [x] Contratos e validacao manual documentados.
+
+## Etapa 4 - Equipes E Capacidade Operacional
+
+- Papeis e permissoes detalhados de equipe.
+- Escalas individuais por profissional.
+- Manutencao e indisponibilidade programada de recursos.
+- Capacidade simultanea por unidade e regras de excecao.
 
 ## Etapa 5 - Onboarding Multissegmento
 

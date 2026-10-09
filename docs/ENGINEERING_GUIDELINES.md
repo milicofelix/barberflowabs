@@ -83,6 +83,16 @@ Ao tocar em codigo antigo:
 - Fazer refatoracao local apenas quando ela for necessaria para implementar ou testar a mudanca com seguranca.
 - Evitar misturar uma grande refatoracao estrutural com uma funcionalidade sem justificativa tecnica.
 
+## Execucao De Testes E Builds
+
+Testes e comandos de validacao podem ser criados ou atualizados como parte da implementacao, mas nao devem ser executados automaticamente.
+
+- Nao executar testes automatizados, testes manuais, testes de browser ou chamadas de verificacao de API sem solicitacao explicita do usuario.
+- Nao executar build, typecheck, lint, formatadores, validadores de schema, migrations, seed, instalacao de dependencias ou inicializacao/reinicio de servicos sem solicitacao explicita do usuario.
+- Revisoes estaticas e inspecoes somente leitura continuam permitidas, desde que nao disparem scripts do projeto.
+- Ao concluir uma alteracao, informar quais validacoes nao foram executadas e fornecer os comandos sugeridos para o usuario executar manualmente, quando forem relevantes.
+- Uma autorizacao vale somente para as verificacoes explicitamente solicitadas naquele momento; nao deve ser presumida para etapas futuras.
+
 ## Criterio De Entrega
 
 Antes de concluir uma implementacao nova:
@@ -91,6 +101,5 @@ Antes de concluir uma implementacao nova:
 - Nao foi criada duplicacao relevante.
 - Dependencias apontam para a camada correta.
 - Tenant, permissoes e erros foram considerados.
-- A validacao proporcional ao risco foi executada.
+- A validacao proporcional ao risco foi documentada e somente foi executada quando solicitada explicitamente pelo usuario.
 - Excecoes a estas diretrizes foram justificadas.
-

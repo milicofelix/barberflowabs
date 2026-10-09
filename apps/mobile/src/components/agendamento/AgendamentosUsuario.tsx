@@ -76,7 +76,12 @@ export default function AgendamentosUsuario() {
 
     return (
         <View style={styles.container}>
-            <Image source={require('@/assets/images/brand/logo-mark-transparent.png')} style={styles.logo} />
+            <Image
+                source={require('@/assets/images/brand/logo-mark-transparent.png')}
+                style={styles.logo}
+                resizeMode="contain"
+                accessibilityLabel="Logo UniFlow ABS"
+            />
             <Text style={styles.titulo}>Fala, {usuario?.nome}!</Text>
             {renderizarConteudo()}
         </View>
@@ -123,6 +128,8 @@ const styles = StyleSheet.create({
         color: 'white',
     },
     logo: {
+        width: 220,
+        height: 166,
         marginTop: 20,
     },
     garotoPropaganda: {

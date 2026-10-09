@@ -10,6 +10,8 @@ import { AgendaModule } from './agenda/agenda.module';
 import { GestaoModule } from './gestao/gestao.module';
 import { SaasModule } from './saas/saas.module';
 import { PublicoModule } from './publico/publico.module';
+import { CatalogoModule } from './catalogo/catalogo.module';
+import { RecursoModule } from './recurso/recurso.module';
 
 @Module({
   imports: [
@@ -23,6 +25,8 @@ import { PublicoModule } from './publico/publico.module';
     GestaoModule,
     SaasModule,
     PublicoModule,
+    CatalogoModule,
+    RecursoModule,
   ],
   controllers: [AppController],
 })

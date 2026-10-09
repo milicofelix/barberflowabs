@@ -28,6 +28,7 @@ model Usuario {
   avaliacoes Avaliacao[]
   denunciasRevisadas DenunciaPerfilPublico[] @relation("DenunciaPerfilRevisor")
   barbeariasCliente ClienteBarbearia[]
+  reagendamentosRealizados HistoricoReagendamento[] @relation("HistoricoReagendamentoAutor")
 
   @@index([barbeariaId])
   @@map("usuarios")
@@ -46,6 +47,8 @@ model Profissional {
   bloqueiosAgenda      BloqueioAgenda[]
   lancamentosFinanceiros LancamentoFinanceiro[]
   avaliacoes           Avaliacao[]
+  especialidades       ProfissionalEspecialidade[]
+  servicosHabilitados  ProfissionalServico[]
 
   @@unique([barbeariaId, nome])
   @@index([barbeariaId])
@@ -60,9 +63,19 @@ model Servico {
   preco        Decimal       @db.Decimal(10, 2)
   qtdeSlots    Int
   imagemURL    String
+  observacoes  String?        @db.Text
+  modeloAtendimento String    @default("PRESENCIAL")
+  duracaoMinutos       Int     @default(15)
+  preparoAntesMinutos  Int     @default(0)
+  preparoDepoisMinutos Int     @default(0)
+  deslocamentoMinutos  Int     @default(0)
   barbearia    Barbearia     @relation(fields: [barbeariaId], references: [id])
   agendamentos Agendamento[]
   requisitos   ServicoRequisito[]
+  especialidades ServicoEspecialidade[]
+  profissionaisHabilitados ProfissionalServico[]
+  recursosNecessarios      ServicoRecurso[]
+  itensAgendamento         AgendamentoServico[]
 
   @@unique([barbeariaId, nome])
   @@index([barbeariaId])
@@ -77,8 +90,17 @@ model Agendamento {
   valorTotal  Decimal  @default(0) @db.Decimal(10, 2)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  dataFim     DateTime?
+  inicioOcupacao DateTime?
+  fimOcupacao DateTime?
+  unidadeId   Int?
+  modeloAtendimento String @default("PRESENCIAL")
+  enderecoAtendimento String? @db.Text
+  deslocamentoMinutos Int @default(0)
+  reagendadoEm DateTime?
 
   barbearia Barbearia @relation(fields: [barbeariaId], references: [id])
+  unidade   Unidade?  @relation(fields: [unidadeId], references: [id])
 
   usuario   Usuario @relation(fields: [usuarioId], references: [id])
   usuarioId Int
@@ -87,10 +109,15 @@ model Agendamento {
   profissionalId Int
 
   servicos Servico[]
+  itens AgendamentoServico[]
+  recursos AgendamentoRecurso[]
+  historicoReagendamentos HistoricoReagendamento[]
   avaliacao Avaliacao?
 
   @@index([barbeariaId])
   @@index([profissionalId, data])
+  @@index([profissionalId, inicioOcupacao, fimOcupacao])
+  @@index([unidadeId, inicioOcupacao, fimOcupacao])
   @@map("agendamentos")
 }
 
@@ -144,6 +171,10 @@ model Barbearia {
   clientes                ClienteBarbearia[]
   segmentos               EstabelecimentoSegmento[]
   especialidades          EstabelecimentoEspecialidade[]
+  especialidadesProfissionais ProfissionalEspecialidade[]
+  especialidadesServicos      ServicoEspecialidade[]
+  profissionaisServicos       ProfissionalServico[]
+  recursos                     Recurso[]
 
   @@map("barbearias")
 }
@@ -173,6 +204,8 @@ model Especialidade {
   updatedAt        DateTime  @updatedAt
   segmento         Segmento  @relation(fields: [segmentoId], references: [id])
   estabelecimentos EstabelecimentoEspecialidade[]
+  profissionais    ProfissionalEspecialidade[]
+  servicos         ServicoEspecialidade[]
 
   @@unique([segmentoId, slug])
   @@index([segmentoId, ativo])
@@ -206,6 +239,146 @@ model EstabelecimentoEspecialidade {
   @@unique([barbeariaId, especialidadeId])
   @@index([especialidadeId])
   @@map("estabelecimentos_especialidades")
+}
+
+model ProfissionalEspecialidade {
+  id              Int           @id @default(autoincrement())
+  barbeariaId     Int
+  profissionalId  Int
+  especialidadeId Int
+  principal       Boolean       @default(false)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  barbearia       Barbearia     @relation(fields: [barbeariaId], references: [id])
+  profissional    Profissional  @relation(fields: [profissionalId], references: [id])
+  especialidade   Especialidade @relation(fields: [especialidadeId], references: [id])
+
+  @@unique([profissionalId, especialidadeId])
+  @@index([barbeariaId, profissionalId])
+  @@index([especialidadeId])
+  @@map("profissionais_especialidades")
+}
+
+model ServicoEspecialidade {
+  id              Int           @id @default(autoincrement())
+  barbeariaId     Int
+  servicoId       Int
+  especialidadeId Int
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  barbearia       Barbearia     @relation(fields: [barbeariaId], references: [id])
+  servico         Servico       @relation(fields: [servicoId], references: [id])
+  especialidade   Especialidade @relation(fields: [especialidadeId], references: [id])
+
+  @@unique([servicoId, especialidadeId])
+  @@index([barbeariaId, servicoId])
+  @@index([especialidadeId])
+  @@map("servicos_especialidades")
+}
+
+model ProfissionalServico {
+  id             Int          @id @default(autoincrement())
+  barbeariaId    Int
+  profissionalId Int
+  servicoId      Int
+  ativo          Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  barbearia      Barbearia    @relation(fields: [barbeariaId], references: [id])
+  profissional   Profissional @relation(fields: [profissionalId], references: [id])
+  servico        Servico      @relation(fields: [servicoId], references: [id])
+
+  @@unique([profissionalId, servicoId])
+  @@index([barbeariaId, ativo])
+  @@index([servicoId])
+  @@map("profissionais_servicos")
+}
+
+model Recurso {
+  id          Int       @id @default(autoincrement())
+  barbeariaId Int
+  unidadeId   Int?
+  nome        String
+  tipo        String
+  capacidade  Int       @default(1)
+  ativo       Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
+  unidade     Unidade?  @relation(fields: [unidadeId], references: [id])
+  reservas    AgendamentoRecurso[]
+
+  @@unique([barbeariaId, nome])
+  @@index([barbeariaId, tipo, ativo])
+  @@index([unidadeId, tipo, ativo])
+  @@map("recursos")
+}
+
+model ServicoRecurso {
+  id          Int      @id @default(autoincrement())
+  servicoId   Int
+  tipoRecurso String
+  quantidade  Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  servico     Servico  @relation(fields: [servicoId], references: [id])
+
+  @@unique([servicoId, tipoRecurso])
+  @@map("servicos_recursos")
+}
+
+model AgendamentoServico {
+  id                   Int         @id @default(autoincrement())
+  agendamentoId        Int
+  servicoId            Int
+  ordem                Int
+  duracaoMinutos       Int
+  preparoAntesMinutos  Int         @default(0)
+  preparoDepoisMinutos Int         @default(0)
+  preco                Decimal     @db.Decimal(10, 2)
+  createdAt            DateTime    @default(now())
+  agendamento           Agendamento @relation(fields: [agendamentoId], references: [id])
+  servico               Servico     @relation(fields: [servicoId], references: [id])
+
+  @@unique([agendamentoId, ordem])
+  @@index([servicoId])
+  @@map("agendamentos_servicos")
+}
+
+model AgendamentoRecurso {
+  id            Int         @id @default(autoincrement())
+  agendamentoId Int
+  recursoId     Int
+  inicio        DateTime
+  fim           DateTime
+  quantidade    Int         @default(1)
+  createdAt     DateTime    @default(now())
+  agendamento   Agendamento @relation(fields: [agendamentoId], references: [id])
+  recurso       Recurso     @relation(fields: [recursoId], references: [id])
+
+  @@unique([agendamentoId, recursoId])
+  @@index([recursoId, inicio, fim])
+  @@map("agendamentos_recursos")
+}
+
+model HistoricoReagendamento {
+  id                Int         @id @default(autoincrement())
+  agendamentoId     Int
+  alteradoPorId     Int
+  dataAnterior      DateTime
+  dataFimAnterior   DateTime?
+  unidadeIdAnterior Int?
+  dataNova          DateTime
+  dataFimNova       DateTime
+  unidadeIdNova     Int?
+  motivo            String?     @db.Text
+  createdAt         DateTime    @default(now())
+  agendamento       Agendamento @relation(fields: [agendamentoId], references: [id])
+  alteradoPor       Usuario     @relation("HistoricoReagendamentoAutor", fields: [alteradoPorId], references: [id])
+
+  @@index([agendamentoId, createdAt])
+  @@index([alteradoPorId])
+  @@map("historico_reagendamentos")
 }
 
 model Requisito {
@@ -268,6 +441,8 @@ model Unidade {
   barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
   horariosFuncionamento HorarioFuncionamento[]
   bloqueiosAgenda       BloqueioAgenda[]
+  recursos              Recurso[]
+  agendamentos          Agendamento[]
 
   @@unique([barbeariaId, nome])
   @@index([barbeariaId])

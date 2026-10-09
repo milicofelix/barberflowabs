@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, ForbiddenException, Get, Param, Put, Query, Body, Req } from '@nestjs/common';
+import { BadRequestException, Controller, ForbiddenException, Get, Param, Put, Query, Body, Req, Post } from '@nestjs/common';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import { Usuario } from '@barbabrutal/core';
 import {
@@ -10,13 +10,34 @@ import {
 import { AgendaPrisma } from './agenda.prisma';
 import { ConfiguracaoAgendaDto } from './agenda.dto';
 import { TenantService } from 'src/shared/tenant.service';
+import { MotorAgendaService } from 'src/motor-agenda/motor-agenda.service';
+import { ConsultarDisponibilidadeDto } from 'src/motor-agenda/motor-agenda.dto';
+import { ConflitoAgendaError } from 'src/motor-agenda/conflito-agenda.error';
 
 @Controller('agenda')
 export class AgendaController {
   constructor(
     private readonly repo: AgendaPrisma,
     private readonly tenant: TenantService,
+    private readonly motor: MotorAgendaService,
   ) {}
+
+  @Post('disponibilidade')
+  async consultarDisponibilidade(
+    @Body() dados: ConsultarDisponibilidadeDto,
+    @UsuarioLogado() usuario: Usuario,
+    @Req() req: any,
+  ) {
+    const barbeariaId = await this.resolverBarbeariaAgenda(req, usuario);
+    try {
+      return await this.motor.consultarDisponibilidade(barbeariaId, dados);
+    } catch (error: any) {
+      if (error instanceof ConflitoAgendaError) {
+        return { disponivel: false, motivo: error.message };
+      }
+      throw error;
+    }
+  }
 
   @Get('configuracao/horarios')
   buscarConfiguracao(@UsuarioLogado() usuario: Usuario) {

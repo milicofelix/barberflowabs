@@ -6,9 +6,10 @@ import { DbModule } from 'src/db/db.module';
 import { AgendamentoPrisma } from './agendamento.prisma';
 import { SaasModule } from 'src/saas/saas.module';
 import { TenantService } from 'src/shared/tenant.service';
+import { MotorAgendaModule } from 'src/motor-agenda/motor-agenda.module';
 
 @Module({
-  imports: [AuthModule, DbModule, SaasModule],
+  imports: [AuthModule, DbModule, SaasModule, MotorAgendaModule],
   controllers: [AgendamentoController],
   providers: [AgendamentoPrisma, TenantService],
 })

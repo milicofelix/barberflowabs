@@ -1,7 +1,6 @@
 import {
   Usuario,
   Agendamento,
-  NovoAgendamento,
   TEMPO_SLOT,
 } from '@barbabrutal/core';
 import {
@@ -14,18 +13,26 @@ import {
   NotFoundException,
   Param,
   Post,
+  Put,
   Req,
+  HttpException,
 } from '@nestjs/common';
 
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import { AgendamentoPrisma } from './agendamento.prisma';
-import { AvaliarAgendamentoDto, CriarAgendamentoDto } from './agendamento.dto';
+import { AvaliarAgendamentoDto } from './agendamento.dto';
 import {
   validarData,
   validarNumeroInteiroPositivo,
 } from 'src/shared/validacao';
 import { PlanoLimitesService } from 'src/saas/plano-limites.service';
 import { TenantService } from 'src/shared/tenant.service';
+import { MotorAgendaService } from 'src/motor-agenda/motor-agenda.service';
+import {
+  CriarAgendamentoUniversalDto,
+  ReagendarAgendamentoDto,
+} from 'src/motor-agenda/motor-agenda.dto';
+import { ConflitoAgendaError } from 'src/motor-agenda/conflito-agenda.error';
 
 @Controller('agendamentos')
 export class AgendamentoController {
@@ -33,30 +40,44 @@ export class AgendamentoController {
     private readonly repo: AgendamentoPrisma,
     private readonly limites: PlanoLimitesService,
     private readonly tenant: TenantService,
+    private readonly motor: MotorAgendaService,
   ) {}
 
   @Post()
   async novoAgendamento(
-    @Body() dados: CriarAgendamentoDto,
+    @Body() dados: CriarAgendamentoUniversalDto,
     @UsuarioLogado() usuario: Usuario,
     @Req() req: any,
   ) {
-    this.validarNovoAgendamento(dados);
     const barbeariaId = await this.resolverBarbeariaAgendamento(req, usuario);
     await this.limites.validarBarbeariaOperacional(barbeariaId);
 
-    const agendamento: Agendamento = {
-      ...(dados as any),
-      barbeariaId,
-      data: new Date(dados.data),
-      usuario: { ...usuario, barbeariaId },
-    };
+    try {
+      return await this.motor.criar(barbeariaId, dados, usuario);
+    } catch (error: any) {
+      if (error instanceof HttpException) throw error;
+      if (error instanceof ConflitoAgendaError) throw new ConflictException(error.message);
+      throw new ConflictException(error?.message ?? 'Não foi possível criar o agendamento');
+    }
+  }
+
+  @Put(':id/reagendar')
+  async reagendar(
+    @Param('id') id: string,
+    @Body() dados: ReagendarAgendamentoDto,
+    @UsuarioLogado() usuario: Usuario,
+    @Req() req: any,
+  ) {
+    validarNumeroInteiroPositivo(id, 'Agendamento');
+    const barbeariaId = await this.resolverBarbeariaAgendamento(req, usuario);
+    await this.limites.validarBarbeariaOperacional(barbeariaId);
 
     try {
-      const casoDeUso = new NovoAgendamento(this.repo);
-      await casoDeUso.executar({ agendamento, usuario });
+      return await this.motor.reagendar(Number(id), barbeariaId, dados, usuario);
     } catch (error: any) {
-      throw new ConflictException(error?.message ?? 'Não foi possível criar o agendamento');
+      if (error instanceof HttpException) throw error;
+      if (error instanceof ConflitoAgendaError) throw new ConflictException(error.message);
+      throw new BadRequestException(error?.message ?? 'Não foi possível reagendar');
     }
   }
 
@@ -131,9 +152,18 @@ export class AgendamentoController {
 
     return agendamentos
       .map((agendamento) => {
+        const inicio = agendamento.inicioOcupacao ?? agendamento.data;
+        const fim = agendamento.fimOcupacao
+          ?? new Date(
+            agendamento.data.getTime()
+              + agendamento.servicos.reduce(
+                (total, servico) => total + (servico.duracaoMinutos ?? servico.qtdeSlots! * TEMPO_SLOT),
+                0,
+              ) * 60_000,
+          );
         return {
-          data: agendamento.data,
-          slots: agendamento.servicos.reduce((total, s) => total + s.qtdeSlots, 0),
+          data: inicio,
+          slots: Math.ceil((fim.getTime() - inicio.getTime()) / (TEMPO_SLOT * 60_000)),
         };
       })
       .reduce((horariosOcupados: Date[], dados: any) => {
@@ -169,20 +199,6 @@ export class AgendamentoController {
     }
 
     return agendamento;
-  }
-
-  private validarNovoAgendamento(dados: CriarAgendamentoDto) {
-    validarData(dados.data);
-    validarNumeroInteiroPositivo(dados.usuario?.id, 'Usuário');
-    validarNumeroInteiroPositivo(dados.profissional?.id, 'Profissional');
-
-    if (!Array.isArray(dados.servicos) || dados.servicos.length === 0) {
-      throw new BadRequestException('Informe pelo menos um serviço');
-    }
-
-    dados.servicos.forEach((servico) => {
-      validarNumeroInteiroPositivo(servico?.id, 'Serviço');
-    });
   }
 
   private async resolverBarbeariaAgendamento(req: any, usuario: Usuario) {

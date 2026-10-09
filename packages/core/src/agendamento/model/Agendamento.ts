@@ -6,6 +6,13 @@ export default interface Agendamento {
     id: number
     barbeariaId?: number
     data: Date
+    dataFim?: Date
+    inicioOcupacao?: Date
+    fimOcupacao?: Date
+    unidadeId?: number | null
+    modeloAtendimento?: 'PRESENCIAL' | 'DOMICILIAR' | 'HIBRIDO'
+    enderecoAtendimento?: string | null
+    deslocamentoMinutos?: number
     usuario: Usuario
     profissional: Partial<Profissional>
     servicos: Partial<Servico>[]

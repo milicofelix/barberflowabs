@@ -50,12 +50,23 @@ export class PublicoPrisma {
           nome: true,
           preco: true,
           qtdeSlots: true,
+          duracaoMinutos: true,
+          preparoAntesMinutos: true,
+          preparoDepoisMinutos: true,
+          deslocamentoMinutos: true,
+          observacoes: true,
+          modeloAtendimento: true,
           requisitos: {
             where: { requisito: { ativo: true } },
             select: {
               obrigatorio: true,
               observacao: true,
               requisito: { select: { id: true, slug: true, nome: true, tipo: true } },
+            },
+          },
+          especialidades: {
+            select: {
+              especialidade: { select: { id: true, slug: true, nome: true } },
             },
           },
         },
@@ -65,6 +76,12 @@ export class PublicoPrisma {
           id: true,
           avaliacao: true,
           quantidadeAvaliacoes: true,
+          especialidades: {
+            select: {
+              principal: true,
+              especialidade: { select: { id: true, slug: true, nome: true } },
+            },
+          },
         },
       },
       avaliacoes: {
@@ -151,13 +168,24 @@ export class PublicoPrisma {
             descricao: true,
             preco: true,
             qtdeSlots: true,
+            duracaoMinutos: true,
+            preparoAntesMinutos: true,
+            preparoDepoisMinutos: true,
+            deslocamentoMinutos: true,
             imagemURL: true,
+            observacoes: true,
+            modeloAtendimento: true,
             requisitos: {
               where: { requisito: { ativo: true } },
               select: {
                 obrigatorio: true,
                 observacao: true,
                 requisito: { select: { id: true, slug: true, nome: true, tipo: true } },
+              },
+            },
+            especialidades: {
+              select: {
+                especialidade: { select: { id: true, slug: true, nome: true } },
               },
             },
           },
@@ -171,6 +199,12 @@ export class PublicoPrisma {
             imagemURL: true,
             avaliacao: true,
             quantidadeAvaliacoes: true,
+            especialidades: {
+              select: {
+                principal: true,
+                especialidade: { select: { id: true, slug: true, nome: true } },
+              },
+            },
           },
         },
         avaliacoes: {
@@ -243,7 +277,9 @@ export class PublicoPrisma {
       destaque: barbearia.destaque,
       statusOperacional: this.statusOperacional(barbearia.horariosFuncionamento ?? []),
       servicos: (barbearia.servicos ?? []).map((servico: any) => this.mapearServicoPublico(servico)),
-      profissionais: barbearia.profissionais ?? [],
+      profissionais: (barbearia.profissionais ?? []).map((profissional: any) =>
+        this.mapearProfissionalPublico(profissional),
+      ),
       avaliacaoMedia: this.mediaAvaliacoes(barbearia.avaliacoes ?? []),
       quantidadeAvaliacoes: barbearia.avaliacoes?.length ?? 0,
       avaliacoes: (barbearia.avaliacoes ?? []).map((avaliacao: any) => ({
@@ -407,16 +443,28 @@ export class PublicoPrisma {
   }
 
   private mapearServicoPublico(servico: any) {
-    const { requisitos = [], ...dadosServico } = servico;
+    const { requisitos = [], especialidades = [], ...dadosServico } = servico;
 
     return {
       ...dadosServico,
       preco: Number(servico.preco),
-      duracaoMinutos: servico.qtdeSlots * 15,
+      duracaoMinutos: servico.duracaoMinutos ?? servico.qtdeSlots * 15,
       requisitos: requisitos.map(({ requisito, obrigatorio, observacao }) => ({
         ...requisito,
         obrigatorio,
         observacao,
+      })),
+      especialidades: especialidades.map(({ especialidade }) => especialidade),
+    };
+  }
+
+  private mapearProfissionalPublico(profissional: any) {
+    const { especialidades = [], ...dadosProfissional } = profissional;
+    return {
+      ...dadosProfissional,
+      especialidades: especialidades.map(({ especialidade, principal }) => ({
+        ...especialidade,
+        principal,
       })),
     };
   }

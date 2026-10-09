@@ -14,12 +14,15 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
     return {
       usuario: { select: { id: true, barbeariaId: true, nome: true, email: true } },
       profissional: { select: { id: true, nome: true } },
+      unidade: { select: { id: true, nome: true } },
       avaliacao: {
         select: { id: true, nota: true, comentario: true, createdAt: true },
       },
       servicos: {
-        select: { id: true, nome: true, preco: true, qtdeSlots: true },
+        select: { id: true, nome: true, preco: true, qtdeSlots: true, duracaoMinutos: true },
       },
+      itens: { orderBy: { ordem: 'asc' }, include: { servico: { select: { id: true, nome: true } } } },
+      recursos: { include: { recurso: { select: { id: true, nome: true, tipo: true } } } },
     } as any;
   }
 

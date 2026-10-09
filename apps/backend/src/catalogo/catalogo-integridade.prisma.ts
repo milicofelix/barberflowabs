@@ -1,0 +1,63 @@
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from 'src/db/prisma.service';
+
+@Injectable()
+export class CatalogoIntegridadePrisma {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async validarClassificacao(segmentoIds: number[], especialidadeIds: number[]) {
+    const segmentos = await (this.prisma as any).segmento.count({
+      where: { id: { in: segmentoIds }, ativo: true },
+    });
+    const especialidades = await (this.prisma as any).especialidade.count({
+      where: { id: { in: especialidadeIds }, segmentoId: { in: segmentoIds }, ativo: true },
+    });
+    if (segmentos !== segmentoIds.length || especialidades !== especialidadeIds.length) {
+      throw new BadRequestException('Segmentos ou especialidades incompatíveis');
+    }
+  }
+
+  async validarEspecialidades(barbeariaId: number, ids: number[]) {
+    if (!ids.length) return;
+    const quantidade = await (this.prisma as any).estabelecimentoEspecialidade.count({
+      where: { barbeariaId, especialidadeId: { in: ids } },
+    });
+    if (quantidade !== ids.length) {
+      throw new BadRequestException('Especialidade não pertence ao estabelecimento');
+    }
+  }
+
+  async validarRequisitos(ids: number[]) {
+    if (!ids.length) return;
+    const quantidade = await (this.prisma as any).requisito.count({
+      where: { id: { in: ids }, ativo: true },
+    });
+    if (quantidade !== ids.length) throw new BadRequestException('Requisito inválido');
+  }
+
+  async validarServicos(barbeariaId: number, ids: number[]) {
+    if (!ids.length) return;
+    const quantidade = await this.prisma.servico.count({ where: { barbeariaId, id: { in: ids } } });
+    if (quantidade !== ids.length) throw new BadRequestException('Serviço não pertence ao estabelecimento');
+  }
+
+  async validarServicosCompativeis(barbeariaId: number, modeloAtendimento: string) {
+    if (modeloAtendimento === 'HIBRIDO') return;
+    const quantidade = await (this.prisma as any).servico.count({
+      where: { barbeariaId, modeloAtendimento: { not: modeloAtendimento } },
+    });
+    if (quantidade > 0) {
+      throw new BadRequestException('Existem serviços com modelo de atendimento incompatível');
+    }
+  }
+
+  async validarEntidadeTenant(entidade: 'profissional' | 'servico', id: number, barbeariaId: number) {
+    const registro = await (this.prisma as any)[entidade].findFirst({
+      where: { id, barbeariaId },
+      select: { id: true },
+    });
+    if (!registro) {
+      throw new NotFoundException(`${entidade === 'servico' ? 'Serviço' : 'Profissional'} não encontrado`);
+    }
+  }
+}
