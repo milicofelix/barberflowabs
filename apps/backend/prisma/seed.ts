@@ -438,6 +438,7 @@ async function seedBarbeariasZonaLeste() {
       where: { email: `dono.${item.slug}@barberflowabs.app` },
       update: {
         nome: `Dono ${item.bairro}`,
+        senha: senhaPadrao,
         barbeariaId: barbearia.id,
         barbeiro: true,
         papel: 'BARBER',
@@ -457,6 +458,7 @@ async function seedBarbeariasZonaLeste() {
       where: { email: `cliente.${item.slug}@barberflowabs.app` },
       update: {
         nome: `Cliente ${item.bairro}`,
+        senha: senhaPadrao,
         barbeariaId: barbearia.id,
         barbeiro: false,
         papel: 'CUSTOMER',

@@ -38,7 +38,7 @@ export default function DenunciaPerfil({ slug, nomeBarbearia, aberto, fechar }: 
             setErro(null)
             const resposta = await httpPost<{ mensagem?: string }>(`/public/barbearias/${slug}/denuncias`, {
                 nome: nome.trim(), email: email.trim(), motivo, mensagem: mensagem.trim(),
-            })
+            }, { escopoTenant: 'nenhum' })
             setSucesso(resposta?.mensagem ?? 'Denúncia recebida para revisão.')
             setNome('')
             setEmail('')

@@ -30,7 +30,6 @@ function opcoesAba(label: string, icone: NomeIcone) {
 export default function Abas() {
     const { usuario } = useSessao()
     const perfil = resolverPerfil(usuario)
-    const cliente = perfil === 'CUSTOMER'
     const operacional = perfilOperacional(perfil)
     const admin = perfilAdmin(perfil)
 
@@ -44,17 +43,13 @@ export default function Abas() {
                 tabBarStyle: { backgroundColor: '#081426', borderTopColor: '#26364E' },
             }}
         >
-            {cliente ? (
-                <>
-                    <Tab.Screen name="Descobrir" component={Descoberta} options={opcoesAba('Descobrir', 'search-outline')} />
-                    <Tab.Screen name="Inicio" component={Inicio} options={opcoesAba('Início', 'home-outline')} />
-                    <Tab.Screen
-                        name="Agendamento"
-                        component={Agendamento}
-                        options={opcoesAba('Agendar', 'calendar-outline')}
-                    />
-                </>
-            ) : null}
+            <Tab.Screen name="Descobrir" component={Descoberta} options={opcoesAba('Descobrir', 'search-outline')} />
+            <Tab.Screen name="Inicio" component={Inicio} options={opcoesAba('Início', 'home-outline')} />
+            <Tab.Screen
+                name="Agendamento"
+                component={Agendamento}
+                options={opcoesAba('Agendar', 'calendar-outline')}
+            />
             {operacional ? (
                 <>
                     <Tab.Screen

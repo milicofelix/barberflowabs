@@ -67,12 +67,14 @@ export function ProvedorAgendamento(props: any) {
     }
 
     async function agendar() {
+        if (!barbearia) throw new Error('Escolha uma barbearia antes de continuar.')
+
         await httpPost('/agendamentos', {
             data,
             usuario,
             profissional,
             servicos,
-        })
+        }, { escopoTenant: 'publico' })
 
         limpar()
     }
@@ -108,7 +110,9 @@ export function ProvedorAgendamento(props: any) {
     const obterHorariosOcupados = useCallback(
         async function (dia: string, profissional: Profissional): Promise<string[]> {
             if (!dia || !profissional) return []
-            const ocupacao = await httpGet<string[]>(`agendamentos/ocupacao/${profissional!.id}/${dia}`)
+            const ocupacao = await httpGet<string[]>(`agendamentos/ocupacao/${profissional!.id}/${dia}`, {
+                escopoTenant: 'publico',
+            })
             return ocupacao ?? []
         },
         [httpGet]
@@ -122,7 +126,9 @@ export function ProvedorAgendamento(props: any) {
             if (!dia) return AgendaUtils.horariosDoDia()
 
             const profissionalQuery = profissional ? `?profissionalId=${profissional.id}` : ''
-            const horarios = await httpGet<HorariosDisponiveis>(`agenda/horarios/${dia}${profissionalQuery}`)
+            const horarios = await httpGet<HorariosDisponiveis>(`agenda/horarios/${dia}${profissionalQuery}`, {
+                escopoTenant: 'publico',
+            })
             return horarios?.manha && horarios?.tardeNoite ? horarios : AgendaUtils.horariosDoDia()
         },
         [httpGet]
@@ -135,18 +141,22 @@ export function ProvedorAgendamento(props: any) {
     }, [barbearia?.id])
 
     useEffect(() => {
-        if (!dia || !profissional) {
+        if (!barbearia || !dia || !profissional) {
             setHorariosOcupados([])
             return
         }
         obterHorariosOcupados(dia, profissional).then(setHorariosOcupados).catch(() => setHorariosOcupados([]))
-    }, [dia, profissional, obterHorariosOcupados])
+    }, [barbearia, dia, profissional, obterHorariosOcupados])
 
     useEffect(() => {
+        if (!barbearia) {
+            setHorariosDisponiveis(AgendaUtils.horariosDoDia())
+            return
+        }
         obterHorariosDisponiveis(dia, profissional)
             .then(setHorariosDisponiveis)
             .catch(() => setHorariosDisponiveis(AgendaUtils.horariosDoDia()))
-    }, [dia, profissional, obterHorariosDisponiveis])
+    }, [barbearia, dia, profissional, obterHorariosDisponiveis])
 
     return (
         <ContextoAgendamento.Provider

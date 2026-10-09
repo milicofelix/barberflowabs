@@ -30,7 +30,9 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
         try {
             setCarregando(true)
             setErro(null)
-            setBarbearia(await httpGet<BarbeariaPerfil>(`/public/barbearias/${encodeURIComponent(route.params.slug)}`))
+            setBarbearia(await httpGet<BarbeariaPerfil>(`/public/barbearias/${encodeURIComponent(route.params.slug)}`, {
+                escopoTenant: 'nenhum',
+            }))
         } catch (e) {
             setBarbearia(null)
             setErro(mensagemDoErro(e))

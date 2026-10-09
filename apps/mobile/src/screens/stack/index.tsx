@@ -2,7 +2,6 @@ import Carregando from '@/src/components/shared/Carregando'
 import { ProvedorAgendamento } from '@/src/data/contexts/ContextoAgendamento'
 import { ProvedorSessao } from '@/src/data/contexts/ContextoSessao'
 import { ProvedorBarbearia } from '@/src/data/contexts/ContextoBarbearia'
-import { resolverPerfil } from '@/src/data/auth/perfis'
 import useSessao from '@/src/data/hooks/useSessao'
 import type { StackParamList } from '@/src/navigation/types'
 import { NavigationContainer } from '@react-navigation/native'
@@ -18,7 +17,6 @@ const Stack = createNativeStackNavigator<StackParamList>()
 
 function Navegacao() {
     const { carregando, usuario } = useSessao()
-    const cliente = resolverPerfil(usuario) === 'CUSTOMER'
 
     if (carregando) return <Carregando mensagem="Validando sua sessão..." />
 
@@ -34,30 +32,26 @@ function Navegacao() {
                 ) : (
                     <>
                         <Stack.Screen name="Abas" component={Abas} options={{ headerShown: false }} />
-                        {cliente ? (
-                            <Stack.Screen
-                                name="PerfilBarbearia"
-                                component={PerfilBarbearia}
-                                options={{
-                                    title: 'Perfil da barbearia',
-                                    headerBackTitle: 'Descobrir',
-                                    headerStyle: { backgroundColor: '#081426' },
-                                    headerTintColor: '#FFFFFF',
-                                }}
-                            />
-                        ) : null}
-                        {cliente ? (
-                            <Stack.Screen
-                                name="Sumario"
-                                component={Sumario}
-                                options={{
-                                    title: 'Confirmar Agendamento',
-                                    headerBackTitle: 'Voltar',
-                                    headerStyle: { backgroundColor: '#333' },
-                                    headerTintColor: '#FFF',
-                                }}
-                            />
-                        ) : null}
+                        <Stack.Screen
+                            name="PerfilBarbearia"
+                            component={PerfilBarbearia}
+                            options={{
+                                title: 'Perfil da barbearia',
+                                headerBackTitle: 'Descobrir',
+                                headerStyle: { backgroundColor: '#081426' },
+                                headerTintColor: '#FFFFFF',
+                            }}
+                        />
+                        <Stack.Screen
+                            name="Sumario"
+                            component={Sumario}
+                            options={{
+                                title: 'Confirmar Agendamento',
+                                headerBackTitle: 'Voltar',
+                                headerStyle: { backgroundColor: '#333' },
+                                headerTintColor: '#FFF',
+                            }}
+                        />
                     </>
                 )}
             </Stack.Navigator>
@@ -68,7 +62,7 @@ function Navegacao() {
 export default function App() {
     return (
         <SafeAreaProvider>
-            <StatusBar style="light" backgroundColor="#081426" />
+            <StatusBar style="light" />
             <ProvedorSessao>
                 <ProvedorBarbearia>
                     <ProvedorAgendamento>

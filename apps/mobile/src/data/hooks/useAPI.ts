@@ -3,7 +3,12 @@ import useSessao from './useSessao'
 import useBarbearia from './useBarbearia'
 
 const URL_BASE = process.env.API_URL
-const BARBEARIA_SLUG = process.env.BARBEARIA_SLUG ?? 'barber-flow-abs'
+
+type EscopoTenant = 'automatico' | 'publico' | 'nenhum'
+
+interface OpcoesRequisicao {
+    escopoTenant?: EscopoTenant
+}
 
 export class ErroAPI extends Error {
     constructor(
@@ -39,16 +44,33 @@ export default function useAPI() {
     const { barbearia } = useBarbearia()
 
     const executar = useCallback(
-        async function executar<T>(metodo: 'GET' | 'POST' | 'PUT' | 'DELETE', caminho: string, body?: unknown) {
+        async function executar<T>(
+            metodo: 'GET' | 'POST' | 'PUT' | 'DELETE',
+            caminho: string,
+            body?: unknown,
+            opcoes: OpcoesRequisicao = {}
+        ) {
             if (!URL_BASE) throw new ErroAPI('A URL da API não foi configurada.', 0)
 
             const uri = caminho.startsWith('/') ? caminho : `/${caminho}`
-            const papel = usuario?.role ?? usuario?.papel
-            const cliente = !usuario || papel === 'CUSTOMER'
-            const barbeariaId = cliente ? barbearia?.id : usuario?.barbeariaId
-            const headers: Record<string, string> = barbeariaId
-                ? { 'x-barbearia-id': String(barbeariaId) }
-                : { 'x-barbearia-slug': barbearia?.slug ?? BARBEARIA_SLUG }
+            const papel = String(usuario?.role ?? usuario?.papel ?? '').toUpperCase()
+            const operacional = papel === 'BARBER' || papel === 'BARBERSHOP_OWNER' || !!usuario?.barbeiro
+            const escopoTenant = opcoes.escopoTenant ?? 'automatico'
+            const headers: Record<string, string> = {}
+
+            if (escopoTenant === 'publico') {
+                if (!barbearia?.slug) {
+                    throw new ErroAPI('Escolha uma barbearia antes de continuar.', 400)
+                }
+                headers['x-barbearia-slug'] = barbearia.slug
+            } else if (escopoTenant === 'automatico') {
+                if (operacional && usuario?.barbeariaId) {
+                    headers['x-barbearia-id'] = String(usuario.barbeariaId)
+                } else if (barbearia?.slug) {
+                    headers['x-barbearia-slug'] = barbearia.slug
+                }
+            }
+
             if (token) headers.Authorization = `Bearer ${token}`
             if (body !== undefined) headers['Content-Type'] = 'application/json'
 
@@ -82,13 +104,13 @@ export default function useAPI() {
 
             return dados as T
         },
-        [barbearia?.id, barbearia?.slug, encerrarSessao, token, usuario?.barbeariaId, usuario?.papel, usuario?.role]
+        [barbearia?.slug, encerrarSessao, token, usuario?.barbeariaId, usuario?.barbeiro, usuario?.papel, usuario?.role]
     )
 
-    const httpGet = useCallback(<T,>(caminho: string) => executar<T>('GET', caminho), [executar])
-    const httpPost = useCallback(<T,>(caminho: string, body?: unknown) => executar<T>('POST', caminho, body), [executar])
-    const httpPut = useCallback(<T,>(caminho: string, body?: unknown) => executar<T>('PUT', caminho, body), [executar])
-    const httpDelete = useCallback(<T,>(caminho: string, body?: unknown) => executar<T>('DELETE', caminho, body), [executar])
+    const httpGet = useCallback(<T,>(caminho: string, opcoes?: OpcoesRequisicao) => executar<T>('GET', caminho, undefined, opcoes), [executar])
+    const httpPost = useCallback(<T,>(caminho: string, body?: unknown, opcoes?: OpcoesRequisicao) => executar<T>('POST', caminho, body, opcoes), [executar])
+    const httpPut = useCallback(<T,>(caminho: string, body?: unknown, opcoes?: OpcoesRequisicao) => executar<T>('PUT', caminho, body, opcoes), [executar])
+    const httpDelete = useCallback(<T,>(caminho: string, body?: unknown, opcoes?: OpcoesRequisicao) => executar<T>('DELETE', caminho, body, opcoes), [executar])
 
     return { httpGet, httpPost, httpPut, httpDelete }
 }

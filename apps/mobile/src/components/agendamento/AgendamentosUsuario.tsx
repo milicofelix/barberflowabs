@@ -27,7 +27,7 @@ export default function AgendamentosUsuario() {
         try {
             setCarregando(true)
             setErro(null)
-            const dados = await httpGet<Agendamento[]>('/agendamentos')
+            const dados = await httpGet<Agendamento[]>('/agendamentos', { escopoTenant: 'publico' })
             setAgendamentos(Array.isArray(dados) ? dados : [])
         } catch (erro) {
             setErro(mensagemDoErro(erro))

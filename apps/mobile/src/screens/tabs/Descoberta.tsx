@@ -55,7 +55,7 @@ export default function Descoberta({ navigation }: Props) {
         try {
             setCarregando(true)
             setErro(null)
-            const dados = await httpGet<BarbeariaResumo[]>(`/public/barbearias${query}`)
+            const dados = await httpGet<BarbeariaResumo[]>(`/public/barbearias${query}`, { escopoTenant: 'nenhum' })
             setBarbearias(Array.isArray(dados) ? dados : [])
         } catch (e) {
             setBarbearias([])

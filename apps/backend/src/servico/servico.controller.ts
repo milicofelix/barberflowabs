@@ -16,12 +16,8 @@ export class ServicoController {
   ) {}
 
   @Get()
-  async obterServicos(@Req() req: any, @UsuarioLogado() usuario?: Usuario) {
-    const papel = String(usuario?.papel ?? usuario?.role ?? '');
-    const perfilVinculado = usuario?.barbeiro || ['BARBER', 'BARBERSHOP_OWNER'].includes(papel);
-    const barbeariaId = perfilVinculado && usuario?.barbeariaId
-      ? usuario.barbeariaId
-      : await this.tenant.resolverBarbeariaId(req);
+  async obterServicos(@Req() req: any) {
+    const barbeariaId = await this.tenant.resolverBarbeariaId(req);
     return this.repo.buscarTodos(barbeariaId);
   }
 

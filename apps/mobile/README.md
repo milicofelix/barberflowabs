@@ -33,7 +33,9 @@ Não é utilizada localização em segundo plano. O mapa nativo será adicionado
 
 ## Tenant selecionado
 
-A barbearia escolhida pelo cliente é persistida no AsyncStorage. As requisições autenticadas de agendamento enviam o tenant atual nos headers `x-barbearia-id` ou `x-barbearia-slug`.
+A barbearia escolhida pelo cliente é persistida no AsyncStorage. As requisições do fluxo público de agendamento enviam o tenant selecionado pelo header `x-barbearia-slug`. O header `x-barbearia-id` fica reservado ao contexto operacional da barbearia do usuário.
+
+O marketplace e o fluxo de agendamento ficam disponíveis para todos os perfis autenticados. Assim, um `BARBER`, `BARBERSHOP_OWNER`, `SUPER_ADMIN` ou `APP_OWNER` também pode utilizar o aplicativo como cliente sem misturar a barbearia selecionada com seu tenant operacional.
 
 ## Validação manual — Fase 3
 
@@ -49,19 +51,38 @@ ipconfig getifaddr en0
 3. Suba o ambiente em uma única linha para evitar problemas com espaços depois de `\`:
 
 ```bash
-EXPO_PACKAGER_HOSTNAME=SEU_IP API_URL=http://SEU_IP:4000 docker compose up --force-recreate app
+EXPO_PACKAGER_HOSTNAME=SEU_IP API_URL=http://SEU_IP:4000 docker compose up app
 ```
+
+Evite `--force-recreate` depois de autenticar o Expo CLI dentro do container, pois a recriação pode remover essa sessão.
 
 4. Aguarde o terminal mostrar `Metro waiting on exp://SEU_IP:8081`.
 5. No iPhone, confirme que o Expo Go possui permissão de **Rede Local** e está na mesma rede Wi-Fi do computador.
 6. Abra o QR code pelo Expo Go.
 
-Resultado esperado: o aplicativo abre sem erro de plugin, exibe o login do Barber Flow ABS e permite entrar com um usuário `CUSTOMER`.
+Resultado esperado: o aplicativo abre sem erro de plugin, exibe o login do Barber Flow ABS e permite entrar com qualquer perfil autenticado.
+
+Contas do seed para validação:
+
+```text
+Cliente:       cliente.barber-flow-mooca@barberflowabs.app / #Senha123
+Barbeiro:      dono.barber-flow-mooca@barberflowabs.app / #Senha123
+```
+
+Para validar `SUPER_ADMIN`, use uma conta administrativa existente no ambiente. Caso o slug do seed seja diferente, consulte os usuários `cliente.<slug>@barberflowabs.app` e `dono.<slug>@barberflowabs.app` criados em `apps/backend/prisma/seed.ts`. O seed redefine a senha apenas dessas contas de demonstração, sem alterar a senha de usuários reais já existentes.
+
+Se as contas de demonstração ainda não existirem ou tiverem sido criadas por um seed antigo, atualize somente os dados locais de demonstração antes do teste:
+
+```bash
+docker compose exec app yarn --cwd apps/backend prisma db seed
+```
 
 ### 2. Validar a lista pública
 
 - [ ] Entrar como cliente.
 - [ ] Confirmar que a primeira aba é **Descobrir**.
+- [ ] Entrar como barbeiro e confirmar que **Descobrir**, **Início** e **Agendar** continuam disponíveis junto da área operacional.
+- [ ] Entrar como administrador e confirmar que o marketplace continua disponível junto da área administrativa.
 - [ ] Confirmar que aparecem somente barbearias públicas aprovadas.
 - [ ] Conferir em cada card: nome, localização, status, avaliação, distância quando disponível e serviços.
 - [ ] Confirmar que tocar no card abre o perfil correto.
@@ -137,7 +158,7 @@ Atenção: o envio válido cria um registro real de denúncia no ambiente atual.
 6. Avançar para o resumo e confirmar que a barbearia correta aparece.
 7. Finalizar o agendamento.
 
-Resultado esperado: o agendamento é criado usando o `x-barbearia-id` da barbearia selecionada.
+Resultado esperado: o agendamento é criado usando o `x-barbearia-slug` da barbearia selecionada, inclusive quando o usuário autenticado também possui perfil operacional em outra barbearia.
 
 ### 9. Validar troca e persistência
 
@@ -155,6 +176,7 @@ Resultado esperado: a última barbearia continua marcada como `Selecionada` e ne
 - [ ] O cliente consulta perfil, serviços, profissionais, horários e avaliações.
 - [ ] A barbearia selecionada sobrevive à reabertura do aplicativo.
 - [ ] O agendamento usa serviços e profissionais do tenant selecionado.
+- [ ] Um usuário operacional consegue agendar em outra barbearia sem usar o próprio `barbeariaId`.
 - [ ] A denúncia apresenta validação e confirmação.
 - [ ] Erros de rede, localização negada e resultados vazios possuem feedback visual.
 - [ ] O mapa ainda não aparece; ele pertence à próxima etapa da Fase 3.
