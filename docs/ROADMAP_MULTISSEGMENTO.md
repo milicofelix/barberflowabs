@@ -17,12 +17,16 @@ Status: concluida em 2026-10-09.
 
 Objetivo: introduzir o conceito de estabelecimento sem quebrar contratos atuais.
 
-- Definir vocabulario canonico e mapa de compatibilidade.
-- Modelar tipo de estabelecimento e modelo de atendimento.
-- Planejar aliases e versionamento de APIs.
-- Criar migrations aditivas e reversiveis.
-- Preservar `barbeariaId` enquanto consumidores legados dependerem dele.
-- Adicionar testes de isolamento multi-tenant antes de ampliar o dominio.
+Status: implementacao concluida em 2026-10-09; migration pendente de aplicacao manual no ambiente.
+
+- [x] Definir vocabulario canonico e mapa de compatibilidade.
+- [x] Modelar tipo de estabelecimento e modelo de atendimento.
+- [x] Introduzir segmentos, especialidades e requisitos sem antecipar a gestao completa do catalogo.
+- [x] Disponibilizar aliases externos em `/public/estabelecimentos`.
+- [x] Planejar convivencia e versionamento de APIs.
+- [x] Criar migration aditiva com rollback manual documentado.
+- [x] Preservar `barbeariaId` enquanto consumidores legados dependerem dele.
+- [x] Adicionar testes direcionados para classificacao e resolucao isolada de tenant.
 
 ## Etapa 2 - Segmentos, Especialidades E Catalogo
 

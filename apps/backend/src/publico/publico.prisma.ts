@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
+import { mapearClassificacaoEstabelecimento } from 'src/estabelecimento/classificacao-estabelecimento.mapper';
 
 const TIME_ZONE_PADRAO = 'America/Sao_Paulo';
 
@@ -49,6 +50,14 @@ export class PublicoPrisma {
           nome: true,
           preco: true,
           qtdeSlots: true,
+          requisitos: {
+            where: { requisito: { ativo: true } },
+            select: {
+              obrigatorio: true,
+              observacao: true,
+              requisito: { select: { id: true, slug: true, nome: true, tipo: true } },
+            },
+          },
         },
       },
       profissionais: {
@@ -71,6 +80,26 @@ export class PublicoPrisma {
           fim: true,
           intervaloInicio: true,
           intervaloFim: true,
+        },
+      },
+      segmentos: {
+        where: { segmento: { ativo: true } },
+        select: {
+          principal: true,
+          segmento: { select: { id: true, slug: true, nome: true } },
+        },
+      },
+      especialidades: {
+        where: { especialidade: { ativo: true } },
+        select: {
+          especialidade: {
+            select: {
+              id: true,
+              slug: true,
+              nome: true,
+              segmento: { select: { id: true, slug: true, nome: true } },
+            },
+          },
         },
       },
     };
@@ -123,6 +152,14 @@ export class PublicoPrisma {
             preco: true,
             qtdeSlots: true,
             imagemURL: true,
+            requisitos: {
+              where: { requisito: { ativo: true } },
+              select: {
+                obrigatorio: true,
+                observacao: true,
+                requisito: { select: { id: true, slug: true, nome: true, tipo: true } },
+              },
+            },
           },
         },
         profissionais: {
@@ -160,12 +197,33 @@ export class PublicoPrisma {
             intervaloFim: true,
           },
         },
+        segmentos: {
+          where: { segmento: { ativo: true } },
+          select: {
+            principal: true,
+            segmento: { select: { id: true, slug: true, nome: true } },
+          },
+        },
+        especialidades: {
+          where: { especialidade: { ativo: true } },
+          select: {
+            especialidade: {
+              select: {
+                id: true,
+                slug: true,
+                nome: true,
+                segmento: { select: { id: true, slug: true, nome: true } },
+              },
+            },
+          },
+        },
       },
     } as any);
 
     if (!barbearia) return null;
 
     return {
+      ...mapearClassificacaoEstabelecimento(barbearia),
       id: barbearia.id,
       nome: barbearia.nomePublico ?? barbearia.nome,
       slug: barbearia.slug,
@@ -184,11 +242,7 @@ export class PublicoPrisma {
       aceitaAgendamentoOnline: barbearia.aceitaAgendamentoOnline,
       destaque: barbearia.destaque,
       statusOperacional: this.statusOperacional(barbearia.horariosFuncionamento ?? []),
-      servicos: (barbearia.servicos ?? []).map((servico: any) => ({
-        ...servico,
-        preco: Number(servico.preco),
-        duracaoMinutos: servico.qtdeSlots * 15,
-      })),
+      servicos: (barbearia.servicos ?? []).map((servico: any) => this.mapearServicoPublico(servico)),
       profissionais: barbearia.profissionais ?? [],
       avaliacaoMedia: this.mediaAvaliacoes(barbearia.avaliacoes ?? []),
       quantidadeAvaliacoes: barbearia.avaliacoes?.length ?? 0,
@@ -326,6 +380,7 @@ export class PublicoPrisma {
     const quantidadeAvaliacoes = barbearia.avaliacoes?.length ?? 0;
 
     return {
+      ...mapearClassificacaoEstabelecimento(barbearia),
       id: barbearia.id,
       nome: barbearia.nomePublico ?? barbearia.nome,
       slug: barbearia.slug,
@@ -347,10 +402,21 @@ export class PublicoPrisma {
       statusOperacional: this.statusOperacional(barbearia.horariosFuncionamento ?? []),
       avaliacaoMedia,
       quantidadeAvaliacoes,
-      servicos: (barbearia.servicos ?? []).map((servico: any) => ({
-        ...servico,
-        preco: Number(servico.preco),
-        duracaoMinutos: servico.qtdeSlots * 15,
+      servicos: (barbearia.servicos ?? []).map((servico: any) => this.mapearServicoPublico(servico)),
+    };
+  }
+
+  private mapearServicoPublico(servico: any) {
+    const { requisitos = [], ...dadosServico } = servico;
+
+    return {
+      ...dadosServico,
+      preco: Number(servico.preco),
+      duracaoMinutos: servico.qtdeSlots * 15,
+      requisitos: requisitos.map(({ requisito, obrigatorio, observacao }) => ({
+        ...requisito,
+        obrigatorio,
+        observacao,
       })),
     };
   }

@@ -264,6 +264,13 @@ API publica de barbearias:
 curl -sS -i "http://localhost:4000/public/barbearias?cidade=Sao%20Paulo&raioKm=25"
 ```
 
+Alias publico canonico para novos consumidores:
+
+```bash
+curl -sS -i "http://localhost:4000/public/estabelecimentos?cidade=Sao%20Paulo&raioKm=25"
+curl -sS -i "http://localhost:4000/public/estabelecimentos/barber-flow-abs"
+```
+
 Rotas novas nao aparecem:
 
 ```bash

@@ -62,6 +62,7 @@ model Servico {
   imagemURL    String
   barbearia    Barbearia     @relation(fields: [barbeariaId], references: [id])
   agendamentos Agendamento[]
+  requisitos   ServicoRequisito[]
 
   @@unique([barbeariaId, nome])
   @@index([barbeariaId])
@@ -123,6 +124,8 @@ model Barbearia {
   proximoContatoEm DateTime?
   trialEndsAt   DateTime?
   antecedenciaMinutos Int      @default(30)
+  tipoEstabelecimento String   @default("BARBEARIA")
+  modeloAtendimento   String   @default("PRESENCIAL")
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   unidades      Unidade[]
@@ -139,8 +142,100 @@ model Barbearia {
   avaliacoes             Avaliacao[]
   denunciasPerfil        DenunciaPerfilPublico[]
   clientes                ClienteBarbearia[]
+  segmentos               EstabelecimentoSegmento[]
+  especialidades          EstabelecimentoEspecialidade[]
 
   @@map("barbearias")
+}
+
+model Segmento {
+  id              Int       @id @default(autoincrement())
+  slug            String    @unique
+  nome            String
+  descricao       String?   @db.Text
+  ativo           Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  especialidades  Especialidade[]
+  estabelecimentos EstabelecimentoSegmento[]
+
+  @@map("segmentos")
+}
+
+model Especialidade {
+  id               Int       @id @default(autoincrement())
+  segmentoId       Int
+  slug             String
+  nome             String
+  descricao        String?   @db.Text
+  ativo             Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  segmento         Segmento  @relation(fields: [segmentoId], references: [id])
+  estabelecimentos EstabelecimentoEspecialidade[]
+
+  @@unique([segmentoId, slug])
+  @@index([segmentoId, ativo])
+  @@map("especialidades")
+}
+
+model EstabelecimentoSegmento {
+  id          Int       @id @default(autoincrement())
+  barbeariaId Int
+  segmentoId  Int
+  principal   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
+  segmento    Segmento  @relation(fields: [segmentoId], references: [id])
+
+  @@unique([barbeariaId, segmentoId])
+  @@index([segmentoId])
+  @@map("estabelecimentos_segmentos")
+}
+
+model EstabelecimentoEspecialidade {
+  id              Int           @id @default(autoincrement())
+  barbeariaId     Int
+  especialidadeId Int
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  barbearia       Barbearia     @relation(fields: [barbeariaId], references: [id])
+  especialidade   Especialidade @relation(fields: [especialidadeId], references: [id])
+
+  @@unique([barbeariaId, especialidadeId])
+  @@index([especialidadeId])
+  @@map("estabelecimentos_especialidades")
+}
+
+model Requisito {
+  id        Int       @id @default(autoincrement())
+  slug      String    @unique
+  nome      String
+  descricao String?   @db.Text
+  tipo      String    @default("INFORMATIVO")
+  ativo     Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  servicos  ServicoRequisito[]
+
+  @@map("requisitos")
+}
+
+model ServicoRequisito {
+  id          Int       @id @default(autoincrement())
+  servicoId   Int
+  requisitoId Int
+  obrigatorio Boolean   @default(true)
+  observacao  String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  servico     Servico   @relation(fields: [servicoId], references: [id])
+  requisito   Requisito @relation(fields: [requisitoId], references: [id])
+
+  @@unique([servicoId, requisitoId])
+  @@index([requisitoId])
+  @@map("servicos_requisitos")
 }
 
 model ClienteBarbearia {

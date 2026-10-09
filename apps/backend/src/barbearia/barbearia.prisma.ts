@@ -1,5 +1,9 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
+import {
+  MODELO_ATENDIMENTO_PADRAO,
+  TIPO_ESTABELECIMENTO_PADRAO,
+} from 'src/estabelecimento/estabelecimento.constants';
 import { AtualizarPerfilPublicoBarbeariaDto, CriarBarbeariaDto } from './barbearia.dto';
 
 @Injectable()
@@ -136,13 +140,21 @@ export class BarbeariaPrisma {
         slug,
         email: dados.email?.trim() || null,
         telefone: dados.telefone?.trim() || null,
+        tipoEstabelecimento: TIPO_ESTABELECIMENTO_PADRAO,
+        modeloAtendimento: MODELO_ATENDIMENTO_PADRAO,
         unidades: {
           create: {
             nome: 'Matriz',
             telefone: dados.telefone?.trim() || null,
           },
         },
-      },
+        segmentos: {
+          create: {
+            principal: true,
+            segmento: { connect: { slug: 'barbearia' } },
+          },
+        },
+      } as any,
       select: {
         id: true,
         nome: true,
