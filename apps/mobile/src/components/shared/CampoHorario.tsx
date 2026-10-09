@@ -38,6 +38,7 @@ export default function CampoHorario(props: CampoHorarioProps) {
             horariosOcupados,
             todosHorariosDisponiveis
         )
+        const horarioOcupado = horariosOcupados.includes(horario)
         const indisponivel = intervalo.ocupado || intervalo.incompleto
         const selecionado = intervaloSelecionado.completo
             && !intervaloSelecionado.ocupado
@@ -56,6 +57,7 @@ export default function CampoHorario(props: CampoHorarioProps) {
                             : horario
                 }
                 onPress={function () {
+                    if (indisponivel) return
                     props.onChange(DateUtils.aplicarHorario(props.value, horario))
                 }}
                 style={[styles.horaContainer, { backgroundColor: cores.superficie, borderColor: cores.borda },
@@ -64,7 +66,13 @@ export default function CampoHorario(props: CampoHorarioProps) {
             >
                 <View style={styles.horaConteudo}>
                     <Text style={[styles.horaTexto, { color: selecionado ? '#FFFFFF' : cores.texto }, indisponivel && !selecionado && styles.textoIndisponivel]}>
-                        {selecionado ? horario : intervalo.ocupado ? `${horario} · Ocupado` : intervalo.incompleto ? `${horario} · Indisponível` : horario}
+                        {selecionado
+                            ? horario
+                            : horarioOcupado
+                                ? `${horario} · Ocupado`
+                                : indisponivel
+                                    ? `${horario} · Indisponível`
+                                    : horario}
                     </Text>
                 </View>
             </Pressable>

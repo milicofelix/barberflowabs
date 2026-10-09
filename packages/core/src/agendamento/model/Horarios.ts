@@ -34,6 +34,8 @@ export default class Horarios {
     }
 
     private horariosConsecutivos(horariosDisponiveis: string[]) {
+        if (typeof this.inicio !== 'string') return []
+
         const [hora, minuto] = this.inicio.split(':').map(Number)
         if (!Number.isInteger(hora) || !Number.isInteger(minuto)) return []
 

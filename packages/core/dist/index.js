@@ -339,6 +339,7 @@ var Horarios = class {
     return this.todos.some((h) => this.horariosOcupados.includes(h));
   }
   horariosConsecutivos(horariosDisponiveis) {
+    if (typeof this.inicio !== "string") return [];
     const [hora, minuto] = this.inicio.split(":").map(Number);
     if (!Number.isInteger(hora) || !Number.isInteger(minuto)) return [];
     const inicioEmMinutos = hora * 60 + minuto;

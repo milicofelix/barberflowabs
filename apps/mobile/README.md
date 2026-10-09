@@ -168,9 +168,11 @@ Resultado esperado: o agendamento é criado usando o `x-barbearia-slug` da barbe
 2. Selecionar um horário livre, por exemplo `10:00`.
 3. Confirmar que `10:00`, `10:15` e `10:30` ficam destacados como um único período.
 4. Confirmar que um início sem três blocos consecutivos aparece como **Indisponível**.
-5. Finalizar o agendamento e voltar ao mesmo profissional e dia.
-6. Confirmar que os três blocos aparecem como ocupados e não podem ser selecionados novamente.
-7. Abrir o mesmo dia na web e confirmar que o período ocupado é idêntico.
+5. Confirmar que um horário inicial cujo período alcance um bloco ocupado também fica indisponível.
+6. Selecionar um horário e, em outro cliente, ocupar um dos blocos do período; ao atualizar a ocupação, confirmar que a seleção antiga é removida.
+7. Finalizar o agendamento e voltar ao mesmo profissional e dia.
+8. Confirmar que os três blocos aparecem como ocupados e não podem ser selecionados novamente.
+9. Abrir o mesmo dia na web e confirmar que o período ocupado é idêntico.
 
 Resultado esperado: mobile, web e backend calculam a quantidade de blocos pela duração real do serviço, usando blocos consecutivos de 15 minutos.
 

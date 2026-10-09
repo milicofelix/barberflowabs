@@ -158,6 +158,16 @@ export function ProvedorAgendamento(props: any) {
             .catch(() => setHorariosDisponiveis(AgendaUtils.horariosDoDia()))
     }, [barbearia, dia, profissional, obterHorariosDisponiveis])
 
+    useEffect(() => {
+        const horarioSelecionado = data.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+        })
+        if (horarioSelecionado === '00:00' || horarioEstaDisponivel(data)) return
+
+        setData(DateUtils.aplicarHorario(data, '00:00'))
+    }, [horariosOcupados, horariosDisponiveis, servicos])
+
     return (
         <ContextoAgendamento.Provider
             value={{
