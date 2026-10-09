@@ -6,6 +6,9 @@ import {
   AlocacaoRecurso,
   MotorAgendaDisponibilidadePrisma,
 } from './motor-agenda.disponibilidade.prisma';
+import { ConflitoAgendaError } from './conflito-agenda.error';
+
+const STATUS_AGENDAMENTO_ATIVO = ['AGENDADO', 'CONFIRMADO', 'CHECKIN'];
 
 @Injectable()
 export class MotorAgendaComandoPrisma {
@@ -22,6 +25,7 @@ export class MotorAgendaComandoPrisma {
   }) {
     return this.prisma.$transaction(async (transacao) => {
       const tx = transacao as any;
+      await this.validarAgendaDoCliente(tx, params.usuarioId);
       await this.bloquearAgenda(tx, params.contexto);
       const recursos = await this.disponibilidade.verificar(tx, params.contexto, params.periodo);
       const agendamento = await tx.agendamento.create({
@@ -81,6 +85,32 @@ export class MotorAgendaComandoPrisma {
       'SELECT id FROM recursos WHERE barbeariaId = ? AND ativo = true FOR UPDATE',
       contexto.barbeariaId,
     );
+  }
+
+  private async validarAgendaDoCliente(cliente: any, usuarioId: number) {
+    await cliente.$queryRawUnsafe(
+      'SELECT id FROM usuarios WHERE id = ? FOR UPDATE',
+      usuarioId,
+    );
+
+    const agora = new Date();
+    const agendamentoAtivo = await cliente.agendamento.findFirst({
+      where: {
+        usuarioId,
+        status: { in: STATUS_AGENDAMENTO_ATIVO },
+        OR: [
+          { fimOcupacao: { gt: agora } },
+          { fimOcupacao: null, data: { gt: agora } },
+        ],
+      },
+      select: { id: true },
+    });
+
+    if (agendamentoAtivo) {
+      throw new ConflitoAgendaError(
+        'Você já possui um agendamento ativo. Cancele o agendamento anterior antes de criar outro.',
+      );
+    }
   }
 
   private dadosCriacao(params: any, recursos: AlocacaoRecurso[]) {

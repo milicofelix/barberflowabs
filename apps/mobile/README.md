@@ -176,6 +176,16 @@ Resultado esperado: o agendamento é criado usando o `x-barbearia-slug` da barbe
 
 Resultado esperado: mobile, web e backend calculam a quantidade de blocos pela duração real do serviço, usando blocos consecutivos de 15 minutos.
 
+### 8.2 Validar agendamento ativo do cliente
+
+1. Entre com um cliente que já possua um agendamento ativo para hoje ou para uma data futura.
+2. Tente finalizar um novo agendamento, no mesmo estabelecimento ou em outro.
+3. Confirme que nenhuma reserva anterior é cancelada automaticamente.
+4. Confirme a mensagem: `Você já possui um agendamento ativo. Cancele o agendamento anterior antes de criar outro.`
+5. Cancele o agendamento anterior e tente novamente.
+
+Resultado esperado: cada cliente mantém somente um agendamento futuro ativo por vez e pode criar outro após cancelar ou concluir o anterior.
+
 ### 9. Validar troca e persistência
 
 1. Na aba **Agendar**, tocar em **Trocar barbearia**.
