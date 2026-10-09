@@ -8,7 +8,9 @@ import { StyleSheet, Text, View } from 'react-native'
 import Agendamento from './Agendamento'
 import Descoberta from './Descoberta'
 import Inicio from './Inicio'
-import { Administracao, Configuracoes, Operacao } from './ModuloEmPreparacao'
+import Administracao from './Administracao'
+import Configuracoes from './Configuracoes'
+import Operacao from './Operacao'
 import AbaPerfilUsuario from './Usuario'
 
 const Tab = createBottomTabNavigator<AbasParamList>()

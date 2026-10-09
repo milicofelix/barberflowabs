@@ -12,6 +12,7 @@ import Abas from '../tabs'
 import Autenticacao from './Autenticacao'
 import Sumario from './Sumario'
 import PerfilBarbearia from './PerfilBarbearia'
+import OnboardingEstabelecimento from './OnboardingEstabelecimento'
 
 const Stack = createNativeStackNavigator<StackParamList>()
 
@@ -24,11 +25,11 @@ function Navegacao() {
         <NavigationContainer>
             <Stack.Navigator>
                 {!usuario ? (
-                    <Stack.Screen
-                        name="Autenticacao"
-                        component={Autenticacao}
-                        options={{ headerShown: false }}
-                    />
+                    <>
+                        <Stack.Screen name="Autenticacao" component={Autenticacao} options={{ headerShown: false }} />
+                        <Stack.Screen name="OnboardingEstabelecimento" component={OnboardingEstabelecimento}
+                            options={{ title: 'Cadastrar estabelecimento', headerStyle: { backgroundColor: '#081426' }, headerTintColor: '#FFF' }} />
+                    </>
                 ) : (
                     <>
                         <Stack.Screen name="Abas" component={Abas} options={{ headerShown: false }} />

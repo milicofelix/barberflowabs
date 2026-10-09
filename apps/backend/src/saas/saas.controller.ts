@@ -118,7 +118,7 @@ export class SaasController {
       papel: usuario?.papel,
       role: usuario?.role,
       superAdminPorBanco:
-        usuario?.papel === 'SUPER_ADMIN' || usuario?.role === 'SUPER_ADMIN',
+        ['SUPER_ADMIN', 'APP_OWNER'].includes(String(usuario?.papel ?? usuario?.role ?? '').toUpperCase()),
       superAdminPorEnv: !!emailNormalizado && emailsSuperAdmin.includes(emailNormalizado),
       superAdmin: this.ehSuperAdmin(usuario),
       superAdminEmailsConfigurado: emailsSuperAdmin.length > 0,
@@ -316,10 +316,11 @@ export class SaasController {
 
   private ehSuperAdmin(usuario: Usuario) {
     const emailNormalizado = usuario?.email?.trim().toLowerCase();
+    const papel = String(usuario?.papel ?? usuario?.role ?? '').toUpperCase();
 
     return (
-      usuario?.role === 'SUPER_ADMIN' ||
-      usuario?.papel === 'SUPER_ADMIN' ||
+      papel === 'SUPER_ADMIN' ||
+      papel === 'APP_OWNER' ||
       (!!emailNormalizado && this.emailsSuperAdmin().includes(emailNormalizado))
     );
   }

@@ -66,18 +66,26 @@ Status: implementacao concluida em 2026-10-09; instalacao da dependencia do mapa
 - [x] Lista e mapa nativo no mobile.
 - [x] Paginacao e ordenacao preparadas na API.
 
-## Etapa 5 - Equipes E Capacidade Operacional
+## Etapa 5 - Retomar A Evolucao Mobile
+
+Status: implementacao funcional concluida em 2026-10-09; validacao manual pendente.
+
+- [x] Operacao do estabelecimento com resumo diario.
+- [x] Agenda por data, profissional e atualizacao de status.
+- [x] Configuracoes do perfil publico e horarios de funcionamento.
+- [x] Cadastro e visualizacao da equipe.
+- [x] Lancamentos e resumo financeiro.
+- [x] Administracao mobile com revisao de estabelecimentos pendentes.
+- [x] Novo fluxo de cadastro multissegmento com plano, responsavel e especialidades.
+- [x] Navegacao condicionada aos perfis operacionais e administrativos.
+- [x] Roteiro manual de validacao documentado.
+
+## Etapa 6 - Equipes E Capacidade Operacional
 
 - Papeis e permissoes detalhados de equipe.
 - Escalas individuais por profissional.
 - Manutencao e indisponibilidade programada de recursos.
 - Capacidade simultanea por unidade e regras de excecao.
-
-## Etapa 6 - Mobile Operacional
-
-- Retomar operacao, configuracoes e administracao no dominio generalizado.
-- Atualizar identidade somente apos aprovacao da marca definitiva.
-- Preparar novos identificadores e materiais de loja quando necessario.
 
 ## Etapas Posteriores
 

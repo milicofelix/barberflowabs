@@ -23,7 +23,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 type Props = NativeStackScreenProps<StackParamList, 'Autenticacao'>
 
-export default function Autenticacao(_: Props) {
+export default function Autenticacao({ navigation }: Props) {
     const {
         nome, email, telefone, senha, confirmacaoSenha, modo, erros, erroGeral, sucesso, processando,
         alterarNome, alterarEmail, alterarTelefone, alterarSenha, alterarConfirmacaoSenha, alterarModo, submeter,
@@ -157,6 +157,9 @@ export default function Autenticacao(_: Props) {
                                 <Text style={styles.alternarModoDestaque}>{cadastro ? 'Entrar' : 'Criar conta'}</Text>
                             </Text>
                         </Pressable>
+                        {!cadastro ? <Pressable onPress={() => navigation.navigate('OnboardingEstabelecimento')} style={styles.estabelecimento}>
+                            <Text style={styles.estabelecimentoTexto}>Quero cadastrar meu estabelecimento</Text>
+                        </Pressable> : null}
                     </View>
                     <Text style={styles.rodape}>Agendamentos simples. Experiências memoráveis.</Text>
                 </ScrollView>
@@ -194,5 +197,7 @@ const styles = StyleSheet.create({
     alternarModo: { paddingTop: 20, paddingBottom: 2, paddingHorizontal: 8 },
     alternarModoTexto: { color: '#667085', fontSize: 14, textAlign: 'center' },
     alternarModoDestaque: { color: '#0A4B78', fontWeight: '800' },
+    estabelecimento: { marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: '#EAECF0' },
+    estabelecimentoTexto: { color: '#6D4F08', fontWeight: '800', textAlign: 'center' },
     rodape: { color: '#91A0B5', fontSize: 12, textAlign: 'center', marginTop: 22 },
 })
