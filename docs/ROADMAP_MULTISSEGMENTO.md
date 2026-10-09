@@ -17,7 +17,7 @@ Status: concluida em 2026-10-09.
 
 Objetivo: introduzir o conceito de estabelecimento sem quebrar contratos atuais.
 
-Status: implementacao concluida em 2026-10-09; migration pendente de aplicacao manual no ambiente.
+Status: implementacao concluida; migration aplicada e validada no ambiente Docker em 2026-10-09.
 
 - [x] Definir vocabulario canonico e mapa de compatibilidade.
 - [x] Modelar tipo de estabelecimento e modelo de atendimento.
@@ -30,7 +30,7 @@ Status: implementacao concluida em 2026-10-09; migration pendente de aplicacao m
 
 ## Etapa 2 - Segmentos, Especialidades E Catalogo
 
-Status: implementacao backend concluida em 2026-10-09; migration pendente de aplicacao manual no ambiente.
+Status: implementacao backend concluida; migration aplicada e validada no ambiente Docker em 2026-10-09.
 
 - [x] Categorias e subcategorias de estabelecimentos.
 - [x] Multiplas especialidades por estabelecimento, profissional e servico.
@@ -42,7 +42,7 @@ Status: implementacao backend concluida em 2026-10-09; migration pendente de apl
 
 ## Etapa 3 - Motor Universal De Agenda
 
-Status: implementacao backend concluida em 2026-10-09; migration pendente de aplicacao manual no ambiente.
+Status: implementacao backend concluida; migration aplicada e validada no ambiente Docker em 2026-10-09.
 
 - [x] Duracoes reais e multiplos servicos ordenados.
 - [x] Preparacao anterior, posterior e entre servicos.
