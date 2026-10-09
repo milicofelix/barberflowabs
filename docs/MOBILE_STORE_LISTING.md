@@ -1,5 +1,7 @@
 # Barber Flow ABS — materiais para publicação
 
+> **Documento congelado para rebranding.** Estes materiais representam a identidade atual. Nao substituir nome, icones, identificadores ou textos de loja antes da aprovacao da marca definitiva conforme o ADR 0001 e `docs/BRAND_NAME_DUE_DILIGENCE.md`.
+
 ## Identidade do aplicativo
 
 - Nome exibido: **Barber Flow ABS**

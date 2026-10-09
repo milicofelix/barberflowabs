@@ -1,6 +1,6 @@
 # System Design - Barber Flow ABS
 
-Este documento existe para orientar evolucoes do projeto sem quebrar o ambiente. Antes de qualquer fase nova, este arquivo deve ser consultado junto com `docs/ROADMAP_SAAS.md` e `docs/ROADMAP_ADMIN_MARKETPLACE.md`.
+Este documento existe para orientar evolucoes do projeto sem quebrar o ambiente. Antes de qualquer fase nova, este arquivo deve ser consultado junto com `docs/ENGINEERING_GUIDELINES.md`, `docs/adr/0001-evolucao-multissegmento.md` e `docs/ROADMAP_MULTISSEGMENTO.md`. Os roadmaps `docs/ROADMAP_SAAS.md` e `docs/ROADMAP_ADMIN_MARKETPLACE.md` permanecem como historico e referencia do estado implementado.
 
 ## Principios De Evolucao
 

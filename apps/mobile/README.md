@@ -2,6 +2,8 @@
 
 Aplicativo Expo/React Native com navegação por React Navigation.
 
+> **Roadmap legado congelado em 2026-10-09.** A Fase 3 esta protegida pelo checkpoint `docs/MOBILE_PHASE_3_CHECKPOINT.md`. Novas funcionalidades devem seguir `docs/ROADMAP_MULTISSEGMENTO.md`; neste fluxo antigo entram apenas correcoes de defeito, seguranca e compatibilidade.
+
 ## Desenvolvimento com Docker
 
 Na raiz do monorepo, substitua `SEU_IP` pelo endereço IPv4 atual do computador:
