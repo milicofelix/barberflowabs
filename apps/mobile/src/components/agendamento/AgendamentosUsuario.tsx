@@ -1,27 +1,28 @@
 import { Agendamento } from '@barbabrutal/core'
 import { StyleSheet, Text, View, Image } from 'react-native'
 import AgendamentoItem from './AgendamentoItem'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useState } from 'react'
+import { useFocusEffect } from '@react-navigation/native'
 import useAPI from '../../data/hooks/useAPI'
 import useSessao from '@/src/data/hooks/useSessao'
 import Carregando from '../shared/Carregando'
 import EstadoErro from '../shared/EstadoErro'
 import EstadoVazio from '../shared/EstadoVazio'
 import { mensagemDoErro } from '@/src/data/hooks/useAPI'
-import useBarbearia from '@/src/data/hooks/useBarbearia'
 import useTema from '@/src/data/contexts/ContextoTema'
+import Confirmacao from '../shared/Confirmacao'
 
 export default function AgendamentosUsuario() {
     const { cores } = useTema()
     const [agendamentos, setAgendamentos] = useState<Agendamento[]>([])
     const [carregando, setCarregando] = useState(true)
     const [erro, setErro] = useState<string | null>(null)
-    const { httpGet } = useAPI()
+    const [agendamentoParaCancelar, setAgendamentoParaCancelar] = useState<Agendamento | null>(null)
+    const { httpDelete, httpGet } = useAPI()
     const { usuario } = useSessao()
-    const { barbearia, carregando: carregandoBarbearia } = useBarbearia()
 
     const carregarAgendamentos = useCallback(async () => {
-        if (!usuario?.email || !barbearia) {
+        if (!usuario?.email) {
             setAgendamentos([])
             setCarregando(false)
             return
@@ -29,35 +30,47 @@ export default function AgendamentosUsuario() {
         try {
             setCarregando(true)
             setErro(null)
-            const dados = await httpGet<Agendamento[]>('/agendamentos', { escopoTenant: 'publico' })
+            const dados = await httpGet<Agendamento[]>('/agendamentos/ativos', { escopoTenant: 'nenhum' })
             setAgendamentos(Array.isArray(dados) ? dados : [])
         } catch (erro) {
             setErro(mensagemDoErro(erro))
         } finally {
             setCarregando(false)
         }
-    }, [barbearia, httpGet, usuario?.email])
+    }, [httpGet, usuario?.email])
 
-    useEffect(() => {
-        if (!carregandoBarbearia) carregarAgendamentos()
-    }, [carregandoBarbearia, carregarAgendamentos])
+    useFocusEffect(useCallback(() => {
+        carregarAgendamentos()
+    }, [carregarAgendamentos]))
+
+    async function cancelarAgendamento() {
+        if (!agendamentoParaCancelar) return
+        const id = agendamentoParaCancelar.id
+        setAgendamentoParaCancelar(null)
+        try {
+            setErro(null)
+            await httpDelete(`/agendamentos/meus/${id}`, undefined, { escopoTenant: 'nenhum' })
+            await carregarAgendamentos()
+        } catch (erro) {
+            setErro(mensagemDoErro(erro))
+        }
+    }
 
     function renderizarConteudo() {
-        if (carregando || carregandoBarbearia) return <Carregando mensagem="Buscando seus agendamentos..." />
+        if (carregando) return <Carregando mensagem="Buscando seus agendamentos..." />
         if (erro) return <EstadoErro mensagem={erro} tentarNovamente={carregarAgendamentos} />
-
-        if (!barbearia) {
-            return <EstadoVazio titulo="Escolha uma barbearia"
-                descricao="Use a aba Descobrir para selecionar onde deseja agendar." />
-        }
 
         if (agendamentos.length > 0) {
             return (
                 <View>
-                    <Text style={[styles.subtitulo, { color: cores.texto }]}>Aqui estão seus últimos agendamentos:</Text>
-                    {[...agendamentos]
-                        .reverse()
-                        .map((a: Agendamento) => <AgendamentoItem agendamento={a} key={a.id} />)}
+                    <Text style={[styles.subtitulo, { color: cores.texto }]}>Seus próximos agendamentos:</Text>
+                    {agendamentos.map((a: Agendamento) => (
+                        <AgendamentoItem
+                            agendamento={a}
+                            key={a.id}
+                            onCancelar={setAgendamentoParaCancelar}
+                        />
+                    ))}
                 </View>
             )
         } else {
@@ -86,6 +99,14 @@ export default function AgendamentosUsuario() {
             />
             <Text style={[styles.titulo, { color: cores.texto }]}>Fala, {usuario?.nome}!</Text>
             {renderizarConteudo()}
+            <Confirmacao
+                visivel={!!agendamentoParaCancelar}
+                titulo="Cancelar agendamento"
+                mensagem="Deseja cancelar este agendamento? Essa ação libera o horário para outro cliente."
+                confirmarLabel="Sim, cancelar"
+                onConfirmar={cancelarAgendamento}
+                onCancelar={() => setAgendamentoParaCancelar(null)}
+            />
         </View>
     )
 }

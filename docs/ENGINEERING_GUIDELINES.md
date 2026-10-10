@@ -93,6 +93,13 @@ Testes e comandos de validacao podem ser criados ou atualizados como parte da im
 - Ao concluir uma alteracao, informar quais validacoes nao foram executadas e fornecer os comandos sugeridos para o usuario executar manualmente, quando forem relevantes.
 - Uma autorizacao vale somente para as verificacoes explicitamente solicitadas naquele momento; nao deve ser presumida para etapas futuras.
 
+## Catalogo De Comandos
+
+- Registrar em `docs/COMANDOS.md` todo novo comando operacional sugerido ao usuario.
+- Antes de registrar, confirmar que o comando ainda nao existe no catalogo e evitar duplicatas.
+- Explicar finalidade, impacto e pre-condicoes, principalmente para migration, seed, dependencia, restart e limpeza.
+- Nunca incluir segredos reais nem oferecer comandos destrutivos genericos sem diagnosticar o alvo.
+
 ## Criterio De Entrega
 
 Antes de concluir uma implementacao nova:

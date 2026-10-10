@@ -13,6 +13,7 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
   private includeAgendamento() {
     return {
       usuario: { select: { id: true, barbeariaId: true, nome: true, email: true } },
+      barbearia: { select: { id: true, nome: true, slug: true } },
       profissional: { select: { id: true, nome: true } },
       unidade: { select: { id: true, nome: true } },
       avaliacao: {
@@ -141,6 +142,24 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
     return agendamentos.map((agendamento) => this.normalizarAgendamento(agendamento));
   }
 
+  async buscarAtivosPorUsuario(usuarioId: number): Promise<Agendamento[]> {
+    const agora = new Date();
+    const agendamentos = await this.prisma.agendamento.findMany({
+      where: {
+        usuarioId,
+        status: { in: STATUS_AGENDAMENTO_ATIVO },
+        OR: [
+          { fimOcupacao: { gt: agora } },
+          { fimOcupacao: null, data: { gt: agora } },
+        ],
+      },
+      include: this.includeAgendamento(),
+      orderBy: { data: 'asc' },
+    } as any);
+
+    return agendamentos.map((agendamento) => this.normalizarAgendamento(agendamento));
+  }
+
   async buscarPorProfissionalEData(
     profissional: number,
     data: Date,
@@ -173,11 +192,11 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
     });
   }
 
-  async cancelar(id: number, usuarioId: number, barbeariaId: number, barbeiro: boolean) {
+  async cancelar(id: number, usuarioId: number, barbeariaId: number | undefined, barbeiro: boolean) {
     const agendamento = await this.prisma.agendamento.findFirst({
       where: {
         id,
-        barbeariaId,
+        ...(barbeariaId ? { barbeariaId } : {}),
         status: { in: ['AGENDADO', 'CONFIRMADO'] },
         ...(barbeiro ? {} : { usuarioId }),
       },

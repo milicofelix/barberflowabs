@@ -17,6 +17,7 @@ export default function Sumario({ navigation }: Props) {
     const [processando, setProcessando] = useState(false)
     const [erro, setErro] = useState<string | null>(null)
     const { barbearia } = useBarbearia()
+    const possuiAgendamentoAtivo = erro?.includes('agendamento ativo') ?? false
 
     async function finalizar() {
         if (processando) return
@@ -62,6 +63,15 @@ export default function Sumario({ navigation }: Props) {
                 <Text style={[styles.valorTotal, { color: cores.texto }]}>{MoedaUtils.formatar(precoTotal())}</Text>
 
                 {erro ? <EstadoErro mensagem={erro} /> : null}
+
+                {possuiAgendamentoAtivo ? (
+                    <Pressable
+                        style={[styles.botaoSecundario, { borderColor: cores.destaque }]}
+                        onPress={() => navigation.navigate('Abas', { screen: 'Inicio' })}
+                    >
+                        <Text style={[styles.textoBotaoSecundario, { color: cores.destaque }]}>Ver e cancelar meu agendamento</Text>
+                    </Pressable>
+                ) : null}
 
                 <Pressable
                     style={[styles.botao, processando && styles.botaoDesabilitado]}
@@ -146,4 +156,12 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     botaoDesabilitado: { opacity: 0.65 },
+    botaoSecundario: {
+        width: '100%',
+        borderWidth: 1,
+        borderRadius: 8,
+        alignItems: 'center',
+        padding: 12,
+    },
+    textoBotaoSecundario: { fontSize: 14, fontWeight: '700' },
 })

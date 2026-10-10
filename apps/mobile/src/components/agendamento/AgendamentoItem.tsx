@@ -1,9 +1,10 @@
 import { Agendamento, DateUtils, MoedaUtils } from '@barbabrutal/core'
-import { StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import useTema from '@/src/data/contexts/ContextoTema'
 
 interface AgendamentoItemProps {
     agendamento: Agendamento
+    onCancelar?: (agendamento: Agendamento) => void
 }
 
 export default function AgendamentoItem(props: AgendamentoItemProps) {
@@ -23,12 +24,26 @@ export default function AgendamentoItem(props: AgendamentoItemProps) {
     return (
         <View style={[styles.container, { backgroundColor: cores.superficie, borderColor: cores.destaque }]}>
             <Text style={[styles.profissional, { color: cores.texto }]}>{props.agendamento.profissional.nome}</Text>
+            {props.agendamento.barbearia?.nome ? (
+                <Text style={[styles.estabelecimento, { color: cores.textoSecundario }]}>
+                    {props.agendamento.barbearia.nome}
+                </Text>
+            ) : null}
             <Text style={[styles.data, { color: cores.destaque }]}>
                 {props.agendamento.data &&
                     DateUtils.formatarDataEHora(new Date(props.agendamento.data))}
             </Text>
             <Text style={[styles.servicos, { color: cores.textoSecundario }]}>{renderizarServicos()}</Text>
             <Text style={[styles.preco, { color: cores.texto }]}>{MoedaUtils.formatar(precoTotal())}</Text>
+            {props.onCancelar ? (
+                <Pressable
+                    accessibilityRole="button"
+                    style={[styles.cancelar, { borderColor: cores.perigo }]}
+                    onPress={() => props.onCancelar?.(props.agendamento)}
+                >
+                    <Text style={[styles.cancelarTexto, { color: cores.perigo }]}>Cancelar agendamento</Text>
+                </Pressable>
+            ) : null}
         </View>
     )
 }
@@ -50,6 +65,7 @@ const styles = StyleSheet.create({
         color: '#ffffff',
         marginBottom: 4,
     },
+    estabelecimento: { fontSize: 12, marginBottom: 4 },
     data: {
         color: '#007AFF',
         fontSize: 18,
@@ -67,4 +83,13 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontStyle: 'italic',
     },
+    cancelar: {
+        alignSelf: 'flex-start',
+        borderWidth: 1,
+        borderRadius: 6,
+        marginTop: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+    },
+    cancelarTexto: { fontSize: 13, fontWeight: '700' },
 })

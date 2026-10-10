@@ -87,6 +87,11 @@ export class AgendamentoController {
     return this.repo.buscarPorEmail(usuario.email, barbeariaId);
   }
 
+  @Get('ativos')
+  buscarAgendamentosAtivos(@UsuarioLogado() usuario: Usuario) {
+    return this.repo.buscarAtivosPorUsuario(usuario.id!);
+  }
+
   @Post(':id/avaliacao')
   async avaliarAgendamento(
     @Param('id') id: string,
@@ -199,6 +204,25 @@ export class AgendamentoController {
     }
 
     return agendamento;
+  }
+
+  @Delete('meus/:id')
+  async cancelarMeuAgendamento(
+    @Param('id') id: string,
+    @UsuarioLogado() usuario: Usuario,
+  ) {
+    validarNumeroInteiroPositivo(id, 'Agendamento');
+
+    try {
+      const agendamento = await this.repo.cancelar(Number(id), usuario.id!, undefined, false);
+      if (!agendamento) {
+        throw new NotFoundException('Agendamento não encontrado para cancelamento');
+      }
+      return agendamento;
+    } catch (error: any) {
+      if (error instanceof NotFoundException) throw error;
+      throw new BadRequestException(error?.message ?? 'Não foi possível cancelar o agendamento');
+    }
   }
 
   private async resolverBarbeariaAgendamento(req: any, usuario: Usuario) {

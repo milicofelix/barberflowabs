@@ -13,6 +13,8 @@ export default interface Agendamento {
     modeloAtendimento?: 'PRESENCIAL' | 'DOMICILIAR' | 'HIBRIDO'
     enderecoAtendimento?: string | null
     deslocamentoMinutos?: number
+    status?: string
+    barbearia?: { id: number; nome: string; slug: string }
     usuario: Usuario
     profissional: Partial<Profissional>
     servicos: Partial<Servico>[]

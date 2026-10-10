@@ -186,6 +186,8 @@ Resultado esperado: mobile, web e backend calculam a quantidade de blocos pela d
 
 Resultado esperado: cada cliente mantém somente um agendamento futuro ativo por vez e pode criar outro após cancelar ou concluir o anterior.
 
+Quando a API informar que já existe um agendamento ativo, o resumo exibe o botão **Ver e cancelar meu agendamento**. A aba **Início** lista reservas ativas de todos os estabelecimentos, mostra o estabelecimento correspondente e permite cancelar após confirmação. Depois do cancelamento, o cliente pode criar uma nova reserva.
+
 ### 9. Validar troca e persistência
 
 1. Na aba **Agendar**, tocar em **Trocar barbearia**.
