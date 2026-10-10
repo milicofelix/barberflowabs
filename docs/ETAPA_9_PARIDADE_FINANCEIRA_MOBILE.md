@@ -1,6 +1,6 @@
 # Etapa 9 — Paridade Financeira Mobile
 
-Status: Fases 1 a 6 implementadas em 2026-10-10, com validacao manual pendente; fases funcionais seguintes pendentes.
+Status: Fases 1 a 7 implementadas em 2026-10-10, com validacao manual pendente; resta a fase de corte do legado e aceite de paridade.
 
 ## Objetivo
 
@@ -156,6 +156,17 @@ Critério de conclusão: assinatura e cobrancas exibem o mesmo estado da web, e 
 - exibir trilha de auditoria apenas com `FINANCEIRO_AUDITAR`;
 - identificar autor, data, entidade e acao;
 - separar visualmente eventos informativos de divergencias que exigem acao.
+
+Implementado:
+
+- formulario de conciliacao com provedor, identificador externo e valores esperado e recebido;
+- vinculo opcional com conta financeira do estabelecimento e busca por conta;
+- calculo da diferenca e classificacao autoritativa pelo backend;
+- historico com estados pendente, conciliado e divergente, destacando itens que exigem acao;
+- protecao de conflitos e idempotencia por provedor e identificador externo;
+- trilha financeira somente para usuarios com `FINANCEIRO_AUDITAR`;
+- identificacao de autor, data, entidade, acao e resumo dos detalhes auditados;
+- separacao visual de eventos criticos, sem expor informacoes de outros estabelecimentos.
 
 Critério de conclusão: conciliacoes e eventos de auditoria coincidem entre web e mobile, sem vazamento entre estabelecimentos.
 
