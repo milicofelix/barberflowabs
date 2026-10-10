@@ -2,23 +2,30 @@ import NossosClientes from '@/components/cliente/NossosClientes'
 import Slogan from '@/components/landing/Slogan'
 import NossosProfissionais from '@/components/profissional/NossosProfissionais'
 import NossosServicos from '@/components/servico/NossosServicos'
-import Cabecalho from '@/components/shared/Cabecalho'
 import Rodape from '@/components/shared/Rodape'
-import SecaoBackground from '@/components/shared/SecaoBackground'
+import type { PropsWithChildren } from 'react'
+
+function SecaoHome({ children }: PropsWithChildren) {
+    return (
+        <section className="bg-white py-10 dark:bg-zinc-950">
+            <div className="container">{children}</div>
+        </section>
+    )
+}
 
 export default function Landing() {
     return (
         <div className="flex flex-col">
             <Slogan />
-            <SecaoBackground imagem="/banners/servicos.webp">
+            <SecaoHome>
                 <NossosServicos />
-            </SecaoBackground>
-            <SecaoBackground imagem="/banners/profissionais.webp">
+            </SecaoHome>
+            <SecaoHome>
                 <NossosProfissionais />
-            </SecaoBackground>
-            <SecaoBackground imagem="/banners/clientes.webp">
+            </SecaoHome>
+            <SecaoHome>
                 <NossosClientes />
-            </SecaoBackground>
+            </SecaoHome>
             <Rodape />
         </div>
     )

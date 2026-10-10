@@ -9,7 +9,7 @@ export default function Processando() {
                 className="
                     flex flex-col justify-center items-center
                     absolute top-0 left-0 w-full h-full gap-2
-                    bg-black/90 text-center
+                    sobre-imagem bg-black/90 text-center
                 "
             >
                 <Logo />

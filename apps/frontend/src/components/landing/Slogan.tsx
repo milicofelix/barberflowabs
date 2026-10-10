@@ -10,20 +10,19 @@ export default function Slogan() {
                 className="
                     sobre-imagem flex flex-col items-center
                     absolute top-0 left-0 w-full h-full
-                    bg-black/65
                 "
             >
-                <Cabecalho />
-                <div className="flex flex-col justify-center items-center flex-1 gap-5">
-                    <h1 className="flex flex-col items-center">
-                        <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-thin tracking-wider">
-                            Encontre sua
+                <Cabecalho semFundo />
+                <div className="slogan-conteudo flex flex-col justify-center items-center gap-5">
+                    <h1 className="slogan-titulo flex flex-col items-center gap-1">
+                        <span className="text-2xl text-white sm:text-3xl md:text-4xl lg:text-5xl font-thin tracking-wider">
+                            Encontre seu
                         </span>
-                        <span className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-gradient">
+                        <span className="text-5xl text-white sm:text-6xl md:text-7xl lg:text-8xl font-black">
                             Estabelecimento
                         </span>
                     </h1>
-                    <p className="text-base sm:text-lg font-extralight">
+                    <p className="slogan-descricao text-base text-center text-white sm:text-lg font-extralight">
                         Compare estabelecimentos, escolha um profissional e agende seu horário online.
                     </p>
                     <Link

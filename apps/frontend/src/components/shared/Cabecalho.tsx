@@ -5,10 +5,14 @@ import useSessao from '@/data/hooks/useSessao'
 import MenuUsuario from './MenuUsuario'
 import AlternadorTema from './AlternadorTema'
 
-export default function Cabecalho() {
+interface CabecalhoProps {
+    semFundo?: boolean
+}
+
+export default function Cabecalho({ semFundo = false }: CabecalhoProps) {
     const { usuario } = useSessao()
     return (
-        <header className="cabecalho-hero flex h-36 items-start self-stretch bg-black/45 text-white">
+        <header className={`cabecalho-hero flex h-36 items-start self-stretch text-white ${semFundo ? 'cabecalho-home' : 'bg-black/45'}`}>
             <nav className="container flex items-start justify-between pt-8">
                 <Logo />
                 <div>

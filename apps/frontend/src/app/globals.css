@@ -81,8 +81,10 @@
     }
 
     .text-gradient {
-        @apply bg-gradient-to-r from-white to-zinc-400;
-        @apply bg-clip-text text-transparent;
+        background: linear-gradient(110deg, #111a42, #2563eb 48%, #9333ea 88%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
     }
 
     .input {
@@ -100,6 +102,77 @@
 
     .alternador-tema {
         @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition hover:-translate-y-0.5;
+    }
+
+    .cabecalho-home {
+        background: linear-gradient(to bottom, rgba(4, 8, 28, .82), rgba(4, 8, 28, .38) 72%, transparent);
+    }
+
+    .slogan-conteudo {
+        width: min(92%, 70rem);
+        margin: auto;
+        padding: clamp(1.5rem, 4vw, 3rem);
+        border: 1px solid rgba(255, 255, 255, .14);
+        border-radius: 1.5rem;
+        background: radial-gradient(ellipse at center, rgba(4, 8, 28, .52), rgba(4, 8, 28, .18) 68%, transparent 100%);
+        box-shadow: 0 22px 70px rgba(2, 6, 23, .24);
+        backdrop-filter: blur(1.5px);
+    }
+
+    .slogan-titulo,
+    .slogan-descricao {
+        text-shadow: 0 2px 5px rgba(0, 0, 0, .95), 0 0 22px rgba(0, 0, 0, .72);
+    }
+
+    .logo-uniflow {
+        @apply flex items-center gap-3;
+    }
+
+    .logo-conteudo {
+        @apply flex min-w-0 flex-col leading-none;
+    }
+
+    .brand {
+        @apply flex items-center;
+        gap: clamp(.4rem, 1vw, .85rem);
+    }
+
+    .brand-name {
+        color: #101827;
+        font-size: clamp(1.25rem, 2.5vw, 2rem);
+        font-weight: 800;
+        letter-spacing: -.055em;
+        white-space: nowrap;
+    }
+
+    .brand-flow {
+        background: linear-gradient(110deg, #00d4ff, #60a5fa 45%, #c084fc 85%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+    }
+
+    .brand-abs {
+        padding: .25rem clamp(.55rem, 1.2vw, 1rem);
+        border: 2px solid transparent;
+        border-radius: .8rem;
+        background:
+            linear-gradient(#f8faff, #f8faff) padding-box,
+            linear-gradient(110deg, #00d4ff, #a78bfa, #e879f9) border-box;
+        color: #101827;
+        font-size: clamp(.72rem, 1.5vw, 1.1rem);
+        font-weight: 900;
+        letter-spacing: .045em;
+        line-height: 1.25;
+        box-shadow: 0 0 18px rgb(124 58 237 / 18%);
+    }
+
+    .brand-tagline {
+        @apply mt-2 hidden font-semibold uppercase sm:block;
+        color: hsl(var(--muted-foreground));
+        font-size: .625rem;
+        letter-spacing: .18em;
+        white-space: nowrap;
     }
 
     .auth-overlay {
@@ -138,6 +211,26 @@
 
     .dark .input { color-scheme: dark; }
     .dark .auth-overlay { background: rgba(0, 0, 0, .8); }
+    .dark .text-gradient,
+    .sobre-imagem .text-gradient {
+        background: linear-gradient(110deg, #fff, #dbeafe 52%, #d8b4fe 92%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+    }
+    .dark .brand-name { color: #fff; }
+    .dark .brand-abs,
+    .cabecalho-hero .brand-abs,
+    .sobre-imagem .brand-abs {
+        background:
+            linear-gradient(#101827, #101827) padding-box,
+            linear-gradient(110deg, #00d4ff, #a78bfa, #e879f9) border-box;
+        color: #f8fafc;
+    }
+    .cabecalho-hero .brand-name,
+    .sobre-imagem .brand-name { color: #fff; }
+    .cabecalho-hero .brand-tagline,
+    .sobre-imagem .brand-tagline { color: #d9e1f2; }
     .dark .icone-azul { @apply bg-blue-950 text-sky-300; }
     .dark .icone-violeta { @apply bg-violet-950 text-violet-300; }
     .dark .icone-rosa { @apply bg-pink-950 text-pink-300; }
@@ -173,3 +266,15 @@ html:not(.dark) .cabecalho-hero .text-zinc-200,
 html:not(.dark) .cabecalho-hero .text-zinc-300 { color: #ffffff !important; }
 html:not(.dark) .sobre-imagem .text-zinc-400,
 html:not(.dark) .cabecalho-hero .text-zinc-400 { color: #d9e1f2 !important; }
+
+@media (max-width: 480px) {
+    .logo-uniflow { gap: .4rem; }
+    .logo-uniflow img { width: 3.25rem; height: 3.25rem; }
+    .brand { gap: .3rem; }
+    .brand-name { font-size: 1.05rem; }
+    .brand-abs {
+        padding: .18rem .42rem;
+        border-radius: .55rem;
+        font-size: .6rem;
+    }
+}
