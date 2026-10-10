@@ -184,9 +184,11 @@ Resultado esperado: mobile, web e backend calculam a quantidade de blocos pela d
 4. Confirme a mensagem: `Você já possui um agendamento ativo. Cancele o agendamento anterior antes de criar outro.`
 5. Cancele o agendamento anterior e tente novamente.
 
-Resultado esperado: cada cliente mantém somente um agendamento futuro ativo por vez e pode criar outro após cancelar ou concluir o anterior.
+Resultado esperado: cada cliente mantém somente um agendamento futuro ativo por unidade. Agendamentos em unidades diferentes são permitidos, mas permanecem visíveis na área **Ativos** para evitar conflito de horários.
 
-Quando a API informar que já existe um agendamento ativo, o resumo exibe o botão **Ver e cancelar meu agendamento**. A aba **Início** lista reservas ativas de todos os estabelecimentos, mostra o estabelecimento correspondente e permite cancelar após confirmação. Depois do cancelamento, o cliente pode criar uma nova reserva.
+Quando a API informar que já existe um agendamento ativo na mesma unidade, o resumo exibe o botão **Ver e cancelar meu agendamento**. A aba **Início** possui os filtros **Ativos** e **Histórico**, mostra estabelecimento, unidade e status, e permite cancelar reservas futuras após confirmação. Reservas vencidas são mantidas no histórico para o estabelecimento classificá-las como **Concluído**, **Cancelado** ou **Não compareceu**.
+
+Se houver uma reserva ativa em outra unidade, o resumo apresenta apenas um lembrete para conferir datas e horários; a nova reserva continua permitida.
 
 ### 9. Validar troca e persistência
 

@@ -54,6 +54,10 @@ interface Agendamento {
         nome: string;
         slug: string;
     };
+    unidade?: {
+        id: number;
+        nome: string;
+    } | null;
     usuario: Usuario;
     profissional: Partial<Profissional>;
     servicos: Partial<Servico>[];

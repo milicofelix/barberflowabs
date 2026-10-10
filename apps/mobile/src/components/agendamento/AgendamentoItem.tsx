@@ -9,6 +9,18 @@ interface AgendamentoItemProps {
 
 export default function AgendamentoItem(props: AgendamentoItemProps) {
     const { cores } = useTema()
+    const status = props.agendamento.status ?? 'AGENDADO'
+    const fim = new Date(props.agendamento.dataFim ?? props.agendamento.data)
+    const aguardandoEncerramento = ['AGENDADO', 'CONFIRMADO', 'CHECKIN'].includes(status)
+        && fim.getTime() <= Date.now()
+    const statusLabel = aguardandoEncerramento
+        ? 'Aguardando atualização do estabelecimento'
+        : ({
+            AGENDADO: 'Agendado', CONFIRMADO: 'Confirmado', CHECKIN: 'Check-in',
+            CONCLUIDO: 'Concluído', CANCELADO: 'Cancelado', NO_SHOW: 'Não compareceu',
+        } as Record<string, string>)[status] ?? status
+    const statusCritico = status === 'CANCELADO' || status === 'NO_SHOW'
+    const corStatus = statusCritico ? cores.perigo : status === 'CONCLUIDO' ? cores.sucesso : cores.destaque
     function precoTotal() {
         return props.agendamento.servicos.reduce((acc, servico) => acc + servico.preco!, 0)
     }
@@ -23,11 +35,17 @@ export default function AgendamentoItem(props: AgendamentoItemProps) {
 
     return (
         <View style={[styles.container, { backgroundColor: cores.superficie, borderColor: cores.destaque }]}>
+            <View style={[styles.status, { borderColor: corStatus }]}>
+                <Text style={[styles.statusTexto, { color: corStatus }]}>{statusLabel}</Text>
+            </View>
             <Text style={[styles.profissional, { color: cores.texto }]}>{props.agendamento.profissional.nome}</Text>
             {props.agendamento.barbearia?.nome ? (
                 <Text style={[styles.estabelecimento, { color: cores.textoSecundario }]}>
                     {props.agendamento.barbearia.nome}
                 </Text>
+            ) : null}
+            {props.agendamento.unidade?.nome ? (
+                <Text style={[styles.estabelecimento, { color: cores.textoSecundario }]}>Unidade: {props.agendamento.unidade.nome}</Text>
             ) : null}
             <Text style={[styles.data, { color: cores.destaque }]}>
                 {props.agendamento.data &&
@@ -66,6 +84,8 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     estabelecimento: { fontSize: 12, marginBottom: 4 },
+    status: { alignSelf: 'flex-start', borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4, marginBottom: 8 },
+    statusTexto: { fontSize: 11, fontWeight: '800' },
     data: {
         color: '#007AFF',
         fontSize: 18,

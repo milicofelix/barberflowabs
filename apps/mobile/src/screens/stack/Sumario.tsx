@@ -1,11 +1,11 @@
 import { ActivityIndicator, StyleSheet, Text, Pressable, View } from 'react-native'
-import { DateUtils, MoedaUtils } from '@barbabrutal/core'
+import { Agendamento, DateUtils, MoedaUtils } from '@barbabrutal/core'
 import useAgendamento from '../../data/hooks/useAgendamento'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import type { StackParamList } from '@/src/navigation/types'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import EstadoErro from '@/src/components/shared/EstadoErro'
-import { mensagemDoErro } from '@/src/data/hooks/useAPI'
+import useAPI, { mensagemDoErro } from '@/src/data/hooks/useAPI'
 import useBarbearia from '@/src/data/hooks/useBarbearia'
 import useTema from '@/src/data/contexts/ContextoTema'
 
@@ -16,8 +16,16 @@ export default function Sumario({ navigation }: Props) {
     const { data, profissional, servicos, duracaoTotal, precoTotal, agendar } = useAgendamento()
     const [processando, setProcessando] = useState(false)
     const [erro, setErro] = useState<string | null>(null)
+    const [possuiOutroAgendamento, setPossuiOutroAgendamento] = useState(false)
     const { barbearia } = useBarbearia()
+    const { httpGet } = useAPI()
     const possuiAgendamentoAtivo = erro?.includes('agendamento ativo') ?? false
+
+    useEffect(() => {
+        httpGet<Agendamento[]>('/agendamentos/ativos', { escopoTenant: 'nenhum' })
+            .then((agendamentos) => setPossuiOutroAgendamento(agendamentos.length > 0))
+            .catch(() => setPossuiOutroAgendamento(false))
+    }, [httpGet])
 
     async function finalizar() {
         if (processando) return
@@ -61,6 +69,14 @@ export default function Sumario({ navigation }: Props) {
 
                 <Text style={[styles.valorTotalLabel, { color: cores.textoSecundario }]}>VALOR TOTAL</Text>
                 <Text style={[styles.valorTotal, { color: cores.texto }]}>{MoedaUtils.formatar(precoTotal())}</Text>
+
+                {possuiOutroAgendamento ? (
+                    <View style={[styles.lembrete, { borderColor: cores.destaque }]}>
+                        <Text style={{ color: cores.textoSecundario }}>
+                            Você já possui outro agendamento ativo. Uma nova reserva é permitida em outra unidade, mas confira datas e horários para evitar conflito.
+                        </Text>
+                    </View>
+                ) : null}
 
                 {erro ? <EstadoErro mensagem={erro} /> : null}
 
@@ -143,6 +159,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         alignSelf: 'flex-start',
     },
+    lembrete: { width: '100%', borderWidth: 1, borderRadius: 8, marginTop: 12, padding: 12 },
     botao: {
         backgroundColor: '#16a34a',
         paddingVertical: 15,

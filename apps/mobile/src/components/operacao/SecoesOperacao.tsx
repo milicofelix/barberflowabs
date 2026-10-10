@@ -31,7 +31,7 @@ export function AgendaOperacao({ itens, alterarStatus }: {
         <Text style={[styles.titulo, { color: cores.texto }]}>{item.usuario?.nome ?? 'Cliente'}</Text>
         <Text style={[styles.descricao, { color: cores.textoSecundario }]}>{item.profissional?.nome ?? 'Profissional'} · {new Date(item.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Text>
         <Text style={[styles.descricao, { color: cores.textoSecundario }]}>{item.servicos?.map((servico) => servico.nome).join(' · ')}</Text>
-        <View style={styles.acoes}>{['CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'NO_SHOW'].map((status) =>
+        <View style={styles.acoes}>{['CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW'].map((status) =>
             <Pressable key={status} onPress={() => alterarStatus(item.id, status)} style={[styles.chip, { borderColor: cores.borda }, item.status === status && styles.chipAtivo]}>
                 <Text style={[styles.chipTexto, { color: cores.texto }]}>{status.replace('_', ' ')}</Text></Pressable>)}</View>
     </View>)}</View>

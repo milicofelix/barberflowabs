@@ -1,5 +1,5 @@
 import { Agendamento } from '@barbabrutal/core'
-import { StyleSheet, Text, View, Image } from 'react-native'
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
 import AgendamentoItem from './AgendamentoItem'
 import React, { useCallback, useState } from 'react'
 import { useFocusEffect } from '@react-navigation/native'
@@ -12,12 +12,21 @@ import { mensagemDoErro } from '@/src/data/hooks/useAPI'
 import useTema from '@/src/data/contexts/ContextoTema'
 import Confirmacao from '../shared/Confirmacao'
 
+type FiltroAgendamento = 'ATIVOS' | 'HISTORICO'
+const STATUS_ATIVOS = ['AGENDADO', 'CONFIRMADO', 'CHECKIN']
+
+function agendamentoAtivo(agendamento: Agendamento) {
+    const fim = new Date(agendamento.dataFim ?? agendamento.data)
+    return STATUS_ATIVOS.includes(agendamento.status ?? 'AGENDADO') && fim.getTime() > Date.now()
+}
+
 export default function AgendamentosUsuario() {
     const { cores } = useTema()
     const [agendamentos, setAgendamentos] = useState<Agendamento[]>([])
     const [carregando, setCarregando] = useState(true)
     const [erro, setErro] = useState<string | null>(null)
     const [agendamentoParaCancelar, setAgendamentoParaCancelar] = useState<Agendamento | null>(null)
+    const [filtro, setFiltro] = useState<FiltroAgendamento>('ATIVOS')
     const { httpDelete, httpGet } = useAPI()
     const { usuario } = useSessao()
 
@@ -30,7 +39,7 @@ export default function AgendamentosUsuario() {
         try {
             setCarregando(true)
             setErro(null)
-            const dados = await httpGet<Agendamento[]>('/agendamentos/ativos', { escopoTenant: 'nenhum' })
+            const dados = await httpGet<Agendamento[]>('/agendamentos/meus', { escopoTenant: 'nenhum' })
             setAgendamentos(Array.isArray(dados) ? dados : [])
         } catch (erro) {
             setErro(mensagemDoErro(erro))
@@ -60,33 +69,58 @@ export default function AgendamentosUsuario() {
         if (carregando) return <Carregando mensagem="Buscando seus agendamentos..." />
         if (erro) return <EstadoErro mensagem={erro} tentarNovamente={carregarAgendamentos} />
 
-        if (agendamentos.length > 0) {
-            return (
-                <View>
-                    <Text style={[styles.subtitulo, { color: cores.texto }]}>Seus próximos agendamentos:</Text>
-                    {agendamentos.map((a: Agendamento) => (
-                        <AgendamentoItem
-                            agendamento={a}
-                            key={a.id}
-                            onCancelar={setAgendamentoParaCancelar}
-                        />
+        const filtrados = agendamentos.filter((agendamento) => (
+            filtro === 'ATIVOS' ? agendamentoAtivo(agendamento) : !agendamentoAtivo(agendamento)
+        ))
+
+        return (
+            <View style={styles.listaContainer}>
+                <View style={styles.filtros}>
+                    {(['ATIVOS', 'HISTORICO'] as const).map((opcao) => (
+                        <Pressable
+                            key={opcao}
+                            onPress={() => setFiltro(opcao)}
+                            style={[
+                                styles.filtro,
+                                { borderColor: cores.borda },
+                                filtro === opcao && { backgroundColor: cores.destaque, borderColor: cores.destaque },
+                            ]}
+                        >
+                            <Text style={{ color: filtro === opcao ? cores.destaqueTexto : cores.texto }}>
+                                {opcao === 'ATIVOS' ? 'Ativos' : 'Histórico'}
+                            </Text>
+                        </Pressable>
                     ))}
                 </View>
-            )
-        } else {
-            return (
-                <View style={styles.vazio}>
-                    <EstadoVazio
-                        titulo="Você ainda não tem agendamentos"
-                        descricao="Escolha a aba Agendar para marcar seu próximo horário."
-                    />
-                    <Image
-                        source={require('@/assets/images/inicio/garoto-propaganda.png')}
-                        style={styles.garotoPropaganda}
-                    />
-                </View>
-            )
-        }
+                {filtrados.length > 0 ? (
+                    <View>
+                        <Text style={[styles.subtitulo, { color: cores.texto }]}>
+                            {filtro === 'ATIVOS' ? 'Seus próximos agendamentos:' : 'Agendamentos anteriores e cancelados:'}
+                        </Text>
+                        {filtrados.map((agendamento) => (
+                            <AgendamentoItem
+                                agendamento={agendamento}
+                                key={agendamento.id}
+                                onCancelar={agendamentoAtivo(agendamento) ? setAgendamentoParaCancelar : undefined}
+                            />
+                        ))}
+                    </View>
+                ) : (
+                    <View style={styles.vazio}>
+                        <EstadoVazio
+                            titulo={filtro === 'ATIVOS' ? 'Você não tem agendamentos ativos' : 'Nenhum agendamento no histórico'}
+                            descricao={filtro === 'ATIVOS' ? 'Escolha a aba Agendar para marcar seu próximo horário.' : 'Agendamentos concluídos, cancelados ou não realizados aparecerão aqui.'}
+                        />
+                        {filtro === 'ATIVOS' ? (
+                            <Image
+                                source={require('@/assets/images/inicio/garoto-propaganda.png')}
+                                style={styles.garotoPropaganda}
+                            />
+                        ) : null}
+                    </View>
+                )}
+            </View>
+        )
     }
 
     return (
@@ -128,6 +162,9 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: '#e4e4e7',
     },
+    listaContainer: { width: '100%' },
+    filtros: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 10 },
+    filtro: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 16, paddingVertical: 8 },
     agendamentoItemContainer: {
         backgroundColor: '#09090b',
         borderRadius: 10,

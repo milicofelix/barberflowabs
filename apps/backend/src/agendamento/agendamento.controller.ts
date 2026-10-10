@@ -92,6 +92,11 @@ export class AgendamentoController {
     return this.repo.buscarAtivosPorUsuario(usuario.id!);
   }
 
+  @Get('meus')
+  buscarMeusAgendamentos(@UsuarioLogado() usuario: Usuario) {
+    return this.repo.buscarPorUsuario(usuario.id!);
+  }
+
   @Post(':id/avaliacao')
   async avaliarAgendamento(
     @Param('id') id: string,

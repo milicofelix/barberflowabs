@@ -160,6 +160,17 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
     return agendamentos.map((agendamento) => this.normalizarAgendamento(agendamento));
   }
 
+  async buscarPorUsuario(usuarioId: number): Promise<Agendamento[]> {
+    const agendamentos = await this.prisma.agendamento.findMany({
+      where: { usuarioId },
+      include: this.includeAgendamento(),
+      orderBy: { data: 'desc' },
+      take: 100,
+    } as any);
+
+    return agendamentos.map((agendamento) => this.normalizarAgendamento(agendamento));
+  }
+
   async buscarPorProfissionalEData(
     profissional: number,
     data: Date,

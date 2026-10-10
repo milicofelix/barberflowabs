@@ -25,7 +25,7 @@ export class MotorAgendaComandoPrisma {
   }) {
     return this.prisma.$transaction(async (transacao) => {
       const tx = transacao as any;
-      await this.validarAgendaDoCliente(tx, params.usuarioId);
+      await this.validarAgendaDoCliente(tx, params.usuarioId, params.contexto);
       await this.bloquearAgenda(tx, params.contexto);
       const recursos = await this.disponibilidade.verificar(tx, params.contexto, params.periodo);
       const agendamento = await tx.agendamento.create({
@@ -87,7 +87,11 @@ export class MotorAgendaComandoPrisma {
     );
   }
 
-  private async validarAgendaDoCliente(cliente: any, usuarioId: number) {
+  private async validarAgendaDoCliente(
+    cliente: any,
+    usuarioId: number,
+    contexto: ContextoAgenda,
+  ) {
     await cliente.$queryRawUnsafe(
       'SELECT id FROM usuarios WHERE id = ? FOR UPDATE',
       usuarioId,
@@ -97,6 +101,8 @@ export class MotorAgendaComandoPrisma {
     const agendamentoAtivo = await cliente.agendamento.findFirst({
       where: {
         usuarioId,
+        barbeariaId: contexto.barbeariaId,
+        unidadeId: contexto.unidadeId,
         status: { in: STATUS_AGENDAMENTO_ATIVO },
         OR: [
           { fimOcupacao: { gt: agora } },
@@ -108,7 +114,7 @@ export class MotorAgendaComandoPrisma {
 
     if (agendamentoAtivo) {
       throw new ConflitoAgendaError(
-        'Você já possui um agendamento ativo. Cancele o agendamento anterior antes de criar outro.',
+        'Você já possui um agendamento ativo nesta unidade. Cancele o anterior antes de criar outro nesta unidade.',
       );
     }
   }
