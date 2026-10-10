@@ -1,6 +1,7 @@
 import type { EstabelecimentoResumo } from '@/src/data/barbearias/tipos'
+import { marcadorDoEstabelecimento } from '@/src/data/barbearias/marcadores'
 import MapView, { Marker } from 'react-native-maps'
-import { StyleSheet, View } from 'react-native'
+import { Image, StyleSheet, View } from 'react-native'
 
 interface Props {
     estabelecimentos: EstabelecimentoResumo[]
@@ -20,7 +21,10 @@ export default function MapaMarketplace({ estabelecimentos, abrir }: Props) {
                 {pontos.map((item) => <Marker key={item.id}
                     coordinate={{ latitude: Number(item.endereco.latitude), longitude: Number(item.endereco.longitude) }}
                     title={item.nome} description={item.especialidades?.map((e) => e.nome).join(' · ')}
-                    onCalloutPress={() => abrir(item.slug)} />)}
+                    anchor={{ x: 0.5, y: 0.95 }} tracksViewChanges={false}
+                    onCalloutPress={() => abrir(item.slug)}>
+                    <Image source={marcadorDoEstabelecimento(item)} style={styles.marcador} resizeMode="contain" />
+                </Marker>)}
             </MapView>
         </View>
     )
@@ -29,4 +33,5 @@ export default function MapaMarketplace({ estabelecimentos, abrir }: Props) {
 const styles = StyleSheet.create({
     container: { height: 330, borderRadius: 16, overflow: 'hidden', marginBottom: 18 },
     mapa: { flex: 1 },
+    marcador: { width: 54, height: 54 },
 })

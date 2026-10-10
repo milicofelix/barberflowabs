@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { caminhoMarcador } from '@/data/marketplace/marcadores'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 const LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
@@ -104,7 +105,14 @@ export default function MapaLeafletBarbearias({ barbearias, posicaoUsuario }: Pr
                 <br><a href="/barbearias/${encodeURIComponent(barbearia.slug)}">Ver perfil</a>
             `
 
-            L.marker([lat, lng]).bindPopup(popup).addTo(camada)
+            const icone = L.icon({
+                iconUrl: caminhoMarcador(barbearia),
+                iconSize: [56, 56],
+                iconAnchor: [28, 53],
+                popupAnchor: [0, -49],
+            })
+
+            L.marker([lat, lng], { icon: icone }).bindPopup(popup).addTo(camada)
             coordenadas.push([lat, lng])
         })
 

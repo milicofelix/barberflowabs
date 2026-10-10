@@ -209,4 +209,15 @@ Resultado esperado: a última barbearia continua marcada como `Selecionada` e ne
 - [ ] Um usuário operacional consegue agendar em outra barbearia sem usar o próprio `barbeariaId`.
 - [ ] A denúncia apresenta validação e confirmação.
 - [ ] Erros de rede, localização negada e resultados vazios possuem feedback visual.
-- [ ] O mapa ainda não aparece; ele pertence à próxima etapa da Fase 3.
+- [ ] O mapa exibe um marcador compatível com o tipo de cada estabelecimento.
+
+### 11. Validar marcadores personalizados no mapa
+
+1. Garanta que existam estabelecimentos aprovados, com latitude e longitude, em tipos diferentes.
+2. Na aba **Descobrir**, alterne de **Lista** para **Mapa**.
+3. Confira os pins de barbearia, salão, esmalteria/manicure, clínica estética e spa.
+4. Confirme que estúdio, profissional autônomo e tipos desconhecidos usam o marcador geral de beleza.
+5. Toque em cada pin, confira nome e especialidades e abra o perfil pelo balão.
+6. Repita a conferência no mapa da descoberta web.
+
+Resultado esperado: os pins possuem fundo transparente, ficam ancorados pela ponta nas coordenadas e usam o mesmo padrão azul/violeta, sem círculo luminoso no chão.
