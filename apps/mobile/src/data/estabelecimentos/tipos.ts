@@ -77,9 +77,6 @@ export interface EstabelecimentoResumo {
     disponivelEm?: string | null
 }
 
-export type EstabelecimentoResumo = EstabelecimentoResumo
-export type EstabelecimentoPerfil = EstabelecimentoPerfil
-
 export interface ResultadoMarketplace {
     itens: EstabelecimentoResumo[]
     paginacao: { pagina: number; limite: number; total: number; paginas: number }

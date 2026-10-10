@@ -264,6 +264,22 @@ Instala a versao recomendada para o SDK Expo atual. Esse comando altera dependen
 
 O banco MySQL e compartilhado. Revise a migration e tenha backup antes de alterar sua estrutura. Nao use `prisma migrate dev` nesse banco, pois o comando tenta criar um shadow database e pode falhar ou operar no ambiente errado.
 
+### Recuperar o container depois de alterar schema ou workspaces
+
+Use esta sequencia quando o servico `app` nao permanece ativo e, por isso, comandos com `docker compose exec` nao funcionam:
+
+```bash
+docker compose stop app
+docker compose run --rm --no-deps app yarn install --network-timeout 600000
+docker compose run --rm --no-deps app sh -lc 'cd apps/backend && npx prisma migrate deploy'
+docker compose run --rm --no-deps app sh -lc 'cd apps/backend && npx prisma generate'
+docker compose up --force-recreate app
+```
+
+O primeiro comando interrompe o ciclo de reinicio. O segundo atualiza os links dos workspaces no volume `node_modules`, inclusive `@uniflowabs/core`. Os dois comandos seguintes aplicam as migrations e sincronizam o Prisma Client com o schema atual. O ultimo recria somente o container da aplicacao, preservando o volume de dependencias e os dados do banco.
+
+Essa sequencia nao remove `node_modules`, volumes ou dados. Antes de aplicar migrations em banco compartilhado, faca backup.
+
 ### Ver o estado das migrations
 
 ```bash
