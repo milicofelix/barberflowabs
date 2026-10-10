@@ -89,7 +89,7 @@ export default function PerfilPublicoEstabelecimento({ slug }: { slug: string })
     return (
         <div className="bg-zinc-950 text-zinc-100">
             <section
-                className="min-h-[420px] bg-cover bg-center"
+                className="sobre-imagem min-h-[420px] bg-cover bg-center"
                 style={{ backgroundImage: `linear-gradient(90deg, rgba(0,0,0,.82), rgba(0,0,0,.38)), url("${capa}")` }}
             >
                 <div className="container flex min-h-[420px] flex-col justify-end gap-5 py-10">

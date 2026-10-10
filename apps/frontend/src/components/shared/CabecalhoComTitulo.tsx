@@ -12,7 +12,7 @@ export default function CabecalhoComTitulo(props: CabecalhoComTituloProps) {
             <Image src="/banners/principal.png" fill alt="Estabelecimento" className="object-cover" />
             <div
                 className="
-                    flex flex-col
+                    sobre-imagem flex flex-col
                     absolute top-0 left-0 w-full h-full
                     bg-black/65
                 "

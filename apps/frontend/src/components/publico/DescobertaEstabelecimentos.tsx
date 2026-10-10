@@ -90,7 +90,7 @@ export default function DescobertaEstabelecimentos() {
     return (
         <main className="min-h-screen bg-zinc-950 text-zinc-100">
             <section
-                className="bg-cover bg-center"
+                className="sobre-imagem bg-cover bg-center"
                 style={{ backgroundImage: 'linear-gradient(90deg, rgba(0,0,0,.92), rgba(0,0,0,.58)), url(/banners/principal.png)' }}
             >
                 <div className="container flex min-h-[340px] flex-col justify-end gap-5 py-10">
@@ -210,7 +210,7 @@ function EstabelecimentoCard({ estabelecimento }: { estabelecimento: any }) {
             <div className="grid gap-4 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                        <h2 className="text-xl font-black text-white">{estabelecimento.nome}</h2>
+                        <h2 className="text-xl font-black text-foreground">{estabelecimento.nome}</h2>
                         <p className="mt-1 text-sm text-zinc-400">{endereco || 'Localização em atualização'}</p>
                     </div>
                     <span className={statusClasse(estabelecimento.statusOperacional?.status)}>

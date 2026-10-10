@@ -8,7 +8,7 @@ export default function Slogan() {
             <Image src="/banners/principal.png" fill alt="Estabelecimento" className="object-cover" />
             <div
                 className="
-                    flex flex-col items-center
+                    sobre-imagem flex flex-col items-center
                     absolute top-0 left-0 w-full h-full
                     bg-black/65
                 "

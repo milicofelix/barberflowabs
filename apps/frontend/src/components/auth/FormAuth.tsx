@@ -7,6 +7,7 @@ import CampoEmail from '../shared/formulario/CampoEmail'
 import CampoTexto from '../shared/formulario/CampoTexto'
 import CampoTelefone from '../shared/formulario/CampoTelefone'
 import CampoSenha from '../shared/formulario/CampoSenha'
+import AlternadorTema from '../shared/AlternadorTema'
 
 export default function FormAuth() {
     const {
@@ -26,11 +27,14 @@ export default function FormAuth() {
     return (
         <div className="h-screen">
             <Image src="/banners/principal.png" fill alt="Banner" />
+            <div className="absolute right-5 top-5 z-10">
+                <AlternadorTema />
+            </div>
             <div
                 className="
                     flex flex-col justify-center items-center
                     absolute top-0 left-0 w-full h-full gap-10
-                    bg-black/80
+                    auth-overlay
                 "
             >
                 <Logo />
@@ -55,7 +59,7 @@ export default function FormAuth() {
                         />
                     )}
                     <div className="flex gap-2">
-                        <button onClick={submeter} className="button flex-1 bg-green-600">
+                        <button onClick={submeter} className="button flex-1">
                             {modo === 'login' ? 'Entrar' : 'Cadastrar'}
                         </button>
                         <Link href="/" className="button flex-1 flex justify-center">
@@ -67,12 +71,12 @@ export default function FormAuth() {
                             {modo === 'login' ? (
                                 <div>
                                     Ainda não tem conta?{' '}
-                                    <span className="text-yellow-400 font-bold">Cadastre-se!</span>
+                                    <span className="text-violet-600 dark:text-violet-300 font-bold">Cadastre-se!</span>
                                 </div>
                             ) : (
                                 <div>
                                     Já tem conta?{' '}
-                                    <span className="text-yellow-400 font-bold">
+                                    <span className="text-violet-600 dark:text-violet-300 font-bold">
                                         Entre na plataforma!
                                     </span>
                                 </div>
