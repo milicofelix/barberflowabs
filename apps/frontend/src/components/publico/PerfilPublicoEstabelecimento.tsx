@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Star } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { salvarEstabelecimentoSelecionado } from '@/data/tenant/estabelecimentoSelecionado'
+import { capaDoEstabelecimento } from '@/data/estabelecimentos/capas'
 
 const URL_BASE = process.env.NEXT_PUBLIC_API_URL
 
@@ -83,12 +84,13 @@ export default function PerfilPublicoEstabelecimento({ slug }: { slug: string })
         estabelecimento.endereco?.cidade,
         estabelecimento.endereco?.estado,
     ].filter(Boolean).join(' - ')
+    const capa = capaDoEstabelecimento(estabelecimento)
 
     return (
         <div className="bg-zinc-950 text-zinc-100">
             <section
                 className="min-h-[420px] bg-cover bg-center"
-                style={{ backgroundImage: `linear-gradient(90deg, rgba(0,0,0,.88), rgba(0,0,0,.46)), url(${estabelecimento.imagemCapaURL || '/banners/principal.png'})` }}
+                style={{ backgroundImage: `linear-gradient(90deg, rgba(0,0,0,.82), rgba(0,0,0,.38)), url("${capa}")` }}
             >
                 <div className="container flex min-h-[420px] flex-col justify-end gap-5 py-10">
                     <span className={statusClasse(estabelecimento.statusOperacional?.status)}>

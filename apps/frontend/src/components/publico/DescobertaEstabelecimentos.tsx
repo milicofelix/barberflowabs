@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ListFilter, LocateFixed, Search, Star } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import MapaLeafletEstabelecimentos from './MapaLeafletEstabelecimentos'
+import { capaDoEstabelecimento } from '@/data/estabelecimentos/capas'
 
 const URL_BASE = process.env.NEXT_PUBLIC_API_URL
 const RAIOS = [2, 5, 10, 25]
@@ -45,14 +46,14 @@ export default function DescobertaEstabelecimentos() {
             const dados = await resposta.json()
 
             if (!resposta.ok) {
-                setErro(dados?.message ?? 'Não foi possível carregar as estabelecimentos.')
+                setErro(dados?.message ?? 'Não foi possível carregar os estabelecimentos.')
                 setEstabelecimentos([])
                 return
             }
 
             setEstabelecimentos(Array.isArray(dados) ? dados : [])
         } catch (e) {
-            setErro('Não foi possível carregar as estabelecimentos.')
+            setErro('Não foi possível carregar os estabelecimentos.')
             setEstabelecimentos([])
         } finally {
             setCarregando(false)
@@ -94,7 +95,7 @@ export default function DescobertaEstabelecimentos() {
             >
                 <div className="container flex min-h-[340px] flex-col justify-end gap-5 py-10">
                     <span className="w-fit rounded border border-yellow-400/50 px-3 py-2 text-sm font-bold text-yellow-300">
-                        Estabelecimentos aprovadas
+                        Estabelecimentos aprovados
                     </span>
                     <div>
                         <h1 className="max-w-4xl text-4xl font-black text-white md:text-5xl">Encontre um estabelecimento perto de você</h1>
@@ -152,7 +153,7 @@ export default function DescobertaEstabelecimentos() {
 
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <p className="text-sm text-zinc-400">
-                        {carregando ? 'Buscando...' : `${estabelecimentos.length} estabelecimento${estabelecimentos.length === 1 ? '' : 's'} encontrada${estabelecimentos.length === 1 ? '' : 's'}`}
+                        {carregando ? 'Buscando...' : `${estabelecimentos.length} estabelecimento${estabelecimentos.length === 1 ? '' : 's'} encontrado${estabelecimentos.length === 1 ? '' : 's'}`}
                     </p>
                     <div className="flex w-fit rounded border border-zinc-800 bg-zinc-900 p-1">
                         <button type="button" onClick={() => setModo('lista')} className={abaClasse(modo === 'lista')}>
@@ -182,7 +183,7 @@ function ListaEstabelecimentos({ estabelecimentos, carregando }: { estabelecimen
     }
 
     if (estabelecimentos.length === 0) {
-        return <p className="rounded border border-zinc-800 bg-zinc-900 p-6 text-zinc-300">Nenhum estabelecimento encontrada.</p>
+        return <p className="rounded border border-zinc-800 bg-zinc-900 p-6 text-zinc-300">Nenhum estabelecimento encontrado.</p>
     }
 
     return (
@@ -196,10 +197,16 @@ function ListaEstabelecimentos({ estabelecimentos, carregando }: { estabelecimen
 
 function EstabelecimentoCard({ estabelecimento }: { estabelecimento: any }) {
     const endereco = [estabelecimento.endereco?.bairro, estabelecimento.endereco?.cidade, estabelecimento.endereco?.estado].filter(Boolean).join(' - ')
+    const capa = capaDoEstabelecimento(estabelecimento)
 
     return (
         <article className="grid overflow-hidden rounded border border-zinc-800 bg-zinc-900 md:grid-cols-[180px_1fr]">
-            <div className="min-h-[180px] bg-cover bg-center" style={{ backgroundImage: `url(${estabelecimento.imagemCapaURL || '/banners/principal.png'})` }} />
+            <div
+                className="min-h-[180px] bg-cover bg-center"
+                role="img"
+                aria-label={`Capa de ${estabelecimento.nome}`}
+                style={{ backgroundImage: `url("${capa}")` }}
+            />
             <div className="grid gap-4 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
