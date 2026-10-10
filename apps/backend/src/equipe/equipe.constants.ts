@@ -1,0 +1,13 @@
+export const PERMISSOES_EQUIPE = [
+  'EQUIPE_GERENCIAR',
+  'ESCALAS_GERENCIAR',
+  'RECURSOS_GERENCIAR',
+  'AGENDA_GERENCIAR',
+  'FINANCEIRO_VISUALIZAR',
+  'CONFIGURACOES_GERENCIAR',
+] as const;
+
+export type PermissaoEquipe = (typeof PERMISSOES_EQUIPE)[number];
+
+export const PAPEIS_EQUIPE = ['GESTOR', 'RECEPCIONISTA', 'PROFISSIONAL'] as const;
+

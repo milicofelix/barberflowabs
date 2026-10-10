@@ -5,3 +5,10 @@ export interface SalvarRecursoDto {
   unidadeId?: number | null;
   ativo?: boolean;
 }
+
+export interface SalvarIndisponibilidadeRecursoDto {
+  inicio: string;
+  fim: string;
+  motivo?: string | null;
+  ativo?: boolean;
+}

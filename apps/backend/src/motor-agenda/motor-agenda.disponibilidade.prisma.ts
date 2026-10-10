@@ -25,9 +25,33 @@ export class MotorAgendaDisponibilidadePrisma {
     periodo: PeriodoAgenda,
     agendamentoIgnoradoId?: number,
   ) {
+    await this.verificarEscala(cliente, contexto, periodo);
     await this.verificarProfissional(cliente, contexto, periodo, agendamentoIgnoradoId);
     await this.verificarBloqueio(cliente, contexto, periodo);
     return this.alocarRecursos(cliente, contexto, periodo, agendamentoIgnoradoId);
+  }
+
+  private async verificarEscala(cliente: any, contexto: ContextoAgenda, periodo: PeriodoAgenda) {
+    const total = await cliente.escalaProfissional.count({
+      where: { barbeariaId: contexto.barbeariaId, profissionalId: contexto.profissionalId, ativo: true },
+    });
+    if (!total) return;
+    const local = this.periodoLocal(periodo);
+    const escalas = await cliente.escalaProfissional.findMany({
+      where: {
+        barbeariaId: contexto.barbeariaId,
+        profissionalId: contexto.profissionalId,
+        diaSemana: local.diaSemana,
+        ativo: true,
+        OR: contexto.unidadeId ? [{ unidadeId: contexto.unidadeId }, { unidadeId: null }] : [{ unidadeId: null }],
+      },
+    });
+    const dentroDaEscala = escalas.some((escala) => {
+      const cruzaIntervalo = escala.intervaloInicio && escala.intervaloFim
+        && local.inicio < escala.intervaloFim && local.fim > escala.intervaloInicio;
+      return local.inicio >= escala.inicio && local.fim <= escala.fim && !cruzaIntervalo;
+    });
+    if (!dentroDaEscala) throw new ConflitoAgendaError('Profissional fora da escala nesse período');
   }
 
   private async verificarProfissional(
@@ -84,6 +108,10 @@ export class MotorAgendaDisponibilidadePrisma {
           : { unidadeId: null }),
       },
       include: {
+        indisponibilidades: {
+          where: { ativo: true, inicio: { lt: periodo.fimOcupacao }, fim: { gt: periodo.inicioOcupacao } },
+          select: { id: true },
+        },
         reservas: {
           where: {
             inicio: { lt: periodo.fimOcupacao },
@@ -103,6 +131,7 @@ export class MotorAgendaDisponibilidadePrisma {
     for (const [tipo, quantidade] of necessidades) {
       let restante = quantidade;
       for (const recurso of recursos.filter((item) => item.tipo === tipo)) {
+        if (recurso.indisponibilidades.length) continue;
         const ocupado = recurso.reservas.reduce((total, reserva) => total + reserva.quantidade, 0);
         const alocado = Math.min(restante, Math.max(0, recurso.capacidade - ocupado));
         if (alocado > 0) alocacoes.push({ recursoId: recurso.id, quantidade: alocado });
@@ -112,6 +141,22 @@ export class MotorAgendaDisponibilidadePrisma {
       if (restante > 0) throw new ConflitoAgendaError(`Recurso do tipo ${tipo} indisponível`);
     }
     return alocacoes;
+  }
+
+  private periodoLocal(periodo: PeriodoAgenda) {
+    const formatar = (data: Date) => new Intl.DateTimeFormat('pt-BR', {
+      timeZone: process.env.APP_TIME_ZONE ?? 'America/Sao_Paulo',
+      weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    }).formatToParts(data);
+    const partesInicio = formatar(periodo.inicioOcupacao);
+    const partesFim = formatar(periodo.fimOcupacao);
+    const valor = (partes: Intl.DateTimeFormatPart[], tipo: string) => partes.find((item) => item.type === tipo)?.value ?? '00';
+    const dias: Record<string, number> = { dom: 0, seg: 1, ter: 2, qua: 3, qui: 4, sex: 5, sáb: 6, sab: 6 };
+    return {
+      diaSemana: dias[valor(partesInicio, 'weekday').replace('.', '').toLowerCase()],
+      inicio: `${valor(partesInicio, 'hour')}:${valor(partesInicio, 'minute')}`,
+      fim: `${valor(partesFim, 'hour')}:${valor(partesFim, 'minute')}`,
+    };
   }
 
   private agruparNecessidades(contexto: ContextoAgenda) {

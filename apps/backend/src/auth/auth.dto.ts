@@ -14,7 +14,7 @@ export type RefreshTokenDto = {
   token: string;
 };
 
-export type UsuarioRole = 'SUPER_ADMIN' | 'BARBER' | 'CUSTOMER';
+export type UsuarioRole = 'SUPER_ADMIN' | 'APP_OWNER' | 'BARBERSHOP_OWNER' | 'BARBER' | 'CUSTOMER';
 
 export type AuthTokenPayload = {
   sub: number;

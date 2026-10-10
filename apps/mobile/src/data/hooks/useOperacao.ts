@@ -1,5 +1,6 @@
 import type {
-    AgendamentoOperacional, DashboardOperacional, LancamentoFinanceiro, ProfissionalOperacional,
+    AgendamentoOperacional, DashboardOperacional, EscalaProfissional, IndisponibilidadeRecurso, LancamentoFinanceiro, MembroEquipe,
+    PermissaoEquipe, ProfissionalOperacional, RecursoOperacional, UsuarioEquipe,
 } from '../operacao/tipos'
 import useAPI, { mensagemDoErro } from './useAPI'
 import { useCallback, useEffect, useState } from 'react'
@@ -7,11 +8,15 @@ import { useCallback, useEffect, useState } from 'react'
 const hoje = () => new Date().toISOString().slice(0, 10)
 
 export default function useOperacao() {
-    const { httpGet, httpPost, httpPut } = useAPI()
+    const { httpDelete, httpGet, httpPost, httpPut } = useAPI()
     const [dashboard, setDashboard] = useState<DashboardOperacional | null>(null)
     const [agendamentos, setAgendamentos] = useState<AgendamentoOperacional[]>([])
     const [profissionais, setProfissionais] = useState<ProfissionalOperacional[]>([])
     const [lancamentos, setLancamentos] = useState<LancamentoFinanceiro[]>([])
+    const [membros, setMembros] = useState<MembroEquipe[]>([])
+    const [usuariosDisponiveis, setUsuariosDisponiveis] = useState<UsuarioEquipe[]>([])
+    const [recursos, setRecursos] = useState<RecursoOperacional[]>([])
+    const [permissoes, setPermissoes] = useState<PermissaoEquipe[]>([])
     const [data, setData] = useState(hoje())
     const [carregando, setCarregando] = useState(true)
     const [erro, setErro] = useState<string | null>(null)
@@ -19,13 +24,20 @@ export default function useOperacao() {
     const carregar = useCallback(async () => {
         try {
             setCarregando(true); setErro(null)
-            const [resumo, agenda, equipe, financeiro] = await Promise.all([
-                httpGet<DashboardOperacional>('/gestao/dashboard'),
-                httpGet<AgendamentoOperacional[]>(`/gestao/agendamentos?data=${data}`),
+            const acessos = await httpGet<PermissaoEquipe[]>('/equipe/minhas-permissoes')
+            setPermissoes(acessos)
+            const pode = (permissao: PermissaoEquipe) => acessos.includes(permissao)
+            const [resumo, agenda, equipe, financeiro, membrosEquipe, usuarios, recursosEquipe] = await Promise.all([
+                pode('AGENDA_GERENCIAR') ? httpGet<DashboardOperacional>('/gestao/dashboard') : Promise.resolve(null),
+                pode('AGENDA_GERENCIAR') ? httpGet<AgendamentoOperacional[]>(`/gestao/agendamentos?data=${data}`) : Promise.resolve([]),
                 httpGet<ProfissionalOperacional[]>('/profissionais'),
-                httpGet<LancamentoFinanceiro[]>(`/gestao/financeiro?inicio=${data}&fim=${data}`),
+                pode('FINANCEIRO_VISUALIZAR') ? httpGet<LancamentoFinanceiro[]>(`/gestao/financeiro?inicio=${data}&fim=${data}`) : Promise.resolve([]),
+                pode('EQUIPE_GERENCIAR') ? httpGet<MembroEquipe[]>('/equipe') : Promise.resolve([]),
+                pode('EQUIPE_GERENCIAR') ? httpGet<UsuarioEquipe[]>('/equipe/usuarios-disponiveis') : Promise.resolve([]),
+                pode('RECURSOS_GERENCIAR') ? httpGet<RecursoOperacional[]>('/recursos') : Promise.resolve([]),
             ])
             setDashboard(resumo); setAgendamentos(agenda); setProfissionais(equipe); setLancamentos(financeiro)
+            setMembros(membrosEquipe); setUsuariosDisponiveis(usuarios); setRecursos(recursosEquipe)
         } catch (e) { setErro(mensagemDoErro(e)) } finally { setCarregando(false) }
     }, [data, httpGet])
 
@@ -44,17 +56,27 @@ export default function useOperacao() {
     }
 
     async function alterarStatus(id: number, status: string) {
-        await executarAcao(() => httpPut(`/gestao/agendamentos/${id}/status`, { status }))
+        return executarAcao(() => httpPut(`/gestao/agendamentos/${id}/status`, { status }))
     }
     async function criarProfissional(dados: Omit<ProfissionalOperacional, 'id'>) {
-        await executarAcao(() => httpPost('/profissionais', { ...dados, avaliacao: 5, quantidadeAvaliacoes: 0 }))
+        return executarAcao(() => httpPost('/profissionais', { ...dados, avaliacao: 5, quantidadeAvaliacoes: 0 }))
     }
     async function criarLancamento(dados: Omit<LancamentoFinanceiro, 'id'>) {
-        await executarAcao(() => httpPost('/gestao/financeiro', dados))
+        return executarAcao(() => httpPost('/gestao/financeiro', dados))
     }
+    async function salvarMembro(dados: { usuarioId: number; profissionalId?: number | null; papel: string; permissoes: PermissaoEquipe[] }) {
+        return executarAcao(() => httpPost('/equipe', dados))
+    }
+    const buscarEscalas = (profissionalId: number) => httpGet<EscalaProfissional[]>(`/equipe/profissionais/${profissionalId}/escalas`)
+    const salvarEscalas = (profissionalId: number, escalas: EscalaProfissional[]) => executarAcao(() => httpPut(`/equipe/profissionais/${profissionalId}/escalas`, { escalas }))
+    const criarRecurso = (dados: Omit<RecursoOperacional, 'id'>) => executarAcao(() => httpPost('/recursos', dados))
+    const indisponibilizarRecurso = (id: number, dados: { inicio: string; fim: string; motivo?: string }) => executarAcao(() => httpPost(`/recursos/${id}/indisponibilidades`, dados))
+    const buscarIndisponibilidades = (id: number) => httpGet<IndisponibilidadeRecurso[]>(`/recursos/${id}/indisponibilidades`)
+    const removerIndisponibilidade = (recursoId: number, id: number) => executarAcao(() => httpDelete(`/recursos/${recursoId}/indisponibilidades/${id}`))
 
     return {
-        dashboard, agendamentos, profissionais, lancamentos, data, setData, carregando, erro,
-        recarregar: carregar, alterarStatus, criarProfissional, criarLancamento,
+        dashboard, agendamentos, profissionais, lancamentos, membros, usuariosDisponiveis, recursos, permissoes, data, setData, carregando, erro,
+        recarregar: carregar, alterarStatus, criarProfissional, criarLancamento, salvarMembro,
+        buscarEscalas, salvarEscalas, criarRecurso, buscarIndisponibilidades, indisponibilizarRecurso, removerIndisponibilidade,
     }
 }

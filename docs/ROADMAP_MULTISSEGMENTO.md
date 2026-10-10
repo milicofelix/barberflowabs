@@ -82,10 +82,15 @@ Status: implementacao funcional concluida em 2026-10-09; validacao manual penden
 
 ## Etapa 6 - Equipes E Capacidade Operacional
 
-- Papeis e permissoes detalhados de equipe.
-- Escalas individuais por profissional.
-- Manutencao e indisponibilidade programada de recursos.
-- Capacidade simultanea por unidade e regras de excecao.
+Status: implementacao concluida em 2026-10-10; migration e validacao manual pendentes por decisao do responsavel.
+
+- [x] Papeis e permissoes detalhados de equipe.
+- [x] Vinculo opcional entre usuario e perfil profissional.
+- [x] Escalas individuais por profissional, com intervalo e unidade opcional.
+- [x] Manutencao e indisponibilidade programada de recursos.
+- [x] Capacidade simultanea por recurso e unidade.
+- [x] Escalas e indisponibilidades conectadas ao motor universal de agenda.
+- [x] Gestao mobile de membros, escalas, recursos e bloqueios de manutencao.
 
 ## Etapas Posteriores
 

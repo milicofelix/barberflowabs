@@ -9,6 +9,8 @@ import { useState } from 'react'
 import { RefreshControl, ScrollView, StyleSheet, Text, TextInput } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
+import { EscalasEquipe, MembrosEquipe } from '@/src/components/operacao/GestaoEquipe'
+import GestaoRecursos from '@/src/components/operacao/GestaoRecursos'
 
 export default function Operacao() {
     const { cores } = useTema()
@@ -17,13 +19,14 @@ export default function Operacao() {
     return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}><ScrollView contentContainerStyle={styles.conteudo}
         refreshControl={<RefreshControl refreshing={dados.carregando} onRefresh={dados.recarregar} tintColor="#E7B84B" />}>
         <Text style={styles.sobretitulo}>OPERAÇÃO DO ESTABELECIMENTO</Text><Text style={[styles.titulo, { color: cores.texto }]}>Gestão diária</Text>
-        <SeletorOperacao atual={secao} selecionar={setSecao} />
+        <SeletorOperacao atual={secao} selecionar={setSecao} permissoes={dados.permissoes} />
         {secao === 'AGENDA' ? <TextInput style={[styles.data, { backgroundColor: cores.campo, color: cores.campoTexto, borderColor: cores.borda }]} value={dados.data} onChangeText={dados.setData} placeholder="AAAA-MM-DD" placeholderTextColor={cores.textoSecundario} /> : null}
         {dados.erro ? <EstadoErro mensagem={dados.erro} tentarNovamente={dados.recarregar} /> : null}
         {dados.carregando && !dados.dashboard ? <Carregando mensagem="Carregando operação..." /> : null}
         {!dados.carregando && secao === 'RESUMO' ? <ResumoOperacao dados={dados.dashboard} /> : null}
         {!dados.carregando && secao === 'AGENDA' ? (dados.agendamentos.length ? <AgendaOperacao itens={dados.agendamentos} alterarStatus={dados.alterarStatus} /> : <EstadoVazio titulo="Agenda livre nesta data" />) : null}
-        {!dados.carregando && secao === 'EQUIPE' ? <EquipeOperacao itens={dados.profissionais} criar={dados.criarProfissional} /> : null}
+        {!dados.carregando && secao === 'EQUIPE' ? <><EquipeOperacao itens={dados.profissionais} criar={dados.criarProfissional} /><EscalasEquipe profissionais={dados.profissionais} buscar={dados.buscarEscalas} salvar={dados.salvarEscalas} /><MembrosEquipe membros={dados.membros} usuarios={dados.usuariosDisponiveis} profissionais={dados.profissionais} salvar={dados.salvarMembro} /></> : null}
+        {!dados.carregando && secao === 'CAPACIDADE' ? <GestaoRecursos itens={dados.recursos} criar={dados.criarRecurso} buscarIndisponibilidades={dados.buscarIndisponibilidades} indisponibilizar={dados.indisponibilizarRecurso} removerIndisponibilidade={dados.removerIndisponibilidade} /> : null}
         {!dados.carregando && secao === 'FINANCEIRO' ? <FinanceiroOperacao itens={dados.lancamentos} criar={dados.criarLancamento} data={dados.data} /> : null}
     </ScrollView></SafeAreaView>
 }

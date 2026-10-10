@@ -1,3 +1,4 @@
+type PapelUsuario = 'SUPER_ADMIN' | 'APP_OWNER' | 'BARBERSHOP_OWNER' | 'BARBER' | 'CUSTOMER';
 interface Usuario {
     id?: number;
     barbeariaId?: number;
@@ -7,8 +8,8 @@ interface Usuario {
     telefone?: string;
     dataNascimento?: string | null;
     barbeiro?: boolean;
-    papel?: 'SUPER_ADMIN' | 'BARBER' | 'CUSTOMER';
-    role?: 'SUPER_ADMIN' | 'BARBER' | 'CUSTOMER';
+    papel?: PapelUsuario;
+    role?: PapelUsuario;
 }
 
 interface Profissional {

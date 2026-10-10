@@ -74,3 +74,20 @@ O endpoint de ocupacao agora formata os horarios explicitamente no fuso `America
 - os nomes das abas continuam disponiveis para leitores de tela, mas nao ocupam espaco visual.
 
 No modo claro, valide especialmente as descricoes dos profissionais, os dias de funcionamento, os filtros do marketplace, o resumo do agendamento e os agendamentos anteriores.
+
+## Equipes, Escalas, Recursos E Permissoes
+
+A operacao mobile agora permite:
+
+- vincular usuarios existentes ao estabelecimento como gestor, recepcionista ou profissional;
+- conceder permissoes separadas para equipe, escalas, recursos, agenda, financeiro e configuracoes;
+- associar opcionalmente o membro ao seu perfil profissional;
+- configurar os dias e o periodo da escala individual de cada profissional;
+- cadastrar recursos e sua capacidade simultanea;
+- programar e remover indisponibilidades de recursos por manutencao ou outro motivo.
+
+No backend, as permissoes passam a proteger as rotas operacionais. Donos do estabelecimento continuam com acesso integral e contas antigas com indicador `barbeiro` conservam o acesso enquanto ainda nao possuem um vinculo detalhado. Depois que um vinculo e criado, suas permissoes passam a prevalecer.
+
+O motor de agenda rejeita periodos fora da escala individual e ignora recursos indisponiveis ao calcular a capacidade. Se nenhuma escala individual existir, permanece valida a configuracao geral do estabelecimento para preservar compatibilidade.
+
+A migration `20261010010000_add_team_capacity_management` foi criada, mas nao aplicada. A validacao manual das Etapas 1 a 7 foi pulada conforme solicitado, e nenhum teste ou build foi executado.

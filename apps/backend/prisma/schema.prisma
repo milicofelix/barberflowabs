@@ -29,6 +29,7 @@ model Usuario {
   denunciasRevisadas DenunciaPerfilPublico[] @relation("DenunciaPerfilRevisor")
   barbeariasCliente ClienteBarbearia[]
   reagendamentosRealizados HistoricoReagendamento[] @relation("HistoricoReagendamentoAutor")
+  vinculosEquipe MembroEquipe[]
 
   @@index([barbeariaId])
   @@map("usuarios")
@@ -49,6 +50,8 @@ model Profissional {
   avaliacoes           Avaliacao[]
   especialidades       ProfissionalEspecialidade[]
   servicosHabilitados  ProfissionalServico[]
+  vinculoEquipe        MembroEquipe?
+  escalas              EscalaProfissional[]
 
   @@unique([barbeariaId, nome])
   @@index([barbeariaId])
@@ -175,6 +178,9 @@ model Barbearia {
   especialidadesServicos      ServicoEspecialidade[]
   profissionaisServicos       ProfissionalServico[]
   recursos                     Recurso[]
+  membrosEquipe                MembroEquipe[]
+  escalasProfissionais         EscalaProfissional[]
+  indisponibilidadesRecursos   IndisponibilidadeRecurso[]
 
   @@map("barbearias")
 }
@@ -307,11 +313,72 @@ model Recurso {
   barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
   unidade     Unidade?  @relation(fields: [unidadeId], references: [id])
   reservas    AgendamentoRecurso[]
+  indisponibilidades IndisponibilidadeRecurso[]
 
   @@unique([barbeariaId, nome])
   @@index([barbeariaId, tipo, ativo])
   @@index([unidadeId, tipo, ativo])
   @@map("recursos")
+}
+
+model MembroEquipe {
+  id             Int           @id @default(autoincrement())
+  barbeariaId    Int
+  usuarioId      Int
+  profissionalId Int?          @unique
+  papel          String        @default("PROFISSIONAL")
+  permissoes     Json
+  ativo          Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  barbearia      Barbearia     @relation(fields: [barbeariaId], references: [id])
+  usuario        Usuario       @relation(fields: [usuarioId], references: [id])
+  profissional   Profissional? @relation(fields: [profissionalId], references: [id])
+
+  @@unique([barbeariaId, usuarioId])
+  @@index([barbeariaId, ativo])
+  @@map("membros_equipe")
+}
+
+model EscalaProfissional {
+  id              Int          @id @default(autoincrement())
+  barbeariaId     Int
+  profissionalId Int
+  unidadeId       Int?
+  diaSemana       Int
+  inicio          String       @db.VarChar(5)
+  fim             String       @db.VarChar(5)
+  intervaloInicio String?      @db.VarChar(5)
+  intervaloFim    String?      @db.VarChar(5)
+  ativo           Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  barbearia       Barbearia    @relation(fields: [barbeariaId], references: [id])
+  profissional    Profissional @relation(fields: [profissionalId], references: [id])
+  unidade         Unidade?     @relation(fields: [unidadeId], references: [id])
+
+  @@index([barbeariaId, diaSemana, ativo])
+  @@index([profissionalId, diaSemana, ativo])
+  @@index([unidadeId])
+  @@map("escalas_profissionais")
+}
+
+model IndisponibilidadeRecurso {
+  id          Int      @id @default(autoincrement())
+  barbeariaId Int
+  recursoId   Int
+  inicio      DateTime
+  fim         DateTime
+  motivo      String?  @db.Text
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
+  recurso     Recurso   @relation(fields: [recursoId], references: [id])
+
+  @@index([barbeariaId, inicio, fim])
+  @@index([recursoId, inicio, fim, ativo])
+  @@map("indisponibilidades_recursos")
 }
 
 model ServicoRecurso {
@@ -443,6 +510,7 @@ model Unidade {
   bloqueiosAgenda       BloqueioAgenda[]
   recursos              Recurso[]
   agendamentos          Agendamento[]
+  escalasProfissionais  EscalaProfissional[]
 
   @@unique([barbeariaId, nome])
   @@index([barbeariaId])

@@ -1,11 +1,13 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
-import { SalvarRecursoDto } from './recurso.dto';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { EquipePolicy } from 'src/equipe/equipe.policy';
+import { SalvarIndisponibilidadeRecursoDto, SalvarRecursoDto } from './recurso.dto';
 
 @Injectable()
 export class RecursoPolicy {
+  constructor(private readonly equipePolicy: EquipePolicy) {}
+
   validarGestor(usuario: any) {
-    const gestor = usuario?.barbeariaId && (usuario.barbeiro || usuario.papel === 'BARBERSHOP_OWNER');
-    if (!gestor) throw new ForbiddenException('Usuário sem permissão para gerenciar recursos');
+    return this.equipePolicy.validarPermissao(usuario, 'RECURSOS_GERENCIAR');
   }
 
   validar(dados: SalvarRecursoDto) {
@@ -17,5 +19,14 @@ export class RecursoPolicy {
     if (dados.unidadeId && (!Number.isInteger(Number(dados.unidadeId)) || Number(dados.unidadeId) <= 0)) {
       throw new BadRequestException('Unidade inválida');
     }
+  }
+
+  validarIndisponibilidade(dados: SalvarIndisponibilidadeRecursoDto) {
+    const inicio = new Date(dados?.inicio);
+    const fim = new Date(dados?.fim);
+    if (Number.isNaN(inicio.getTime()) || Number.isNaN(fim.getTime())) {
+      throw new BadRequestException('Período de indisponibilidade inválido');
+    }
+    if (inicio >= fim) throw new BadRequestException('Início deve ser anterior ao fim');
   }
 }

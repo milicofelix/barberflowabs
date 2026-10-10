@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, ForbiddenException, Get, Param, Put, Query, Body, Req, Post } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Param, Put, Query, Body, Req, Post } from '@nestjs/common';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import { Usuario } from '@barbabrutal/core';
 import {
@@ -13,6 +13,7 @@ import { TenantService } from 'src/shared/tenant.service';
 import { MotorAgendaService } from 'src/motor-agenda/motor-agenda.service';
 import { ConsultarDisponibilidadeDto } from 'src/motor-agenda/motor-agenda.dto';
 import { ConflitoAgendaError } from 'src/motor-agenda/conflito-agenda.error';
+import { EquipePolicy } from 'src/equipe/equipe.policy';
 
 @Controller('agenda')
 export class AgendaController {
@@ -20,6 +21,7 @@ export class AgendaController {
     private readonly repo: AgendaPrisma,
     private readonly tenant: TenantService,
     private readonly motor: MotorAgendaService,
+    private readonly equipePolicy: EquipePolicy,
   ) {}
 
   @Post('disponibilidade')
@@ -40,17 +42,17 @@ export class AgendaController {
   }
 
   @Get('configuracao/horarios')
-  buscarConfiguracao(@UsuarioLogado() usuario: Usuario) {
-    this.validarPermissaoConfiguracao(usuario);
+  async buscarConfiguracao(@UsuarioLogado() usuario: Usuario) {
+    await this.validarPermissaoConfiguracao(usuario);
     return this.repo.buscarConfiguracao(usuario.barbeariaId);
   }
 
   @Put('configuracao/horarios')
-  salvarConfiguracao(
+  async salvarConfiguracao(
     @Body() dados: ConfiguracaoAgendaDto,
     @UsuarioLogado() usuario: Usuario,
   ) {
-    this.validarPermissaoConfiguracao(usuario);
+    await this.validarPermissaoConfiguracao(usuario);
     this.validarConfiguracao(dados);
     return this.repo.salvarConfiguracao(usuario.barbeariaId, dados);
   }
@@ -84,9 +86,7 @@ export class AgendaController {
   }
 
   private validarPermissaoConfiguracao(usuario: Usuario) {
-    if (!usuario.barbeiro) {
-      throw new ForbiddenException('Apenas barbeiros podem alterar configurações da agenda');
-    }
+    return this.equipePolicy.validarPermissao(usuario, 'CONFIGURACOES_GERENCIAR');
   }
 
   private async resolverBarbeariaAgenda(req: any, usuario: Usuario) {

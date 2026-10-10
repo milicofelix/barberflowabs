@@ -5,9 +5,10 @@ import { DbModule } from 'src/db/db.module';
 import { RecursoController } from './recurso.controller';
 import { RecursoPolicy } from './recurso.policy';
 import { RecursoPrisma } from './recurso.prisma';
+import { EquipeModule } from 'src/equipe/equipe.module';
 
 @Module({
-  imports: [AuthModule, DbModule],
+  imports: [AuthModule, DbModule, EquipeModule],
   controllers: [RecursoController],
   providers: [RecursoPrisma, RecursoPolicy],
 })

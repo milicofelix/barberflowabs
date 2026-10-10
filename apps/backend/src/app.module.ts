@@ -12,6 +12,7 @@ import { SaasModule } from './saas/saas.module';
 import { PublicoModule } from './publico/publico.module';
 import { CatalogoModule } from './catalogo/catalogo.module';
 import { RecursoModule } from './recurso/recurso.module';
+import { EquipeModule } from './equipe/equipe.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { RecursoModule } from './recurso/recurso.module';
     PublicoModule,
     CatalogoModule,
     RecursoModule,
+    EquipeModule,
   ],
   controllers: [AppController],
 })

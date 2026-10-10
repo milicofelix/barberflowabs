@@ -45,8 +45,8 @@ export class UsuarioPrisma implements RepositorioUsuario {
   }
 
   private normalizarPapel(papel: string | null | undefined, barbeiro: boolean): Usuario['papel'] {
-    if (papel === 'SUPER_ADMIN' || papel === 'BARBER' || papel === 'CUSTOMER') {
-      return papel;
+    if (['SUPER_ADMIN', 'APP_OWNER', 'BARBERSHOP_OWNER', 'BARBER', 'CUSTOMER'].includes(String(papel))) {
+      return papel as Usuario['papel'];
     }
 
     return barbeiro ? 'BARBER' : 'CUSTOMER';

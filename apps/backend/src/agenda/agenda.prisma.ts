@@ -16,7 +16,7 @@ export class AgendaPrisma {
     const dataReferencia = this.criarDataReferencia(params.data);
     const diaSemana = dataReferencia.getUTCDay();
 
-    const [barbearia, horariosFuncionamento] = await Promise.all([
+    const [barbearia, horariosFuncionamento, escalasProfissional] = await Promise.all([
       this.prisma.barbearia.findUnique({
         where: { id: params.barbeariaId },
         select: { antecedenciaMinutos: true },
@@ -30,9 +30,29 @@ export class AgendaPrisma {
         },
         orderBy: { inicio: 'asc' },
       }),
+      params.profissionalId
+        ? (this.prisma as any).escalaProfissional.findMany({
+          where: {
+            barbeariaId: params.barbeariaId,
+            profissionalId: params.profissionalId,
+            diaSemana,
+            ativo: true,
+            OR: params.unidadeId ? [{ unidadeId: params.unidadeId }, { unidadeId: null }] : [{ unidadeId: null }],
+          },
+          orderBy: { inicio: 'asc' },
+        })
+        : Promise.resolve([]),
     ]);
 
-    if (horariosFuncionamento.length === 0) {
+    const possuiEscalaConfigurada = params.profissionalId
+      ? await (this.prisma as any).escalaProfissional.count({
+        where: { barbeariaId: params.barbeariaId, profissionalId: params.profissionalId, ativo: true },
+      }) > 0
+      : false;
+    const periodos = possuiEscalaConfigurada ? escalasProfissional : horariosFuncionamento;
+
+    if (periodos.length === 0) {
+      if (possuiEscalaConfigurada) return { manha: [], tardeNoite: [] };
       return this.removerHorariosSemAntecedencia(
         AgendaUtils.horariosDoDia(),
         params.data,
@@ -40,7 +60,7 @@ export class AgendaPrisma {
       );
     }
 
-    const horarios = horariosFuncionamento.flatMap((horario) =>
+    const horarios = periodos.flatMap((horario) =>
       this.gerarSlots({
         inicio: horario.inicio,
         fim: horario.fim,

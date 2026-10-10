@@ -6,9 +6,10 @@ import { TenantService } from 'src/shared/tenant.service';
 import { AuthModule } from 'src/auth/auth.module';
 import { AuthMiddleware } from 'src/auth/auth.middleware';
 import { SaasModule } from 'src/saas/saas.module';
+import { EquipeModule } from 'src/equipe/equipe.module';
 
 @Module({
-  imports: [AuthModule, DbModule, SaasModule],
+  imports: [AuthModule, DbModule, SaasModule, EquipeModule],
   controllers: [ProfissionalController],
   providers: [ProfissionalPrisma, TenantService],
 })

@@ -29,6 +29,8 @@ import {
   SalvarClienteDto,
 } from './gestao.dto';
 import { GestaoPrisma } from './gestao.prisma';
+import { EquipePolicy } from 'src/equipe/equipe.policy';
+import { PermissaoEquipe } from 'src/equipe/equipe.constants';
 
 const STATUS_AGENDAMENTO = ['AGENDADO', 'CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW'];
 const TIPOS_LANCAMENTO = ['RECEITA', 'DESPESA'];
@@ -41,23 +43,24 @@ export class GestaoController {
   constructor(
     private readonly repo: GestaoPrisma,
     private readonly cripto: BcryptProvider,
+    private readonly equipePolicy: EquipePolicy,
   ) {}
 
   @Get('dashboard')
-  dashboard(@UsuarioLogado() usuario: Usuario) {
-    this.validarPermissao(usuario);
+  async dashboard(@UsuarioLogado() usuario: Usuario) {
+    await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
     return this.repo.dashboard(usuario.barbeariaId);
   }
 
   @Get('clientes')
-  listarClientes(@UsuarioLogado() usuario: Usuario) {
-    this.validarPermissao(usuario);
+  async listarClientes(@UsuarioLogado() usuario: Usuario) {
+    await this.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
     return this.repo.listarClientes(usuario.barbeariaId);
   }
 
   @Post('clientes')
   async criarCliente(@Body() dados: SalvarClienteDto, @UsuarioLogado() usuario: Usuario) {
-    this.validarPermissao(usuario);
+    await this.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
     this.validarCliente(dados, true);
     return this.repo.criarCliente(usuario.barbeariaId, {
       ...dados,
@@ -71,7 +74,7 @@ export class GestaoController {
     @Body() dados: SalvarClienteDto,
     @UsuarioLogado() usuario: Usuario,
   ) {
-    this.validarPermissao(usuario);
+    await this.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
     validarNumeroInteiroPositivo(id, 'Cliente');
     this.validarCliente(dados, false);
 
@@ -92,7 +95,7 @@ export class GestaoController {
 
   @Get('clientes/:id/historico')
   async historicoCliente(@Param('id') id: string, @UsuarioLogado() usuario: Usuario) {
-    this.validarPermissao(usuario);
+    await this.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
     validarNumeroInteiroPositivo(id, 'Cliente');
     const cliente = await this.repo.historicoCliente(Number(id), usuario.barbeariaId);
     if (!cliente) throw new NotFoundException('Cliente não encontrado');
@@ -101,15 +104,15 @@ export class GestaoController {
 
   @Delete('clientes/:id')
   async excluirCliente(@Param('id') id: string, @UsuarioLogado() usuario: Usuario) {
-    this.validarPermissao(usuario);
+    await this.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
     validarNumeroInteiroPositivo(id, 'Cliente');
     const cliente = await this.repo.excluirCliente(Number(id), usuario.barbeariaId);
     if (!cliente) throw new NotFoundException('Cliente não encontrado');
   }
 
   @Get('agendamentos')
-  listarAgendamentos(@Query('data') data: string, @UsuarioLogado() usuario: Usuario) {
-    this.validarPermissao(usuario);
+  async listarAgendamentos(@Query('data') data: string, @UsuarioLogado() usuario: Usuario) {
+    await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
     validarData(data);
     return this.repo.listarAgendamentos(usuario.barbeariaId, data);
   }
@@ -120,7 +123,7 @@ export class GestaoController {
     @Body() dados: AtualizarStatusAgendamentoDto,
     @UsuarioLogado() usuario: Usuario,
   ) {
-    this.validarPermissao(usuario);
+    await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
     validarNumeroInteiroPositivo(id, 'Agendamento');
     if (!STATUS_AGENDAMENTO.includes(dados?.status)) {
       throw new BadRequestException('Status inválido');
@@ -136,50 +139,50 @@ export class GestaoController {
   }
 
   @Get('financeiro')
-  listarFinanceiro(
+  async listarFinanceiro(
     @Query('inicio') inicio: string,
     @Query('fim') fim: string,
     @UsuarioLogado() usuario: Usuario,
   ) {
-    this.validarPermissao(usuario);
+    await this.validarPermissao(usuario, 'FINANCEIRO_VISUALIZAR');
     validarData(inicio, 'Início');
     validarData(fim, 'Fim');
     return this.repo.listarFinanceiro(usuario.barbeariaId, inicio, fim);
   }
 
   @Post('financeiro')
-  criarLancamento(
+  async criarLancamento(
     @Body() dados: CriarLancamentoFinanceiroDto,
     @UsuarioLogado() usuario: Usuario,
   ) {
-    this.validarPermissao(usuario);
+    await this.validarPermissao(usuario, 'FINANCEIRO_VISUALIZAR');
     this.validarLancamento(dados);
     return this.repo.criarLancamento(usuario.barbeariaId, dados);
   }
 
   @Delete('financeiro/:id')
   async excluirLancamento(@Param('id') id: string, @UsuarioLogado() usuario: Usuario) {
-    this.validarPermissao(usuario);
+    await this.validarPermissao(usuario, 'FINANCEIRO_VISUALIZAR');
     validarNumeroInteiroPositivo(id, 'Lançamento');
     const lancamento = await this.repo.excluirLancamento(Number(id), usuario.barbeariaId);
     if (!lancamento) throw new NotFoundException('Lançamento não encontrado');
   }
 
   @Get('relatorios')
-  relatorios(
+  async relatorios(
     @Query('inicio') inicio: string,
     @Query('fim') fim: string,
     @UsuarioLogado() usuario: Usuario,
   ) {
-    this.validarPermissao(usuario);
+    await this.validarPermissao(usuario, 'FINANCEIRO_VISUALIZAR');
     validarData(inicio, 'Início');
     validarData(fim, 'Fim');
     return this.repo.relatorios(usuario.barbeariaId, inicio, fim);
   }
 
   @Get('relacionamento')
-  relacionamento(@UsuarioLogado() usuario: Usuario) {
-    this.validarPermissao(usuario);
+  async relacionamento(@UsuarioLogado() usuario: Usuario) {
+    await this.validarPermissao(usuario, 'CONFIGURACOES_GERENCIAR');
     return this.repo.relacionamento(usuario.barbeariaId);
   }
 
@@ -188,7 +191,7 @@ export class GestaoController {
     @Body() dados: CriarLembreteRelacionamentoDto,
     @UsuarioLogado() usuario: Usuario,
   ) {
-    this.validarPermissao(usuario);
+    await this.validarPermissao(usuario, 'CONFIGURACOES_GERENCIAR');
     this.validarLembrete(dados);
     const lembrete = await this.repo.criarLembrete(usuario.barbeariaId, dados);
     if (!lembrete) throw new NotFoundException('Cliente ou agendamento não encontrado');
@@ -201,7 +204,7 @@ export class GestaoController {
     @Body() dados: AtualizarStatusLembreteDto,
     @UsuarioLogado() usuario: Usuario,
   ) {
-    this.validarPermissao(usuario);
+    await this.validarPermissao(usuario, 'CONFIGURACOES_GERENCIAR');
     validarNumeroInteiroPositivo(id, 'Lembrete');
     if (!STATUS_LEMBRETE.includes(dados?.status)) {
       throw new BadRequestException('Status do lembrete inválido');
@@ -216,10 +219,8 @@ export class GestaoController {
     return lembrete;
   }
 
-  private validarPermissao(usuario: Usuario) {
-    if (!usuario?.barbeiro) {
-      throw new ForbiddenException('Apenas barbeiros podem acessar a gestão');
-    }
+  private validarPermissao(usuario: Usuario, permissao: PermissaoEquipe) {
+    return this.equipePolicy.validarPermissao(usuario, permissao);
   }
 
   private validarLancamento(dados: CriarLancamentoFinanceiroDto) {

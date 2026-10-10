@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
-import { SalvarRecursoDto } from './recurso.dto';
+import { SalvarIndisponibilidadeRecursoDto, SalvarRecursoDto } from './recurso.dto';
 
 @Injectable()
 export class RecursoPrisma {
@@ -35,6 +35,26 @@ export class RecursoPrisma {
       return (this.prisma as any).recurso.update({ where: { id }, data: { ativo: false } });
     }
     return (this.prisma as any).recurso.delete({ where: { id } });
+  }
+
+  async listarIndisponibilidades(recursoId: number, barbeariaId: number) {
+    await this.validarExistencia(recursoId, barbeariaId);
+    return (this.prisma as any).indisponibilidadeRecurso.findMany({
+      where: { recursoId, barbeariaId, ativo: true }, orderBy: { inicio: 'asc' },
+    });
+  }
+
+  async criarIndisponibilidade(recursoId: number, barbeariaId: number, dados: SalvarIndisponibilidadeRecursoDto) {
+    await this.validarExistencia(recursoId, barbeariaId);
+    return (this.prisma as any).indisponibilidadeRecurso.create({
+      data: { recursoId, barbeariaId, inicio: new Date(dados.inicio), fim: new Date(dados.fim), motivo: dados.motivo?.trim() || null, ativo: dados.ativo ?? true },
+    });
+  }
+
+  async removerIndisponibilidade(recursoId: number, id: number, barbeariaId: number) {
+    const item = await (this.prisma as any).indisponibilidadeRecurso.findFirst({ where: { id, recursoId, barbeariaId } });
+    if (!item) throw new NotFoundException('Indisponibilidade não encontrada');
+    return (this.prisma as any).indisponibilidadeRecurso.update({ where: { id }, data: { ativo: false } });
   }
 
   private dadosPersistencia(barbeariaId: number, dados: SalvarRecursoDto) {
