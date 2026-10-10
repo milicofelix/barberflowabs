@@ -70,3 +70,7 @@ O modo inicial e manual. A contratacao e configuracao de Mercado Pago, Asaas ou 
 O arquivo `rollback.sql` ao lado da migration existe apenas para recuperacao manual. Ele remove os dados financeiros da etapa e deve ser usado somente depois de backup e validacao explicita.
 
 Nenhuma migration, geracao, validacao, teste ou build foi executado automaticamente nesta etapa.
+
+## Paridade Mobile
+
+A implementacao mobile completa foi separada em fases no documento `docs/ETAPA_9_PARIDADE_FINANCEIRA_MOBILE.md`. Enquanto essas fases nao forem concluidas, o mobile permanece com o financeiro operacional legado e nao possui paridade funcional com a central web.

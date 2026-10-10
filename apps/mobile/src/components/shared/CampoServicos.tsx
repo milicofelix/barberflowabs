@@ -1,7 +1,7 @@
 import { Image, StyleSheet, Text, Pressable, View } from 'react-native'
 import { Servico } from '@uniflowabs/core'
 import useServicos from '@/src/data/hooks/useServicos'
-import imagens from '@/src/data/constants/imagens'
+import { imagemDoServico } from '@/src/data/constants/imagens'
 import Carregando from './Carregando'
 import EstadoErro from './EstadoErro'
 import EstadoVazio from './EstadoVazio'
@@ -31,7 +31,8 @@ function Opcao(props: { servico: Servico; onClick: (s: Servico) => void; selecio
                 <View>
                     <Image
                         style={styles.imagemServico}
-                        source={imagens.servicos.find((s) => s.id === props.servico.id)?.imagem}
+                        source={imagemDoServico(props.servico.nome, props.servico.imagemURL)}
+                        resizeMode="cover"
                     />
                     <Text style={[styles.textoServico, { color: props.selecionado ? '#FFFFFF' : cores.texto }]}>{props.servico.nome}</Text>
                 </View>

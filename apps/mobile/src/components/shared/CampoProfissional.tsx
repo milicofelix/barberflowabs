@@ -1,7 +1,7 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
 import { Profissional } from '@uniflowabs/core'
 import useProfissionais from '@/src/data/hooks/useProfissionais'
-import imagens from '@/src/data/constants/imagens'
+import { imagemDoProfissional } from '@/src/data/constants/imagens'
 import Carregando from './Carregando'
 import EstadoErro from './EstadoErro'
 import EstadoVazio from './EstadoVazio'
@@ -37,7 +37,8 @@ export default function CampoProfissional(props: CampoProfissionalProps) {
                     <View style={{ alignItems: 'center' }}>
                         <Image
                             style={{ width: 100, height: 100, borderRadius: 6 }}
-                            source={imagens.profissionais.find((pr) => pr.id === p.id)?.imagem}
+                            source={imagemDoProfissional(p.imagemURL)}
+                            resizeMode="cover"
                         />
                         <Text style={{ color: value?.id === p?.id ? '#FFFFFF' : cores.texto, paddingVertical: 5 }}>
                             {p.nome.split(' ')[0]}

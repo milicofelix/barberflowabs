@@ -117,6 +117,7 @@ Status: implementacao funcional concluida em 2026-10-10; migration, Prisma Clien
 - [x] Contrato idempotente para eventos de gateway.
 - [x] Relatorios, conciliacao e auditoria financeira.
 - [x] Central financeira web e permissoes especificas.
+- [ ] Executar as Fases 0 a 7 da paridade financeira mobile documentadas em `docs/ETAPA_9_PARIDADE_FINANCEIRA_MOBILE.md`.
 - [ ] Selecionar, contratar e ativar um gateway externo em homologacao.
 
 ## Etapas Posteriores
