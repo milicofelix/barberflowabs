@@ -294,7 +294,7 @@ Regenera o cliente a partir do `schema.prisma`. Execute depois de migrations que
 docker compose exec -T app sh -lc 'cd apps/backend && npx prisma db seed'
 ```
 
-Cria ou atualiza os dados de demonstracao definidos em `apps/backend/prisma/seed.ts`. Mesmo usando operacoes idempotentes, o seed altera dados e deve ser revisado antes da execucao.
+Cria ou atualiza os dados de demonstracao definidos em `apps/backend/prisma/seed.ts`. Isso inclui os 12 estabelecimentos multissegmento do Tatuape usados para validar os seis marcadores do marketplace. Mesmo usando operacoes idempotentes, o seed altera dados e deve ser revisado antes da execucao.
 
 ### Sequencia apos migrations
 

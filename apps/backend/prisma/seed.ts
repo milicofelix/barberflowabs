@@ -1,5 +1,6 @@
 import { profissionais, servicos, Usuario } from '@barbabrutal/core';
 import { PrismaClient } from '@prisma/client';
+import { seedMarketplaceTatuape } from './seeds/marketplace-tatuape.seed';
 
 const prisma = new PrismaClient();
 const BARBEARIA_PADRAO_ID = 1;
@@ -327,6 +328,7 @@ async function seed() {
   });
 
   await seedBarbeariasZonaLeste();
+  await seedMarketplaceTatuape(prisma);
 }
 
 async function seedPlanosAssinatura() {
