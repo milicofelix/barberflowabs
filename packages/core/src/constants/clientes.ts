@@ -4,14 +4,14 @@ const clientes = [
         imagemURL: '/clientes/cliente-1.jpg',
         nome: 'Ricardo Santos',
         testemunho:
-            'Consegui encontrar uma barbearia perto de casa, comparar horários disponíveis e agendar em poucos minutos. O atendimento foi pontual e bem organizado.',
+            'Consegui encontrar um estabelecimento perto de casa, comparar horários disponíveis e agendar em poucos minutos. O atendimento foi pontual e bem organizado.',
     },
     {
         id: 2,
         imagemURL: '/clientes/cliente-2.jpg',
         nome: 'Tiago Oliveira',
         testemunho:
-            'Gostei de ver os serviços, preços e profissionais antes de marcar. Ficou mais fácil escolher a barbearia certa para o que eu precisava.',
+            'Gostei de ver os serviços, preços e profissionais antes de marcar. Ficou mais fácil escolher o estabelecimento certo para o que eu precisava.',
     },
     {
         id: 3,

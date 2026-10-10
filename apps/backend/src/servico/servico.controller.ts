@@ -2,7 +2,7 @@ import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get,
 import { ServicoPrisma } from './servico.prisma';
 import { TenantService } from 'src/shared/tenant.service';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
-import { Usuario } from '@barbabrutal/core';
+import { Usuario } from '@uniflowabs/core';
 import { validarNumeroInteiroPositivo, validarTextoObrigatorio } from 'src/shared/validacao';
 import { CriarServicoDto } from './servico.dto';
 import { PlanoLimitesService } from 'src/saas/plano-limites.service';
@@ -17,17 +17,17 @@ export class ServicoController {
 
   @Get()
   async obterServicos(@Req() req: any) {
-    const barbeariaId = await this.tenant.resolverBarbeariaId(req);
-    return this.repo.buscarTodos(barbeariaId);
+    const estabelecimentoId = await this.tenant.resolverEstabelecimentoId(req);
+    return this.repo.buscarTodos(estabelecimentoId);
   }
 
   @Post()
   async criarServico(@Body() dados: CriarServicoDto, @UsuarioLogado() usuario: Usuario) {
     this.validarPermissao(usuario);
     this.validarServico(dados);
-    await this.limites.validarBarbeariaOperacional(usuario.barbeariaId);
-    await this.limites.validarNovoServico(usuario.barbeariaId);
-    return this.repo.criar(usuario.barbeariaId, dados);
+    await this.limites.validarEstabelecimentoOperacional(usuario.estabelecimentoId);
+    await this.limites.validarNovoServico(usuario.estabelecimentoId);
+    return this.repo.criar(usuario.estabelecimentoId, dados);
   }
 
   @Put(':id')
@@ -39,21 +39,21 @@ export class ServicoController {
     this.validarPermissao(usuario);
     validarNumeroInteiroPositivo(id, 'Serviço');
     this.validarServico(dados);
-    await this.limites.validarBarbeariaOperacional(usuario.barbeariaId);
-    return this.repo.atualizar(Number(id), usuario.barbeariaId, dados);
+    await this.limites.validarEstabelecimentoOperacional(usuario.estabelecimentoId);
+    return this.repo.atualizar(Number(id), usuario.estabelecimentoId, dados);
   }
 
   @Delete(':id')
   async excluirServico(@Param('id') id: string, @UsuarioLogado() usuario: Usuario) {
     this.validarPermissao(usuario);
     validarNumeroInteiroPositivo(id, 'Serviço');
-    await this.limites.validarBarbeariaOperacional(usuario.barbeariaId);
-    return this.repo.excluir(Number(id), usuario.barbeariaId);
+    await this.limites.validarEstabelecimentoOperacional(usuario.estabelecimentoId);
+    return this.repo.excluir(Number(id), usuario.estabelecimentoId);
   }
 
   private validarPermissao(usuario: Usuario) {
-    if (!usuario?.barbeiro) {
-      throw new ForbiddenException('Apenas barbeiros podem gerenciar serviços');
+    if (!usuario?.membroEstabelecimento) {
+      throw new ForbiddenException('Apenas membroEstabelecimentos podem gerenciar serviços');
     }
   }
 

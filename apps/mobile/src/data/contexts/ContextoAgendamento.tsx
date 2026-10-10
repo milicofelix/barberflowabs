@@ -1,8 +1,8 @@
-import { AgendaUtils, DateUtils, Horarios, Profissional, Servico } from '@barbabrutal/core'
+import { AgendaUtils, DateUtils, Horarios, Profissional, Servico } from '@uniflowabs/core'
 import { createContext, useCallback, useEffect, useState } from 'react'
 import useAPI from '../hooks/useAPI'
 import useSessao from '../hooks/useSessao'
-import useBarbearia from '../hooks/useBarbearia'
+import useEstabelecimento from '../hooks/useEstabelecimento'
 
 interface HorariosDisponiveis {
     manha: string[]
@@ -38,7 +38,7 @@ function formatarDia(data: Date) {
 export function ProvedorAgendamento(props: any) {
     const { httpPost, httpGet } = useAPI()
     const { usuario } = useSessao()
-    const { barbearia } = useBarbearia()
+    const { estabelecimento } = useEstabelecimento()
 
     const [horariosOcupados, setHorariosOcupados] = useState<string[]>([])
     const [horariosDisponiveis, setHorariosDisponiveis] = useState<HorariosDisponiveis>(
@@ -67,7 +67,7 @@ export function ProvedorAgendamento(props: any) {
     }
 
     async function agendar() {
-        if (!barbearia) throw new Error('Escolha uma barbearia antes de continuar.')
+        if (!estabelecimento) throw new Error('Escolha um estabelecimento antes de continuar.')
 
         await httpPost('/agendamentos', {
             data,
@@ -138,25 +138,25 @@ export function ProvedorAgendamento(props: any) {
         setProfissional(null)
         setServicos([])
         setData(DateUtils.hojeComHoraZerada())
-    }, [barbearia?.id])
+    }, [estabelecimento?.id])
 
     useEffect(() => {
-        if (!barbearia || !dia || !profissional) {
+        if (!estabelecimento || !dia || !profissional) {
             setHorariosOcupados([])
             return
         }
         obterHorariosOcupados(dia, profissional).then(setHorariosOcupados).catch(() => setHorariosOcupados([]))
-    }, [barbearia, dia, profissional, obterHorariosOcupados])
+    }, [estabelecimento, dia, profissional, obterHorariosOcupados])
 
     useEffect(() => {
-        if (!barbearia) {
+        if (!estabelecimento) {
             setHorariosDisponiveis(AgendaUtils.horariosDoDia())
             return
         }
         obterHorariosDisponiveis(dia, profissional)
             .then(setHorariosDisponiveis)
             .catch(() => setHorariosDisponiveis(AgendaUtils.horariosDoDia()))
-    }, [barbearia, dia, profissional, obterHorariosDisponiveis])
+    }, [estabelecimento, dia, profissional, obterHorariosDisponiveis])
 
     useEffect(() => {
         const horarioSelecionado = data.toLocaleTimeString('pt-BR', {

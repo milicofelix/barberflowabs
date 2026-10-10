@@ -1,4 +1,4 @@
-import { clientes } from '@barbabrutal/core'
+import { clientes } from '@uniflowabs/core'
 import { LayoutGrid } from '../ui/layout-grid'
 import ItemCliente from './ItemCliente'
 import TituloSecao from '../shared/TituloSecao'
@@ -19,7 +19,7 @@ export default function NossosClientes() {
             <TituloSecao
                 tag="Experiência"
                 principal="Clientes Que Agendam Online"
-                secundario="A plataforma aproxima clientes e barbearias com busca por localização, agenda online e avaliações reais."
+                secundario="A plataforma aproxima clientes e estabelecimentos com busca por localização, agenda online e avaliações reais."
             />
             <div className="h-[900px] w-full">
                 <LayoutGrid cards={cards} />

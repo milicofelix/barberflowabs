@@ -1,5 +1,5 @@
 export interface OnboardingSaasDto {
-  barbearia: {
+  estabelecimento: {
     nome: string;
     slug: string;
     email?: string;
@@ -22,19 +22,19 @@ export interface AtualizarPlanoDto {
   planoSlug: string;
 }
 
-export interface AtualizarStatusBarbeariaDto {
+export interface AtualizarStatusEstabelecimentoDto {
   status: string;
 }
 
-export interface RevisarBarbeariaDto {
+export interface RevisarEstabelecimentoDto {
   motivo?: string;
 }
 
-export interface AtualizarDestaqueBarbeariaDto {
+export interface AtualizarDestaqueEstabelecimentoDto {
   destaque: boolean;
 }
 
-export interface AtualizarComercialBarbeariaDto {
+export interface AtualizarComercialEstabelecimentoDto {
   comercialStatus: string;
   notasInternas?: string | null;
   ultimoContatoEm?: string | null;

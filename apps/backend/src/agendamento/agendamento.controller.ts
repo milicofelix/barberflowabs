@@ -2,7 +2,7 @@ import {
   Usuario,
   Agendamento,
   TEMPO_SLOT,
-} from '@barbabrutal/core';
+} from '@uniflowabs/core';
 import {
   BadRequestException,
   Body,
@@ -49,11 +49,11 @@ export class AgendamentoController {
     @UsuarioLogado() usuario: Usuario,
     @Req() req: any,
   ) {
-    const barbeariaId = await this.resolverBarbeariaAgendamento(req, usuario);
-    await this.limites.validarBarbeariaOperacional(barbeariaId);
+    const estabelecimentoId = await this.resolverEstabelecimentoAgendamento(req, usuario);
+    await this.limites.validarEstabelecimentoOperacional(estabelecimentoId);
 
     try {
-      return await this.motor.criar(barbeariaId, dados, usuario);
+      return await this.motor.criar(estabelecimentoId, dados, usuario);
     } catch (error: any) {
       if (error instanceof HttpException) throw error;
       if (error instanceof ConflitoAgendaError) throw new ConflictException(error.message);
@@ -69,11 +69,11 @@ export class AgendamentoController {
     @Req() req: any,
   ) {
     validarNumeroInteiroPositivo(id, 'Agendamento');
-    const barbeariaId = await this.resolverBarbeariaAgendamento(req, usuario);
-    await this.limites.validarBarbeariaOperacional(barbeariaId);
+    const estabelecimentoId = await this.resolverEstabelecimentoAgendamento(req, usuario);
+    await this.limites.validarEstabelecimentoOperacional(estabelecimentoId);
 
     try {
-      return await this.motor.reagendar(Number(id), barbeariaId, dados, usuario);
+      return await this.motor.reagendar(Number(id), estabelecimentoId, dados, usuario);
     } catch (error: any) {
       if (error instanceof HttpException) throw error;
       if (error instanceof ConflitoAgendaError) throw new ConflictException(error.message);
@@ -83,8 +83,8 @@ export class AgendamentoController {
 
   @Get()
   async buscarAgendamentosCliente(@UsuarioLogado() usuario: Usuario, @Req() req: any) {
-    const barbeariaId = await this.resolverBarbeariaAgendamento(req, usuario);
-    return this.repo.buscarPorEmail(usuario.email, barbeariaId);
+    const estabelecimentoId = await this.resolverEstabelecimentoAgendamento(req, usuario);
+    return this.repo.buscarPorEmail(usuario.email, estabelecimentoId);
   }
 
   @Get('ativos')
@@ -134,12 +134,12 @@ export class AgendamentoController {
   ) {
     validarNumeroInteiroPositivo(profissional, 'Profissional');
     validarData(data);
-    const barbeariaId = await this.resolverBarbeariaAgendamento(req, usuario);
+    const estabelecimentoId = await this.resolverEstabelecimentoAgendamento(req, usuario);
 
     return this.repo.buscarPorProfissionalEData(
       +profissional,
       new Date(data),
-      barbeariaId,
+      estabelecimentoId,
     );
   }
 
@@ -152,12 +152,12 @@ export class AgendamentoController {
   ) {
     validarNumeroInteiroPositivo(profissional, 'Profissional');
     validarData(dataParam);
-    const barbeariaId = await this.resolverBarbeariaAgendamento(req, usuario);
+    const estabelecimentoId = await this.resolverEstabelecimentoAgendamento(req, usuario);
 
     const agendamentos = await this.repo.buscarPorProfissionalEData(
       +profissional,
       new Date(dataParam),
-      barbeariaId,
+      estabelecimentoId,
     );
 
     return agendamentos
@@ -194,12 +194,12 @@ export class AgendamentoController {
     @Req() req: any,
   ) {
     validarNumeroInteiroPositivo(id, 'Agendamento');
-    const barbeariaId = await this.resolverBarbeariaAgendamento(req, usuario);
+    const estabelecimentoId = await this.resolverEstabelecimentoAgendamento(req, usuario);
     let agendamento: Agendamento | null;
-    const podeCancelarComoBarbeiro = !!usuario.barbeiro && usuario.barbeariaId === barbeariaId;
+    const podeCancelarComoMembro = !!usuario.membroEstabelecimento && usuario.estabelecimentoId === estabelecimentoId;
 
     try {
-      agendamento = await this.repo.cancelar(Number(id), usuario.id!, barbeariaId, podeCancelarComoBarbeiro);
+      agendamento = await this.repo.cancelar(Number(id), usuario.id!, estabelecimentoId, podeCancelarComoMembro);
     } catch (error: any) {
       throw new BadRequestException(error?.message ?? 'Não foi possível cancelar o agendamento');
     }
@@ -230,8 +230,8 @@ export class AgendamentoController {
     }
   }
 
-  private async resolverBarbeariaAgendamento(req: any, usuario: Usuario) {
-    return this.tenant.resolverBarbeariaId(req);
+  private async resolverEstabelecimentoAgendamento(req: any, usuario: Usuario) {
+    return this.tenant.resolverEstabelecimentoId(req);
   }
 
   private formatarHorarioLocal(data: Date) {

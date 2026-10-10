@@ -54,7 +54,7 @@ export default function useOnboardingEstabelecimento() {
             setProcessando(true); setErro(null)
             await httpPost('/saas/onboarding', {
                 planoSlug: form.planoSlug,
-                barbearia: { nome: form.nome, slug: form.slug, email: form.emailEstabelecimento, telefone: form.telefoneEstabelecimento,
+                estabelecimento: { nome: form.nome, slug: form.slug, email: form.emailEstabelecimento, telefone: form.telefoneEstabelecimento,
                     tipoEstabelecimento: form.tipoEstabelecimento, modeloAtendimento: form.modeloAtendimento,
                     segmentoIds: form.segmentoIds, especialidadeIds: form.especialidadeIds },
                 dono: { nome: form.nomeResponsavel, email: form.emailResponsavel, telefone: form.telefoneResponsavel, senha: form.senha },

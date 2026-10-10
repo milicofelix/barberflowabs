@@ -42,7 +42,7 @@ export interface ServicoAgenda {
 }
 
 export interface ContextoAgenda {
-  barbeariaId: number;
+  estabelecimentoId: number;
   modeloEstabelecimento: ModeloAtendimento;
   modeloAtendimento: ModeloAtendimento;
   profissionalId: number;

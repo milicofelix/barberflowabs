@@ -1,5 +1,5 @@
 {
-  "name": "barber-flow-abs",
+  "name": "uniflow-abs",
   "private": true,
   "scripts": {
     "build": "turbo build",

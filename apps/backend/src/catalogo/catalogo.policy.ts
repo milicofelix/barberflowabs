@@ -13,8 +13,8 @@ import {
 @Injectable()
 export class CatalogoPolicy {
   validarGestor(usuario: any) {
-    const papeisPermitidos = ['BARBER', 'BARBERSHOP_OWNER'];
-    const permitido = usuario?.barbeariaId && (usuario.barbeiro || papeisPermitidos.includes(usuario.papel));
+    const papeisPermitidos = ['ESTABLISHMENT_MEMBER', 'ESTABLISHMENT_OWNER'];
+    const permitido = usuario?.estabelecimentoId && (usuario.membroEstabelecimento || papeisPermitidos.includes(usuario.papel));
     if (!permitido) throw new ForbiddenException('Usuário sem permissão para gerenciar o catálogo');
   }
 

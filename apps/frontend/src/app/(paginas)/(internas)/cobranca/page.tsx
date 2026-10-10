@@ -7,14 +7,14 @@ import useSessao from '@/data/hooks/useSessao'
 export default function Page() {
     const { usuario } = useSessao()
     const superAdmin = usuario?.role === 'SUPER_ADMIN' || usuario?.papel === 'SUPER_ADMIN'
-    const responsavelBarbearia = !!usuario?.barbeiro && !superAdmin
+    const responsavelEstabelecimento = !!usuario?.membroEstabelecimento && !superAdmin
 
-    if (!responsavelBarbearia) {
+    if (!responsavelEstabelecimento) {
         return (
             <div className="flex flex-col gap-5">
                 <CabecalhoComTitulo
                     titulo="Cobrança"
-                    descricao="Acesso restrito aos responsáveis pela barbearia."
+                    descricao="Acesso restrito aos responsáveis pelo estabelecimento."
                 />
                 <div className="container py-10 text-zinc-300">
                     Você não tem permissão para acessar esta área.
@@ -27,7 +27,7 @@ export default function Page() {
         <div className="flex flex-col gap-5">
             <CabecalhoComTitulo
                 titulo="Cobrança"
-                descricao="Gerencie plano, trial e limites da barbearia."
+                descricao="Gerencie plano, trial e limites do estabelecimento."
             />
             <div className="container py-10">
                 <PainelBilling />

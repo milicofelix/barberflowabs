@@ -14,15 +14,15 @@ export type RefreshTokenDto = {
   token: string;
 };
 
-export type UsuarioRole = 'SUPER_ADMIN' | 'APP_OWNER' | 'BARBERSHOP_OWNER' | 'BARBER' | 'CUSTOMER';
+export type UsuarioRole = 'SUPER_ADMIN' | 'APP_OWNER' | 'ESTABLISHMENT_OWNER' | 'ESTABLISHMENT_MEMBER' | 'CUSTOMER';
 
 export type AuthTokenPayload = {
   sub: number;
   id: number;
   nome: string;
   email: string;
-  barbeariaId: number | null;
-  barbeiro: boolean;
+  estabelecimentoId: number | null;
+  membroEstabelecimento: boolean;
   papel?: UsuarioRole;
   role: UsuarioRole;
   telefone?: string;

@@ -9,7 +9,7 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
-import { Usuario } from '@barbabrutal/core';
+import { Usuario } from '@uniflowabs/core';
 import { BcryptProvider } from 'src/auth/bcrypt.provider';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import {
@@ -22,17 +22,17 @@ import {
 import {
   AtualizarPlanoAdminDto,
   AtualizarPlanoDto,
-  AtualizarComercialBarbeariaDto,
-  AtualizarDestaqueBarbeariaDto,
-  AtualizarStatusBarbeariaDto,
+  AtualizarComercialEstabelecimentoDto,
+  AtualizarDestaqueEstabelecimentoDto,
+  AtualizarStatusEstabelecimentoDto,
   OnboardingSaasDto,
   RevisarDenunciaPerfilDto,
-  RevisarBarbeariaDto,
+  RevisarEstabelecimentoDto,
 } from './saas.dto';
 import { SaasPrisma } from './saas.prisma';
 import { MODELOS_ATENDIMENTO, TIPOS_ESTABELECIMENTO } from 'src/estabelecimento/estabelecimento.constants';
 
-const STATUS_BARBEARIA = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'CANCELED'];
+const STATUS_ESTABELECIMENTO = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'CANCELED'];
 const STATUS_COMERCIAL = ['NOVO', 'EM_CONTATO', 'APROVADO', 'RECUSADO', 'CONVERTIDO'];
 const STATUS_DENUNCIA = ['PENDENTE', 'EM_ANALISE', 'RESOLVIDA', 'DESCARTADA'];
 
@@ -71,9 +71,9 @@ export class SaasController {
   }
 
   private async buscarCobranca(usuario: Usuario) {
-    this.validarBarbeiro(usuario);
-    const billing = await this.repo.billing(usuario.barbeariaId!);
-    if (!billing) throw new NotFoundException('Barbearia não encontrada');
+    this.validarMembroEstabelecimento(usuario);
+    const billing = await this.repo.billing(usuario.estabelecimentoId!);
+    if (!billing) throw new NotFoundException('Estabelecimento não encontrado');
     return billing;
   }
 
@@ -88,21 +88,21 @@ export class SaasController {
   }
 
   private atualizarPlanoCobranca(dados: AtualizarPlanoDto, usuario: Usuario) {
-    this.validarBarbeiro(usuario);
+    this.validarMembroEstabelecimento(usuario);
     validarTextoObrigatorio(dados.planoSlug, 'Plano');
-    return this.repo.atualizarPlano(usuario.barbeariaId!, dados.planoSlug, usuario.id!);
+    return this.repo.atualizarPlano(usuario.estabelecimentoId!, dados.planoSlug, usuario.id!);
   }
 
-  @Get('admin/barbearias')
-  listarBarbeariasAdmin(@UsuarioLogado() usuario: Usuario) {
+  @Get('admin/estabelecimentos')
+  listarEstabelecimentosAdmin(@UsuarioLogado() usuario: Usuario) {
     this.validarSuperAdmin(usuario);
-    return this.repo.listarBarbeariasAdmin();
+    return this.repo.listarEstabelecimentosAdmin();
   }
 
-  @Get('admin/barbearias/pendentes')
-  listarBarbeariasPendentesAdmin(@UsuarioLogado() usuario: Usuario) {
+  @Get('admin/estabelecimentos/pendentes')
+  listarEstabelecimentosPendentesAdmin(@UsuarioLogado() usuario: Usuario) {
     this.validarSuperAdmin(usuario);
-    return this.repo.listarBarbeariasPendentesAdmin();
+    return this.repo.listarEstabelecimentosPendentesAdmin();
   }
 
   @Get('admin/me')
@@ -114,7 +114,7 @@ export class SaasController {
       id: usuario?.id,
       nome: usuario?.nome,
       email: usuario?.email,
-      barbeiro: usuario?.barbeiro ?? false,
+      membroEstabelecimento: usuario?.membroEstabelecimento ?? false,
       papel: usuario?.papel,
       role: usuario?.role,
       superAdminPorBanco:
@@ -143,46 +143,46 @@ export class SaasController {
     return this.repo.atualizarPlanoAdmin(Number(id), usuario.id!, dados);
   }
 
-  @Put('admin/barbearias/:id/status')
-  atualizarStatusBarbearia(
+  @Put('admin/estabelecimentos/:id/status')
+  atualizarStatusEstabelecimento(
     @Param('id') id: string,
-    @Body() dados: AtualizarStatusBarbeariaDto,
+    @Body() dados: AtualizarStatusEstabelecimentoDto,
     @UsuarioLogado() usuario: Usuario,
   ) {
     this.validarSuperAdmin(usuario);
-    validarNumeroInteiroPositivo(id, 'Barbearia');
+    validarNumeroInteiroPositivo(id, 'Estabelecimento');
 
-    if (!STATUS_BARBEARIA.includes(dados?.status)) {
+    if (!STATUS_ESTABELECIMENTO.includes(dados?.status)) {
       throw new BadRequestException('Status inválido');
     }
 
-    return this.repo.atualizarStatusBarbearia(Number(id), dados.status, usuario.id!);
+    return this.repo.atualizarStatusEstabelecimento(Number(id), dados.status, usuario.id!);
   }
 
-  @Put('admin/barbearias/:id/destaque')
-  atualizarDestaqueBarbearia(
+  @Put('admin/estabelecimentos/:id/destaque')
+  atualizarDestaqueEstabelecimento(
     @Param('id') id: string,
-    @Body() dados: AtualizarDestaqueBarbeariaDto,
+    @Body() dados: AtualizarDestaqueEstabelecimentoDto,
     @UsuarioLogado() usuario: Usuario,
   ) {
     this.validarSuperAdmin(usuario);
-    validarNumeroInteiroPositivo(id, 'Barbearia');
+    validarNumeroInteiroPositivo(id, 'Estabelecimento');
 
     if (typeof dados?.destaque !== 'boolean') {
       throw new BadRequestException('Destaque deve ser verdadeiro ou falso');
     }
 
-    return this.repo.atualizarDestaqueBarbearia(Number(id), dados.destaque, usuario.id!);
+    return this.repo.atualizarDestaqueEstabelecimento(Number(id), dados.destaque, usuario.id!);
   }
 
-  @Put('admin/barbearias/:id/comercial')
-  atualizarComercialBarbearia(
+  @Put('admin/estabelecimentos/:id/comercial')
+  atualizarComercialEstabelecimento(
     @Param('id') id: string,
-    @Body() dados: AtualizarComercialBarbeariaDto,
+    @Body() dados: AtualizarComercialEstabelecimentoDto,
     @UsuarioLogado() usuario: Usuario,
   ) {
     this.validarSuperAdmin(usuario);
-    validarNumeroInteiroPositivo(id, 'Barbearia');
+    validarNumeroInteiroPositivo(id, 'Estabelecimento');
 
     if (!STATUS_COMERCIAL.includes(dados?.comercialStatus)) {
       throw new BadRequestException('Status comercial inválido');
@@ -190,7 +190,7 @@ export class SaasController {
 
     const ultimoContatoEm = this.dataOpcional(dados.ultimoContatoEm, 'Último contato');
     const proximoContatoEm = this.dataOpcional(dados.proximoContatoEm, 'Próximo contato');
-    return this.repo.atualizarComercialBarbearia(Number(id), usuario.id!, {
+    return this.repo.atualizarComercialEstabelecimento(Number(id), usuario.id!, {
       comercialStatus: dados.comercialStatus,
       notasInternas: dados.notasInternas,
       ultimoContatoEm,
@@ -198,27 +198,27 @@ export class SaasController {
     });
   }
 
-  @Put('admin/barbearias/:id/aprovar')
-  aprovarBarbearia(
+  @Put('admin/estabelecimentos/:id/aprovar')
+  aprovarEstabelecimento(
     @Param('id') id: string,
-    @Body() dados: RevisarBarbeariaDto,
+    @Body() dados: RevisarEstabelecimentoDto,
     @UsuarioLogado() usuario: Usuario,
   ) {
     this.validarSuperAdmin(usuario);
-    validarNumeroInteiroPositivo(id, 'Barbearia');
-    return this.repo.aprovarBarbearia(Number(id), usuario.id!, dados?.motivo);
+    validarNumeroInteiroPositivo(id, 'Estabelecimento');
+    return this.repo.aprovarEstabelecimento(Number(id), usuario.id!, dados?.motivo);
   }
 
-  @Put('admin/barbearias/:id/reprovar')
-  reprovarBarbearia(
+  @Put('admin/estabelecimentos/:id/reprovar')
+  reprovarEstabelecimento(
     @Param('id') id: string,
-    @Body() dados: RevisarBarbeariaDto,
+    @Body() dados: RevisarEstabelecimentoDto,
     @UsuarioLogado() usuario: Usuario,
   ) {
     this.validarSuperAdmin(usuario);
-    validarNumeroInteiroPositivo(id, 'Barbearia');
+    validarNumeroInteiroPositivo(id, 'Estabelecimento');
     validarTextoObrigatorio(dados?.motivo, 'Motivo');
-    return this.repo.reprovarBarbearia(Number(id), usuario.id!, dados.motivo!);
+    return this.repo.reprovarEstabelecimento(Number(id), usuario.id!, dados.motivo!);
   }
 
   @Get('admin/auditoria')
@@ -256,23 +256,23 @@ export class SaasController {
   }
 
   private validarOnboarding(dados: OnboardingSaasDto) {
-    validarTextoObrigatorio(dados?.barbearia?.nome, 'Nome do estabelecimento');
-    validarTextoObrigatorio(dados?.barbearia?.slug, 'Slug do estabelecimento');
+    validarTextoObrigatorio(dados?.estabelecimento?.nome, 'Nome do estabelecimento');
+    validarTextoObrigatorio(dados?.estabelecimento?.slug, 'Slug do estabelecimento');
     validarTextoObrigatorio(dados?.dono?.nome, 'Nome do responsável');
     validarEmail(dados?.dono?.email);
     validarSenha(dados?.dono?.senha);
 
-    if (dados.barbearia.email) {
-      validarEmail(dados.barbearia.email, 'E-mail do estabelecimento');
+    if (dados.estabelecimento.email) {
+      validarEmail(dados.estabelecimento.email, 'E-mail do estabelecimento');
     }
-    if (!TIPOS_ESTABELECIMENTO.includes(dados?.barbearia?.tipoEstabelecimento as any)) {
+    if (!TIPOS_ESTABELECIMENTO.includes(dados?.estabelecimento?.tipoEstabelecimento as any)) {
       throw new BadRequestException('Tipo de estabelecimento inválido');
     }
-    if (!MODELOS_ATENDIMENTO.includes(dados?.barbearia?.modeloAtendimento as any)) {
+    if (!MODELOS_ATENDIMENTO.includes(dados?.estabelecimento?.modeloAtendimento as any)) {
       throw new BadRequestException('Modelo de atendimento inválido');
     }
-    this.validarIdsOnboarding(dados?.barbearia?.segmentoIds, 'Segmentos');
-    this.validarIdsOnboarding(dados?.barbearia?.especialidadeIds, 'Especialidades');
+    this.validarIdsOnboarding(dados?.estabelecimento?.segmentoIds, 'Segmentos');
+    this.validarIdsOnboarding(dados?.estabelecimento?.especialidadeIds, 'Especialidades');
   }
 
   private validarIdsOnboarding(ids: number[], campo: string) {
@@ -302,9 +302,9 @@ export class SaasController {
     }
   }
 
-  private validarBarbeiro(usuario: Usuario) {
-    if (!usuario?.barbeiro || this.ehSuperAdmin(usuario)) {
-      throw new ForbiddenException('Apenas responsáveis pela barbearia podem acessar cobrança');
+  private validarMembroEstabelecimento(usuario: Usuario) {
+    if (!usuario?.membroEstabelecimento || this.ehSuperAdmin(usuario)) {
+      throw new ForbiddenException('Apenas responsáveis pelo estabelecimento podem acessar cobrança');
     }
   }
 

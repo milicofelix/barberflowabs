@@ -17,7 +17,7 @@ const statusDenuncia = ['PENDENTE', 'EM_ANALISE', 'RESOLVIDA', 'DESCARTADA']
 export default function PainelSuperAdmin() {
     const { usuario } = useSessao()
     const { httpGet, httpPut } = useAPI()
-    const [barbearias, setBarbearias] = useState<any[]>([])
+    const [estabelecimentos, setEstabelecimentos] = useState<any[]>([])
     const [pendentes, setPendentes] = useState<any[]>([])
     const [auditoria, setAuditoria] = useState<any[]>([])
     const [notificacoes, setNotificacoes] = useState<any[]>([])
@@ -35,19 +35,19 @@ export default function PainelSuperAdmin() {
     const carregar = useCallback(async function carregar() {
         setCarregando(true)
         setAcessoNegado(false)
-        const [dadosMe, dadosBarbearias, dadosPendentes, dadosAuditoria, dadosPlanos, dadosNotificacoes, dadosDenuncias] = await Promise.all([
+        const [dadosMe, dadosEstabelecimentos, dadosPendentes, dadosAuditoria, dadosPlanos, dadosNotificacoes, dadosDenuncias] = await Promise.all([
             httpGet('/saas/admin/me'),
-            httpGet('/saas/admin/barbearias'),
-            httpGet('/saas/admin/barbearias/pendentes'),
+            httpGet('/saas/admin/estabelecimentos'),
+            httpGet('/saas/admin/estabelecimentos/pendentes'),
             httpGet('/saas/admin/auditoria'),
             httpGet('/saas/admin/planos'),
             httpGet('/saas/admin/notificacoes'),
             httpGet('/saas/admin/denuncias-perfil'),
         ])
-        const negado = dadosBarbearias?.statusCode === 403 || dadosAuditoria?.statusCode === 403
+        const negado = dadosEstabelecimentos?.statusCode === 403 || dadosAuditoria?.statusCode === 403
         setDiagnostico(dadosMe?.statusCode ? null : dadosMe)
         setAcessoNegado(negado)
-        setBarbearias(Array.isArray(dadosBarbearias) ? dadosBarbearias : [])
+        setEstabelecimentos(Array.isArray(dadosEstabelecimentos) ? dadosEstabelecimentos : [])
         setPendentes(Array.isArray(dadosPendentes) ? dadosPendentes : [])
         setAuditoria(Array.isArray(dadosAuditoria) ? dadosAuditoria : [])
         setPlanos(Array.isArray(dadosPlanos) ? dadosPlanos : [])
@@ -68,7 +68,7 @@ export default function PainelSuperAdmin() {
 
     async function alterarStatus(id: number, novoStatus: string) {
         setMensagem('')
-        const resposta = await httpPut(`/saas/admin/barbearias/${id}/status`, { status: novoStatus })
+        const resposta = await httpPut(`/saas/admin/estabelecimentos/${id}/status`, { status: novoStatus })
         if (resposta?.statusCode) return setMensagem(resposta.message)
         await carregar()
         setMensagem('Status atualizado.')
@@ -76,42 +76,42 @@ export default function PainelSuperAdmin() {
 
     async function alternarDestaque(id: number, destaqueAtual: boolean) {
         setMensagem('')
-        const resposta = await httpPut(`/saas/admin/barbearias/${id}/destaque`, { destaque: !destaqueAtual })
+        const resposta = await httpPut(`/saas/admin/estabelecimentos/${id}/destaque`, { destaque: !destaqueAtual })
         if (resposta?.statusCode) return setMensagem(resposta.message)
         await carregar()
-        setMensagem(!destaqueAtual ? 'Barbearia destacada.' : 'Destaque removido.')
+        setMensagem(!destaqueAtual ? 'Estabelecimento destacada.' : 'Destaque removido.')
     }
 
-    async function aprovarBarbearia(id: number) {
+    async function aprovarEstabelecimento(id: number) {
         setMensagem('')
-        const resposta = await httpPut(`/saas/admin/barbearias/${id}/aprovar`, {
+        const resposta = await httpPut(`/saas/admin/estabelecimentos/${id}/aprovar`, {
             motivo: motivoRevisao || undefined,
         })
         if (resposta?.statusCode) return setMensagem(resposta.message)
         setMotivoRevisao('')
         await carregar()
-        setMensagem('Barbearia aprovada.')
+        setMensagem('Estabelecimento aprovada.')
     }
 
-    async function reprovarBarbearia(id: number) {
+    async function reprovarEstabelecimento(id: number) {
         setMensagem('')
-        const resposta = await httpPut(`/saas/admin/barbearias/${id}/reprovar`, {
+        const resposta = await httpPut(`/saas/admin/estabelecimentos/${id}/reprovar`, {
             motivo: motivoRevisao,
         })
         if (resposta?.statusCode) return setMensagem(resposta.message)
         setMotivoRevisao('')
         await carregar()
-        setMensagem('Barbearia reprovada.')
+        setMensagem('Estabelecimento reprovada.')
     }
 
-    async function salvarComercial(barbearia: any) {
+    async function salvarComercial(estabelecimento: any) {
         setMensagem('')
-        const dados = comercial[barbearia.id] ?? {}
-        const resposta = await httpPut(`/saas/admin/barbearias/${barbearia.id}/comercial`, {
-            comercialStatus: dados.comercialStatus ?? barbearia.comercialStatus ?? 'NOVO',
-            notasInternas: dados.notasInternas ?? barbearia.notasInternas ?? '',
-            ultimoContatoEm: dados.ultimoContatoEm ?? dataInput(barbearia.ultimoContatoEm),
-            proximoContatoEm: dados.proximoContatoEm ?? dataInput(barbearia.proximoContatoEm),
+        const dados = comercial[estabelecimento.id] ?? {}
+        const resposta = await httpPut(`/saas/admin/estabelecimentos/${estabelecimento.id}/comercial`, {
+            comercialStatus: dados.comercialStatus ?? estabelecimento.comercialStatus ?? 'NOVO',
+            notasInternas: dados.notasInternas ?? estabelecimento.notasInternas ?? '',
+            ultimoContatoEm: dados.ultimoContatoEm ?? dataInput(estabelecimento.ultimoContatoEm),
+            proximoContatoEm: dados.proximoContatoEm ?? dataInput(estabelecimento.proximoContatoEm),
         })
         if (resposta?.statusCode) return setMensagem(resposta.message)
         await carregar()
@@ -260,12 +260,12 @@ export default function PainelSuperAdmin() {
                     />
                 </div>
                 <div className="mt-4 grid gap-3">
-                    {pendentes.map((barbearia) => (
-                        <BarbeariaPendente
-                            key={barbearia.id}
-                            barbearia={barbearia}
-                            onAprovar={aprovarBarbearia}
-                            onReprovar={reprovarBarbearia}
+                    {pendentes.map((estabelecimento) => (
+                        <EstabelecimentoPendente
+                            key={estabelecimento.id}
+                            estabelecimento={estabelecimento}
+                            onAprovar={aprovarEstabelecimento}
+                            onReprovar={reprovarEstabelecimento}
                         />
                     ))}
                     {pendentes.length === 0 && <p className="text-sm text-zinc-400">Nenhum cadastro pendente.</p>}
@@ -273,30 +273,30 @@ export default function PainelSuperAdmin() {
             </section>
 
             <section className="grid gap-3">
-                {barbearias.map((barbearia) => (
-                    <div key={barbearia.id} className="rounded border border-zinc-800 bg-zinc-950 p-4">
+                {estabelecimentos.map((estabelecimento) => (
+                    <div key={estabelecimento.id} className="rounded border border-zinc-800 bg-zinc-950 p-4">
                         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                             <div>
-                                <h2 className="text-xl font-bold text-zinc-100">{barbearia.nome}</h2>
+                                <h2 className="text-xl font-bold text-zinc-100">{estabelecimento.nome}</h2>
                                 <p className="text-sm text-zinc-400">
-                                    {barbearia.slug} | {barbearia.assinatura?.plano?.nome ?? 'sem plano'}
+                                    {estabelecimento.slug} | {estabelecimento.assinatura?.plano?.nome ?? 'sem plano'}
                                 </p>
                                 <p className="text-sm text-zinc-500">
-                                    Revisão: {barbearia.reviewStatus ?? 'APPROVED'} | Assinatura: {barbearia.status}
+                                    Revisão: {estabelecimento.reviewStatus ?? 'APPROVED'} | Assinatura: {estabelecimento.status}
                                 </p>
                                 <p className="text-sm text-zinc-500">
-                                    {barbearia._count?.profissionais ?? 0} profissionais | {barbearia._count?.servicos ?? 0} serviços | {barbearia._count?.agendamentos ?? 0} agendamentos
+                                    {estabelecimento._count?.profissionais ?? 0} profissionais | {estabelecimento._count?.servicos ?? 0} serviços | {estabelecimento._count?.agendamentos ?? 0} agendamentos
                                 </p>
                                 <div className="mt-3 grid gap-2 text-xs text-zinc-400 md:grid-cols-3">
-                                    <UsoLimite label="Profissionais" dados={barbearia.limites} chave="profissionais" />
-                                    <UsoLimite label="Unidades" dados={barbearia.limites} chave="unidades" />
-                                    <UsoLimite label="Serviços" dados={barbearia.limites} chave="servicos" />
+                                    <UsoLimite label="Profissionais" dados={estabelecimento.limites} chave="profissionais" />
+                                    <UsoLimite label="Unidades" dados={estabelecimento.limites} chave="unidades" />
+                                    <UsoLimite label="Serviços" dados={estabelecimento.limites} chave="servicos" />
                                 </div>
                             </div>
                             <div className="grid gap-2 lg:w-56">
                                 <select
-                                    value={barbearia.status}
-                                    onChange={(e) => alterarStatus(barbearia.id, e.target.value)}
+                                    value={estabelecimento.status}
+                                    onChange={(e) => alterarStatus(estabelecimento.id, e.target.value)}
                                     className="input"
                                 >
                                     {status.map((item) => (
@@ -305,13 +305,13 @@ export default function PainelSuperAdmin() {
                                 </select>
                                 <button
                                     type="button"
-                                    onClick={() => alternarDestaque(barbearia.id, !!barbearia.destaque)}
+                                    onClick={() => alternarDestaque(estabelecimento.id, !!estabelecimento.destaque)}
                                     className={[
                                         'rounded px-4 py-2 text-sm font-bold',
-                                        barbearia.destaque ? 'bg-yellow-400 text-black' : 'border border-zinc-700 text-zinc-200',
+                                        estabelecimento.destaque ? 'bg-yellow-400 text-black' : 'border border-zinc-700 text-zinc-200',
                                     ].join(' ')}
                                 >
-                                    {barbearia.destaque ? 'Remover destaque' : 'Destacar'}
+                                    {estabelecimento.destaque ? 'Remover destaque' : 'Destacar'}
                                 </button>
                             </div>
                         </div>
@@ -319,8 +319,8 @@ export default function PainelSuperAdmin() {
                             <label className="grid gap-1 text-sm text-zinc-400">
                                 Status comercial
                                 <select
-                                    value={valorComercial(comercial, barbearia, 'comercialStatus', 'NOVO')}
-                                    onChange={(e) => atualizarComercial(barbearia.id, 'comercialStatus', e.target.value)}
+                                    value={valorComercial(comercial, estabelecimento, 'comercialStatus', 'NOVO')}
+                                    onChange={(e) => atualizarComercial(estabelecimento.id, 'comercialStatus', e.target.value)}
                                     className="input"
                                 >
                                     {statusComercial.map((item) => (
@@ -332,8 +332,8 @@ export default function PainelSuperAdmin() {
                                 Último contato
                                 <input
                                     type="date"
-                                    value={valorComercial(comercial, barbearia, 'ultimoContatoEm', dataInput(barbearia.ultimoContatoEm))}
-                                    onChange={(e) => atualizarComercial(barbearia.id, 'ultimoContatoEm', e.target.value)}
+                                    value={valorComercial(comercial, estabelecimento, 'ultimoContatoEm', dataInput(estabelecimento.ultimoContatoEm))}
+                                    onChange={(e) => atualizarComercial(estabelecimento.id, 'ultimoContatoEm', e.target.value)}
                                     className="input"
                                 />
                             </label>
@@ -341,23 +341,23 @@ export default function PainelSuperAdmin() {
                                 Próximo contato
                                 <input
                                     type="date"
-                                    value={valorComercial(comercial, barbearia, 'proximoContatoEm', dataInput(barbearia.proximoContatoEm))}
-                                    onChange={(e) => atualizarComercial(barbearia.id, 'proximoContatoEm', e.target.value)}
+                                    value={valorComercial(comercial, estabelecimento, 'proximoContatoEm', dataInput(estabelecimento.proximoContatoEm))}
+                                    onChange={(e) => atualizarComercial(estabelecimento.id, 'proximoContatoEm', e.target.value)}
                                     className="input"
                                 />
                             </label>
                             <label className="grid gap-1 text-sm text-zinc-400">
                                 Notas internas
                                 <input
-                                    value={valorComercial(comercial, barbearia, 'notasInternas', barbearia.notasInternas ?? '')}
-                                    onChange={(e) => atualizarComercial(barbearia.id, 'notasInternas', e.target.value)}
+                                    value={valorComercial(comercial, estabelecimento, 'notasInternas', estabelecimento.notasInternas ?? '')}
+                                    onChange={(e) => atualizarComercial(estabelecimento.id, 'notasInternas', e.target.value)}
                                     placeholder="Resumo do contato comercial"
                                     className="input"
                                 />
                             </label>
                             <button
                                 type="button"
-                                onClick={() => salvarComercial(barbearia)}
+                                onClick={() => salvarComercial(estabelecimento)}
                                 className="rounded bg-zinc-100 px-4 py-2 text-sm font-bold text-zinc-950"
                             >
                                 Salvar comercial
@@ -374,7 +374,7 @@ export default function PainelSuperAdmin() {
                         <div key={log.id} className="rounded border border-zinc-800 p-3">
                             <p className="font-semibold text-zinc-100">{log.acao}</p>
                             <p className="text-sm text-zinc-400">
-                                {log.barbearia?.nome ?? '-'} | {log.usuario?.email ?? '-'} | {formatarData(log.createdAt)}
+                                {log.estabelecimento?.nome ?? '-'} | {log.usuario?.email ?? '-'} | {formatarData(log.createdAt)}
                             </p>
                         </div>
                     ))}
@@ -492,9 +492,9 @@ function NotificacaoAdmin({ notificacao }: { notificacao: any }) {
                         {notificacao.usuario?.email ?? '-'} | {formatarData(notificacao.createdAt)}
                     </p>
                 </div>
-                {detalhes.barbeariaSlug && (
+                {detalhes.estabelecimentoSlug && (
                     <span className="rounded border border-zinc-700 px-2 py-1 text-xs font-semibold text-zinc-300">
-                        {detalhes.barbeariaSlug}
+                        {detalhes.estabelecimentoSlug}
                     </span>
                 )}
             </div>
@@ -515,11 +515,11 @@ function DenunciaAdmin(props: {
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                     <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-bold text-zinc-100">{denuncia.barbearia?.nome ?? 'Barbearia'}</h3>
+                        <h3 className="font-bold text-zinc-100">{denuncia.estabelecimento?.nome ?? 'Estabelecimento'}</h3>
                         <span className={classeStatusDenuncia(denuncia.status)}>{denuncia.status}</span>
                     </div>
                     <p className="mt-1 text-sm text-zinc-400">
-                        {denuncia.barbearia?.slug ?? '-'} | {denuncia.motivo} | {formatarData(denuncia.createdAt)}
+                        {denuncia.estabelecimento?.slug ?? '-'} | {denuncia.motivo} | {formatarData(denuncia.createdAt)}
                     </p>
                     <p className="mt-3 text-sm text-zinc-300">{denuncia.mensagem}</p>
                     {(denuncia.nome || denuncia.email) && (
@@ -558,39 +558,39 @@ function DenunciaAdmin(props: {
     )
 }
 
-function BarbeariaPendente(props: {
-    barbearia: any
+function EstabelecimentoPendente(props: {
+    estabelecimento: any
     onAprovar: (id: number) => void
     onReprovar: (id: number) => void
 }) {
-    const barbearia = props.barbearia
+    const estabelecimento = props.estabelecimento
 
     return (
         <div className="rounded border border-yellow-400/30 bg-zinc-900 p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
-                    <h3 className="text-lg font-bold text-zinc-100">{barbearia.nome}</h3>
+                    <h3 className="text-lg font-bold text-zinc-100">{estabelecimento.nome}</h3>
                     <p className="text-sm text-zinc-400">
-                        {barbearia.slug} | {barbearia.email ?? 'sem e-mail'} | {barbearia.telefone ?? 'sem telefone'}
+                        {estabelecimento.slug} | {estabelecimento.email ?? 'sem e-mail'} | {estabelecimento.telefone ?? 'sem telefone'}
                     </p>
                     <p className="text-sm text-zinc-500">
-                        Plano {barbearia.assinatura?.plano?.nome ?? '-'} | criado em {formatarData(barbearia.createdAt)}
+                        Plano {estabelecimento.assinatura?.plano?.nome ?? '-'} | criado em {formatarData(estabelecimento.createdAt)}
                     </p>
-                    {barbearia.reviewReason && (
-                        <p className="mt-2 text-sm text-zinc-400">{barbearia.reviewReason}</p>
+                    {estabelecimento.reviewReason && (
+                        <p className="mt-2 text-sm text-zinc-400">{estabelecimento.reviewReason}</p>
                     )}
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <button
                         type="button"
-                        onClick={() => props.onAprovar(barbearia.id)}
+                        onClick={() => props.onAprovar(estabelecimento.id)}
                         className="rounded bg-emerald-500 px-4 py-2 font-bold text-white"
                     >
                         Aprovar
                     </button>
                     <button
                         type="button"
-                        onClick={() => props.onReprovar(barbearia.id)}
+                        onClick={() => props.onReprovar(estabelecimento.id)}
                         className="rounded bg-red-500/15 px-4 py-2 font-bold text-red-300"
                     >
                         Reprovar
@@ -652,8 +652,8 @@ function dataInput(valor?: string | null) {
     return new Date(valor).toISOString().slice(0, 10)
 }
 
-function valorComercial(comercial: Record<number, any>, barbearia: any, campo: string, fallback: string) {
-    return comercial[barbearia.id]?.[campo] ?? fallback
+function valorComercial(comercial: Record<number, any>, estabelecimento: any, campo: string, fallback: string) {
+    return comercial[estabelecimento.id]?.[campo] ?? fallback
 }
 
 function classeStatusDenuncia(status: string) {

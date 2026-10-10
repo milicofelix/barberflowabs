@@ -6,7 +6,7 @@
     "JWT_SECRET",
     "REACT_NATIVE_PACKAGER_HOSTNAME",
     "API_URL",
-    "BARBEARIA_SLUG"
+    "ESTABELECIMENTO_SLUG"
   ],
   "tasks": {
     "build": {

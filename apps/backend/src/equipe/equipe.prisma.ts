@@ -6,9 +6,9 @@ import { SalvarEscalaDto, SalvarMembroEquipeDto } from './equipe.dto';
 export class EquipePrisma {
   constructor(private readonly prisma: PrismaService) {}
 
-  listar(barbeariaId: number) {
+  listar(estabelecimentoId: number) {
     return (this.prisma as any).membroEquipe.findMany({
-      where: { barbeariaId },
+      where: { estabelecimentoId },
       include: {
         usuario: { select: { id: true, nome: true, email: true, telefone: true } },
         profissional: { select: { id: true, nome: true, imagemURL: true } },
@@ -17,69 +17,69 @@ export class EquipePrisma {
     });
   }
 
-  listarUsuariosDisponiveis(barbeariaId: number) {
+  listarUsuariosDisponiveis(estabelecimentoId: number) {
     return this.prisma.usuario.findMany({
-      where: { barbeariaId, vinculosEquipe: { none: { barbeariaId } } } as any,
+      where: { estabelecimentoId, vinculosEquipe: { none: { estabelecimentoId } } } as any,
       select: { id: true, nome: true, email: true, telefone: true },
       orderBy: { nome: 'asc' },
     });
   }
 
-  async criar(barbeariaId: number, dados: SalvarMembroEquipeDto) {
-    await this.validarVinculos(barbeariaId, dados);
+  async criar(estabelecimentoId: number, dados: SalvarMembroEquipeDto) {
+    await this.validarVinculos(estabelecimentoId, dados);
     return (this.prisma as any).membroEquipe.create({
-      data: this.dadosMembro(barbeariaId, dados),
+      data: this.dadosMembro(estabelecimentoId, dados),
     });
   }
 
-  async atualizar(id: number, barbeariaId: number, dados: SalvarMembroEquipeDto) {
-    const membro = await (this.prisma as any).membroEquipe.findFirst({ where: { id, barbeariaId } });
+  async atualizar(id: number, estabelecimentoId: number, dados: SalvarMembroEquipeDto) {
+    const membro = await (this.prisma as any).membroEquipe.findFirst({ where: { id, estabelecimentoId } });
     if (!membro) throw new NotFoundException('Membro da equipe não encontrado');
-    await this.validarVinculos(barbeariaId, dados);
+    await this.validarVinculos(estabelecimentoId, dados);
     return (this.prisma as any).membroEquipe.update({
-      where: { id }, data: this.dadosMembro(barbeariaId, dados),
+      where: { id }, data: this.dadosMembro(estabelecimentoId, dados),
     });
   }
 
-  listarEscalas(profissionalId: number, barbeariaId: number) {
+  listarEscalas(profissionalId: number, estabelecimentoId: number) {
     return (this.prisma as any).escalaProfissional.findMany({
-      where: { profissionalId, barbeariaId },
+      where: { profissionalId, estabelecimentoId },
       include: { unidade: { select: { id: true, nome: true } } },
       orderBy: [{ diaSemana: 'asc' }, { inicio: 'asc' }],
     });
   }
 
-  async salvarEscalas(profissionalId: number, barbeariaId: number, escalas: SalvarEscalaDto[]) {
-    await this.validarProfissional(profissionalId, barbeariaId);
-    await Promise.all(escalas.map((escala) => this.validarUnidade(escala.unidadeId, barbeariaId)));
+  async salvarEscalas(profissionalId: number, estabelecimentoId: number, escalas: SalvarEscalaDto[]) {
+    await this.validarProfissional(profissionalId, estabelecimentoId);
+    await Promise.all(escalas.map((escala) => this.validarUnidade(escala.unidadeId, estabelecimentoId)));
     await this.prisma.$transaction(async (tx) => {
-      await (tx as any).escalaProfissional.deleteMany({ where: { profissionalId, barbeariaId } });
+      await (tx as any).escalaProfissional.deleteMany({ where: { profissionalId, estabelecimentoId } });
       if (escalas.length) await (tx as any).escalaProfissional.createMany({
-        data: escalas.map((escala) => ({ ...escala, barbeariaId, profissionalId, unidadeId: escala.unidadeId ?? null, ativo: escala.ativo ?? true })),
+        data: escalas.map((escala) => ({ ...escala, estabelecimentoId, profissionalId, unidadeId: escala.unidadeId ?? null, ativo: escala.ativo ?? true })),
       });
     });
-    return this.listarEscalas(profissionalId, barbeariaId);
+    return this.listarEscalas(profissionalId, estabelecimentoId);
   }
 
-  private dadosMembro(barbeariaId: number, dados: SalvarMembroEquipeDto) {
-    return { barbeariaId, usuarioId: Number(dados.usuarioId), profissionalId: dados.profissionalId ? Number(dados.profissionalId) : null,
+  private dadosMembro(estabelecimentoId: number, dados: SalvarMembroEquipeDto) {
+    return { estabelecimentoId, usuarioId: Number(dados.usuarioId), profissionalId: dados.profissionalId ? Number(dados.profissionalId) : null,
       papel: dados.papel, permissoes: dados.permissoes, ativo: dados.ativo ?? true };
   }
 
-  private async validarVinculos(barbeariaId: number, dados: SalvarMembroEquipeDto) {
-    const usuario = await this.prisma.usuario.findFirst({ where: { id: Number(dados.usuarioId), barbeariaId } });
+  private async validarVinculos(estabelecimentoId: number, dados: SalvarMembroEquipeDto) {
+    const usuario = await this.prisma.usuario.findFirst({ where: { id: Number(dados.usuarioId), estabelecimentoId } });
     if (!usuario) throw new BadRequestException('Usuário não pertence ao estabelecimento');
-    if (dados.profissionalId) await this.validarProfissional(Number(dados.profissionalId), barbeariaId);
+    if (dados.profissionalId) await this.validarProfissional(Number(dados.profissionalId), estabelecimentoId);
   }
 
-  private async validarProfissional(id: number, barbeariaId: number) {
-    const profissional = await this.prisma.profissional.findFirst({ where: { id, barbeariaId } });
+  private async validarProfissional(id: number, estabelecimentoId: number) {
+    const profissional = await this.prisma.profissional.findFirst({ where: { id, estabelecimentoId } });
     if (!profissional) throw new BadRequestException('Profissional não pertence ao estabelecimento');
   }
 
-  private async validarUnidade(id: number | null | undefined, barbeariaId: number) {
+  private async validarUnidade(id: number | null | undefined, estabelecimentoId: number) {
     if (!id) return;
-    const unidade = await this.prisma.unidade.findFirst({ where: { id: Number(id), barbeariaId } });
+    const unidade = await this.prisma.unidade.findFirst({ where: { id: Number(id), estabelecimentoId } });
     if (!unidade) throw new BadRequestException('Unidade não pertence ao estabelecimento');
   }
 }

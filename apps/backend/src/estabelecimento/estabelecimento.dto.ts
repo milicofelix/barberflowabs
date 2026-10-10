@@ -1,11 +1,11 @@
-export type CriarBarbeariaDto = {
+export type CriarEstabelecimentoDto = {
   nome: string;
   slug: string;
   email?: string;
   telefone?: string;
 };
 
-export type AtualizarPerfilPublicoBarbeariaDto = {
+export type AtualizarPerfilPublicoEstabelecimentoDto = {
   nomePublico?: string;
   descricaoPublica?: string;
   imagemCapaURL?: string;

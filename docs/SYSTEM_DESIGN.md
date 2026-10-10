@@ -82,35 +82,35 @@ Checklist tecnico:
 
 ## Multi-Tenant
 
-Entidade raiz de tenant: `Barbearia`.
+Entidade raiz de tenant: `Estabelecimento`.
 
 Campos esperados nas entidades operacionais:
 
-- `barbeariaId` em `Usuario`
-- `barbeariaId` em `Profissional`
-- `barbeariaId` em `Servico`
-- `barbeariaId` em `Agendamento`
-- `barbeariaId` em configuracoes, financeiro, relacionamento e avaliacoes
+- `estabelecimentoId` em `Usuario`
+- `estabelecimentoId` em `Profissional`
+- `estabelecimentoId` em `Servico`
+- `estabelecimentoId` em `Agendamento`
+- `estabelecimentoId` em configuracoes, financeiro, relacionamento e avaliacoes
 
 Regras:
 
-- Rotas autenticadas de barbeiro/dono devem priorizar `usuario.barbeariaId`.
-- Rotas autenticadas de cliente, como agendamento e historico do cliente, devem resolver a barbearia pelo tenant publico selecionado (`x-barbearia-slug`).
-- Usuario `BARBER` dentro do fluxo publico de `/agendamento` atua como cliente e deve usar o tenant publico selecionado, nao a propria barbearia.
-- Cliente logado sem barbearia selecionada deve ser conduzido ao marketplace publico antes de abrir formulario de agendamento.
-- `x-barbearia-id` so deve ser enviado pelo frontend para usuarios operacionais da barbearia; cliente usa slug publico selecionado.
-- `x-barbearia-slug` e `x-barbearia-id` ajudam na resolucao inicial, mas nao devem permitir que barbeiro/dono acesse dados de outra barbearia quando esta logado.
-- Servicos, profissionais, agendamentos, clientes e financeiro devem sempre filtrar por `barbeariaId`.
-- Nova barbearia criada pelo onboarding deve nascer sem servicos/profissionais copiados da barbearia padrao.
-- `Usuario.barbeariaId` nao representa carteira de clientes no marketplace. Cliente pode pertencer a varias barbearias pela tabela `ClienteBarbearia`.
-- Ao concluir um agendamento, o usuario deve ser vinculado automaticamente como cliente da barbearia agendada.
-- Um usuario `BARBER` tambem pode existir como cliente em outra barbearia pela tabela `ClienteBarbearia`; papel operacional nao deve impedir essa associacao.
+- Rotas autenticadas de membro do estabelecimento/dono devem priorizar `usuario.estabelecimentoId`.
+- Rotas autenticadas de cliente, como agendamento e historico do cliente, devem resolver a estabelecimento pelo tenant publico selecionado (`x-estabelecimento-slug`).
+- Usuario `ESTABLISHMENT_MEMBER` dentro do fluxo publico de `/agendamento` atua como cliente e deve usar o tenant publico selecionado, nao a propria estabelecimento.
+- Cliente logado sem estabelecimento selecionada deve ser conduzido ao marketplace publico antes de abrir formulario de agendamento.
+- `x-estabelecimento-id` so deve ser enviado pelo frontend para usuarios operacionais da estabelecimento; cliente usa slug publico selecionado.
+- `x-estabelecimento-slug` e `x-estabelecimento-id` ajudam na resolucao inicial, mas nao devem permitir que membro do estabelecimento/dono acesse dados de outra estabelecimento quando esta logado.
+- Servicos, profissionais, agendamentos, clientes e financeiro devem sempre filtrar por `estabelecimentoId`.
+- Nova estabelecimento criada pelo onboarding deve nascer sem servicos/profissionais copiados da estabelecimento padrao.
+- `Usuario.estabelecimentoId` nao representa carteira de clientes no marketplace. Cliente pode pertencer a varias estabelecimentos pela tabela `ClienteEstabelecimento`.
+- Ao concluir um agendamento, o usuario deve ser vinculado automaticamente como cliente da estabelecimento agendada.
+- Um usuario `ESTABLISHMENT_MEMBER` tambem pode existir como cliente em outra estabelecimento pela tabela `ClienteEstabelecimento`; papel operacional nao deve impedir essa associacao.
 
 ## Horarios E Fuso
 
 - Status publico de funcionamento deve calcular "agora" com fuso explicito `America/Sao_Paulo`.
 - Nao usar `new Date().getHours()` diretamente para decidir `ABERTA` ou `FECHADA`; container ou host podem estar em UTC.
-- O filtro `abertaAgora=true` de `GET /public/barbearias` depende desse mesmo calculo.
+- O filtro `abertaAgora=true` de `GET /public/estabelecimentos` depende desse mesmo calculo.
 - Horarios de agenda e horarios publicos precisam comparar dia da semana e minutos do dia no mesmo fuso.
 
 ## Papeis E Acesso
@@ -118,17 +118,17 @@ Regras:
 Estado atual:
 
 - `SUPER_ADMIN`: dono do app/SaaS.
-- `BARBER`: responsavel ou profissional da barbearia.
+- `ESTABLISHMENT_MEMBER`: responsavel ou profissional da estabelecimento.
 - `CUSTOMER`: cliente final.
-- Campo legado `barbeiro` ainda existe por compatibilidade.
+- Campo legado `membro do estabelecimento` ainda existe por compatibilidade.
 
 Regra de transicao:
 
 - Backend deve aceitar `papel` e `role` enquanto a normalizacao final nao for feita.
 - `SUPER_ADMIN_EMAILS` no ambiente pode promover usuario para super admin em tempo de request.
-- `SUPER_ADMIN` e papel de plataforma, nao tenant de barbearia.
-- `SUPER_ADMIN` nao deve carregar `barbeariaId`, `barbeiro`, agenda, gestao operacional, perfil publico ou cobranca de barbearia.
-- Donos/responsaveis de barbearia usam `BARBER` com `barbeiro=true` e `barbeariaId` definido.
+- `SUPER_ADMIN` e papel de plataforma, nao tenant de estabelecimento.
+- `SUPER_ADMIN` nao deve carregar `estabelecimentoId`, `membro do estabelecimento`, agenda, gestao operacional, perfil publico ou cobranca de estabelecimento.
+- Donos/responsaveis de estabelecimento usam `ESTABLISHMENT_MEMBER` com `membro do estabelecimento=true` e `estabelecimentoId` definido.
 - Depois de alterar papel ou token, fazer logout/login ou chamar refresh.
 
 ## Planos E Pagamento
@@ -147,17 +147,17 @@ Regra de transicao:
 
 Publico:
 
-- `GET /public/barbearias`
-- `GET /public/barbearias/:slug`
-- `POST /public/barbearias/:slug/denuncias`
+- `GET /public/estabelecimentos`
+- `GET /public/estabelecimentos/:slug`
+- `POST /public/estabelecimentos/:slug/denuncias`
 
-Barbearia:
+Estabelecimento:
 
-- `GET /barbearias`
-- `GET /barbearias/:slug`
-- `POST /barbearias`
-- `GET /barbearias/minha/perfil-publico`
-- `PUT /barbearias/minha/perfil-publico`
+- `GET /estabelecimentos`
+- `GET /estabelecimentos/:slug`
+- `POST /estabelecimentos`
+- `GET /estabelecimentos/minha/perfil-publico`
+- `PUT /estabelecimentos/minha/perfil-publico`
 
 Agenda:
 
@@ -175,7 +175,7 @@ Agendamentos:
 
 Regras de agendamento:
 
-- Nao pode existir mais de um agendamento ativo para a mesma barbearia, profissional e data/hora.
+- Nao pode existir mais de um agendamento ativo para a mesma estabelecimento, profissional e data/hora.
 - Status considerados ativos para bloqueio de horario: `AGENDADO`, `CONFIRMADO` e `CHECKIN`.
 - A criacao de agendamento deve serializar a reserva por profissional antes de gravar, evitando duplo clique ou duas requisicoes simultaneas no mesmo horario.
 
@@ -187,16 +187,16 @@ Admin SaaS:
 - `GET /saas/admin/notificacoes`
 - `GET /saas/admin/denuncias-perfil`
 - `PUT /saas/admin/denuncias-perfil/:id`
-- `GET /saas/admin/barbearias`
-- `GET /saas/admin/barbearias/pendentes`
-- `PUT /saas/admin/barbearias/:id/status`
-- `PUT /saas/admin/barbearias/:id/destaque`
-- `PUT /saas/admin/barbearias/:id/comercial`
-- `PUT /saas/admin/barbearias/:id/aprovar`
-- `PUT /saas/admin/barbearias/:id/reprovar`
+- `GET /saas/admin/estabelecimentos`
+- `GET /saas/admin/estabelecimentos/pendentes`
+- `PUT /saas/admin/estabelecimentos/:id/status`
+- `PUT /saas/admin/estabelecimentos/:id/destaque`
+- `PUT /saas/admin/estabelecimentos/:id/comercial`
+- `PUT /saas/admin/estabelecimentos/:id/aprovar`
+- `PUT /saas/admin/estabelecimentos/:id/reprovar`
 - `GET /saas/admin/auditoria`
 
-Cobrança Da Barbearia:
+Cobrança Da Estabelecimento:
 
 - `GET /saas/cobranca`
 - `PUT /saas/cobranca/plano`
@@ -220,7 +220,7 @@ Cobrança Da Barbearia:
 - Usar `upsert` quando existir chave unica.
 - Usar `createMany({ skipDuplicates: true })` quando a tabela tiver unique adequado.
 - Se criar dados dependentes de migration nova, avisar que migration precisa estar aplicada antes do seed.
-- Seeds demo devem criar dados por barbearia, nunca compartilhar profissionais/servicos entre tenants.
+- Seeds demo devem criar dados por estabelecimento, nunca compartilhar profissionais/servicos entre tenants.
 
 ## Checklist Antes De Entregar Codigo
 
@@ -244,9 +244,9 @@ Para mudancas com banco:
 
 Para mudancas publicas:
 
-- Testar ou orientar teste de `/public/barbearias`.
-- Testar ou orientar teste de `/barbearias`.
-- Verificar se barbearia precisa estar `APPROVED`, `ACTIVE/TRIAL` e com coordenadas para aparecer.
+- Testar ou orientar teste de `/public/estabelecimentos`.
+- Testar ou orientar teste de `/estabelecimentos`.
+- Verificar se estabelecimento precisa estar `APPROVED`, `ACTIVE/TRIAL` e com coordenadas para aparecer.
 
 ## Diagnostico Rapido
 
@@ -258,10 +258,10 @@ docker compose logs --tail=160 app
 curl -sS -i http://localhost:4000/ping
 ```
 
-API publica de barbearias:
+API publica de estabelecimentos:
 
 ```bash
-curl -sS -i "http://localhost:4000/public/barbearias?cidade=Sao%20Paulo&raioKm=25"
+curl -sS -i "http://localhost:4000/public/estabelecimentos?cidade=Sao%20Paulo&raioKm=25"
 ```
 
 Alias publico canonico para novos consumidores:
@@ -310,13 +310,13 @@ http://localhost:4000/ping
 3. Validar busca publica:
 
 ```text
-http://localhost:3000/barbearias
+http://localhost:3000/estabelecimentos
 ```
 
 4. Validar mapa:
 
 ```text
-http://localhost:3000/barbearias
+http://localhost:3000/estabelecimentos
 ```
 
 Entrar na aba `Mapa`, permitir localizacao e usar raio `25 km`.
@@ -327,7 +327,7 @@ Entrar na aba `Mapa`, permitir localizacao e usar raio `25 km`.
 http://localhost:3000/admin
 ```
 
-6. Validar configuracoes da barbearia:
+6. Validar configuracoes da estabelecimento:
 
 ```text
 http://localhost:3000/configuracoes
@@ -346,8 +346,8 @@ http://localhost:3000/gestao
 - Prisma Client desatualizado pode quebrar TypeScript apos schema novo.
 - Expo pode mostrar warnings de versao sem impedir backend/frontend.
 - Frontend pode manter token antigo; logout/login resolve alteracoes de papel.
-- Endpoint publico nao retorna barbearias pendentes, reprovadas, suspensas ou canceladas.
-- Barbearias sem coordenadas aparecem na lista, mas nao aparecem como marcador real no mapa.
+- Endpoint publico nao retorna estabelecimentos pendentes, reprovadas, suspensas ou canceladas.
+- Estabelecimentos sem coordenadas aparecem na lista, mas nao aparecem como marcador real no mapa.
 
 ## Regra De Ouro
 

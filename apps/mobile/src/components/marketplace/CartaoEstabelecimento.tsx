@@ -1,4 +1,4 @@
-import type { EstabelecimentoResumo } from '@/src/data/barbearias/tipos'
+import type { EstabelecimentoResumo } from '@/src/data/estabelecimentos/tipos'
 import { Ionicons } from '@expo/vector-icons'
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import useTema from '@/src/data/contexts/ContextoTema'

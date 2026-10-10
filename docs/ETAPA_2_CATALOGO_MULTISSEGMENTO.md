@@ -2,7 +2,7 @@
 
 ## Resultado
 
-O backend passa a representar um catalogo reutilizavel antes da criacao de novas telas operacionais. A nomenclatura interna legada (`Barbearia` e `barbeariaId`) continua preservada para compatibilidade e isolamento de tenant.
+O backend passa a representar um catalogo reutilizavel antes da criacao de novas telas operacionais. A nomenclatura interna legada (`Estabelecimento` e `estabelecimentoId`) continua preservada para compatibilidade e isolamento de tenant.
 
 Foram adicionados:
 

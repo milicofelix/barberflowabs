@@ -28,8 +28,8 @@ export class CatalogoController {
 
   @Get('estabelecimento')
   async obterEstabelecimento(@Req() req: any) {
-    const barbeariaId = await this.tenant.resolverBarbeariaId(req);
-    return this.catalogo.obterConfiguracao(barbeariaId);
+    const estabelecimentoId = await this.tenant.resolverEstabelecimentoId(req);
+    return this.catalogo.obterConfiguracao(estabelecimentoId);
   }
 
   @Put('estabelecimento')

@@ -38,12 +38,12 @@ export class AuthMiddleware implements NestMiddleware {
 
       usuario.papel = emailsSuperAdmin.includes(usuario.email.toLowerCase())
         ? 'SUPER_ADMIN'
-        : (usuario.papel ?? (usuario.barbeiro ? 'BARBER' : 'CUSTOMER'));
+        : (usuario.papel ?? (usuario.membroEstabelecimento ? 'ESTABLISHMENT_MEMBER' : 'CUSTOMER'));
       usuario.role = usuario.papel;
 
       if (usuario.papel === 'SUPER_ADMIN') {
-        usuario.barbeiro = false;
-        usuario.barbeariaId = null as any;
+        usuario.membroEstabelecimento = false;
+        usuario.estabelecimentoId = null as any;
       }
 
       req.usuario = usuario;

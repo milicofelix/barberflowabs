@@ -14,9 +14,9 @@ export class CatalogoPrisma {
     private readonly integridade: CatalogoIntegridadePrisma,
   ) {}
 
-  async atualizarEstabelecimento(barbeariaId: number, dados: AtualizarCatalogoEstabelecimentoDto) {
+  async atualizarEstabelecimento(estabelecimentoId: number, dados: AtualizarCatalogoEstabelecimentoDto) {
     await this.integridade.validarClassificacao(dados.segmentoIds, dados.especialidadeIds);
-    await this.integridade.validarServicosCompativeis(barbeariaId, dados.modeloAtendimento);
+    await this.integridade.validarServicosCompativeis(estabelecimentoId, dados.modeloAtendimento);
 
     return this.prisma.$transaction(async (transacao) => {
       const tx = transacao as any;
@@ -24,15 +24,15 @@ export class CatalogoPrisma {
         ? { especialidadeId: { notIn: dados.especialidadeIds } }
         : {};
       await tx.profissionalEspecialidade.deleteMany({
-        where: { barbeariaId, ...filtroEspecialidadesRemovidas },
+        where: { estabelecimentoId, ...filtroEspecialidadesRemovidas },
       });
       await tx.servicoEspecialidade.deleteMany({
-        where: { barbeariaId, ...filtroEspecialidadesRemovidas },
+        where: { estabelecimentoId, ...filtroEspecialidadesRemovidas },
       });
-      await tx.estabelecimentoEspecialidade.deleteMany({ where: { barbeariaId } });
-      await tx.estabelecimentoSegmento.deleteMany({ where: { barbeariaId } });
-      await tx.barbearia.update({
-        where: { id: barbeariaId },
+      await tx.estabelecimentoEspecialidade.deleteMany({ where: { estabelecimentoId } });
+      await tx.estabelecimentoSegmento.deleteMany({ where: { estabelecimentoId } });
+      await tx.estabelecimento.update({
+        where: { id: estabelecimentoId },
         data: {
           tipoEstabelecimento: dados.tipoEstabelecimento,
           modeloAtendimento: dados.modeloAtendimento,
@@ -44,26 +44,26 @@ export class CatalogoPrisma {
           },
         },
       });
-      return this.obterConfiguracaoComCliente(tx, barbeariaId);
+      return this.obterConfiguracaoComCliente(tx, estabelecimentoId);
     });
   }
 
   async atualizarProfissional(
-    barbeariaId: number,
+    estabelecimentoId: number,
     profissionalId: number,
     dados: AtualizarEspecialidadesProfissionalDto,
   ) {
-    await this.integridade.validarEntidadeTenant('profissional', profissionalId, barbeariaId);
-    await this.integridade.validarEspecialidades(barbeariaId, dados.especialidadeIds);
-    if (dados.servicoIds !== undefined) await this.integridade.validarServicos(barbeariaId, dados.servicoIds);
+    await this.integridade.validarEntidadeTenant('profissional', profissionalId, estabelecimentoId);
+    await this.integridade.validarEspecialidades(estabelecimentoId, dados.especialidadeIds);
+    if (dados.servicoIds !== undefined) await this.integridade.validarServicos(estabelecimentoId, dados.servicoIds);
 
     return this.prisma.$transaction(async (transacao) => {
       const tx = transacao as any;
-      await tx.profissionalEspecialidade.deleteMany({ where: { barbeariaId, profissionalId } });
+      await tx.profissionalEspecialidade.deleteMany({ where: { estabelecimentoId, profissionalId } });
       if (dados.especialidadeIds.length) {
         await tx.profissionalEspecialidade.createMany({
           data: dados.especialidadeIds.map((especialidadeId) => ({
-            barbeariaId,
+            estabelecimentoId,
             profissionalId,
             especialidadeId,
             principal: especialidadeId === Number(dados.especialidadePrincipalId),
@@ -71,11 +71,11 @@ export class CatalogoPrisma {
         });
       }
       if (dados.servicoIds !== undefined) {
-        await tx.profissionalServico.deleteMany({ where: { barbeariaId, profissionalId } });
+        await tx.profissionalServico.deleteMany({ where: { estabelecimentoId, profissionalId } });
         if (dados.servicoIds.length) {
           await tx.profissionalServico.createMany({
             data: dados.servicoIds.map((servicoId) => ({
-              barbeariaId,
+              estabelecimentoId,
               profissionalId,
               servicoId,
               ativo: true,
@@ -93,21 +93,21 @@ export class CatalogoPrisma {
     });
   }
 
-  async atualizarServico(barbeariaId: number, servicoId: number, dados: AtualizarCatalogoServicoDto) {
-    await this.integridade.validarEntidadeTenant('servico', servicoId, barbeariaId);
-    await this.integridade.validarEspecialidades(barbeariaId, dados.especialidadeIds);
+  async atualizarServico(estabelecimentoId: number, servicoId: number, dados: AtualizarCatalogoServicoDto) {
+    await this.integridade.validarEntidadeTenant('servico', servicoId, estabelecimentoId);
+    await this.integridade.validarEspecialidades(estabelecimentoId, dados.especialidadeIds);
     await this.integridade.validarRequisitos(dados.requisitos.map((item) => item.requisitoId));
 
     return this.prisma.$transaction(async (transacao) => {
       const tx = transacao as any;
-      await tx.servicoEspecialidade.deleteMany({ where: { barbeariaId, servicoId } });
+      await tx.servicoEspecialidade.deleteMany({ where: { estabelecimentoId, servicoId } });
       await tx.servicoRequisito.deleteMany({ where: { servicoId } });
       if (dados.recursosNecessarios !== undefined) {
         await tx.servicoRecurso.deleteMany({ where: { servicoId } });
       }
       if (dados.especialidadeIds.length) {
         await tx.servicoEspecialidade.createMany({
-          data: dados.especialidadeIds.map((especialidadeId) => ({ barbeariaId, servicoId, especialidadeId })),
+          data: dados.especialidadeIds.map((especialidadeId) => ({ estabelecimentoId, servicoId, especialidadeId })),
         });
       }
       if (dados.requisitos.length) {
@@ -130,7 +130,7 @@ export class CatalogoPrisma {
         });
       }
       return tx.servico.update({
-        where: { id: servicoId, barbeariaId },
+        where: { id: servicoId, estabelecimentoId },
         data: {
           observacoes: dados.observacoes?.trim() || null,
           modeloAtendimento: dados.modeloAtendimento,
@@ -149,9 +149,9 @@ export class CatalogoPrisma {
     });
   }
 
-  private obterConfiguracaoComCliente(cliente: any, barbeariaId: number) {
-    return cliente.barbearia.findUnique({
-      where: { id: barbeariaId },
+  private obterConfiguracaoComCliente(cliente: any, estabelecimentoId: number) {
+    return cliente.estabelecimento.findUnique({
+      where: { id: estabelecimentoId },
       select: {
         id: true,
         nome: true,

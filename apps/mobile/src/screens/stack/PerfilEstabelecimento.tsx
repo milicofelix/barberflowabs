@@ -1,11 +1,11 @@
-import DenunciaPerfil from '@/src/components/barbearias/DenunciaPerfil'
+import DenunciaPerfil from '@/src/components/estabelecimentos/DenunciaPerfil'
 import Carregando from '@/src/components/shared/Carregando'
 import EstadoErro from '@/src/components/shared/EstadoErro'
 import EstadoVazio from '@/src/components/shared/EstadoVazio'
-import type { EstabelecimentoPerfil } from '@/src/data/barbearias/tipos'
-import { resumirSelecao } from '@/src/data/barbearias/tipos'
+import type { EstabelecimentoPerfil } from '@/src/data/estabelecimentos/tipos'
+import { resumirSelecao } from '@/src/data/estabelecimentos/tipos'
 import useAPI, { mensagemDoErro } from '@/src/data/hooks/useAPI'
-import useBarbearia from '@/src/data/hooks/useBarbearia'
+import useEstabelecimento from '@/src/data/hooks/useEstabelecimento'
 import type { StackParamList } from '@/src/navigation/types'
 import { Ionicons } from '@expo/vector-icons'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
@@ -15,14 +15,14 @@ import { ActivityIndicator, ImageBackground, Pressable, ScrollView, StyleSheet, 
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
 
-type Props = NativeStackScreenProps<StackParamList, 'PerfilBarbearia'>
+type Props = NativeStackScreenProps<StackParamList, 'PerfilEstabelecimento'>
 const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
 
-export default function PerfilBarbearia({ route, navigation }: Props) {
+export default function PerfilEstabelecimento({ route, navigation }: Props) {
     const { cores } = useTema()
     const { httpGet } = useAPI()
-    const { barbearia: selecionada, selecionarBarbearia } = useBarbearia()
-    const [barbearia, setBarbearia] = useState<EstabelecimentoPerfil | null>(null)
+    const { estabelecimento: selecionada, selecionarEstabelecimento } = useEstabelecimento()
+    const [estabelecimento, setEstabelecimento] = useState<EstabelecimentoPerfil | null>(null)
     const [carregando, setCarregando] = useState(true)
     const [selecionando, setSelecionando] = useState(false)
     const [erro, setErro] = useState<string | null>(null)
@@ -32,11 +32,11 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
         try {
             setCarregando(true)
             setErro(null)
-            setBarbearia(await httpGet<EstabelecimentoPerfil>(`/public/estabelecimentos/${encodeURIComponent(route.params.slug)}`, {
+            setEstabelecimento(await httpGet<EstabelecimentoPerfil>(`/public/estabelecimentos/${encodeURIComponent(route.params.slug)}`, {
                 escopoTenant: 'nenhum',
             }))
         } catch (e) {
-            setBarbearia(null)
+            setEstabelecimento(null)
             setErro(mensagemDoErro(e))
         } finally {
             setCarregando(false)
@@ -46,48 +46,48 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
     useEffect(() => { carregar() }, [carregar])
 
     async function agendarAqui() {
-        if (!barbearia || selecionando) return
+        if (!estabelecimento || selecionando) return
         try {
             setSelecionando(true)
-            await selecionarBarbearia(resumirSelecao(barbearia))
+            await selecionarEstabelecimento(resumirSelecao(estabelecimento))
             navigation.navigate('Abas', { screen: 'Agendamento' })
         } catch {
-            setErro('Não foi possível salvar sua barbearia. Tente novamente.')
+            setErro('Não foi possível salvar seu estabelecimento. Tente novamente.')
         } finally {
             setSelecionando(false)
         }
     }
 
     if (carregando) return <Carregando mensagem="Carregando perfil do estabelecimento..." />
-    if (erro || !barbearia) return <SafeAreaView style={[styles.telaEstado, { backgroundColor: cores.fundo }]}><EstadoErro mensagem={erro ?? 'Estabelecimento não encontrado.'} tentarNovamente={carregar} /></SafeAreaView>
+    if (erro || !estabelecimento) return <SafeAreaView style={[styles.telaEstado, { backgroundColor: cores.fundo }]}><EstadoErro mensagem={erro ?? 'Estabelecimento não encontrado.'} tentarNovamente={carregar} /></SafeAreaView>
 
-    const endereco = [barbearia.endereco?.logradouro, barbearia.endereco?.bairro, barbearia.endereco?.cidade, barbearia.endereco?.estado].filter(Boolean).join(' · ')
-    const imagem = barbearia.imagemCapaURL?.startsWith('http') ? { uri: barbearia.imagemCapaURL } : require('@/assets/images/inicio/fundo.png')
-    const estaSelecionada = selecionada?.id === barbearia.id
+    const endereco = [estabelecimento.endereco?.logradouro, estabelecimento.endereco?.bairro, estabelecimento.endereco?.cidade, estabelecimento.endereco?.estado].filter(Boolean).join(' · ')
+    const imagem = estabelecimento.imagemCapaURL?.startsWith('http') ? { uri: estabelecimento.imagemCapaURL } : require('@/assets/images/inicio/fundo.png')
+    const estaSelecionada = selecionada?.id === estabelecimento.id
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['bottom']}>
             <ScrollView contentContainerStyle={styles.conteudo}>
                 <ImageBackground source={imagem} style={styles.hero} imageStyle={styles.heroImagem}>
                     <View style={styles.heroOverlay}>
-                        <Text style={[styles.status, barbearia.statusOperacional?.status === 'ABERTA' && styles.statusAberta]}>{barbearia.statusOperacional?.label}</Text>
+                        <Text style={[styles.status, estabelecimento.statusOperacional?.status === 'ABERTA' && styles.statusAberta]}>{estabelecimento.statusOperacional?.label}</Text>
                         <View>
-                            <Text style={styles.nome}>{barbearia.nome}</Text>
-                            {barbearia.descricao ? <Text style={styles.descricao}>{barbearia.descricao}</Text> : null}
+                            <Text style={styles.nome}>{estabelecimento.nome}</Text>
+                            {estabelecimento.descricao ? <Text style={styles.descricao}>{estabelecimento.descricao}</Text> : null}
                         </View>
                     </View>
                 </ImageBackground>
 
                 <View style={[styles.informacoes, { borderBottomColor: cores.borda }]}>
-                    {barbearia.avaliacaoMedia != null ? <Info icone="star" texto={`${barbearia.avaliacaoMedia} · ${barbearia.quantidadeAvaliacoes} avaliações`} /> : null}
+                    {estabelecimento.avaliacaoMedia != null ? <Info icone="star" texto={`${estabelecimento.avaliacaoMedia} · ${estabelecimento.quantidadeAvaliacoes} avaliações`} /> : null}
                     {endereco ? <Info icone="location-outline" texto={endereco} /> : null}
-                    {barbearia.telefone ? <Info icone="call-outline" texto={barbearia.telefone} /> : null}
-                    {barbearia.segmentos?.length ? <Info icone="sparkles-outline" texto={barbearia.segmentos.map((item) => item.nome).join(' · ')} /> : null}
+                    {estabelecimento.telefone ? <Info icone="call-outline" texto={estabelecimento.telefone} /> : null}
+                    {estabelecimento.segmentos?.length ? <Info icone="sparkles-outline" texto={estabelecimento.segmentos.map((item) => item.nome).join(' · ')} /> : null}
                     {estaSelecionada ? <View style={styles.selecionada}><Ionicons name="checkmark-circle" size={20} color="#48C78E" /><Text style={styles.selecionadaTexto}>Estabelecimento selecionado</Text></View> : null}
                 </View>
 
                 <Secao titulo="Serviços">
-                    {barbearia.servicos.length ? barbearia.servicos.map((servico) => (
+                    {estabelecimento.servicos.length ? estabelecimento.servicos.map((servico) => (
                         <View key={servico.id} style={[styles.itemCard, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
                             <View style={styles.itemCabecalho}><Text style={[styles.itemTitulo, { color: cores.texto }]}>{servico.nome}</Text><Text style={styles.preco}>{moeda(servico.preco)}</Text></View>
                             {servico.descricao ? <Text style={[styles.itemDescricao, { color: cores.textoSecundario }]}>{servico.descricao}</Text> : null}
@@ -97,7 +97,7 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
                 </Secao>
 
                 <Secao titulo="Profissionais">
-                    {barbearia.profissionais.length ? barbearia.profissionais.map((profissional) => (
+                    {estabelecimento.profissionais.length ? estabelecimento.profissionais.map((profissional) => (
                         <View key={profissional.id} style={[styles.itemCard, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
                             <Text style={[styles.itemTitulo, { color: cores.texto }]}>{profissional.nome}</Text>
                             {profissional.descricao ? <Text style={[styles.itemDescricao, { color: cores.textoSecundario }]}>{profissional.descricao}</Text> : null}
@@ -108,7 +108,7 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
 
                 <Secao titulo="Horários">
                     <View style={[styles.itemCard, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
-                        {barbearia.horariosFuncionamento.length ? barbearia.horariosFuncionamento.map((horario) => (
+                        {estabelecimento.horariosFuncionamento.length ? estabelecimento.horariosFuncionamento.map((horario) => (
                             <View key={horario.diaSemana} style={[styles.horarioLinha, { borderBottomColor: cores.borda }]}>
                                 <Text style={[styles.horarioDia, { color: cores.textoSecundario }]}>{DIAS[horario.diaSemana] ?? '-'}</Text>
                                 <Text style={[styles.horarioValor, { color: cores.texto }]}>{horario.inicio} às {horario.fim}</Text>
@@ -118,7 +118,7 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
                 </Secao>
 
                 <Secao titulo="Avaliações">
-                    {barbearia.avaliacoes.length ? barbearia.avaliacoes.map((avaliacao) => (
+                    {estabelecimento.avaliacoes.length ? estabelecimento.avaliacoes.map((avaliacao) => (
                         <View key={avaliacao.id} style={[styles.itemCard, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
                             <Text style={styles.avaliacaoNota}>{'★'.repeat(Math.max(1, Math.min(5, Math.round(avaliacao.nota))))}</Text>
                             <Text style={[styles.itemDescricao, { color: cores.textoSecundario }]}>{avaliacao.comentario || 'Cliente não deixou comentário.'}</Text>
@@ -134,13 +134,13 @@ export default function PerfilBarbearia({ route, navigation }: Props) {
             </ScrollView>
 
             <View style={[styles.rodapeFixo, { backgroundColor: cores.fundo, borderTopColor: cores.borda }]}>
-                <Pressable onPress={agendarAqui} disabled={!barbearia.aceitaAgendamentoOnline || selecionando}
-                    style={[styles.agendar, (!barbearia.aceitaAgendamentoOnline || selecionando) && styles.agendarDesabilitado]}>
+                <Pressable onPress={agendarAqui} disabled={!estabelecimento.aceitaAgendamentoOnline || selecionando}
+                    style={[styles.agendar, (!estabelecimento.aceitaAgendamentoOnline || selecionando) && styles.agendarDesabilitado]}>
                     {selecionando ? <ActivityIndicator color="#081426" /> : <Text style={styles.agendarTexto}>{estaSelecionada ? 'Continuar agendamento' : 'Agendar neste estabelecimento'}</Text>}
                 </Pressable>
-                {!barbearia.aceitaAgendamentoOnline ? <Text style={styles.indisponivel}>Agendamento online indisponível.</Text> : null}
+                {!estabelecimento.aceitaAgendamentoOnline ? <Text style={styles.indisponivel}>Agendamento online indisponível.</Text> : null}
             </View>
-            <DenunciaPerfil slug={barbearia.slug} nomeBarbearia={barbearia.nome} aberto={denunciaAberta} fechar={() => setDenunciaAberta(false)} />
+            <DenunciaPerfil slug={estabelecimento.slug} nomeEstabelecimento={estabelecimento.nome} aberto={denunciaAberta} fechar={() => setDenunciaAberta(false)} />
         </SafeAreaView>
     )
 }

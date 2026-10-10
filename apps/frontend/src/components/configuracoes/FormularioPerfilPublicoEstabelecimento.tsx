@@ -20,7 +20,7 @@ const perfilVazio = {
     observacaoRevisao: '',
 }
 
-export default function FormularioPerfilPublicoBarbearia() {
+export default function FormularioPerfilPublicoEstabelecimento() {
     const { httpGet, httpPut } = useAPI()
     const [perfil, setPerfil] = useState<any>(perfilVazio)
     const [carregando, setCarregando] = useState(true)
@@ -30,7 +30,7 @@ export default function FormularioPerfilPublicoBarbearia() {
 
     const carregar = useCallback(async () => {
         setCarregando(true)
-        const dados = await httpGet('/barbearias/minha/perfil-publico')
+        const dados = await httpGet('/estabelecimentos/minha/perfil-publico')
 
         if (dados?.statusCode && dados.statusCode >= 400) {
             setMensagem(dados.message ?? 'Não foi possível carregar o perfil público.')
@@ -76,7 +76,7 @@ export default function FormularioPerfilPublicoBarbearia() {
         setSalvando(true)
         setMensagem('')
 
-        const resposta = await httpPut('/barbearias/minha/perfil-publico', {
+        const resposta = await httpPut('/estabelecimentos/minha/perfil-publico', {
             ...perfil,
             latitude: perfil.latitude === '' ? null : Number(perfil.latitude),
             longitude: perfil.longitude === '' ? null : Number(perfil.longitude),

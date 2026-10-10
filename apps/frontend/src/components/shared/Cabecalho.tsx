@@ -15,9 +15,9 @@ export default function Cabecalho() {
                         <MenuUsuario />
                     ) : (
                         <div className="flex items-center gap-5">
-                            <Link href="/barbearias">Barbearias</Link>
+                            <Link href="/estabelecimentos">Estabelecimentos</Link>
                             <Link href="/onboarding" className="font-semibold text-yellow-400">
-                                Criar barbearia
+                                Criar estabelecimento
                             </Link>
                             <Link href="/entrar">Entrar</Link>
                         </div>

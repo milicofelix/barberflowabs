@@ -4,7 +4,7 @@ import Servico from '../../servico/model/Servico'
 
 export default interface Agendamento {
     id: number
-    barbeariaId?: number
+    estabelecimentoId?: number
     data: Date
     dataFim?: Date
     inicioOcupacao?: Date
@@ -14,7 +14,7 @@ export default interface Agendamento {
     enderecoAtendimento?: string | null
     deslocamentoMinutos?: number
     status?: string
-    barbearia?: { id: number; nome: string; slug: string }
+    estabelecimento?: { id: number; nome: string; slug: string }
     unidade?: { id: number; nome: string } | null
     usuario: Usuario
     profissional: Partial<Profissional>

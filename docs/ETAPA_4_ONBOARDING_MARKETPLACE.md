@@ -2,7 +2,7 @@
 
 ## Resultado
 
-O onboarding passa a classificar o estabelecimento desde a adesao, e o aplicativo mobile consome um marketplace multissegmento em vez de uma listagem exclusiva de barbearias.
+O onboarding passa a classificar o estabelecimento desde a adesao, e o aplicativo mobile consome um marketplace multissegmento em vez de uma listagem exclusiva de estabelecimentos.
 
 ## Onboarding
 
@@ -10,7 +10,7 @@ O onboarding passa a classificar o estabelecimento desde a adesao, e o aplicativ
 
 ```json
 {
-  "barbearia": {
+  "estabelecimento": {
     "nome": "Studio Exemplo",
     "slug": "studio-exemplo",
     "tipoEstabelecimento": "ESTUDIO_BELEZA",
@@ -27,7 +27,7 @@ O onboarding passa a classificar o estabelecimento desde a adesao, e o aplicativ
 }
 ```
 
-Segmentos e especialidades sao validados em conjunto. O responsavel recebe o papel `BARBERSHOP_OWNER` e o perfil continua pendente de revisao antes da publicacao.
+Segmentos e especialidades sao validados em conjunto. O responsavel recebe o papel `ESTABLISHMENT_OWNER` e o perfil continua pendente de revisao antes da publicacao.
 
 ## Marketplace Publico
 

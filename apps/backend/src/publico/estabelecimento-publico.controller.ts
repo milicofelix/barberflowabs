@@ -8,12 +8,12 @@ export class EstabelecimentoPublicoController {
 
   @Get()
   listar(@Query() filtros: any) {
-    return this.repo.listarBarbearias(filtros);
+    return this.repo.listarEstabelecimentos(filtros);
   }
 
   @Get(':slug')
   async buscarPorSlug(@Param('slug') slug: string) {
-    const estabelecimento = await this.repo.buscarBarbeariaPorSlug(slug);
+    const estabelecimento = await this.repo.buscarEstabelecimentoPorSlug(slug);
     if (!estabelecimento) throw new NotFoundException('Estabelecimento não encontrado');
     return estabelecimento;
   }

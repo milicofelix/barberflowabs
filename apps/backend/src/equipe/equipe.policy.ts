@@ -9,7 +9,7 @@ export class EquipePolicy {
   constructor(private readonly prisma: PrismaService) {}
 
   async validarPermissao(usuario: any, permissao: PermissaoEquipe) {
-    if (!usuario?.barbeariaId) throw new ForbiddenException('Usuário sem estabelecimento');
+    if (!usuario?.estabelecimentoId) throw new ForbiddenException('Usuário sem estabelecimento');
     const permissoes = await this.obterPermissoes(usuario);
     if (!permissoes.includes(permissao)) {
       throw new ForbiddenException('Usuário sem permissão para esta operação');
@@ -17,13 +17,13 @@ export class EquipePolicy {
   }
 
   async obterPermissoes(usuario: any): Promise<PermissaoEquipe[]> {
-    if (!usuario?.barbeariaId) return [];
-    if (usuario.papel === 'BARBERSHOP_OWNER') return [...PERMISSOES_EQUIPE];
+    if (!usuario?.estabelecimentoId) return [];
+    if (usuario.papel === 'ESTABLISHMENT_OWNER') return [...PERMISSOES_EQUIPE];
     const membro = await (this.prisma as any).membroEquipe.findFirst({
-      where: { barbeariaId: usuario.barbeariaId, usuarioId: usuario.id, ativo: true },
+      where: { estabelecimentoId: usuario.estabelecimentoId, usuarioId: usuario.id, ativo: true },
       select: { permissoes: true },
     });
-    if (!membro && usuario.barbeiro) return [...PERMISSOES_EQUIPE];
+    if (!membro && usuario.membroEstabelecimento) return [...PERMISSOES_EQUIPE];
     const permissoes = Array.isArray(membro?.permissoes) ? membro.permissoes : [];
     return permissoes.filter((item: string) => PERMISSOES_EQUIPE.includes(item as PermissaoEquipe));
   }

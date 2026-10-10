@@ -5,7 +5,7 @@ import Link from 'next/link'
 export default function Slogan() {
     return (
         <div className="relative h-[450px] sm:h-[700px]">
-            <Image src="/banners/principal.png" fill alt="Barbearia" className="object-cover" />
+            <Image src="/banners/principal.png" fill alt="Estabelecimento" className="object-cover" />
             <div
                 className="
                     flex flex-col items-center
@@ -20,21 +20,21 @@ export default function Slogan() {
                             Encontre sua
                         </span>
                         <span className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-gradient">
-                            Barbearia
+                            Estabelecimento
                         </span>
                     </h1>
                     <p className="text-base sm:text-lg font-extralight">
-                        Compare barbearias, escolha um profissional e agende seu horário online.
+                        Compare estabelecimentos, escolha um profissional e agende seu horário online.
                     </p>
                     <Link
-                        href="/barbearias"
+                        href="/estabelecimentos"
                         className="
                             bg-gradient-to-r from-green-500 to-green-600
                             text-white font-semibold text-base md:text-lg
                             px-4 py-2 rounded-sm hover:from-green-600 hover:to-green-700 
                         "
                     >
-                        Ver Barbearias
+                        Ver Estabelecimentos
                     </Link>
                 </div>
             </div>

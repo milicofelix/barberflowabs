@@ -11,7 +11,7 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { Usuario } from '@barbabrutal/core';
+import { Usuario } from '@uniflowabs/core';
 import { BcryptProvider } from 'src/auth/bcrypt.provider';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import {
@@ -49,20 +49,20 @@ export class GestaoController {
   @Get('dashboard')
   async dashboard(@UsuarioLogado() usuario: Usuario) {
     await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
-    return this.repo.dashboard(usuario.barbeariaId);
+    return this.repo.dashboard(usuario.estabelecimentoId);
   }
 
   @Get('clientes')
   async listarClientes(@UsuarioLogado() usuario: Usuario) {
     await this.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
-    return this.repo.listarClientes(usuario.barbeariaId);
+    return this.repo.listarClientes(usuario.estabelecimentoId);
   }
 
   @Post('clientes')
   async criarCliente(@Body() dados: SalvarClienteDto, @UsuarioLogado() usuario: Usuario) {
     await this.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
     this.validarCliente(dados, true);
-    return this.repo.criarCliente(usuario.barbeariaId, {
+    return this.repo.criarCliente(usuario.estabelecimentoId, {
       ...dados,
       senha: await this.cripto.criptografar(dados.senha!),
     });
@@ -81,12 +81,12 @@ export class GestaoController {
     let cliente: any;
 
     try {
-      cliente = await this.repo.atualizarCliente(Number(id), usuario.barbeariaId, {
+      cliente = await this.repo.atualizarCliente(Number(id), usuario.estabelecimentoId, {
         ...dados,
         senha: dados.senha ? await this.cripto.criptografar(dados.senha) : undefined,
       });
     } catch (error: any) {
-      throw new ForbiddenException(error?.message ?? 'Cliente não pode ser alterado por esta barbearia');
+      throw new ForbiddenException(error?.message ?? 'Cliente não pode ser alterado por este estabelecimento');
     }
 
     if (!cliente) throw new NotFoundException('Cliente não encontrado');
@@ -97,7 +97,7 @@ export class GestaoController {
   async historicoCliente(@Param('id') id: string, @UsuarioLogado() usuario: Usuario) {
     await this.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
     validarNumeroInteiroPositivo(id, 'Cliente');
-    const cliente = await this.repo.historicoCliente(Number(id), usuario.barbeariaId);
+    const cliente = await this.repo.historicoCliente(Number(id), usuario.estabelecimentoId);
     if (!cliente) throw new NotFoundException('Cliente não encontrado');
     return cliente;
   }
@@ -106,7 +106,7 @@ export class GestaoController {
   async excluirCliente(@Param('id') id: string, @UsuarioLogado() usuario: Usuario) {
     await this.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
     validarNumeroInteiroPositivo(id, 'Cliente');
-    const cliente = await this.repo.excluirCliente(Number(id), usuario.barbeariaId);
+    const cliente = await this.repo.excluirCliente(Number(id), usuario.estabelecimentoId);
     if (!cliente) throw new NotFoundException('Cliente não encontrado');
   }
 
@@ -114,7 +114,7 @@ export class GestaoController {
   async listarAgendamentos(@Query('data') data: string, @UsuarioLogado() usuario: Usuario) {
     await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
     validarData(data);
-    return this.repo.listarAgendamentos(usuario.barbeariaId, data);
+    return this.repo.listarAgendamentos(usuario.estabelecimentoId, data);
   }
 
   @Put('agendamentos/:id/status')
@@ -131,7 +131,7 @@ export class GestaoController {
 
     const agendamento = await this.repo.atualizarStatusAgendamento(
       Number(id),
-      usuario.barbeariaId,
+      usuario.estabelecimentoId,
       dados.status,
     );
     if (!agendamento) throw new NotFoundException('Agendamento não encontrado');
@@ -147,7 +147,7 @@ export class GestaoController {
     await this.validarPermissao(usuario, 'FINANCEIRO_VISUALIZAR');
     validarData(inicio, 'Início');
     validarData(fim, 'Fim');
-    return this.repo.listarFinanceiro(usuario.barbeariaId, inicio, fim);
+    return this.repo.listarFinanceiro(usuario.estabelecimentoId, inicio, fim);
   }
 
   @Post('financeiro')
@@ -157,14 +157,14 @@ export class GestaoController {
   ) {
     await this.validarPermissao(usuario, 'FINANCEIRO_VISUALIZAR');
     this.validarLancamento(dados);
-    return this.repo.criarLancamento(usuario.barbeariaId, dados);
+    return this.repo.criarLancamento(usuario.estabelecimentoId, dados);
   }
 
   @Delete('financeiro/:id')
   async excluirLancamento(@Param('id') id: string, @UsuarioLogado() usuario: Usuario) {
     await this.validarPermissao(usuario, 'FINANCEIRO_VISUALIZAR');
     validarNumeroInteiroPositivo(id, 'Lançamento');
-    const lancamento = await this.repo.excluirLancamento(Number(id), usuario.barbeariaId);
+    const lancamento = await this.repo.excluirLancamento(Number(id), usuario.estabelecimentoId);
     if (!lancamento) throw new NotFoundException('Lançamento não encontrado');
   }
 
@@ -177,13 +177,13 @@ export class GestaoController {
     await this.validarPermissao(usuario, 'FINANCEIRO_VISUALIZAR');
     validarData(inicio, 'Início');
     validarData(fim, 'Fim');
-    return this.repo.relatorios(usuario.barbeariaId, inicio, fim);
+    return this.repo.relatorios(usuario.estabelecimentoId, inicio, fim);
   }
 
   @Get('relacionamento')
   async relacionamento(@UsuarioLogado() usuario: Usuario) {
     await this.validarPermissao(usuario, 'CONFIGURACOES_GERENCIAR');
-    return this.repo.relacionamento(usuario.barbeariaId);
+    return this.repo.relacionamento(usuario.estabelecimentoId);
   }
 
   @Post('relacionamento/lembretes')
@@ -193,7 +193,7 @@ export class GestaoController {
   ) {
     await this.validarPermissao(usuario, 'CONFIGURACOES_GERENCIAR');
     this.validarLembrete(dados);
-    const lembrete = await this.repo.criarLembrete(usuario.barbeariaId, dados);
+    const lembrete = await this.repo.criarLembrete(usuario.estabelecimentoId, dados);
     if (!lembrete) throw new NotFoundException('Cliente ou agendamento não encontrado');
     return lembrete;
   }
@@ -212,7 +212,7 @@ export class GestaoController {
 
     const lembrete = await this.repo.atualizarStatusLembrete(
       Number(id),
-      usuario.barbeariaId,
+      usuario.estabelecimentoId,
       dados.status,
     );
     if (!lembrete) throw new NotFoundException('Lembrete não encontrado');

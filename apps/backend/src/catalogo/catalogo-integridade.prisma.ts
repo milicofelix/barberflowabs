@@ -17,10 +17,10 @@ export class CatalogoIntegridadePrisma {
     }
   }
 
-  async validarEspecialidades(barbeariaId: number, ids: number[]) {
+  async validarEspecialidades(estabelecimentoId: number, ids: number[]) {
     if (!ids.length) return;
     const quantidade = await (this.prisma as any).estabelecimentoEspecialidade.count({
-      where: { barbeariaId, especialidadeId: { in: ids } },
+      where: { estabelecimentoId, especialidadeId: { in: ids } },
     });
     if (quantidade !== ids.length) {
       throw new BadRequestException('Especialidade não pertence ao estabelecimento');
@@ -35,25 +35,25 @@ export class CatalogoIntegridadePrisma {
     if (quantidade !== ids.length) throw new BadRequestException('Requisito inválido');
   }
 
-  async validarServicos(barbeariaId: number, ids: number[]) {
+  async validarServicos(estabelecimentoId: number, ids: number[]) {
     if (!ids.length) return;
-    const quantidade = await this.prisma.servico.count({ where: { barbeariaId, id: { in: ids } } });
+    const quantidade = await this.prisma.servico.count({ where: { estabelecimentoId, id: { in: ids } } });
     if (quantidade !== ids.length) throw new BadRequestException('Serviço não pertence ao estabelecimento');
   }
 
-  async validarServicosCompativeis(barbeariaId: number, modeloAtendimento: string) {
+  async validarServicosCompativeis(estabelecimentoId: number, modeloAtendimento: string) {
     if (modeloAtendimento === 'HIBRIDO') return;
     const quantidade = await (this.prisma as any).servico.count({
-      where: { barbeariaId, modeloAtendimento: { not: modeloAtendimento } },
+      where: { estabelecimentoId, modeloAtendimento: { not: modeloAtendimento } },
     });
     if (quantidade > 0) {
       throw new BadRequestException('Existem serviços com modelo de atendimento incompatível');
     }
   }
 
-  async validarEntidadeTenant(entidade: 'profissional' | 'servico', id: number, barbeariaId: number) {
+  async validarEntidadeTenant(entidade: 'profissional' | 'servico', id: number, estabelecimentoId: number) {
     const registro = await (this.prisma as any)[entidade].findFirst({
-      where: { id, barbeariaId },
+      where: { id, estabelecimentoId },
       select: { id: true },
     });
     if (!registro) {

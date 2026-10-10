@@ -20,9 +20,9 @@ export class CatalogoConsultaPrisma {
     });
   }
 
-  async obterConfiguracao(barbeariaId: number) {
-    const estabelecimento = await (this.prisma as any).barbearia.findUnique({
-      where: { id: barbeariaId },
+  async obterConfiguracao(estabelecimentoId: number) {
+    const estabelecimento = await (this.prisma as any).estabelecimento.findUnique({
+      where: { id: estabelecimentoId },
       select: {
         id: true,
         nome: true,
@@ -37,9 +37,9 @@ export class CatalogoConsultaPrisma {
     return estabelecimento;
   }
 
-  async obterModeloAtendimento(barbeariaId: number) {
-    const registro = await (this.prisma as any).barbearia.findUnique({
-      where: { id: barbeariaId },
+  async obterModeloAtendimento(estabelecimentoId: number) {
+    const registro = await (this.prisma as any).estabelecimento.findUnique({
+      where: { id: estabelecimentoId },
       select: { modeloAtendimento: true },
     });
     if (!registro) throw new NotFoundException('Estabelecimento não encontrado');

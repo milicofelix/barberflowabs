@@ -14,6 +14,6 @@ export type StackParamList = {
     Autenticacao: undefined
     Abas: NavigatorScreenParams<AbasParamList> | undefined
     Sumario: undefined
-    PerfilBarbearia: { slug: string }
+    PerfilEstabelecimento: { slug: string }
     OnboardingEstabelecimento: undefined
 }

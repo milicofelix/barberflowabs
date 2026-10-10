@@ -13,7 +13,7 @@ export class MarketplacePrisma {
   ) {}
 
   async listar(filtros: MarketplaceFiltrosDto) {
-    const estabelecimentos = await this.publico.listarBarbearias(filtros);
+    const estabelecimentos = await this.publico.listarEstabelecimentos(filtros);
     const data = this.dataOpcional(filtros.disponivelEm);
     const filtrados = [];
 
@@ -85,18 +85,18 @@ export class MarketplacePrisma {
     return segmentoOk && especialidadeOk && (nota === null || Number(estabelecimento.avaliacaoMedia ?? 0) >= nota);
   }
 
-  private async temProfissionalDisponivel(barbeariaId: number, servicos: any[], inicio: Date) {
+  private async temProfissionalDisponivel(estabelecimentoId: number, servicos: any[], inicio: Date) {
     const duracao = Math.min(...servicos.map((servico) => Number(servico.duracaoMinutos ?? 15)));
     const fim = new Date(inicio.getTime() + duracao * 60_000);
     const vinculos = await (this.prisma as any).profissionalServico.findMany({
-      where: { barbeariaId, servicoId: { in: servicos.map((servico) => servico.id) }, ativo: true },
+      where: { estabelecimentoId, servicoId: { in: servicos.map((servico) => servico.id) }, ativo: true },
       select: { profissionalId: true },
     });
     const profissionais = [...new Set<number>(vinculos.map((vinculo: any) => vinculo.profissionalId))];
     if (!profissionais.length) return false;
     const ocupados = await (this.prisma as any).agendamento.findMany({
       where: {
-        barbeariaId,
+        estabelecimentoId,
         profissionalId: { in: profissionais },
         status: { in: STATUS_ATIVOS },
         inicioOcupacao: { lt: fim },

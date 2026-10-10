@@ -1,6 +1,6 @@
 # ADR 0001 - Evolucao Para Plataforma Multissegmento
 
-- Status: aceito
+- Status: substituido pelo ADR 0002 em 2026-10-10
 - Data: 2026-10-09
 - Decisores: equipe Barber Flow ABS
 - Nome escolhido para o produto: UniFlow ABS

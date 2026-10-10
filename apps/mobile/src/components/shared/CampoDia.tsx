@@ -1,4 +1,4 @@
-import { DateUtils } from '@barbabrutal/core'
+import { DateUtils } from '@uniflowabs/core'
 import { StyleSheet, Text, Pressable, View } from 'react-native'
 import useTema from '@/src/data/contexts/ContextoTema'
 

@@ -12,38 +12,38 @@ datasource db {
 
 model Usuario {
   id           Int           @id @default(autoincrement())
-  barbeariaId  Int?
+  estabelecimentoId  Int?
   nome         String
   email        String        @unique
   senha        String
   telefone     String?
   dataNascimento DateTime?
-  barbeiro     Boolean
+  membroEstabelecimento     Boolean
   papel        String        @default("CUSTOMER")
-  barbearia    Barbearia?    @relation(fields: [barbeariaId], references: [id])
+  estabelecimento    Estabelecimento?    @relation(fields: [estabelecimentoId], references: [id])
   agendamentos Agendamento[]
   lancamentosFinanceiros LancamentoFinanceiro[]
   logsAuditoria LogAuditoria[]
   lembretesRelacionamento LembreteRelacionamento[]
   avaliacoes Avaliacao[]
   denunciasRevisadas DenunciaPerfilPublico[] @relation("DenunciaPerfilRevisor")
-  barbeariasCliente ClienteBarbearia[]
+  estabelecimentosCliente ClienteEstabelecimento[]
   reagendamentosRealizados HistoricoReagendamento[] @relation("HistoricoReagendamentoAutor")
   vinculosEquipe MembroEquipe[]
 
-  @@index([barbeariaId])
+  @@index([estabelecimentoId])
   @@map("usuarios")
 }
 
 model Profissional {
   id                   Int           @id @default(autoincrement())
-  barbeariaId          Int
+  estabelecimentoId          Int
   nome                 String
   descricao            String        @db.Text
   imagemURL            String
   avaliacao            Float
   quantidadeAvaliacoes Int
-  barbearia            Barbearia     @relation(fields: [barbeariaId], references: [id])
+  estabelecimento            Estabelecimento     @relation(fields: [estabelecimentoId], references: [id])
   agendamentos         Agendamento[]
   bloqueiosAgenda      BloqueioAgenda[]
   lancamentosFinanceiros LancamentoFinanceiro[]
@@ -53,14 +53,14 @@ model Profissional {
   vinculoEquipe        MembroEquipe?
   escalas              EscalaProfissional[]
 
-  @@unique([barbeariaId, nome])
-  @@index([barbeariaId])
+  @@unique([estabelecimentoId, nome])
+  @@index([estabelecimentoId])
   @@map("profissionais")
 }
 
 model Servico {
   id           Int           @id @default(autoincrement())
-  barbeariaId  Int
+  estabelecimentoId  Int
   nome         String
   descricao    String        @db.Text
   preco        Decimal       @db.Decimal(10, 2)
@@ -72,7 +72,7 @@ model Servico {
   preparoAntesMinutos  Int     @default(0)
   preparoDepoisMinutos Int     @default(0)
   deslocamentoMinutos  Int     @default(0)
-  barbearia    Barbearia     @relation(fields: [barbeariaId], references: [id])
+  estabelecimento    Estabelecimento     @relation(fields: [estabelecimentoId], references: [id])
   agendamentos Agendamento[]
   requisitos   ServicoRequisito[]
   especialidades ServicoEspecialidade[]
@@ -80,15 +80,15 @@ model Servico {
   recursosNecessarios      ServicoRecurso[]
   itensAgendamento         AgendamentoServico[]
 
-  @@unique([barbeariaId, nome])
-  @@index([barbeariaId])
+  @@unique([estabelecimentoId, nome])
+  @@index([estabelecimentoId])
   @@map("servicos")
 }
 
 model Agendamento {
   id          Int      @id @default(autoincrement())
   data        DateTime
-  barbeariaId Int
+  estabelecimentoId Int
   status      String   @default("AGENDADO")
   valorTotal  Decimal  @default(0) @db.Decimal(10, 2)
   createdAt   DateTime @default(now())
@@ -102,7 +102,7 @@ model Agendamento {
   deslocamentoMinutos Int @default(0)
   reagendadoEm DateTime?
 
-  barbearia Barbearia @relation(fields: [barbeariaId], references: [id])
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
   unidade   Unidade?  @relation(fields: [unidadeId], references: [id])
 
   usuario   Usuario @relation(fields: [usuarioId], references: [id])
@@ -117,14 +117,14 @@ model Agendamento {
   historicoReagendamentos HistoricoReagendamento[]
   avaliacao Avaliacao?
 
-  @@index([barbeariaId])
+  @@index([estabelecimentoId])
   @@index([profissionalId, data])
   @@index([profissionalId, inicioOcupacao, fimOcupacao])
   @@index([unidadeId, inicioOcupacao, fimOcupacao])
   @@map("agendamentos")
 }
 
-model Barbearia {
+model Estabelecimento {
   id            Int            @id @default(autoincrement())
   nome          String
   slug          String         @unique
@@ -166,12 +166,12 @@ model Barbearia {
   horariosFuncionamento HorarioFuncionamento[]
   bloqueiosAgenda       BloqueioAgenda[]
   lancamentosFinanceiros LancamentoFinanceiro[]
-  assinatura             AssinaturaBarbearia?
+  assinatura             AssinaturaEstabelecimento?
   logsAuditoria          LogAuditoria[]
   lembretesRelacionamento LembreteRelacionamento[]
   avaliacoes             Avaliacao[]
   denunciasPerfil        DenunciaPerfilPublico[]
-  clientes                ClienteBarbearia[]
+  clientes                ClienteEstabelecimento[]
   segmentos               EstabelecimentoSegmento[]
   especialidades          EstabelecimentoEspecialidade[]
   especialidadesProfissionais ProfissionalEspecialidade[]
@@ -182,7 +182,7 @@ model Barbearia {
   escalasProfissionais         EscalaProfissional[]
   indisponibilidadesRecursos   IndisponibilidadeRecurso[]
 
-  @@map("barbearias")
+  @@map("estabelecimentos")
 }
 
 model Segmento {
@@ -220,89 +220,89 @@ model Especialidade {
 
 model EstabelecimentoSegmento {
   id          Int       @id @default(autoincrement())
-  barbeariaId Int
+  estabelecimentoId Int
   segmentoId  Int
   principal   Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
   segmento    Segmento  @relation(fields: [segmentoId], references: [id])
 
-  @@unique([barbeariaId, segmentoId])
+  @@unique([estabelecimentoId, segmentoId])
   @@index([segmentoId])
   @@map("estabelecimentos_segmentos")
 }
 
 model EstabelecimentoEspecialidade {
   id              Int           @id @default(autoincrement())
-  barbeariaId     Int
+  estabelecimentoId     Int
   especialidadeId Int
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
-  barbearia       Barbearia     @relation(fields: [barbeariaId], references: [id])
+  estabelecimento       Estabelecimento     @relation(fields: [estabelecimentoId], references: [id])
   especialidade   Especialidade @relation(fields: [especialidadeId], references: [id])
 
-  @@unique([barbeariaId, especialidadeId])
+  @@unique([estabelecimentoId, especialidadeId])
   @@index([especialidadeId])
   @@map("estabelecimentos_especialidades")
 }
 
 model ProfissionalEspecialidade {
   id              Int           @id @default(autoincrement())
-  barbeariaId     Int
+  estabelecimentoId     Int
   profissionalId  Int
   especialidadeId Int
   principal       Boolean       @default(false)
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
-  barbearia       Barbearia     @relation(fields: [barbeariaId], references: [id])
+  estabelecimento       Estabelecimento     @relation(fields: [estabelecimentoId], references: [id])
   profissional    Profissional  @relation(fields: [profissionalId], references: [id])
   especialidade   Especialidade @relation(fields: [especialidadeId], references: [id])
 
   @@unique([profissionalId, especialidadeId])
-  @@index([barbeariaId, profissionalId])
+  @@index([estabelecimentoId, profissionalId])
   @@index([especialidadeId])
   @@map("profissionais_especialidades")
 }
 
 model ServicoEspecialidade {
   id              Int           @id @default(autoincrement())
-  barbeariaId     Int
+  estabelecimentoId     Int
   servicoId       Int
   especialidadeId Int
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
-  barbearia       Barbearia     @relation(fields: [barbeariaId], references: [id])
+  estabelecimento       Estabelecimento     @relation(fields: [estabelecimentoId], references: [id])
   servico         Servico       @relation(fields: [servicoId], references: [id])
   especialidade   Especialidade @relation(fields: [especialidadeId], references: [id])
 
   @@unique([servicoId, especialidadeId])
-  @@index([barbeariaId, servicoId])
+  @@index([estabelecimentoId, servicoId])
   @@index([especialidadeId])
   @@map("servicos_especialidades")
 }
 
 model ProfissionalServico {
   id             Int          @id @default(autoincrement())
-  barbeariaId    Int
+  estabelecimentoId    Int
   profissionalId Int
   servicoId      Int
   ativo          Boolean      @default(true)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
-  barbearia      Barbearia    @relation(fields: [barbeariaId], references: [id])
+  estabelecimento      Estabelecimento    @relation(fields: [estabelecimentoId], references: [id])
   profissional   Profissional @relation(fields: [profissionalId], references: [id])
   servico        Servico      @relation(fields: [servicoId], references: [id])
 
   @@unique([profissionalId, servicoId])
-  @@index([barbeariaId, ativo])
+  @@index([estabelecimentoId, ativo])
   @@index([servicoId])
   @@map("profissionais_servicos")
 }
 
 model Recurso {
   id          Int       @id @default(autoincrement())
-  barbeariaId Int
+  estabelecimentoId Int
   unidadeId   Int?
   nome        String
   tipo        String
@@ -310,20 +310,20 @@ model Recurso {
   ativo       Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
   unidade     Unidade?  @relation(fields: [unidadeId], references: [id])
   reservas    AgendamentoRecurso[]
   indisponibilidades IndisponibilidadeRecurso[]
 
-  @@unique([barbeariaId, nome])
-  @@index([barbeariaId, tipo, ativo])
+  @@unique([estabelecimentoId, nome])
+  @@index([estabelecimentoId, tipo, ativo])
   @@index([unidadeId, tipo, ativo])
   @@map("recursos")
 }
 
 model MembroEquipe {
   id             Int           @id @default(autoincrement())
-  barbeariaId    Int
+  estabelecimentoId    Int
   usuarioId      Int
   profissionalId Int?          @unique
   papel          String        @default("PROFISSIONAL")
@@ -331,18 +331,18 @@ model MembroEquipe {
   ativo          Boolean       @default(true)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
-  barbearia      Barbearia     @relation(fields: [barbeariaId], references: [id])
+  estabelecimento      Estabelecimento     @relation(fields: [estabelecimentoId], references: [id])
   usuario        Usuario       @relation(fields: [usuarioId], references: [id])
   profissional   Profissional? @relation(fields: [profissionalId], references: [id])
 
-  @@unique([barbeariaId, usuarioId])
-  @@index([barbeariaId, ativo])
+  @@unique([estabelecimentoId, usuarioId])
+  @@index([estabelecimentoId, ativo])
   @@map("membros_equipe")
 }
 
 model EscalaProfissional {
   id              Int          @id @default(autoincrement())
-  barbeariaId     Int
+  estabelecimentoId     Int
   profissionalId Int
   unidadeId       Int?
   diaSemana       Int
@@ -353,11 +353,11 @@ model EscalaProfissional {
   ativo           Boolean      @default(true)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
-  barbearia       Barbearia    @relation(fields: [barbeariaId], references: [id])
+  estabelecimento       Estabelecimento    @relation(fields: [estabelecimentoId], references: [id])
   profissional    Profissional @relation(fields: [profissionalId], references: [id])
   unidade         Unidade?     @relation(fields: [unidadeId], references: [id])
 
-  @@index([barbeariaId, diaSemana, ativo])
+  @@index([estabelecimentoId, diaSemana, ativo])
   @@index([profissionalId, diaSemana, ativo])
   @@index([unidadeId])
   @@map("escalas_profissionais")
@@ -365,7 +365,7 @@ model EscalaProfissional {
 
 model IndisponibilidadeRecurso {
   id          Int      @id @default(autoincrement())
-  barbeariaId Int
+  estabelecimentoId Int
   recursoId   Int
   inicio      DateTime
   fim         DateTime
@@ -373,10 +373,10 @@ model IndisponibilidadeRecurso {
   ativo       Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
   recurso     Recurso   @relation(fields: [recursoId], references: [id])
 
-  @@index([barbeariaId, inicio, fim])
+  @@index([estabelecimentoId, inicio, fim])
   @@index([recursoId, inicio, fim, ativo])
   @@map("indisponibilidades_recursos")
 }
@@ -478,9 +478,9 @@ model ServicoRequisito {
   @@map("servicos_requisitos")
 }
 
-model ClienteBarbearia {
+model ClienteEstabelecimento {
   id          Int       @id @default(autoincrement())
-  barbeariaId Int
+  estabelecimentoId Int
   usuarioId   Int
   origem      String    @default("AGENDAMENTO")
   primeiroAgendamentoEm DateTime?
@@ -488,38 +488,38 @@ model ClienteBarbearia {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  barbearia Barbearia @relation(fields: [barbeariaId], references: [id])
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
   usuario   Usuario   @relation(fields: [usuarioId], references: [id])
 
-  @@unique([barbeariaId, usuarioId])
+  @@unique([estabelecimentoId, usuarioId])
   @@index([usuarioId])
-  @@map("clientes_barbearias")
+  @@map("clientes_estabelecimentos")
 }
 
 model Unidade {
   id          Int       @id @default(autoincrement())
-  barbeariaId Int
+  estabelecimentoId Int
   nome        String
   endereco    String?
   telefone    String?
   ativa       Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
   horariosFuncionamento HorarioFuncionamento[]
   bloqueiosAgenda       BloqueioAgenda[]
   recursos              Recurso[]
   agendamentos          Agendamento[]
   escalasProfissionais  EscalaProfissional[]
 
-  @@unique([barbeariaId, nome])
-  @@index([barbeariaId])
+  @@unique([estabelecimentoId, nome])
+  @@index([estabelecimentoId])
   @@map("unidades")
 }
 
 model HorarioFuncionamento {
   id              Int       @id @default(autoincrement())
-  barbeariaId     Int
+  estabelecimentoId     Int
   unidadeId       Int?
   diaSemana       Int
   inicio          String    @db.VarChar(5)
@@ -529,17 +529,17 @@ model HorarioFuncionamento {
   ativo           Boolean   @default(true)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  barbearia       Barbearia @relation(fields: [barbeariaId], references: [id])
+  estabelecimento       Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
   unidade         Unidade?  @relation(fields: [unidadeId], references: [id])
 
-  @@index([barbeariaId, diaSemana])
+  @@index([estabelecimentoId, diaSemana])
   @@index([unidadeId])
   @@map("horarios_funcionamento")
 }
 
 model BloqueioAgenda {
   id             Int           @id @default(autoincrement())
-  barbeariaId    Int
+  estabelecimentoId    Int
   profissionalId Int?
   unidadeId      Int?
   inicio         DateTime
@@ -547,11 +547,11 @@ model BloqueioAgenda {
   motivo         String?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
-  barbearia      Barbearia     @relation(fields: [barbeariaId], references: [id])
+  estabelecimento      Estabelecimento     @relation(fields: [estabelecimentoId], references: [id])
   profissional   Profissional? @relation(fields: [profissionalId], references: [id])
   unidade        Unidade?      @relation(fields: [unidadeId], references: [id])
 
-  @@index([barbeariaId, inicio, fim])
+  @@index([estabelecimentoId, inicio, fim])
   @@index([profissionalId, inicio, fim])
   @@index([unidadeId, inicio, fim])
   @@map("bloqueios_agenda")
@@ -559,7 +559,7 @@ model BloqueioAgenda {
 
 model LancamentoFinanceiro {
   id             Int           @id @default(autoincrement())
-  barbeariaId    Int
+  estabelecimentoId    Int
   profissionalId Int?
   usuarioId      Int?
   tipo           String
@@ -569,11 +569,11 @@ model LancamentoFinanceiro {
   data           DateTime
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
-  barbearia      Barbearia     @relation(fields: [barbeariaId], references: [id])
+  estabelecimento      Estabelecimento     @relation(fields: [estabelecimentoId], references: [id])
   profissional   Profissional? @relation(fields: [profissionalId], references: [id])
   usuario        Usuario?      @relation(fields: [usuarioId], references: [id])
 
-  @@index([barbeariaId, data])
+  @@index([estabelecimentoId, data])
   @@index([profissionalId, data])
   @@index([usuarioId])
   @@map("lancamentos_financeiros")
@@ -592,14 +592,14 @@ model PlanoAssinatura {
   ativo           Boolean              @default(true)
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
-  assinaturas     AssinaturaBarbearia[]
+  assinaturas     AssinaturaEstabelecimento[]
 
   @@map("planos_assinatura")
 }
 
-model AssinaturaBarbearia {
+model AssinaturaEstabelecimento {
   id              Int              @id @default(autoincrement())
-  barbeariaId     Int              @unique
+  estabelecimentoId     Int              @unique
   planoId         Int
   status          String           @default("TRIAL")
   trialEndsAt     DateTime?
@@ -607,34 +607,34 @@ model AssinaturaBarbearia {
   cancelAtPeriodEnd Boolean        @default(false)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
-  barbearia       Barbearia        @relation(fields: [barbeariaId], references: [id])
+  estabelecimento       Estabelecimento        @relation(fields: [estabelecimentoId], references: [id])
   plano           PlanoAssinatura  @relation(fields: [planoId], references: [id])
 
   @@index([planoId])
   @@index([status])
-  @@map("assinaturas_barbearia")
+  @@map("assinaturas_estabelecimentos")
 }
 
 model LogAuditoria {
   id          Int       @id @default(autoincrement())
-  barbeariaId Int?
+  estabelecimentoId Int?
   usuarioId   Int?
   acao        String
   entidade    String
   entidadeId  String?
   detalhes    Json?
   createdAt   DateTime  @default(now())
-  barbearia   Barbearia? @relation(fields: [barbeariaId], references: [id])
+  estabelecimento   Estabelecimento? @relation(fields: [estabelecimentoId], references: [id])
   usuario     Usuario?   @relation(fields: [usuarioId], references: [id])
 
-  @@index([barbeariaId, createdAt])
+  @@index([estabelecimentoId, createdAt])
   @@index([usuarioId, createdAt])
   @@map("logs_auditoria")
 }
 
 model LembreteRelacionamento {
   id             Int          @id @default(autoincrement())
-  barbeariaId    Int
+  estabelecimentoId    Int
   usuarioId      Int?
   agendamentoId  Int?
   tipo           String
@@ -645,17 +645,17 @@ model LembreteRelacionamento {
   enviadoEm      DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
-  barbearia      Barbearia    @relation(fields: [barbeariaId], references: [id])
+  estabelecimento      Estabelecimento    @relation(fields: [estabelecimentoId], references: [id])
   usuario        Usuario?     @relation(fields: [usuarioId], references: [id])
 
-  @@index([barbeariaId, status, dataPrevista])
+  @@index([estabelecimentoId, status, dataPrevista])
   @@index([usuarioId])
   @@map("lembretes_relacionamento")
 }
 
 model Avaliacao {
   id             Int          @id @default(autoincrement())
-  barbeariaId    Int
+  estabelecimentoId    Int
   agendamentoId  Int          @unique
   usuarioId      Int
   profissionalId Int
@@ -664,12 +664,12 @@ model Avaliacao {
   status         String       @default("APPROVED")
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
-  barbearia      Barbearia    @relation(fields: [barbeariaId], references: [id])
+  estabelecimento      Estabelecimento    @relation(fields: [estabelecimentoId], references: [id])
   agendamento    Agendamento  @relation(fields: [agendamentoId], references: [id])
   usuario        Usuario      @relation(fields: [usuarioId], references: [id])
   profissional   Profissional @relation(fields: [profissionalId], references: [id])
 
-  @@index([barbeariaId, status])
+  @@index([estabelecimentoId, status])
   @@index([profissionalId, status])
   @@index([usuarioId])
   @@map("avaliacoes")
@@ -677,7 +677,7 @@ model Avaliacao {
 
 model DenunciaPerfilPublico {
   id            Int       @id @default(autoincrement())
-  barbeariaId   Int
+  estabelecimentoId   Int
   nome          String?
   email         String?
   motivo        String
@@ -688,10 +688,10 @@ model DenunciaPerfilPublico {
   revisadoEm    DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  barbearia     Barbearia @relation(fields: [barbeariaId], references: [id])
+  estabelecimento     Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
   revisadoPor   Usuario?  @relation("DenunciaPerfilRevisor", fields: [revisadoPorId], references: [id])
 
-  @@index([barbeariaId, status, createdAt])
+  @@index([estabelecimentoId, status, createdAt])
   @@index([revisadoPorId])
   @@map("denuncias_perfil_publico")
 }

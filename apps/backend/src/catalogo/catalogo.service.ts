@@ -25,30 +25,30 @@ export class CatalogoService {
     return this.consulta.listarRequisitos();
   }
 
-  obterConfiguracao(barbeariaId: number) {
-    return this.consulta.obterConfiguracao(barbeariaId);
+  obterConfiguracao(estabelecimentoId: number) {
+    return this.consulta.obterConfiguracao(estabelecimentoId);
   }
 
   atualizarEstabelecimento(usuario: any, dados: AtualizarCatalogoEstabelecimentoDto) {
     this.policy.validarGestor(usuario);
     this.policy.validarEstabelecimento(dados);
-    return this.repo.atualizarEstabelecimento(usuario.barbeariaId, dados);
+    return this.repo.atualizarEstabelecimento(usuario.estabelecimentoId, dados);
   }
 
   atualizarProfissional(usuario: any, profissionalId: number, dados: AtualizarEspecialidadesProfissionalDto) {
     this.policy.validarGestor(usuario);
     this.policy.validarProfissional(dados);
-    return this.repo.atualizarProfissional(usuario.barbeariaId, profissionalId, dados);
+    return this.repo.atualizarProfissional(usuario.estabelecimentoId, profissionalId, dados);
   }
 
   async atualizarServico(usuario: any, servicoId: number, dados: AtualizarCatalogoServicoDto) {
     this.policy.validarGestor(usuario);
     this.policy.validarServico(dados);
-    const modeloEstabelecimento = await this.consulta.obterModeloAtendimento(usuario.barbeariaId);
+    const modeloEstabelecimento = await this.consulta.obterModeloAtendimento(usuario.estabelecimentoId);
     this.policy.validarCompatibilidadeModelo(
       modeloEstabelecimento as ModeloAtendimento,
       dados.modeloAtendimento,
     );
-    return this.repo.atualizarServico(usuario.barbeariaId, servicoId, dados);
+    return this.repo.atualizarServico(usuario.estabelecimentoId, servicoId, dados);
   }
 }

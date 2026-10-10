@@ -21,7 +21,7 @@ export default class RegistrarUsuario implements CasoDeUso<Usuario, void> {
         const novoUsuario = {
             ...usuario,
             senha: senhaCriptografada,
-            barbeiro: false,
+            membroEstabelecimento: false,
         }
 
         await this.repo.salvar(novoUsuario)

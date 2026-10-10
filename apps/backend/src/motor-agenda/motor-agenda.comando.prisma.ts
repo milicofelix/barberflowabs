@@ -77,13 +77,13 @@ export class MotorAgendaComandoPrisma {
 
   private async bloquearAgenda(cliente: any, contexto: ContextoAgenda) {
     await cliente.$queryRawUnsafe(
-      'SELECT id FROM profissionais WHERE id = ? AND barbeariaId = ? FOR UPDATE',
+      'SELECT id FROM profissionais WHERE id = ? AND estabelecimentoId = ? FOR UPDATE',
       contexto.profissionalId,
-      contexto.barbeariaId,
+      contexto.estabelecimentoId,
     );
     await cliente.$queryRawUnsafe(
-      'SELECT id FROM recursos WHERE barbeariaId = ? AND ativo = true FOR UPDATE',
-      contexto.barbeariaId,
+      'SELECT id FROM recursos WHERE estabelecimentoId = ? AND ativo = true FOR UPDATE',
+      contexto.estabelecimentoId,
     );
   }
 
@@ -101,7 +101,7 @@ export class MotorAgendaComandoPrisma {
     const agendamentoAtivo = await cliente.agendamento.findFirst({
       where: {
         usuarioId,
-        barbeariaId: contexto.barbeariaId,
+        estabelecimentoId: contexto.estabelecimentoId,
         unidadeId: contexto.unidadeId,
         status: { in: STATUS_AGENDAMENTO_ATIVO },
         OR: [
@@ -122,7 +122,7 @@ export class MotorAgendaComandoPrisma {
   private dadosCriacao(params: any, recursos: AlocacaoRecurso[]) {
     const { contexto, periodo } = params;
     return {
-      barbeariaId: contexto.barbeariaId,
+      estabelecimentoId: contexto.estabelecimentoId,
       usuarioId: params.usuarioId,
       profissionalId: contexto.profissionalId,
       unidadeId: contexto.unidadeId,
@@ -173,16 +173,16 @@ export class MotorAgendaComandoPrisma {
   }
 
   private atualizarRelacionamentoCliente(cliente: any, params: any) {
-    return cliente.clienteBarbearia.upsert({
+    return cliente.clienteEstabelecimento.upsert({
       where: {
-        barbeariaId_usuarioId: {
-          barbeariaId: params.contexto.barbeariaId,
+        estabelecimentoId_usuarioId: {
+          estabelecimentoId: params.contexto.estabelecimentoId,
           usuarioId: params.usuarioId,
         },
       },
       update: { ultimoAgendamentoEm: params.periodo.data },
       create: {
-        barbeariaId: params.contexto.barbeariaId,
+        estabelecimentoId: params.contexto.estabelecimentoId,
         usuarioId: params.usuarioId,
         origem: 'AGENDAMENTO',
         primeiroAgendamentoEm: params.periodo.data,

@@ -8,7 +8,7 @@ const TIME_ZONE_PADRAO = 'America/Sao_Paulo';
 export class PublicoPrisma {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listarBarbearias(filtros: any = {}) {
+  async listarEstabelecimentos(filtros: any = {}) {
     const latitude = this.numero(filtros.lat);
     const longitude = this.numero(filtros.lng);
     const raioKm = this.numero(filtros.raioKm) ?? 10;
@@ -121,18 +121,18 @@ export class PublicoPrisma {
       },
     };
 
-    const barbearias: any[] = await this.prisma.barbearia.findMany({
+    const estabelecimentos: any[] = await this.prisma.estabelecimento.findMany({
       where,
       include,
     });
 
-    return barbearias
-      .map((barbearia) => this.resumoBarbearia(barbearia, latitude, longitude))
-      .filter((barbearia) => {
-        if (latitude !== null && longitude !== null && barbearia.distanciaKm !== null && barbearia.distanciaKm > raioKm) {
+    return estabelecimentos
+      .map((estabelecimento) => this.resumoEstabelecimento(estabelecimento, latitude, longitude))
+      .filter((estabelecimento) => {
+        if (latitude !== null && longitude !== null && estabelecimento.distanciaKm !== null && estabelecimento.distanciaKm > raioKm) {
           return false;
         }
-        if (abertaAgora && barbearia.statusOperacional.status !== 'ABERTA') {
+        if (abertaAgora && estabelecimento.statusOperacional.status !== 'ABERTA') {
           return false;
         }
         return true;
@@ -152,8 +152,8 @@ export class PublicoPrisma {
       });
   }
 
-  async buscarBarbeariaPorSlug(slug: string) {
-    const barbearia: any = await this.prisma.barbearia.findFirst({
+  async buscarEstabelecimentoPorSlug(slug: string) {
+    const estabelecimento: any = await this.prisma.estabelecimento.findFirst({
       where: {
         slug,
         reviewStatus: 'APPROVED',
@@ -254,35 +254,35 @@ export class PublicoPrisma {
       },
     } as any);
 
-    if (!barbearia) return null;
+    if (!estabelecimento) return null;
 
     return {
-      ...mapearClassificacaoEstabelecimento(barbearia),
-      id: barbearia.id,
-      nome: barbearia.nomePublico ?? barbearia.nome,
-      slug: barbearia.slug,
-      telefone: barbearia.telefone,
-      email: barbearia.email,
-      descricao: barbearia.descricaoPublica,
-      imagemCapaURL: this.imagemCapa(barbearia.imagemCapaURL),
+      ...mapearClassificacaoEstabelecimento(estabelecimento),
+      id: estabelecimento.id,
+      nome: estabelecimento.nomePublico ?? estabelecimento.nome,
+      slug: estabelecimento.slug,
+      telefone: estabelecimento.telefone,
+      email: estabelecimento.email,
+      descricao: estabelecimento.descricaoPublica,
+      imagemCapaURL: this.imagemCapa(estabelecimento.imagemCapaURL),
       endereco: {
-        logradouro: barbearia.endereco,
-        bairro: barbearia.bairro,
-        cidade: barbearia.cidade,
-        estado: barbearia.estado,
-        latitude: barbearia.latitude,
-        longitude: barbearia.longitude,
+        logradouro: estabelecimento.endereco,
+        bairro: estabelecimento.bairro,
+        cidade: estabelecimento.cidade,
+        estado: estabelecimento.estado,
+        latitude: estabelecimento.latitude,
+        longitude: estabelecimento.longitude,
       },
-      aceitaAgendamentoOnline: barbearia.aceitaAgendamentoOnline,
-      destaque: barbearia.destaque,
-      statusOperacional: this.statusOperacional(barbearia.horariosFuncionamento ?? []),
-      servicos: (barbearia.servicos ?? []).map((servico: any) => this.mapearServicoPublico(servico)),
-      profissionais: (barbearia.profissionais ?? []).map((profissional: any) =>
+      aceitaAgendamentoOnline: estabelecimento.aceitaAgendamentoOnline,
+      destaque: estabelecimento.destaque,
+      statusOperacional: this.statusOperacional(estabelecimento.horariosFuncionamento ?? []),
+      servicos: (estabelecimento.servicos ?? []).map((servico: any) => this.mapearServicoPublico(servico)),
+      profissionais: (estabelecimento.profissionais ?? []).map((profissional: any) =>
         this.mapearProfissionalPublico(profissional),
       ),
-      avaliacaoMedia: this.mediaAvaliacoes(barbearia.avaliacoes ?? []),
-      quantidadeAvaliacoes: barbearia.avaliacoes?.length ?? 0,
-      avaliacoes: (barbearia.avaliacoes ?? []).map((avaliacao: any) => ({
+      avaliacaoMedia: this.mediaAvaliacoes(estabelecimento.avaliacoes ?? []),
+      quantidadeAvaliacoes: estabelecimento.avaliacoes?.length ?? 0,
+      avaliacoes: (estabelecimento.avaliacoes ?? []).map((avaliacao: any) => ({
         id: avaliacao.id,
         nota: avaliacao.nota,
         comentario: avaliacao.comentario,
@@ -290,12 +290,12 @@ export class PublicoPrisma {
         cliente: avaliacao.usuario?.nome,
         profissional: avaliacao.profissional?.nome,
       })),
-      horariosFuncionamento: barbearia.horariosFuncionamento ?? [],
+      horariosFuncionamento: estabelecimento.horariosFuncionamento ?? [],
     };
   }
 
   async denunciarPerfil(slug: string, dados: any) {
-    const barbearia = await this.prisma.barbearia.findFirst({
+    const estabelecimento = await this.prisma.estabelecimento.findFirst({
       where: {
         slug,
         reviewStatus: 'APPROVED',
@@ -304,11 +304,11 @@ export class PublicoPrisma {
       select: { id: true, nome: true, slug: true },
     });
 
-    if (!barbearia) throw new NotFoundException('Barbearia não encontrada');
+    if (!estabelecimento) throw new NotFoundException('Estabelecimento não encontrado');
 
     const denuncia = await (this.prisma as any).denunciaPerfilPublico.create({
       data: {
-        barbeariaId: barbearia.id,
+        estabelecimentoId: estabelecimento.id,
         nome: this.textoOuNulo(dados.nome),
         email: this.textoOuNulo(dados.email),
         motivo: dados.motivo.trim(),
@@ -319,7 +319,7 @@ export class PublicoPrisma {
 
     await this.prisma.logAuditoria.create({
       data: {
-        barbeariaId: null,
+        estabelecimentoId: null,
         usuarioId: null,
         acao: 'PUBLIC_PROFILE_REPORT',
         entidade: 'DenunciaPerfilPublico',
@@ -327,9 +327,9 @@ export class PublicoPrisma {
         detalhes: {
           tipo: 'DENUNCIA_PERFIL_PUBLICO',
           titulo: 'Denúncia de perfil público recebida',
-          mensagem: `${barbearia.nome} recebeu uma denúncia pública para revisão.`,
-          barbeariaId: barbearia.id,
-          barbeariaSlug: barbearia.slug,
+          mensagem: `${estabelecimento.nome} recebeu uma denúncia pública para revisão.`,
+          estabelecimentoId: estabelecimento.id,
+          estabelecimentoSlug: estabelecimento.slug,
           denunciaId: denuncia.id,
           motivo: denuncia.motivo,
         },
@@ -406,39 +406,39 @@ export class PublicoPrisma {
     return hora * 60 + minuto;
   }
 
-  private resumoBarbearia(barbearia: any, latitude: number | null, longitude: number | null) {
+  private resumoEstabelecimento(estabelecimento: any, latitude: number | null, longitude: number | null) {
     const distanciaKm =
-      latitude !== null && longitude !== null && barbearia.latitude !== null && barbearia.longitude !== null
-        ? this.distanciaKm(latitude, longitude, barbearia.latitude, barbearia.longitude)
+      latitude !== null && longitude !== null && estabelecimento.latitude !== null && estabelecimento.longitude !== null
+        ? this.distanciaKm(latitude, longitude, estabelecimento.latitude, estabelecimento.longitude)
         : null;
 
-    const avaliacaoMedia = this.mediaAvaliacoes(barbearia.avaliacoes ?? []);
-    const quantidadeAvaliacoes = barbearia.avaliacoes?.length ?? 0;
+    const avaliacaoMedia = this.mediaAvaliacoes(estabelecimento.avaliacoes ?? []);
+    const quantidadeAvaliacoes = estabelecimento.avaliacoes?.length ?? 0;
 
     return {
-      ...mapearClassificacaoEstabelecimento(barbearia),
-      id: barbearia.id,
-      nome: barbearia.nomePublico ?? barbearia.nome,
-      slug: barbearia.slug,
-      telefone: barbearia.telefone,
-      email: barbearia.email,
-      descricao: barbearia.descricaoPublica,
-      imagemCapaURL: this.imagemCapa(barbearia.imagemCapaURL),
+      ...mapearClassificacaoEstabelecimento(estabelecimento),
+      id: estabelecimento.id,
+      nome: estabelecimento.nomePublico ?? estabelecimento.nome,
+      slug: estabelecimento.slug,
+      telefone: estabelecimento.telefone,
+      email: estabelecimento.email,
+      descricao: estabelecimento.descricaoPublica,
+      imagemCapaURL: this.imagemCapa(estabelecimento.imagemCapaURL),
       endereco: {
-        logradouro: barbearia.endereco,
-        bairro: barbearia.bairro,
-        cidade: barbearia.cidade,
-        estado: barbearia.estado,
-        latitude: barbearia.latitude,
-        longitude: barbearia.longitude,
+        logradouro: estabelecimento.endereco,
+        bairro: estabelecimento.bairro,
+        cidade: estabelecimento.cidade,
+        estado: estabelecimento.estado,
+        latitude: estabelecimento.latitude,
+        longitude: estabelecimento.longitude,
       },
-      aceitaAgendamentoOnline: barbearia.aceitaAgendamentoOnline,
-      destaque: barbearia.destaque,
+      aceitaAgendamentoOnline: estabelecimento.aceitaAgendamentoOnline,
+      destaque: estabelecimento.destaque,
       distanciaKm: distanciaKm === null ? null : Number(distanciaKm.toFixed(1)),
-      statusOperacional: this.statusOperacional(barbearia.horariosFuncionamento ?? []),
+      statusOperacional: this.statusOperacional(estabelecimento.horariosFuncionamento ?? []),
       avaliacaoMedia,
       quantidadeAvaliacoes,
-      servicos: (barbearia.servicos ?? []).map((servico: any) => this.mapearServicoPublico(servico)),
+      servicos: (estabelecimento.servicos ?? []).map((servico: any) => this.mapearServicoPublico(servico)),
     };
   }
 

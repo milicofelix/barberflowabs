@@ -11,10 +11,10 @@ import {
 import type { SegmentoOnboarding } from './onboarding.config'
 
 const cadastroInicial = {
-    nomeBarbearia: '',
+    nomeEstabelecimento: '',
     slug: '',
-    emailBarbearia: '',
-    telefoneBarbearia: '',
+    emailEstabelecimento: '',
+    telefoneEstabelecimento: '',
     nomeDono: '',
     emailDono: '',
     telefoneDono: '',
@@ -43,7 +43,7 @@ export default function OnboardingSaas() {
         setForm((atual) => ({
             ...atual,
             [campo]: valor,
-            ...(campo === 'nomeBarbearia' ? { slug: slugify(valor) } : {}),
+            ...(campo === 'nomeEstabelecimento' ? { slug: slugify(valor) } : {}),
         }))
     }
 
@@ -62,11 +62,11 @@ export default function OnboardingSaas() {
         setMensagem('')
         const resposta = await httpPost('/saas/onboarding', {
             planoSlug: form.planoSlug,
-            barbearia: {
-                nome: form.nomeBarbearia,
+            estabelecimento: {
+                nome: form.nomeEstabelecimento,
                 slug: form.slug,
-                email: form.emailBarbearia,
-                telefone: form.telefoneBarbearia,
+                email: form.emailEstabelecimento,
+                telefone: form.telefoneEstabelecimento,
                 tipoEstabelecimento: form.tipoEstabelecimento,
                 modeloAtendimento: form.modeloAtendimento,
                 segmentoIds: form.segmentoIds,
@@ -99,10 +99,10 @@ export default function OnboardingSaas() {
                 <section className="grid gap-6 lg:grid-cols-[1fr_420px]">
                     <div className="grid gap-4 rounded border border-zinc-800 bg-zinc-900 p-5">
                         <h2 className="text-xl font-bold">Dados do estabelecimento</h2>
-                        <Campo label="Nome do estabelecimento" value={form.nomeBarbearia} onChange={(v) => alterar('nomeBarbearia', v)} />
+                        <Campo label="Nome do estabelecimento" value={form.nomeEstabelecimento} onChange={(v) => alterar('nomeEstabelecimento', v)} />
                         <Campo label="Slug" value={form.slug} onChange={(v) => alterar('slug', v)} />
-                        <Campo label="E-mail do estabelecimento" value={form.emailBarbearia} onChange={(v) => alterar('emailBarbearia', v)} />
-                        <Campo label="Telefone do estabelecimento" value={form.telefoneBarbearia} onChange={(v) => alterar('telefoneBarbearia', v)} />
+                        <Campo label="E-mail do estabelecimento" value={form.emailEstabelecimento} onChange={(v) => alterar('emailEstabelecimento', v)} />
+                        <Campo label="Telefone do estabelecimento" value={form.telefoneEstabelecimento} onChange={(v) => alterar('telefoneEstabelecimento', v)} />
 
                         <div className="grid gap-4 sm:grid-cols-2">
                             <Selecao label="Tipo" value={form.tipoEstabelecimento} onChange={(v) => alterar('tipoEstabelecimento', v)} opcoes={TIPOS_ESTABELECIMENTO_ONBOARDING} />

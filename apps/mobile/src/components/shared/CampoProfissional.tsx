@@ -1,5 +1,5 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
-import { Profissional } from '@barbabrutal/core'
+import { Profissional } from '@uniflowabs/core'
 import useProfissionais from '@/src/data/hooks/useProfissionais'
 import imagens from '@/src/data/constants/imagens'
 import Carregando from './Carregando'

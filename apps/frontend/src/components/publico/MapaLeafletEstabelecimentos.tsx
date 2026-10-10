@@ -15,11 +15,11 @@ declare global {
 }
 
 type Props = {
-    barbearias: any[]
+    estabelecimentos: any[]
     posicaoUsuario?: { lat: number; lng: number } | null
 }
 
-export default function MapaLeafletBarbearias({ barbearias, posicaoUsuario }: Props) {
+export default function MapaLeafletEstabelecimentos({ estabelecimentos, posicaoUsuario }: Props) {
     const mapaRef = useRef<HTMLDivElement | null>(null)
     const instanciaRef = useRef<any>(null)
     const camadaMarcadoresRef = useRef<any>(null)
@@ -28,14 +28,14 @@ export default function MapaLeafletBarbearias({ barbearias, posicaoUsuario }: Pr
 
     const pontos = useMemo(
         () =>
-            barbearias
-                .map((barbearia) => {
-                    const lat = coordenadaValida(barbearia.endereco?.latitude)
-                    const lng = coordenadaValida(barbearia.endereco?.longitude)
-                    return lat === null || lng === null ? null : { barbearia, lat, lng }
+            estabelecimentos
+                .map((estabelecimento) => {
+                    const lat = coordenadaValida(estabelecimento.endereco?.latitude)
+                    const lng = coordenadaValida(estabelecimento.endereco?.longitude)
+                    return lat === null || lng === null ? null : { estabelecimento, lat, lng }
                 })
-                .filter(Boolean) as Array<{ barbearia: any; lat: number; lng: number }>,
-        [barbearias],
+                .filter(Boolean) as Array<{ estabelecimento: any; lat: number; lng: number }>,
+        [estabelecimentos],
     )
 
     useEffect(() => {
@@ -95,18 +95,18 @@ export default function MapaLeafletBarbearias({ barbearias, posicaoUsuario }: Pr
             coordenadas.push([posicaoUsuario.lat, posicaoUsuario.lng])
         }
 
-        pontos.forEach(({ barbearia, lat, lng }) => {
-            const distancia = barbearia.distanciaKm !== null ? `<br><small>${barbearia.distanciaKm} km de distância</small>` : ''
-            const status = barbearia.statusOperacional?.label ? `<br><small>${barbearia.statusOperacional.label}</small>` : ''
+        pontos.forEach(({ estabelecimento, lat, lng }) => {
+            const distancia = estabelecimento.distanciaKm !== null ? `<br><small>${estabelecimento.distanciaKm} km de distância</small>` : ''
+            const status = estabelecimento.statusOperacional?.label ? `<br><small>${estabelecimento.statusOperacional.label}</small>` : ''
             const popup = `
-                <strong>${escaparHtml(barbearia.nome)}</strong>
+                <strong>${escaparHtml(estabelecimento.nome)}</strong>
                 ${distancia}
                 ${status}
-                <br><a href="/barbearias/${encodeURIComponent(barbearia.slug)}">Ver perfil</a>
+                <br><a href="/estabelecimentos/${encodeURIComponent(estabelecimento.slug)}">Ver perfil</a>
             `
 
             const icone = L.icon({
-                iconUrl: caminhoMarcador(barbearia),
+                iconUrl: caminhoMarcador(estabelecimento),
                 iconSize: [56, 56],
                 iconAnchor: [28, 53],
                 popupAnchor: [0, -49],
@@ -132,7 +132,7 @@ export default function MapaLeafletBarbearias({ barbearias, posicaoUsuario }: Pr
                 {erroMapa && <div className="grid h-full min-h-[520px] place-items-center px-6 text-center text-zinc-400">{erroMapa}</div>}
                 {!erroMapa && pontos.length === 0 && !posicaoUsuario && (
                     <div className="absolute inset-0 z-[401] flex items-center justify-center bg-zinc-950/80 px-6 text-center text-zinc-300">
-                        As barbearias ainda não possuem coordenadas cadastradas.
+                        As estabelecimentos ainda não possuem coordenadas cadastradas.
                     </div>
                 )}
                 {!erroMapa && !leafletPronto && <div className="grid h-full min-h-[520px] place-items-center text-zinc-400">Carregando mapa...</div>}
@@ -140,13 +140,13 @@ export default function MapaLeafletBarbearias({ barbearias, posicaoUsuario }: Pr
             </div>
 
             <div className="grid content-start gap-3">
-                {barbearias.map((barbearia) => (
-                    <Link key={barbearia.id} href={`/barbearias/${barbearia.slug}`} className="rounded border border-zinc-800 bg-zinc-900 p-4">
+                {estabelecimentos.map((estabelecimento) => (
+                    <Link key={estabelecimento.id} href={`/estabelecimentos/${estabelecimento.slug}`} className="rounded border border-zinc-800 bg-zinc-900 p-4">
                         <div className="flex items-start justify-between gap-3">
-                            <strong>{barbearia.nome}</strong>
-                            {barbearia.distanciaKm !== null && <span className="text-sm text-zinc-400">{barbearia.distanciaKm} km</span>}
+                            <strong>{estabelecimento.nome}</strong>
+                            {estabelecimento.distanciaKm !== null && <span className="text-sm text-zinc-400">{estabelecimento.distanciaKm} km</span>}
                         </div>
-                        <p className="mt-1 text-sm text-zinc-400">{barbearia.statusOperacional?.label ?? 'Status indisponível'}</p>
+                        <p className="mt-1 text-sm text-zinc-400">{estabelecimento.statusOperacional?.label ?? 'Status indisponível'}</p>
                     </Link>
                 ))}
             </div>

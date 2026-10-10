@@ -1,7 +1,7 @@
 import Carregando from '@/src/components/shared/Carregando'
 import { ProvedorAgendamento } from '@/src/data/contexts/ContextoAgendamento'
 import { ProvedorSessao } from '@/src/data/contexts/ContextoSessao'
-import { ProvedorBarbearia } from '@/src/data/contexts/ContextoBarbearia'
+import { ProvedorEstabelecimento } from '@/src/data/contexts/ContextoEstabelecimento'
 import useSessao from '@/src/data/hooks/useSessao'
 import type { StackParamList } from '@/src/navigation/types'
 import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native'
@@ -11,7 +11,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import Abas from '../tabs'
 import Autenticacao from './Autenticacao'
 import Sumario from './Sumario'
-import PerfilBarbearia from './PerfilBarbearia'
+import PerfilEstabelecimento from './PerfilEstabelecimento'
 import OnboardingEstabelecimento from './OnboardingEstabelecimento'
 import AlternadorTema from '@/src/components/shared/AlternadorTema'
 import { ProvedorTema } from '@/src/data/contexts/ContextoTema'
@@ -38,8 +38,8 @@ function Navegacao() {
                     <>
                         <Stack.Screen name="Abas" component={Abas} options={{ headerShown: false }} />
                         <Stack.Screen
-                            name="PerfilBarbearia"
-                            component={PerfilBarbearia}
+                            name="PerfilEstabelecimento"
+                            component={PerfilEstabelecimento}
                             options={{
                                 title: 'Perfil do estabelecimento',
                                 headerBackTitle: 'Descobrir',
@@ -71,11 +71,11 @@ export default function App() {
             <ProvedorTema>
                 <StatusBar style="auto" />
                 <ProvedorSessao>
-                    <ProvedorBarbearia>
+                    <ProvedorEstabelecimento>
                         <ProvedorAgendamento>
                             <Navegacao />
                         </ProvedorAgendamento>
-                    </ProvedorBarbearia>
+                    </ProvedorEstabelecimento>
                 </ProvedorSessao>
             </ProvedorTema>
         </SafeAreaProvider>

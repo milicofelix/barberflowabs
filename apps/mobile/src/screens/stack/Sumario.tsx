@@ -1,12 +1,12 @@
 import { ActivityIndicator, StyleSheet, Text, Pressable, View } from 'react-native'
-import { Agendamento, DateUtils, MoedaUtils } from '@barbabrutal/core'
+import { Agendamento, DateUtils, MoedaUtils } from '@uniflowabs/core'
 import useAgendamento from '../../data/hooks/useAgendamento'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import type { StackParamList } from '@/src/navigation/types'
 import { useEffect, useState } from 'react'
 import EstadoErro from '@/src/components/shared/EstadoErro'
 import useAPI, { mensagemDoErro } from '@/src/data/hooks/useAPI'
-import useBarbearia from '@/src/data/hooks/useBarbearia'
+import useEstabelecimento from '@/src/data/hooks/useEstabelecimento'
 import useTema from '@/src/data/contexts/ContextoTema'
 
 type Props = NativeStackScreenProps<StackParamList, 'Sumario'>
@@ -17,7 +17,7 @@ export default function Sumario({ navigation }: Props) {
     const [processando, setProcessando] = useState(false)
     const [erro, setErro] = useState<string | null>(null)
     const [possuiOutroAgendamento, setPossuiOutroAgendamento] = useState(false)
-    const { barbearia } = useBarbearia()
+    const { estabelecimento } = useEstabelecimento()
     const { httpGet } = useAPI()
     const possuiAgendamentoAtivo = erro?.includes('agendamento ativo') ?? false
 
@@ -48,8 +48,8 @@ export default function Sumario({ navigation }: Props) {
                 <Text style={[styles.titulo, { color: cores.texto }]}>Resumo do Agendamento</Text>
                 <Text style={[styles.subtitulo, { color: cores.textoSecundario }]}>Será um prazer atendê-lo!</Text>
 
-                <Text style={[styles.label, { color: cores.textoSecundario }]}>BARBEARIA</Text>
-                <Text style={[styles.valor, { color: cores.texto }]}>{barbearia?.nome ?? 'Não selecionada'}</Text>
+                <Text style={[styles.label, { color: cores.textoSecundario }]}>ESTABELECIMENTO</Text>
+                <Text style={[styles.valor, { color: cores.texto }]}>{estabelecimento?.nome ?? 'Não selecionada'}</Text>
 
                 <Text style={[styles.label, { color: cores.textoSecundario }]}>PROFISSIONAL</Text>
                 <Text style={[styles.valor, { color: cores.texto }]}>{profissional?.nome}</Text>

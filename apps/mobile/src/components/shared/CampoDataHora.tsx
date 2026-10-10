@@ -1,4 +1,4 @@
-import { DateUtils } from '@barbabrutal/core'
+import { DateUtils } from '@uniflowabs/core'
 import { View } from 'react-native'
 import CampoDia from './CampoDia'
 import CampoHorario, { HorariosDisponiveis } from './CampoHorario'

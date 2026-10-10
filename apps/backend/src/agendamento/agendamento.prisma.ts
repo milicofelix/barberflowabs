@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../db/prisma.service';
-import Agendamento from '@barbabrutal/core/src/agendamento/model/Agendamento';
-import RepositorioAgendamento from '@barbabrutal/core/src/agendamento/provider/RepositorioAgendamento';
-import { DEFAULT_BARBEARIA_ID } from 'src/shared/tenant';
+import Agendamento from '@uniflowabs/core/src/agendamento/model/Agendamento';
+import RepositorioAgendamento from '@uniflowabs/core/src/agendamento/provider/RepositorioAgendamento';
+import { DEFAULT_ESTABELECIMENTO_ID } from 'src/shared/tenant';
 
 const STATUS_AGENDAMENTO_ATIVO = ['AGENDADO', 'CONFIRMADO', 'CHECKIN'];
 
@@ -12,8 +12,8 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
 
   private includeAgendamento() {
     return {
-      usuario: { select: { id: true, barbeariaId: true, nome: true, email: true } },
-      barbearia: { select: { id: true, nome: true, slug: true } },
+      usuario: { select: { id: true, estabelecimentoId: true, nome: true, email: true } },
+      estabelecimento: { select: { id: true, nome: true, slug: true } },
       profissional: { select: { id: true, nome: true } },
       unidade: { select: { id: true, nome: true } },
       avaliacao: {
@@ -41,34 +41,34 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
   }
 
   async criar(agendamento: Agendamento): Promise<void> {
-    const barbeariaId = agendamento.usuario.barbeariaId ?? DEFAULT_BARBEARIA_ID;
+    const estabelecimentoId = agendamento.usuario.estabelecimentoId ?? DEFAULT_ESTABELECIMENTO_ID;
     const servicoIds = agendamento.servicos.map((servico) => servico.id);
     const [profissional, servicos] = await Promise.all([
       this.prisma.profissional.findFirst({
-        where: { id: agendamento.profissional.id, barbeariaId },
+        where: { id: agendamento.profissional.id, estabelecimentoId },
       }),
       this.prisma.servico.findMany({
-        where: { id: { in: servicoIds }, barbeariaId },
+        where: { id: { in: servicoIds }, estabelecimentoId },
         select: { preco: true },
       }),
     ]);
 
     if (!profissional || servicos.length !== servicoIds.length) {
-      throw new Error('Profissional ou serviço não pertence à barbearia informada');
+      throw new Error('Profissional ou serviço não pertence ao estabelecimento informado');
     }
 
     const valorTotal = servicos.reduce((total, servico) => total + Number(servico.preco), 0);
 
     await this.prisma.$transaction(async (tx) => {
       await tx.$queryRawUnsafe(
-        'SELECT id FROM profissionais WHERE id = ? AND barbeariaId = ? FOR UPDATE',
+        'SELECT id FROM profissionais WHERE id = ? AND estabelecimentoId = ? FOR UPDATE',
         agendamento.profissional.id,
-        barbeariaId,
+        estabelecimentoId,
       );
 
       const conflito = await tx.agendamento.findFirst({
         where: {
-          barbeariaId,
+          estabelecimentoId,
           profissionalId: agendamento.profissional.id,
           data: agendamento.data,
           status: { in: STATUS_AGENDAMENTO_ATIVO },
@@ -86,7 +86,7 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
 
       await tx.agendamento.create({
         data: {
-          barbearia: { connect: { id: barbeariaId } },
+          estabelecimento: { connect: { id: estabelecimentoId } },
           data: agendamento.data,
           status: 'AGENDADO',
           valorTotal,
@@ -98,10 +98,10 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
         },
       });
 
-      await (tx as any).clienteBarbearia.upsert({
+      await (tx as any).clienteEstabelecimento.upsert({
         where: {
-          barbeariaId_usuarioId: {
-            barbeariaId,
+          estabelecimentoId_usuarioId: {
+            estabelecimentoId,
             usuarioId: agendamento.usuario.id!,
           },
         },
@@ -109,7 +109,7 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
           ultimoAgendamentoEm: agendamento.data,
         },
         create: {
-          barbeariaId,
+          estabelecimentoId,
           usuarioId: agendamento.usuario.id!,
           origem: 'AGENDAMENTO',
           primeiroAgendamentoEm: agendamento.data,
@@ -128,11 +128,11 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
     return agendamento ? this.normalizarAgendamento(agendamento) : null;
   }
 
-  async buscarPorEmail(email: string, barbeariaId?: number): Promise<Agendamento[]> {
+  async buscarPorEmail(email: string, estabelecimentoId?: number): Promise<Agendamento[]> {
     const agendamentos = await this.prisma.agendamento.findMany({
       where: {
         usuario: { email },
-        ...(barbeariaId ? { barbeariaId } : {}),
+        ...(estabelecimentoId ? { estabelecimentoId } : {}),
       },
       include: this.includeAgendamento(),
       orderBy: { data: 'desc' },
@@ -174,7 +174,7 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
   async buscarPorProfissionalEData(
     profissional: number,
     data: Date,
-    barbeariaId = DEFAULT_BARBEARIA_ID,
+    estabelecimentoId = DEFAULT_ESTABELECIMENTO_ID,
   ): Promise<Agendamento[]> {
     const ano = data.getFullYear();
     const mes = data.getUTCMonth();
@@ -185,7 +185,7 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
 
     const agendamentos = await this.prisma.agendamento.findMany({
       where: {
-        barbeariaId,
+        estabelecimentoId,
         profissionalId: profissional,
         status: { in: STATUS_AGENDAMENTO_ATIVO },
         data: { gte: inicioDoDia, lte: fimDoDia },
@@ -203,13 +203,13 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
     });
   }
 
-  async cancelar(id: number, usuarioId: number, barbeariaId: number | undefined, barbeiro: boolean) {
+  async cancelar(id: number, usuarioId: number, estabelecimentoId: number | undefined, membroEstabelecimento: boolean) {
     const agendamento = await this.prisma.agendamento.findFirst({
       where: {
         id,
-        ...(barbeariaId ? { barbeariaId } : {}),
+        ...(estabelecimentoId ? { estabelecimentoId } : {}),
         status: { in: ['AGENDADO', 'CONFIRMADO'] },
-        ...(barbeiro ? {} : { usuarioId }),
+        ...(membroEstabelecimento ? {} : { usuarioId }),
       },
       select: { id: true, data: true },
     });
@@ -234,7 +234,7 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
       where: { id, usuarioId },
       select: {
         id: true,
-        barbeariaId: true,
+        estabelecimentoId: true,
         usuarioId: true,
         profissionalId: true,
         status: true,
@@ -255,7 +255,7 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
 
     const avaliacao = await (this.prisma as any).avaliacao.create({
       data: {
-        barbeariaId: agendamento.barbeariaId,
+        estabelecimentoId: agendamento.estabelecimentoId,
         agendamentoId: agendamento.id,
         usuarioId: agendamento.usuarioId,
         profissionalId: agendamento.profissionalId,

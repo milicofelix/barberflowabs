@@ -1,6 +1,6 @@
 'use client'
 
-import { Profissional } from '@barbabrutal/core'
+import { Profissional } from '@uniflowabs/core'
 import { useCallback, useEffect, useState } from 'react'
 import useAPI from './useAPI'
 import useSessao from './useSessao'

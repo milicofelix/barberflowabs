@@ -3,13 +3,13 @@
 import Link from 'next/link'
 import { ListFilter, LocateFixed, Search, Star } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import MapaLeafletBarbearias from './MapaLeafletBarbearias'
+import MapaLeafletEstabelecimentos from './MapaLeafletEstabelecimentos'
 
 const URL_BASE = process.env.NEXT_PUBLIC_API_URL
 const RAIOS = [2, 5, 10, 25]
 
-export default function DescobertaBarbearias() {
-    const [barbearias, setBarbearias] = useState<any[]>([])
+export default function DescobertaEstabelecimentos() {
+    const [estabelecimentos, setEstabelecimentos] = useState<any[]>([])
     const [carregando, setCarregando] = useState(true)
     const [erro, setErro] = useState('')
     const [q, setQ] = useState('')
@@ -41,19 +41,19 @@ export default function DescobertaBarbearias() {
         try {
             setCarregando(true)
             setErro('')
-            const resposta = await fetch(`${URL_BASE}/public/barbearias?${parametros.toString()}`)
+            const resposta = await fetch(`${URL_BASE}/public/estabelecimentos?${parametros.toString()}`)
             const dados = await resposta.json()
 
             if (!resposta.ok) {
-                setErro(dados?.message ?? 'Não foi possível carregar as barbearias.')
-                setBarbearias([])
+                setErro(dados?.message ?? 'Não foi possível carregar as estabelecimentos.')
+                setEstabelecimentos([])
                 return
             }
 
-            setBarbearias(Array.isArray(dados) ? dados : [])
+            setEstabelecimentos(Array.isArray(dados) ? dados : [])
         } catch (e) {
-            setErro('Não foi possível carregar as barbearias.')
-            setBarbearias([])
+            setErro('Não foi possível carregar as estabelecimentos.')
+            setEstabelecimentos([])
         } finally {
             setCarregando(false)
         }
@@ -94,10 +94,10 @@ export default function DescobertaBarbearias() {
             >
                 <div className="container flex min-h-[340px] flex-col justify-end gap-5 py-10">
                     <span className="w-fit rounded border border-yellow-400/50 px-3 py-2 text-sm font-bold text-yellow-300">
-                        Barbearias aprovadas
+                        Estabelecimentos aprovadas
                     </span>
                     <div>
-                        <h1 className="max-w-4xl text-4xl font-black text-white md:text-5xl">Encontre uma barbearia perto de você</h1>
+                        <h1 className="max-w-4xl text-4xl font-black text-white md:text-5xl">Encontre um estabelecimento perto de você</h1>
                         <p className="mt-4 max-w-2xl text-lg text-zinc-300">
                             Compare distância, serviços, status de funcionamento e escolha onde agendar.
                         </p>
@@ -152,7 +152,7 @@ export default function DescobertaBarbearias() {
 
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <p className="text-sm text-zinc-400">
-                        {carregando ? 'Buscando...' : `${barbearias.length} barbearia${barbearias.length === 1 ? '' : 's'} encontrada${barbearias.length === 1 ? '' : 's'}`}
+                        {carregando ? 'Buscando...' : `${estabelecimentos.length} estabelecimento${estabelecimentos.length === 1 ? '' : 's'} encontrada${estabelecimentos.length === 1 ? '' : 's'}`}
                     </p>
                     <div className="flex w-fit rounded border border-zinc-800 bg-zinc-900 p-1">
                         <button type="button" onClick={() => setModo('lista')} className={abaClasse(modo === 'lista')}>
@@ -167,73 +167,73 @@ export default function DescobertaBarbearias() {
                 {erro && <p className="rounded border border-red-900 bg-red-950/50 p-4 text-sm text-red-200">{erro}</p>}
 
                 {modo === 'mapa' ? (
-                    <MapaLeafletBarbearias barbearias={barbearias} posicaoUsuario={posicao} />
+                    <MapaLeafletEstabelecimentos estabelecimentos={estabelecimentos} posicaoUsuario={posicao} />
                 ) : (
-                    <ListaBarbearias barbearias={barbearias} carregando={carregando} />
+                    <ListaEstabelecimentos estabelecimentos={estabelecimentos} carregando={carregando} />
                 )}
             </section>
         </main>
     )
 }
 
-function ListaBarbearias({ barbearias, carregando }: { barbearias: any[]; carregando: boolean }) {
+function ListaEstabelecimentos({ estabelecimentos, carregando }: { estabelecimentos: any[]; carregando: boolean }) {
     if (carregando) {
-        return <p className="rounded border border-zinc-800 bg-zinc-900 p-6 text-zinc-300">Carregando barbearias...</p>
+        return <p className="rounded border border-zinc-800 bg-zinc-900 p-6 text-zinc-300">Carregando estabelecimentos...</p>
     }
 
-    if (barbearias.length === 0) {
-        return <p className="rounded border border-zinc-800 bg-zinc-900 p-6 text-zinc-300">Nenhuma barbearia encontrada.</p>
+    if (estabelecimentos.length === 0) {
+        return <p className="rounded border border-zinc-800 bg-zinc-900 p-6 text-zinc-300">Nenhum estabelecimento encontrada.</p>
     }
 
     return (
         <div className="grid gap-4 lg:grid-cols-2">
-            {barbearias.map((barbearia) => (
-                <BarbeariaCard key={barbearia.id} barbearia={barbearia} />
+            {estabelecimentos.map((estabelecimento) => (
+                <EstabelecimentoCard key={estabelecimento.id} estabelecimento={estabelecimento} />
             ))}
         </div>
     )
 }
 
-function BarbeariaCard({ barbearia }: { barbearia: any }) {
-    const endereco = [barbearia.endereco?.bairro, barbearia.endereco?.cidade, barbearia.endereco?.estado].filter(Boolean).join(' - ')
+function EstabelecimentoCard({ estabelecimento }: { estabelecimento: any }) {
+    const endereco = [estabelecimento.endereco?.bairro, estabelecimento.endereco?.cidade, estabelecimento.endereco?.estado].filter(Boolean).join(' - ')
 
     return (
         <article className="grid overflow-hidden rounded border border-zinc-800 bg-zinc-900 md:grid-cols-[180px_1fr]">
-            <div className="min-h-[180px] bg-cover bg-center" style={{ backgroundImage: `url(${barbearia.imagemCapaURL || '/banners/principal.png'})` }} />
+            <div className="min-h-[180px] bg-cover bg-center" style={{ backgroundImage: `url(${estabelecimento.imagemCapaURL || '/banners/principal.png'})` }} />
             <div className="grid gap-4 p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                        <h2 className="text-xl font-black text-white">{barbearia.nome}</h2>
+                        <h2 className="text-xl font-black text-white">{estabelecimento.nome}</h2>
                         <p className="mt-1 text-sm text-zinc-400">{endereco || 'Localização em atualização'}</p>
                     </div>
-                    <span className={statusClasse(barbearia.statusOperacional?.status)}>
-                        {barbearia.statusOperacional?.label ?? 'Status indisponível'}
+                    <span className={statusClasse(estabelecimento.statusOperacional?.status)}>
+                        {estabelecimento.statusOperacional?.label ?? 'Status indisponível'}
                     </span>
                 </div>
                 <div className="flex flex-wrap gap-2 text-sm text-zinc-300">
-                    {barbearia.distanciaKm !== null && <span className="rounded bg-zinc-800 px-2 py-1">{barbearia.distanciaKm} km</span>}
-                    {barbearia.avaliacaoMedia != null && (
+                    {estabelecimento.distanciaKm !== null && <span className="rounded bg-zinc-800 px-2 py-1">{estabelecimento.distanciaKm} km</span>}
+                    {estabelecimento.avaliacaoMedia != null && (
                         <span className="inline-flex items-center gap-1 rounded bg-zinc-800 px-2 py-1">
                             <Star size={14} className="fill-yellow-400 text-yellow-400" />
-                            {barbearia.avaliacaoMedia} ({barbearia.quantidadeAvaliacoes})
+                            {estabelecimento.avaliacaoMedia} ({estabelecimento.quantidadeAvaliacoes})
                         </span>
                     )}
-                    {barbearia.destaque && <span className="rounded bg-yellow-400 px-2 py-1 font-bold text-black">Destaque</span>}
+                    {estabelecimento.destaque && <span className="rounded bg-yellow-400 px-2 py-1 font-bold text-black">Destaque</span>}
                 </div>
-                <p className="line-clamp-2 text-sm text-zinc-400">{barbearia.descricao || 'Perfil público em atualização.'}</p>
+                <p className="line-clamp-2 text-sm text-zinc-400">{estabelecimento.descricao || 'Perfil público em atualização.'}</p>
                 <div className="flex flex-wrap gap-2">
-                    {(barbearia.servicos ?? []).slice(0, 3).map((servico: any) => (
+                    {(estabelecimento.servicos ?? []).slice(0, 3).map((servico: any) => (
                         <span key={servico.id} className="rounded border border-zinc-700 px-2 py-1 text-xs text-zinc-300">
                             {servico.nome}
                         </span>
                     ))}
                 </div>
                 <div className="flex flex-wrap gap-3">
-                    <Link href={`/barbearias/${barbearia.slug}`} className="rounded bg-yellow-400 px-4 py-2 text-sm font-bold text-black">
+                    <Link href={`/estabelecimentos/${estabelecimento.slug}`} className="rounded bg-yellow-400 px-4 py-2 text-sm font-bold text-black">
                         Ver perfil
                     </Link>
-                    {barbearia.aceitaAgendamentoOnline && (
-                        <Link href={`/agendamento?barbearia=${barbearia.slug}`} className="rounded border border-zinc-600 px-4 py-2 text-sm font-bold text-zinc-100">
+                    {estabelecimento.aceitaAgendamentoOnline && (
+                        <Link href={`/agendamento?estabelecimento=${estabelecimento.slug}`} className="rounded border border-zinc-600 px-4 py-2 text-sm font-bold text-zinc-100">
                             Agendar
                         </Link>
                     )}

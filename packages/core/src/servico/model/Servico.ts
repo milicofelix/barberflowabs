@@ -1,6 +1,6 @@
 export default interface Servico {
     id: number
-    barbeariaId?: number
+    estabelecimentoId?: number
     nome: string
     descricao: string
     preco: number

@@ -1,5 +1,5 @@
 import { Body, Controller, Post, Req, UnauthorizedException } from '@nestjs/common';
-import { LoginUsuario, RegistrarUsuario, Usuario } from '@barbabrutal/core';
+import { LoginUsuario, RegistrarUsuario, Usuario } from '@uniflowabs/core';
 import { UsuarioPrisma } from './usuario.prisma';
 import { BcryptProvider } from './bcrypt.provider';
 import * as jwt from 'jsonwebtoken';
@@ -24,9 +24,9 @@ export class AuthController {
   async registrar(@Body() usuario: RegistrarUsuarioDto, @Req() req: any) {
     this.validarRegistro(usuario);
 
-    const barbeariaId = await this.tenant.resolverBarbeariaId(req);
+    const estabelecimentoId = await this.tenant.resolverEstabelecimentoId(req);
     const casoDeUso = new RegistrarUsuario(this.repo, this.cripto);
-    await casoDeUso.executar({ ...usuario, barbeariaId });
+    await casoDeUso.executar({ ...usuario, estabelecimentoId });
   }
 
   @Post('login')
@@ -92,8 +92,8 @@ export class AuthController {
       id: usuario.id!,
       nome: usuario.nome,
       email: usuario.email,
-      barbeariaId: superAdmin ? null : usuario.barbeariaId!,
-      barbeiro: superAdmin ? false : usuario.barbeiro ?? false,
+      estabelecimentoId: superAdmin ? null : usuario.estabelecimentoId!,
+      membroEstabelecimento: superAdmin ? false : usuario.membroEstabelecimento ?? false,
       papel,
       role: papel,
       telefone: usuario.telefone,
@@ -110,6 +110,6 @@ export class AuthController {
       return 'SUPER_ADMIN';
     }
 
-    return (usuario.papel ?? (usuario.barbeiro ? 'BARBER' : 'CUSTOMER')) as AuthTokenPayload['role'];
+    return (usuario.papel ?? (usuario.membroEstabelecimento ? 'ESTABLISHMENT_MEMBER' : 'CUSTOMER')) as AuthTokenPayload['role'];
   }
 }

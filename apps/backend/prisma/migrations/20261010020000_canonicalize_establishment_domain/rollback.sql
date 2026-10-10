@@ -1,0 +1,30 @@
+UPDATE `usuarios` SET `papel` = 'BARBERSHOP_OWNER' WHERE `papel` = 'ESTABLISHMENT_OWNER';
+UPDATE `usuarios` SET `papel` = 'BARBER' WHERE `papel` = 'ESTABLISHMENT_MEMBER';
+
+ALTER TABLE `denuncias_perfil_publico` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `avaliacoes` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `lembretes_relacionamento` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `logs_auditoria` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `assinaturas_estabelecimentos` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `lancamentos_financeiros` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `bloqueios_agenda` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `horarios_funcionamento` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `unidades` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `clientes_estabelecimentos` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `indisponibilidades_recursos` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `escalas_profissionais` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `membros_equipe` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `recursos` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `profissionais_servicos` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `servicos_especialidades` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `profissionais_especialidades` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `estabelecimentos_especialidades` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `estabelecimentos_segmentos` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `agendamentos` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `servicos` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `profissionais` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`;
+ALTER TABLE `usuarios` RENAME COLUMN `estabelecimentoId` TO `barbeariaId`, RENAME COLUMN `membroEstabelecimento` TO `barbeiro`;
+
+RENAME TABLE `assinaturas_estabelecimentos` TO `assinaturas_barbearia`;
+RENAME TABLE `clientes_estabelecimentos` TO `clientes_barbearias`;
+RENAME TABLE `estabelecimentos` TO `barbearias`;

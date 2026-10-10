@@ -11,7 +11,7 @@ describe('CatalogoIntegridadePrisma - isolamento de tenant', () => {
     ).rejects.toBeInstanceOf(NotFoundException);
 
     expect(findFirst).toHaveBeenCalledWith({
-      where: { id: 15, barbeariaId: 8 },
+      where: { id: 15, estabelecimentoId: 8 },
       select: { id: true },
     });
   });
@@ -23,7 +23,7 @@ describe('CatalogoIntegridadePrisma - isolamento de tenant', () => {
     await expect(integridade.validarEntidadeTenant('servico', 21, 8)).rejects.toBeInstanceOf(NotFoundException);
 
     expect(findFirst).toHaveBeenCalledWith({
-      where: { id: 21, barbeariaId: 8 },
+      where: { id: 21, estabelecimentoId: 8 },
       select: { id: true },
     });
   });

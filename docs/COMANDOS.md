@@ -174,7 +174,7 @@ Substitua `SLUG` pelo identificador publico do estabelecimento.
 ### Consultar um endpoint autenticado
 
 ```bash
-curl -sS -i -H 'Authorization: Bearer SEU_TOKEN' -H 'x-barbearia-slug: SLUG' http://localhost:4000/ROTA
+curl -sS -i -H 'Authorization: Bearer SEU_TOKEN' -H 'x-estabelecimento-slug: SLUG' http://localhost:4000/ROTA
 ```
 
 Consulta uma rota protegida no tenant informado. Nunca registre um token real neste arquivo, em commits ou em mensagens compartilhadas.
@@ -202,7 +202,7 @@ Executa uma consulta e encerra a sessao. Troque os placeholders e mantenha `SELE
 ### Inspecionar agendamentos de um profissional
 
 ```sql
-SELECT id, profissionalId, barbeariaId, status, data, dataFim, inicioOcupacao, fimOcupacao, usuarioId, createdAt
+SELECT id, profissionalId, estabelecimentoId, status, data, dataFim, inicioOcupacao, fimOcupacao, usuarioId, createdAt
 FROM agendamentos
 WHERE profissionalId = ID_PROFISSIONAL
 ORDER BY COALESCE(inicioOcupacao, data);
@@ -213,9 +213,9 @@ Ajuda a localizar conflitos reais de agenda e diferenciar dados persistidos de c
 ### Inspecionar bloqueios da agenda
 
 ```sql
-SELECT id, profissionalId, barbeariaId, unidadeId, inicio, fim, motivo
+SELECT id, profissionalId, estabelecimentoId, unidadeId, inicio, fim, motivo
 FROM bloqueios_agenda
-WHERE barbeariaId = ID_ESTABELECIMENTO
+WHERE estabelecimentoId = ID_ESTABELECIMENTO
 ORDER BY inicio;
 ```
 
@@ -224,9 +224,9 @@ Lista bloqueios administrativos do estabelecimento. Adicione filtros de periodo 
 ### Inspecionar horario de funcionamento
 
 ```sql
-SELECT id, barbeariaId, unidadeId, diaSemana, inicio, fim, intervaloInicio, intervaloFim, ativo
+SELECT id, estabelecimentoId, unidadeId, diaSemana, inicio, fim, intervaloInicio, intervaloFim, ativo
 FROM horarios_funcionamento
-WHERE barbeariaId = ID_ESTABELECIMENTO
+WHERE estabelecimentoId = ID_ESTABELECIMENTO
 ORDER BY diaSemana, inicio;
 ```
 
@@ -279,6 +279,8 @@ docker compose exec -T app sh -lc 'cd apps/backend && npx prisma migrate deploy'
 ```
 
 Aplica, em ordem, somente as migrations versionadas que ainda estao pendentes. Altera a estrutura e possivelmente os dados do banco.
+
+Na canonicalizacao da Etapa 7, esse comando aplica primeiro a capacidade operacional da Etapa 6 e depois renomeia tabelas, colunas e papeis para o vocabulario de `estabelecimento`. Faça backup antes: essa mudanca remove os aliases tecnicos antigos e exige que backend, web e mobile sejam atualizados juntos.
 
 ### Gerar o Prisma Client
 

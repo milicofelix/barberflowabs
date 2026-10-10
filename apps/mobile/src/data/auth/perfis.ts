@@ -1,9 +1,9 @@
-import type { Usuario } from '@barbabrutal/core'
+import type { Usuario } from '@uniflowabs/core'
 
 export type PerfilUsuario =
     | 'CUSTOMER'
-    | 'BARBER'
-    | 'BARBERSHOP_OWNER'
+    | 'ESTABLISHMENT_MEMBER'
+    | 'ESTABLISHMENT_OWNER'
     | 'SUPER_ADMIN'
     | 'APP_OWNER'
 
@@ -14,8 +14,8 @@ export function resolverPerfil(usuario: Usuario | null): PerfilUsuario | null {
 
     if (perfil === 'APP_OWNER') return 'APP_OWNER'
     if (perfil === 'SUPER_ADMIN') return 'SUPER_ADMIN'
-    if (perfil === 'BARBERSHOP_OWNER') return 'BARBERSHOP_OWNER'
-    if (perfil === 'BARBER' || usuario.barbeiro) return 'BARBER'
+    if (perfil === 'ESTABLISHMENT_OWNER') return 'ESTABLISHMENT_OWNER'
+    if (perfil === 'ESTABLISHMENT_MEMBER' || usuario.membroEstabelecimento) return 'ESTABLISHMENT_MEMBER'
     return 'CUSTOMER'
 }
 
@@ -24,5 +24,5 @@ export function perfilAdmin(perfil: PerfilUsuario | null) {
 }
 
 export function perfilOperacional(perfil: PerfilUsuario | null) {
-    return perfil === 'BARBER' || perfil === 'BARBERSHOP_OWNER'
+    return perfil === 'ESTABLISHMENT_MEMBER' || perfil === 'ESTABLISHMENT_OWNER'
 }

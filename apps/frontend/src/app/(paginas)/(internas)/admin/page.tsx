@@ -8,7 +8,7 @@ export default function Page() {
         <div className="flex flex-col gap-5">
             <CabecalhoComTitulo
                 titulo="Admin SaaS"
-                descricao="Acompanhe barbearias, assinaturas e auditoria."
+                descricao="Acompanhe estabelecimentos, assinaturas e auditoria."
             />
             <div className="container py-10">
                 <PainelSuperAdmin />

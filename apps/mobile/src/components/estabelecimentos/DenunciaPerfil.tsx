@@ -5,16 +5,16 @@ import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, Text
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
 
-const MOTIVOS = ['Dados incorretos', 'Localização incorreta', 'Conteúdo inadequado', 'Barbearia não existe', 'Outro motivo']
+const MOTIVOS = ['Dados incorretos', 'Localização incorreta', 'Conteúdo inadequado', 'Estabelecimento não existe', 'Outro motivo']
 
 interface Props {
     slug: string
-    nomeBarbearia: string
+    nomeEstabelecimento: string
     aberto: boolean
     fechar: () => void
 }
 
-export default function DenunciaPerfil({ slug, nomeBarbearia, aberto, fechar }: Props) {
+export default function DenunciaPerfil({ slug, nomeEstabelecimento, aberto, fechar }: Props) {
     const { cores } = useTema()
     const { httpPost } = useAPI()
     const [nome, setNome] = useState('')
@@ -70,7 +70,7 @@ export default function DenunciaPerfil({ slug, nomeBarbearia, aberto, fechar }: 
                         </View>
                         <Pressable onPress={encerrar} hitSlop={12}><Text style={styles.fechar}>Fechar</Text></Pressable>
                     </View>
-                    <Text style={[styles.descricao, { color: cores.textoSecundario }]}>Avise sobre informações incorretas ou conteúdo inadequado em {nomeBarbearia}.</Text>
+                    <Text style={[styles.descricao, { color: cores.textoSecundario }]}>Avise sobre informações incorretas ou conteúdo inadequado em {nomeEstabelecimento}.</Text>
                     <Campo label="Nome (opcional)" value={nome} onChangeText={setNome} autoCapitalize="words" />
                     <Campo label="E-mail (opcional)" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
                     <Text style={[styles.label, { color: cores.texto }]}>Motivo</Text>

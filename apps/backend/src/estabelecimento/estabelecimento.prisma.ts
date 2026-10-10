@@ -4,14 +4,14 @@ import {
   MODELO_ATENDIMENTO_PADRAO,
   TIPO_ESTABELECIMENTO_PADRAO,
 } from 'src/estabelecimento/estabelecimento.constants';
-import { AtualizarPerfilPublicoBarbeariaDto, CriarBarbeariaDto } from './barbearia.dto';
+import { AtualizarPerfilPublicoEstabelecimentoDto, CriarEstabelecimentoDto } from './estabelecimento.dto';
 
 @Injectable()
-export class BarbeariaPrisma {
+export class EstabelecimentoPrisma {
   constructor(private readonly prisma: PrismaService) {}
 
   listar() {
-    return this.prisma.barbearia.findMany({
+    return this.prisma.estabelecimento.findMany({
       orderBy: { nome: 'asc' },
       select: {
         id: true,
@@ -27,7 +27,7 @@ export class BarbeariaPrisma {
   }
 
   buscarPorSlug(slug: string) {
-    return this.prisma.barbearia.findUnique({
+    return this.prisma.estabelecimento.findUnique({
       where: { slug },
       select: {
         id: true,
@@ -42,31 +42,31 @@ export class BarbeariaPrisma {
     });
   }
 
-  async buscarPerfilPublico(barbeariaId: number) {
-    const barbearia = await this.prisma.barbearia.findUnique({
-      where: { id: barbeariaId },
+  async buscarPerfilPublico(estabelecimentoId: number) {
+    const estabelecimento = await this.prisma.estabelecimento.findUnique({
+      where: { id: estabelecimentoId },
       select: this.camposPerfilPublico(),
     });
 
-    if (!barbearia) {
-      throw new BadRequestException('Barbearia não encontrada');
+    if (!estabelecimento) {
+      throw new BadRequestException('Estabelecimento não encontrado');
     }
 
-    return this.normalizarPerfilPublico(barbearia);
+    return this.normalizarPerfilPublico(estabelecimento);
   }
 
   async atualizarPerfilPublico(
-    barbeariaId: number,
+    estabelecimentoId: number,
     usuarioId: number,
-    dados: AtualizarPerfilPublicoBarbeariaDto,
+    dados: AtualizarPerfilPublicoEstabelecimentoDto,
   ) {
-    const atual = await this.prisma.barbearia.findUnique({
-      where: { id: barbeariaId },
+    const atual = await this.prisma.estabelecimento.findUnique({
+      where: { id: estabelecimentoId },
       select: this.camposPerfilPublico(),
     });
 
     if (!atual) {
-      throw new BadRequestException('Barbearia não encontrada');
+      throw new BadRequestException('Estabelecimento não encontrado');
     }
 
     const dadosPublicos: any = {
@@ -85,8 +85,8 @@ export class BarbeariaPrisma {
     };
 
     const exigeRevisao = this.alterouCamposCriticos(atual, dadosPublicos);
-    const atualizado = await this.prisma.barbearia.update({
-      where: { id: barbeariaId },
+    const atualizado = await this.prisma.estabelecimento.update({
+      where: { id: estabelecimentoId },
       data: {
         ...dadosPublicos,
         ...(exigeRevisao
@@ -96,7 +96,7 @@ export class BarbeariaPrisma {
               approvedById: null,
               rejectedAt: null,
               rejectedById: null,
-              reviewReason: this.textoOuNulo(dados.observacaoRevisao) ?? 'Perfil público alterado pela barbearia.',
+              reviewReason: this.textoOuNulo(dados.observacaoRevisao) ?? 'Perfil público alterado pelo estabelecimento.',
             }
           : {}),
       } as any,
@@ -106,11 +106,11 @@ export class BarbeariaPrisma {
     if (exigeRevisao) {
       await this.prisma.logAuditoria.create({
         data: {
-          barbeariaId,
+          estabelecimentoId,
           usuarioId,
-          acao: 'BARBERSHOP_PUBLIC_PROFILE_REVIEW_REQUESTED',
-          entidade: 'Barbearia',
-          entidadeId: barbeariaId,
+          acao: 'ESTABLISHMENT_PUBLIC_PROFILE_REVIEW_REQUESTED',
+          entidade: 'Estabelecimento',
+          entidadeId: estabelecimentoId,
           detalhes: {
             observacao: dados.observacaoRevisao ?? null,
           },
@@ -121,7 +121,7 @@ export class BarbeariaPrisma {
     return this.normalizarPerfilPublico(atualizado);
   }
 
-  async criar(dados: CriarBarbeariaDto) {
+  async criar(dados: CriarEstabelecimentoDto) {
     const nome = dados.nome?.trim();
     const slug = this.normalizarSlug(dados.slug);
 
@@ -129,12 +129,12 @@ export class BarbeariaPrisma {
       throw new BadRequestException('Nome e slug são obrigatórios');
     }
 
-    const existente = await this.prisma.barbearia.findUnique({ where: { slug } });
+    const existente = await this.prisma.estabelecimento.findUnique({ where: { slug } });
     if (existente) {
-      throw new ConflictException('Já existe uma barbearia com esse slug');
+      throw new ConflictException('Já existe um estabelecimento com esse slug');
     }
 
-    return this.prisma.barbearia.create({
+    return this.prisma.estabelecimento.create({
       data: {
         nome,
         slug,
@@ -151,7 +151,7 @@ export class BarbeariaPrisma {
         segmentos: {
           create: {
             principal: true,
-            segmento: { connect: { slug: 'barbearia' } },
+            segmento: { connect: { slug: 'estabelecimento' } },
           },
         },
       } as any,
@@ -203,13 +203,13 @@ export class BarbeariaPrisma {
     } as any;
   }
 
-  private normalizarPerfilPublico(barbearia: any) {
+  private normalizarPerfilPublico(estabelecimento: any) {
     return {
-      ...barbearia,
-      latitude: barbearia.latitude ?? null,
-      longitude: barbearia.longitude ?? null,
-      prontoParaMapa: Boolean(barbearia.latitude !== null && barbearia.longitude !== null),
-      aparecePublicamente: barbearia.reviewStatus === 'APPROVED',
+      ...estabelecimento,
+      latitude: estabelecimento.latitude ?? null,
+      longitude: estabelecimento.longitude ?? null,
+      prontoParaMapa: Boolean(estabelecimento.latitude !== null && estabelecimento.longitude !== null),
+      aparecePublicamente: estabelecimento.reviewStatus === 'APPROVED',
     };
   }
 

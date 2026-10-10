@@ -1,25 +1,25 @@
 'use client'
 
-const CHAVE_STORAGE = 'barberflowabs_barbearia_slug'
-export const EVENTO_BARBEARIA_SELECIONADA = 'barberflowabs:barbearia-selecionada'
+const CHAVE_STORAGE = 'barberflowabs_estabelecimento_slug'
+export const EVENTO_ESTABELECIMENTO_SELECIONADO = 'barberflowabs:estabelecimento-selecionado'
 
-export const BARBEARIA_PADRAO = process.env.NEXT_PUBLIC_BARBEARIA_SLUG ?? 'barber-flow-abs'
+export const ESTABELECIMENTO_PADRAO = process.env.NEXT_PUBLIC_ESTABELECIMENTO_SLUG ?? 'barber-flow-abs'
 
-export function obterBarbeariaSelecionada() {
-    if (typeof window === 'undefined') return BARBEARIA_PADRAO
+export function obterEstabelecimentoSelecionado() {
+    if (typeof window === 'undefined') return ESTABELECIMENTO_PADRAO
 
-    const slugUrl = new URLSearchParams(window.location.search).get('barbearia')
+    const slugUrl = new URLSearchParams(window.location.search).get('estabelecimento')
     if (slugUrl) {
         return slugUrl
     }
 
-    return window.localStorage.getItem(CHAVE_STORAGE) || BARBEARIA_PADRAO
+    return window.localStorage.getItem(CHAVE_STORAGE) || ESTABELECIMENTO_PADRAO
 }
 
-export function temBarbeariaSelecionada() {
+export function temEstabelecimentoSelecionado() {
     if (typeof window === 'undefined') return false
 
-    const slugUrl = new URLSearchParams(window.location.search).get('barbearia')
+    const slugUrl = new URLSearchParams(window.location.search).get('estabelecimento')
     return Boolean(slugUrl || window.localStorage.getItem(CHAVE_STORAGE))
 }
 
@@ -29,7 +29,7 @@ export function estaNoFluxoDeAgendamentoCliente() {
     return window.location.pathname.startsWith('/agendamento')
 }
 
-export function salvarBarbeariaSelecionada(slug: string) {
+export function salvarEstabelecimentoSelecionado(slug: string) {
     if (typeof window === 'undefined') return
 
     const slugLimpo = slug?.trim()
@@ -39,15 +39,15 @@ export function salvarBarbeariaSelecionada(slug: string) {
     if (slugAtual === slugLimpo) return
 
     window.localStorage.setItem(CHAVE_STORAGE, slugLimpo)
-    window.dispatchEvent(new CustomEvent(EVENTO_BARBEARIA_SELECIONADA, { detail: slugLimpo }))
+    window.dispatchEvent(new CustomEvent(EVENTO_ESTABELECIMENTO_SELECIONADO, { detail: slugLimpo }))
 }
 
-export function extrairBarbeariaDoDestino(destino: string | null) {
+export function extrairEstabelecimentoDoDestino(destino: string | null) {
     if (!destino) return null
 
     try {
         const url = new URL(destino, window.location.origin)
-        return url.searchParams.get('barbearia')
+        return url.searchParams.get('estabelecimento')
     } catch (e) {
         return null
     }

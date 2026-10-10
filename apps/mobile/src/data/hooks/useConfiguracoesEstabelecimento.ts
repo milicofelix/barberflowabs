@@ -26,7 +26,7 @@ export default function useConfiguracoesEstabelecimento() {
         try {
             setCarregando(true); setErro(null)
             const [dadosPerfil, dadosAgenda, dadosCatalogo] = await Promise.all([
-                httpGet<PerfilConfiguracao>('/barbearias/minha/perfil-publico'),
+                httpGet<PerfilConfiguracao>('/estabelecimentos/minha/perfil-publico'),
                 httpGet<AgendaConfiguracao>('/agenda/configuracao/horarios'),
                 httpGet('/catalogo/estabelecimento'),
             ])
@@ -40,7 +40,7 @@ export default function useConfiguracoesEstabelecimento() {
         try {
             setSalvando(true); setErro(null); setSucesso(null)
             const [perfilAtualizado, agendaAtualizada] = await Promise.all([
-                httpPut<PerfilConfiguracao>('/barbearias/minha/perfil-publico', perfil),
+                httpPut<PerfilConfiguracao>('/estabelecimentos/minha/perfil-publico', perfil),
                 httpPut<AgendaConfiguracao>('/agenda/configuracao/horarios', agenda),
             ])
             setPerfil(perfilAtualizado); setAgenda(agendaAtualizada); setSucesso('Configurações atualizadas.')

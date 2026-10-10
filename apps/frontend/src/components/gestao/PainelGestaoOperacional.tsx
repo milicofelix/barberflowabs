@@ -1,7 +1,7 @@
 'use client'
 
 import useAPI from '@/data/hooks/useAPI'
-import { Profissional, Servico } from '@barbabrutal/core'
+import { Profissional, Servico } from '@uniflowabs/core'
 import { IconPencil, IconPlus, IconTrash } from '@tabler/icons-react'
 import { useCallback, useEffect, useState } from 'react'
 

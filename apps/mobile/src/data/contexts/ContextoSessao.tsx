@@ -1,4 +1,4 @@
-import { Usuario } from '@barbabrutal/core'
+import { Usuario } from '@uniflowabs/core'
 import { jwtDecode } from 'jwt-decode'
 import { createContext, useCallback, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
@@ -9,12 +9,12 @@ const TOKEN_NOME = '_barberflowabs_token'
 
 interface TokenPayload {
     id: number
-    barbeariaId?: number | null
+    estabelecimentoId?: number | null
     nome: string
     email: string
-    barbeiro?: boolean
-    papel?: Usuario['papel'] | 'BARBERSHOP_OWNER' | 'APP_OWNER'
-    role?: Usuario['role'] | 'BARBERSHOP_OWNER' | 'APP_OWNER'
+    membroEstabelecimento?: boolean
+    papel?: Usuario['papel'] | 'ESTABLISHMENT_OWNER' | 'APP_OWNER'
+    role?: Usuario['role'] | 'ESTABLISHMENT_OWNER' | 'APP_OWNER'
     telefone?: string
     exp?: number
 }
@@ -43,10 +43,10 @@ function decodificarSessao(token: string): Sessao | null {
             token,
             usuario: {
                 id: payload.id,
-                barbeariaId: payload.barbeariaId ?? undefined,
+                estabelecimentoId: payload.estabelecimentoId ?? undefined,
                 nome: payload.nome,
                 email: payload.email,
-                barbeiro: payload.barbeiro,
+                membroEstabelecimento: payload.membroEstabelecimento,
                 papel: payload.papel as Usuario['papel'],
                 role: payload.role as Usuario['role'],
                 telefone: payload.telefone,

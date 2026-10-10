@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post, Put, Req } from '@nestjs/co
 import { ProfissionalPrisma } from './profissional.prisma';
 import { TenantService } from 'src/shared/tenant.service';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
-import { Usuario } from '@barbabrutal/core';
+import { Usuario } from '@uniflowabs/core';
 import { validarNumeroInteiroPositivo, validarTextoObrigatorio } from 'src/shared/validacao';
 import { CriarProfissionalDto } from './profissional.dto';
 import { PlanoLimitesService } from 'src/saas/plano-limites.service';
@@ -19,8 +19,8 @@ export class ProfissionalController {
 
   @Get()
   async obterProfissionais(@Req() req: any) {
-    const barbeariaId = await this.tenant.resolverBarbeariaId(req);
-    return this.repo.buscarTodos(barbeariaId);
+    const estabelecimentoId = await this.tenant.resolverEstabelecimentoId(req);
+    return this.repo.buscarTodos(estabelecimentoId);
   }
 
   @Post()
@@ -30,9 +30,9 @@ export class ProfissionalController {
   ) {
     await this.equipePolicy.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
     this.validarProfissional(dados);
-    await this.limites.validarBarbeariaOperacional(usuario.barbeariaId);
-    await this.limites.validarNovoProfissional(usuario.barbeariaId);
-    return this.repo.criar(usuario.barbeariaId, dados);
+    await this.limites.validarEstabelecimentoOperacional(usuario.estabelecimentoId);
+    await this.limites.validarNovoProfissional(usuario.estabelecimentoId);
+    return this.repo.criar(usuario.estabelecimentoId, dados);
   }
 
   @Put(':id')
@@ -44,16 +44,16 @@ export class ProfissionalController {
     await this.equipePolicy.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
     validarNumeroInteiroPositivo(id, 'Profissional');
     this.validarProfissional(dados);
-    await this.limites.validarBarbeariaOperacional(usuario.barbeariaId);
-    return this.repo.atualizar(Number(id), usuario.barbeariaId, dados);
+    await this.limites.validarEstabelecimentoOperacional(usuario.estabelecimentoId);
+    return this.repo.atualizar(Number(id), usuario.estabelecimentoId, dados);
   }
 
   @Delete(':id')
   async excluirProfissional(@Param('id') id: string, @UsuarioLogado() usuario: Usuario) {
     await this.equipePolicy.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
     validarNumeroInteiroPositivo(id, 'Profissional');
-    await this.limites.validarBarbeariaOperacional(usuario.barbeariaId);
-    return this.repo.excluir(Number(id), usuario.barbeariaId);
+    await this.limites.validarEstabelecimentoOperacional(usuario.estabelecimentoId);
+    return this.repo.excluir(Number(id), usuario.estabelecimentoId);
   }
 
   private validarProfissional(dados: CriarProfissionalDto) {

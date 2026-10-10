@@ -33,13 +33,13 @@ export class MotorAgendaDisponibilidadePrisma {
 
   private async verificarEscala(cliente: any, contexto: ContextoAgenda, periodo: PeriodoAgenda) {
     const total = await cliente.escalaProfissional.count({
-      where: { barbeariaId: contexto.barbeariaId, profissionalId: contexto.profissionalId, ativo: true },
+      where: { estabelecimentoId: contexto.estabelecimentoId, profissionalId: contexto.profissionalId, ativo: true },
     });
     if (!total) return;
     const local = this.periodoLocal(periodo);
     const escalas = await cliente.escalaProfissional.findMany({
       where: {
-        barbeariaId: contexto.barbeariaId,
+        estabelecimentoId: contexto.estabelecimentoId,
         profissionalId: contexto.profissionalId,
         diaSemana: local.diaSemana,
         ativo: true,
@@ -62,7 +62,7 @@ export class MotorAgendaDisponibilidadePrisma {
   ) {
     const conflito = await cliente.agendamento.findFirst({
       where: {
-        barbeariaId: contexto.barbeariaId,
+        estabelecimentoId: contexto.estabelecimentoId,
         profissionalId: contexto.profissionalId,
         status: { in: STATUS_ATIVOS },
         inicioOcupacao: { lt: periodo.fimOcupacao },
@@ -77,7 +77,7 @@ export class MotorAgendaDisponibilidadePrisma {
   private async verificarBloqueio(cliente: any, contexto: ContextoAgenda, periodo: PeriodoAgenda) {
     const bloqueio = await cliente.bloqueioAgenda.findFirst({
       where: {
-        barbeariaId: contexto.barbeariaId,
+        estabelecimentoId: contexto.estabelecimentoId,
         inicio: { lt: periodo.fimOcupacao },
         fim: { gt: periodo.inicioOcupacao },
         AND: [
@@ -100,7 +100,7 @@ export class MotorAgendaDisponibilidadePrisma {
     if (!necessidades.size) return [];
     const recursos = await cliente.recurso.findMany({
       where: {
-        barbeariaId: contexto.barbeariaId,
+        estabelecimentoId: contexto.estabelecimentoId,
         tipo: { in: [...necessidades.keys()] },
         ativo: true,
         ...(contexto.unidadeId

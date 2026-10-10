@@ -1,13 +1,13 @@
 import { BadRequestException, Body, Controller, ForbiddenException, Get, Param, Post, Put } from '@nestjs/common';
-import { Usuario } from '@barbabrutal/core';
+import { Usuario } from '@uniflowabs/core';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
-import { BarbeariaPrisma } from './barbearia.prisma';
-import { AtualizarPerfilPublicoBarbeariaDto, CriarBarbeariaDto } from './barbearia.dto';
+import { EstabelecimentoPrisma } from './estabelecimento.prisma';
+import { AtualizarPerfilPublicoEstabelecimentoDto, CriarEstabelecimentoDto } from './estabelecimento.dto';
 import { validarEmail, validarTextoObrigatorio } from 'src/shared/validacao';
 
-@Controller('barbearias')
-export class BarbeariaController {
-  constructor(private readonly repo: BarbeariaPrisma) {}
+@Controller('estabelecimentos')
+export class EstabelecimentoController {
+  constructor(private readonly repo: EstabelecimentoPrisma) {}
 
   @Get()
   listar() {
@@ -17,17 +17,17 @@ export class BarbeariaController {
   @Get('minha/perfil-publico')
   buscarMeuPerfilPublico(@UsuarioLogado() usuario: Usuario) {
     this.validarPermissao(usuario);
-    return this.repo.buscarPerfilPublico(usuario.barbeariaId!);
+    return this.repo.buscarPerfilPublico(usuario.estabelecimentoId!);
   }
 
   @Put('minha/perfil-publico')
   atualizarMeuPerfilPublico(
-    @Body() dados: AtualizarPerfilPublicoBarbeariaDto,
+    @Body() dados: AtualizarPerfilPublicoEstabelecimentoDto,
     @UsuarioLogado() usuario: Usuario,
   ) {
     this.validarPermissao(usuario);
     this.validarPerfilPublico(dados);
-    return this.repo.atualizarPerfilPublico(usuario.barbeariaId!, usuario.id!, dados);
+    return this.repo.atualizarPerfilPublico(usuario.estabelecimentoId!, usuario.id!, dados);
   }
 
   @Get(':slug')
@@ -36,7 +36,7 @@ export class BarbeariaController {
   }
 
   @Post()
-  criar(@Body() dados: CriarBarbeariaDto) {
+  criar(@Body() dados: CriarEstabelecimentoDto) {
     validarTextoObrigatorio(dados.nome, 'Nome');
     validarTextoObrigatorio(dados.slug, 'Slug');
 
@@ -48,12 +48,12 @@ export class BarbeariaController {
   }
 
   private validarPermissao(usuario: Usuario) {
-    if (!usuario?.barbeiro) {
-      throw new ForbiddenException('Apenas responsáveis pela barbearia podem alterar o perfil público');
+    if (!usuario?.membroEstabelecimento) {
+      throw new ForbiddenException('Apenas responsáveis pelo estabelecimento podem alterar o perfil público');
     }
   }
 
-  private validarPerfilPublico(dados: AtualizarPerfilPublicoBarbeariaDto) {
+  private validarPerfilPublico(dados: AtualizarPerfilPublicoEstabelecimentoDto) {
     validarTextoObrigatorio(dados.nomePublico, 'Nome público');
 
     if (dados.email) {

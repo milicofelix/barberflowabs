@@ -1,8 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
 import {
-  DEFAULT_BARBEARIA_ID,
-  DEFAULT_BARBEARIA_SLUG,
+  DEFAULT_ESTABELECIMENTO_ID,
+  DEFAULT_ESTABELECIMENTO_SLUG,
   TENANT_ID_HEADER,
   TENANT_SLUG_HEADER,
 } from './tenant';
@@ -11,37 +11,37 @@ import {
 export class TenantService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async resolverBarbeariaId(req: any): Promise<number> {
+  async resolverEstabelecimentoId(req: any): Promise<number> {
     const headers = req?.headers ?? {};
     const idHeader = this.lerHeader(headers, TENANT_ID_HEADER);
-    const slugHeader = this.lerHeader(headers, TENANT_SLUG_HEADER) ?? DEFAULT_BARBEARIA_SLUG;
+    const slugHeader = this.lerHeader(headers, TENANT_SLUG_HEADER) ?? DEFAULT_ESTABELECIMENTO_SLUG;
 
     if (idHeader) {
       const id = Number(idHeader);
       if (!Number.isInteger(id) || id <= 0) {
-        throw new BadRequestException('Header x-barbearia-id inválido');
+        throw new BadRequestException('Header x-estabelecimento-id inválido');
       }
 
-      const barbearia = await this.prisma.barbearia.findUnique({
+      const estabelecimento = await this.prisma.estabelecimento.findUnique({
         where: { id },
         select: { id: true },
       });
-      if (!barbearia) {
-        throw new NotFoundException('Barbearia não encontrada');
+      if (!estabelecimento) {
+        throw new NotFoundException('Estabelecimento não encontrado');
       }
-      return barbearia.id;
+      return estabelecimento.id;
     }
 
-    const barbearia = await this.prisma.barbearia.findUnique({
+    const estabelecimento = await this.prisma.estabelecimento.findUnique({
       where: { slug: slugHeader },
       select: { id: true },
     });
 
-    if (barbearia) {
-      return barbearia.id;
+    if (estabelecimento) {
+      return estabelecimento.id;
     }
 
-    return DEFAULT_BARBEARIA_ID;
+    return DEFAULT_ESTABELECIMENTO_ID;
   }
 
   private lerHeader(headers: Record<string, string | string[] | undefined>, nome: string) {

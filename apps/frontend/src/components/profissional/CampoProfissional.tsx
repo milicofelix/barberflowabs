@@ -1,7 +1,7 @@
 'use client'
 
 import useProfissionais from '@/data/hooks/useProfissionais'
-import { Profissional } from '@barbabrutal/core'
+import { Profissional } from '@uniflowabs/core'
 import Image from 'next/image'
 
 export interface CampoProfissionalProps

@@ -29,9 +29,9 @@ describe('CatalogoPolicy', () => {
   });
 
   it('restringe alteracoes a gestores vinculados a um tenant', () => {
-    expect(() => policy.validarGestor({ papel: 'CUSTOMER', barbeariaId: 1 })).toThrow(
+    expect(() => policy.validarGestor({ papel: 'CUSTOMER', estabelecimentoId: 1 })).toThrow(
       ForbiddenException,
     );
-    expect(() => policy.validarGestor({ papel: 'BARBERSHOP_OWNER', barbeariaId: 4 })).not.toThrow();
+    expect(() => policy.validarGestor({ papel: 'ESTABLISHMENT_OWNER', estabelecimentoId: 4 })).not.toThrow();
   });
 });

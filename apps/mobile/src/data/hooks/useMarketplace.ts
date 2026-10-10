@@ -1,4 +1,4 @@
-import type { CategoriaMarketplace, ResultadoMarketplace } from '../barbearias/tipos'
+import type { CategoriaMarketplace, ResultadoMarketplace } from '../estabelecimentos/tipos'
 import useAPI, { mensagemDoErro } from './useAPI'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 

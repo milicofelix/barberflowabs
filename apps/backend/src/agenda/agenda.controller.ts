@@ -1,6 +1,6 @@
 import { BadRequestException, Controller, Get, Param, Put, Query, Body, Req, Post } from '@nestjs/common';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
-import { Usuario } from '@barbabrutal/core';
+import { Usuario } from '@uniflowabs/core';
 import {
   validarData,
   validarHorario,
@@ -30,9 +30,9 @@ export class AgendaController {
     @UsuarioLogado() usuario: Usuario,
     @Req() req: any,
   ) {
-    const barbeariaId = await this.resolverBarbeariaAgenda(req, usuario);
+    const estabelecimentoId = await this.resolverEstabelecimentoAgenda(req, usuario);
     try {
-      return await this.motor.consultarDisponibilidade(barbeariaId, dados);
+      return await this.motor.consultarDisponibilidade(estabelecimentoId, dados);
     } catch (error: any) {
       if (error instanceof ConflitoAgendaError) {
         return { disponivel: false, motivo: error.message };
@@ -44,7 +44,7 @@ export class AgendaController {
   @Get('configuracao/horarios')
   async buscarConfiguracao(@UsuarioLogado() usuario: Usuario) {
     await this.validarPermissaoConfiguracao(usuario);
-    return this.repo.buscarConfiguracao(usuario.barbeariaId);
+    return this.repo.buscarConfiguracao(usuario.estabelecimentoId);
   }
 
   @Put('configuracao/horarios')
@@ -54,7 +54,7 @@ export class AgendaController {
   ) {
     await this.validarPermissaoConfiguracao(usuario);
     this.validarConfiguracao(dados);
-    return this.repo.salvarConfiguracao(usuario.barbeariaId, dados);
+    return this.repo.salvarConfiguracao(usuario.estabelecimentoId, dados);
   }
 
   @Get('horarios/:data')
@@ -75,10 +75,10 @@ export class AgendaController {
       validarNumeroInteiroPositivo(unidadeId, 'Unidade');
     }
 
-    const barbeariaId = await this.resolverBarbeariaAgenda(req, usuario);
+    const estabelecimentoId = await this.resolverEstabelecimentoAgenda(req, usuario);
 
     return this.repo.buscarHorariosDisponiveis({
-      barbeariaId,
+      estabelecimentoId,
       data,
       profissionalId: profissionalId ? Number(profissionalId) : undefined,
       unidadeId: unidadeId ? Number(unidadeId) : undefined,
@@ -89,8 +89,8 @@ export class AgendaController {
     return this.equipePolicy.validarPermissao(usuario, 'CONFIGURACOES_GERENCIAR');
   }
 
-  private async resolverBarbeariaAgenda(req: any, usuario: Usuario) {
-    return this.tenant.resolverBarbeariaId(req);
+  private async resolverEstabelecimentoAgenda(req: any, usuario: Usuario) {
+    return this.tenant.resolverEstabelecimentoId(req);
   }
 
   private validarConfiguracao(dados: ConfiguracaoAgendaDto) {

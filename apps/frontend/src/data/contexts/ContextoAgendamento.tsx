@@ -2,7 +2,7 @@
 import { createContext, useCallback, useEffect, useState } from 'react'
 import useAPI from '../hooks/useAPI'
 import useSessao from '../hooks/useSessao'
-import { AgendaUtils, DateUtils, Horarios, Profissional, Servico } from '@barbabrutal/core'
+import { AgendaUtils, DateUtils, Horarios, Profissional, Servico } from '@uniflowabs/core'
 import { useRouter } from 'next/navigation'
 
 interface HorariosDisponiveis {

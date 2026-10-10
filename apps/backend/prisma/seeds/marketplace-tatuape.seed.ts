@@ -3,7 +3,7 @@ import { estabelecimentosMarketplaceTatuape } from './marketplace-tatuape.data';
 
 export async function seedMarketplaceTatuape(prisma: PrismaClient) {
   for (const item of estabelecimentosMarketplaceTatuape) {
-    const estabelecimento = await prisma.barbearia.upsert({
+    const estabelecimento = await prisma.estabelecimento.upsert({
       where: { slug: item.slug },
       update: dadosDoEstabelecimento(item),
       create: { slug: item.slug, ...dadosDoEstabelecimento(item), trialEndsAt: adicionarDias(new Date(), 30) },
@@ -16,13 +16,13 @@ export async function seedMarketplaceTatuape(prisma: PrismaClient) {
     });
 
     await prisma.estabelecimentoSegmento.updateMany({
-      where: { barbeariaId: estabelecimento.id },
+      where: { estabelecimentoId: estabelecimento.id },
       data: { principal: false },
     });
     await prisma.estabelecimentoSegmento.upsert({
-      where: { barbeariaId_segmentoId: { barbeariaId: estabelecimento.id, segmentoId: segmento.id } },
+      where: { estabelecimentoId_segmentoId: { estabelecimentoId: estabelecimento.id, segmentoId: segmento.id } },
       update: { principal: true },
-      create: { barbeariaId: estabelecimento.id, segmentoId: segmento.id, principal: true },
+      create: { estabelecimentoId: estabelecimento.id, segmentoId: segmento.id, principal: true },
     });
 
     await seedEstruturaDoEstabelecimento(prisma, estabelecimento.id, item);
@@ -33,41 +33,41 @@ export async function seedMarketplaceTatuape(prisma: PrismaClient) {
 
 async function seedEstruturaDoEstabelecimento(
   prisma: PrismaClient,
-  barbeariaId: number,
+  estabelecimentoId: number,
   item: (typeof estabelecimentosMarketplaceTatuape)[number],
 ) {
   await prisma.unidade.upsert({
-    where: { barbeariaId_nome: { barbeariaId, nome: 'Matriz Tatuapé' } },
+    where: { estabelecimentoId_nome: { estabelecimentoId, nome: 'Matriz Tatuapé' } },
     update: { endereco: item.endereco, telefone: item.telefone, ativa: true },
-    create: { barbeariaId, nome: 'Matriz Tatuapé', endereco: item.endereco, telefone: item.telefone },
+    create: { estabelecimentoId, nome: 'Matriz Tatuapé', endereco: item.endereco, telefone: item.telefone },
   });
 
   const profissional = await prisma.profissional.upsert({
-    where: { barbeariaId_nome: { barbeariaId, nome: item.profissional } },
+    where: { estabelecimentoId_nome: { estabelecimentoId, nome: item.profissional } },
     update: { descricao: `Especialista da ${item.nome}.`, imagemURL: '/profissionais/profissional-1.jpg' },
     create: {
-      barbeariaId, nome: item.profissional, descricao: `Especialista da ${item.nome}.`,
+      estabelecimentoId, nome: item.profissional, descricao: `Especialista da ${item.nome}.`,
       imagemURL: '/profissionais/profissional-1.jpg', avaliacao: 5, quantidadeAvaliacoes: 0,
     },
   });
 
   for (const servico of item.servicos) {
     const registro = await prisma.servico.upsert({
-      where: { barbeariaId_nome: { barbeariaId, nome: servico.nome } },
+      where: { estabelecimentoId_nome: { estabelecimentoId, nome: servico.nome } },
       update: dadosDoServico(servico),
-      create: { barbeariaId, nome: servico.nome, ...dadosDoServico(servico) },
+      create: { estabelecimentoId, nome: servico.nome, ...dadosDoServico(servico) },
     });
     await prisma.profissionalServico.upsert({
       where: { profissionalId_servicoId: { profissionalId: profissional.id, servicoId: registro.id } },
       update: { ativo: true },
-      create: { barbeariaId, profissionalId: profissional.id, servicoId: registro.id, ativo: true },
+      create: { estabelecimentoId, profissionalId: profissional.id, servicoId: registro.id, ativo: true },
     });
   }
 
-  await prisma.horarioFuncionamento.deleteMany({ where: { barbeariaId } });
+  await prisma.horarioFuncionamento.deleteMany({ where: { estabelecimentoId } });
   await prisma.horarioFuncionamento.createMany({
     data: [1, 2, 3, 4, 5, 6].map((diaSemana) => ({
-      barbeariaId, diaSemana, inicio: '09:00', fim: '20:00',
+      estabelecimentoId, diaSemana, inicio: '09:00', fim: '20:00',
       intervaloInicio: '13:00', intervaloFim: '14:00', ativo: true,
     })),
   });

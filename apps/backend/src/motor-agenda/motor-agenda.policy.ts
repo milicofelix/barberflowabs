@@ -52,7 +52,7 @@ export class MotorAgendaPolicy {
   }
 
   validarReagendamento(agendamento: any, usuario: any) {
-    const gestor = usuario?.barbeiro && usuario?.barbeariaId === agendamento.barbeariaId;
+    const gestor = usuario?.membroEstabelecimento && usuario?.estabelecimentoId === agendamento.estabelecimentoId;
     if (agendamento.usuarioId !== usuario?.id && !gestor) {
       throw new ForbiddenException('Usuário sem permissão para reagendar');
     }

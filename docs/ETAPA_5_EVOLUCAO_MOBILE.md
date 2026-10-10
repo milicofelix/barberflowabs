@@ -4,7 +4,7 @@
 
 A navegacao mobile deixa de exibir os modulos provisórios e passa a respeitar o perfil autenticado:
 
-- `BARBER` e `BARBERSHOP_OWNER`: operacao e configuracoes;
+- `ESTABLISHMENT_MEMBER` e `ESTABLISHMENT_OWNER`: operacao e configuracoes;
 - `SUPER_ADMIN` e `APP_OWNER`: administracao da plataforma;
 - usuarios nao autenticados: login, cadastro pessoal e cadastro de estabelecimento;
 - clientes: descoberta, agendamento e perfil, sem acesso aos modulos de gestao.
@@ -15,7 +15,7 @@ O modulo de operacao concentra resumo diario, agenda filtrada por profissional, 
 
 ### Responsavel pelo estabelecimento
 
-1. Entre com uma conta `BARBERSHOP_OWNER`.
+1. Entre com uma conta `ESTABLISHMENT_OWNER`.
 2. Confirme que as abas **Operacao** e **Ajustes** estao visiveis.
 3. Em **Operacao > Resumo**, confira os indicadores diarios.
 4. Em **Agenda**, altere a data, filtre por profissional e atualize o status de um atendimento.
@@ -86,7 +86,7 @@ A operacao mobile agora permite:
 - cadastrar recursos e sua capacidade simultanea;
 - programar e remover indisponibilidades de recursos por manutencao ou outro motivo.
 
-No backend, as permissoes passam a proteger as rotas operacionais. Donos do estabelecimento continuam com acesso integral e contas antigas com indicador `barbeiro` conservam o acesso enquanto ainda nao possuem um vinculo detalhado. Depois que um vinculo e criado, suas permissoes passam a prevalecer.
+No backend, as permissoes passam a proteger as rotas operacionais. Donos do estabelecimento continuam com acesso integral e contas antigas com indicador `membro do estabelecimento` conservam o acesso enquanto ainda nao possuem um vinculo detalhado. Depois que um vinculo e criado, suas permissoes passam a prevalecer.
 
 O motor de agenda rejeita periodos fora da escala individual e ignora recursos indisponiveis ao calcular a capacidade. Se nenhuma escala individual existir, permanece valida a configuracao geral do estabelecimento para preservar compatibilidade.
 

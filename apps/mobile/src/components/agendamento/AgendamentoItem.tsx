@@ -1,4 +1,4 @@
-import { Agendamento, DateUtils, MoedaUtils } from '@barbabrutal/core'
+import { Agendamento, DateUtils, MoedaUtils } from '@uniflowabs/core'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import useTema from '@/src/data/contexts/ContextoTema'
 
@@ -39,9 +39,9 @@ export default function AgendamentoItem(props: AgendamentoItemProps) {
                 <Text style={[styles.statusTexto, { color: corStatus }]}>{statusLabel}</Text>
             </View>
             <Text style={[styles.profissional, { color: cores.texto }]}>{props.agendamento.profissional.nome}</Text>
-            {props.agendamento.barbearia?.nome ? (
+            {props.agendamento.estabelecimento?.nome ? (
                 <Text style={[styles.estabelecimento, { color: cores.textoSecundario }]}>
-                    {props.agendamento.barbearia.nome}
+                    {props.agendamento.estabelecimento.nome}
                 </Text>
             ) : null}
             {props.agendamento.unidade?.nome ? (

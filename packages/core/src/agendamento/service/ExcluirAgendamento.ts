@@ -19,8 +19,8 @@ export default class ExcluirAgendamento implements CasoDeUso<Entrada, void> {
         }
 
         const cliente = agendamento.usuario.email === usuario.email
-        const mesmaBarbearia = agendamento.barbeariaId === usuario.barbeariaId
-        const profissional = usuario.barbeiro && mesmaBarbearia
+        const mesmaEstabelecimento = agendamento.estabelecimentoId === usuario.estabelecimentoId
+        const profissional = usuario.membroEstabelecimento && mesmaEstabelecimento
 
         if (!cliente && !profissional) {
             throw new Error('Usuário não autorizado')

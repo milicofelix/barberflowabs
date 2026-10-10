@@ -22,8 +22,8 @@ import Link from 'next/link'
 export default function MenuUsuario() {
     const { usuario, encerrarSessao } = useSessao()
     const superAdmin = usuario?.role === 'SUPER_ADMIN' || usuario?.papel === 'SUPER_ADMIN'
-    const responsavelBarbearia = !!usuario?.barbeiro && !superAdmin
-    const cliente = !usuario?.barbeiro && !superAdmin
+    const responsavelEstabelecimento = !!usuario?.membroEstabelecimento && !superAdmin
+    const cliente = !usuario?.membroEstabelecimento && !superAdmin
 
     return usuario ? (
         <DropdownMenu>
@@ -49,9 +49,9 @@ export default function MenuUsuario() {
                 )}
                 {!superAdmin && (
                     <DropdownMenuItem>
-                        <Link href="/barbearias" className="flex gap-2">
+                        <Link href="/estabelecimentos" className="flex gap-2">
                             <IconMapPin size={18} />
-                            <span>Barbearias</span>
+                            <span>Estabelecimentos</span>
                         </Link>
                     </DropdownMenuItem>
                 )}
@@ -63,7 +63,7 @@ export default function MenuUsuario() {
                         </Link>
                     </DropdownMenuItem>
                 )}
-                {responsavelBarbearia && (
+                {responsavelEstabelecimento && (
                     <DropdownMenuItem>
                         <Link href="/gestao" className="flex gap-2">
                             <IconTool size={18} />
@@ -71,7 +71,7 @@ export default function MenuUsuario() {
                         </Link>
                     </DropdownMenuItem>
                 )}
-                {responsavelBarbearia && (
+                {responsavelEstabelecimento && (
                     <DropdownMenuItem>
                         <Link href="/configuracoes" className="flex gap-2">
                             <IconSettings size={18} />
@@ -79,7 +79,7 @@ export default function MenuUsuario() {
                         </Link>
                     </DropdownMenuItem>
                 )}
-                {responsavelBarbearia && (
+                {responsavelEstabelecimento && (
                     <DropdownMenuItem>
                         <Link href="/cobranca" className="flex gap-2">
                             <IconCreditCard size={18} />

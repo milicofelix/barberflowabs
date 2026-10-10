@@ -25,7 +25,7 @@ Status: implementacao concluida; migration aplicada e validada no ambiente Docke
 - [x] Disponibilizar aliases externos em `/public/estabelecimentos`.
 - [x] Planejar convivencia e versionamento de APIs.
 - [x] Criar migration aditiva com rollback manual documentado.
-- [x] Preservar `barbeariaId` enquanto consumidores legados dependerem dele.
+- [x] Preservar temporariamente o identificador legado durante a fase aditiva.
 - [x] Adicionar testes direcionados para classificacao e resolucao isolada de tenant.
 
 ## Etapa 2 - Segmentos, Especialidades E Catalogo
@@ -59,7 +59,7 @@ Status: implementacao backend concluida; migration aplicada e validada no ambien
 Status: implementacao concluida em 2026-10-09; instalacao da dependencia do mapa e validacao manual pendentes.
 
 - [x] Onboarding com tipo de estabelecimento, modelo de atendimento, segmentos e especialidades.
-- [x] Responsavel criado com perfil `BARBERSHOP_OWNER`.
+- [x] Responsavel criado com perfil `ESTABLISHMENT_OWNER`.
 - [x] Marketplace publico por categoria e especialidade.
 - [x] Filtros por localizacao, avaliacao, preco, funcionamento e disponibilidade de profissional.
 - [x] Perfis publicos consumidos pelo contrato externo de estabelecimentos.
@@ -91,6 +91,20 @@ Status: implementacao concluida em 2026-10-10; migration e validacao manual pend
 - [x] Capacidade simultanea por recurso e unidade.
 - [x] Escalas e indisponibilidades conectadas ao motor universal de agenda.
 - [x] Gestao mobile de membros, escalas, recursos e bloqueios de manutencao.
+
+## Etapa 7 - Canonicalizacao Definitiva Do Dominio
+
+Status: implementacao concluida em 2026-10-10; migration, geracao do Prisma Client e validacao manual pendentes.
+
+- [x] Substituir `Barbearia`, `barbeariaId` e `barbearias` no dominio ativo.
+- [x] Renomear modelos, tabelas, colunas, relacoes e chaves compostas.
+- [x] Adotar `ESTABLISHMENT_OWNER` e `ESTABLISHMENT_MEMBER`.
+- [x] Adotar headers `x-estabelecimento-id` e `x-estabelecimento-slug`.
+- [x] Renomear rotas, arquivos, componentes, contextos e hooks web/mobile.
+- [x] Renomear o pacote compartilhado para `@uniflowabs/core`.
+- [x] Criar migration de dados e estrutura com rollback manual.
+- [x] Preservar `BARBEARIA` somente como categoria de estabelecimento.
+- [x] Registrar a decisao no ADR 0002.
 
 ## Etapas Posteriores
 

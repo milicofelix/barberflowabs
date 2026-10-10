@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import useSessao from './useSessao'
-import useBarbearia from './useBarbearia'
+import useEstabelecimento from './useEstabelecimento'
 
 const URL_BASE = process.env.API_URL
 
@@ -41,7 +41,7 @@ export function mensagemDoErro(erro: unknown) {
 
 export default function useAPI() {
     const { token, usuario, encerrarSessao } = useSessao()
-    const { barbearia } = useBarbearia()
+    const { estabelecimento } = useEstabelecimento()
 
     const executar = useCallback(
         async function executar<T>(
@@ -54,20 +54,20 @@ export default function useAPI() {
 
             const uri = caminho.startsWith('/') ? caminho : `/${caminho}`
             const papel = String(usuario?.role ?? usuario?.papel ?? '').toUpperCase()
-            const operacional = papel === 'BARBER' || papel === 'BARBERSHOP_OWNER' || !!usuario?.barbeiro
+            const operacional = papel === 'ESTABLISHMENT_MEMBER' || papel === 'ESTABLISHMENT_OWNER' || !!usuario?.membroEstabelecimento
             const escopoTenant = opcoes.escopoTenant ?? 'automatico'
             const headers: Record<string, string> = {}
 
             if (escopoTenant === 'publico') {
-                if (!barbearia?.slug) {
-                    throw new ErroAPI('Escolha uma barbearia antes de continuar.', 400)
+                if (!estabelecimento?.slug) {
+                    throw new ErroAPI('Escolha um estabelecimento antes de continuar.', 400)
                 }
-                headers['x-barbearia-slug'] = barbearia.slug
+                headers['x-estabelecimento-slug'] = estabelecimento.slug
             } else if (escopoTenant === 'automatico') {
-                if (operacional && usuario?.barbeariaId) {
-                    headers['x-barbearia-id'] = String(usuario.barbeariaId)
-                } else if (barbearia?.slug) {
-                    headers['x-barbearia-slug'] = barbearia.slug
+                if (operacional && usuario?.estabelecimentoId) {
+                    headers['x-estabelecimento-id'] = String(usuario.estabelecimentoId)
+                } else if (estabelecimento?.slug) {
+                    headers['x-estabelecimento-slug'] = estabelecimento.slug
                 }
             }
 
@@ -104,7 +104,7 @@ export default function useAPI() {
 
             return dados as T
         },
-        [barbearia?.slug, encerrarSessao, token, usuario?.barbeariaId, usuario?.barbeiro, usuario?.papel, usuario?.role]
+        [estabelecimento?.slug, encerrarSessao, token, usuario?.estabelecimentoId, usuario?.membroEstabelecimento, usuario?.papel, usuario?.role]
     )
 
     const httpGet = useCallback(<T,>(caminho: string, opcoes?: OpcoesRequisicao) => executar<T>('GET', caminho, undefined, opcoes), [executar])

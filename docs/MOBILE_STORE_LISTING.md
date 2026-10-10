@@ -16,21 +16,21 @@
 
 **Descrição curta (até 80 caracteres)**
 
-Agende serviços e organize a rotina da sua barbearia em um só lugar.
+Agende serviços e organize a rotina da sua estabelecimento em um só lugar.
 
 **Subtítulo para iOS (até 30 caracteres)**
 
-Agenda e gestão para barbearias
+Agenda e gestão para estabelecimentos
 
 **Descrição completa inicial**
 
-O Barber Flow ABS aproxima clientes, profissionais e barbearias em uma experiência simples e organizada. Encontre serviços, escolha profissionais, agende horários e acompanhe seus compromissos pelo celular.
+O Barber Flow ABS aproxima clientes, profissionais e estabelecimentos em uma experiência simples e organizada. Encontre serviços, escolha profissionais, agende horários e acompanhe seus compromissos pelo celular.
 
 Para profissionais e gestores, o aplicativo evoluirá com recursos de operação, clientes, serviços, agenda, financeiro e relacionamento integrados ao ecossistema Barber Flow ABS.
 
 **Palavras-chave iniciais**
 
-barbearia, agendamento, barbeiro, cabelo, barba, agenda, gestão
+estabelecimento, agendamento, membro do estabelecimento, cabelo, barba, agenda, gestão
 
 ## Recursos visuais disponíveis
 
@@ -49,7 +49,7 @@ barbearia, agendamento, barbeiro, cabelo, barba, agenda, gestão
 Capturar após as telas das próximas fases estarem estáveis, sem dados pessoais reais:
 
 1. Entrada com a identidade Barber Flow ABS.
-2. Descoberta de barbearias e serviços.
+2. Descoberta de estabelecimentos e serviços.
 3. Escolha de profissional, data e horário.
 4. Confirmação e acompanhamento do agendamento.
 5. Visão operacional para profissionais e proprietários.

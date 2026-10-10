@@ -2,18 +2,18 @@ import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/c
 import { AuthMiddleware } from 'src/auth/auth.middleware';
 import { AuthModule } from 'src/auth/auth.module';
 import { DbModule } from 'src/db/db.module';
-import { BarbeariaController } from './barbearia.controller';
-import { BarbeariaPrisma } from './barbearia.prisma';
+import { EstabelecimentoController } from './estabelecimento.controller';
+import { EstabelecimentoPrisma } from './estabelecimento.prisma';
 
 @Module({
   imports: [AuthModule, DbModule],
-  controllers: [BarbeariaController],
-  providers: [BarbeariaPrisma],
+  controllers: [EstabelecimentoController],
+  providers: [EstabelecimentoPrisma],
 })
-export class BarbeariaModule implements NestModule {
+export class EstabelecimentoModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(AuthMiddleware).forRoutes({
-      path: 'barbearias/minha/perfil-publico',
+      path: 'estabelecimentos/minha/perfil-publico',
       method: RequestMethod.ALL,
     });
   }

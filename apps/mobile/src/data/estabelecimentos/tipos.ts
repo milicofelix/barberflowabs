@@ -1,4 +1,4 @@
-export interface EnderecoBarbearia {
+export interface EnderecoEstabelecimento {
     logradouro?: string | null
     bairro?: string | null
     cidade?: string | null
@@ -53,7 +53,7 @@ export interface HorarioFuncionamento {
     intervaloFim?: string | null
 }
 
-export interface BarbeariaResumo {
+export interface EstabelecimentoResumo {
     id: number
     nome: string
     slug: string
@@ -61,7 +61,7 @@ export interface BarbeariaResumo {
     email?: string | null
     descricao?: string | null
     imagemCapaURL?: string | null
-    endereco: EnderecoBarbearia
+    endereco: EnderecoEstabelecimento
     aceitaAgendamentoOnline: boolean
     destaque: boolean
     distanciaKm: number | null
@@ -77,32 +77,32 @@ export interface BarbeariaResumo {
     disponivelEm?: string | null
 }
 
-export type EstabelecimentoResumo = BarbeariaResumo
-export type EstabelecimentoPerfil = BarbeariaPerfil
+export type EstabelecimentoResumo = EstabelecimentoResumo
+export type EstabelecimentoPerfil = EstabelecimentoPerfil
 
 export interface ResultadoMarketplace {
     itens: EstabelecimentoResumo[]
     paginacao: { pagina: number; limite: number; total: number; paginas: number }
 }
 
-export interface BarbeariaPerfil extends Omit<BarbeariaResumo, 'distanciaKm'> {
+export interface EstabelecimentoPerfil extends Omit<EstabelecimentoResumo, 'distanciaKm'> {
     profissionais: ProfissionalPublico[]
     avaliacoes: AvaliacaoPublica[]
     horariosFuncionamento: HorarioFuncionamento[]
 }
 
-export interface BarbeariaSelecionada {
+export interface EstabelecimentoSelecionado {
     id: number
     nome: string
     slug: string
     cidade?: string | null
 }
 
-export function resumirSelecao(barbearia: BarbeariaResumo | BarbeariaPerfil): BarbeariaSelecionada {
+export function resumirSelecao(estabelecimento: EstabelecimentoResumo | EstabelecimentoPerfil): EstabelecimentoSelecionado {
     return {
-        id: barbearia.id,
-        nome: barbearia.nome,
-        slug: barbearia.slug,
-        cidade: barbearia.endereco?.cidade,
+        id: estabelecimento.id,
+        nome: estabelecimento.nome,
+        slug: estabelecimento.slug,
+        cidade: estabelecimento.endereco?.cidade,
     }
 }

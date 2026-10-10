@@ -1,4 +1,4 @@
-import { ProvedorCriptografia } from '@barbabrutal/core';
+import { ProvedorCriptografia } from '@uniflowabs/core';
 import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 

@@ -12,7 +12,7 @@ content-type: application/json
     "email": "rebecaprrsilva@zmail.com",
     "senha": "#Senha123",
     "telefone": "(11) 88888-9999",
-    "barbeiro": false
+    "membroEstabelecimento": false
 }
 
 ###

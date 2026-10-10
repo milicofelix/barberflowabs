@@ -4,7 +4,7 @@ import FormularioAgendamento from '@/src/components/agendamento/FormularioAgenda
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
 import type { AbasParamList, StackParamList } from '@/src/navigation/types'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import useBarbearia from '@/src/data/hooks/useBarbearia'
+import useEstabelecimento from '@/src/data/hooks/useEstabelecimento'
 import Carregando from '@/src/components/shared/Carregando'
 import EstadoVazio from '@/src/components/shared/EstadoVazio'
 import useTema from '@/src/data/contexts/ContextoTema'
@@ -13,18 +13,18 @@ type Props = BottomTabScreenProps<AbasParamList, 'Agendamento'>
 
 export default function Agendamento({ navigation }: Props) {
     const { cores } = useTema()
-    const { barbearia, carregando } = useBarbearia()
+    const { estabelecimento, carregando } = useEstabelecimento()
 
-    if (carregando) return <Carregando mensagem="Carregando sua barbearia..." />
+    if (carregando) return <Carregando mensagem="Carregando seu estabelecimento..." />
 
-    if (!barbearia) {
+    if (!estabelecimento) {
         return (
             <SafeAreaView style={[styles.container, { backgroundColor: cores.fundo }]}>
                 <View style={styles.vazio}>
                     <EstadoVazio
-                        titulo="Escolha uma barbearia"
+                        titulo="Escolha um estabelecimento"
                         descricao="Consulte os perfis e selecione onde deseja realizar o agendamento."
-                        acaoLabel="Encontrar barbearias"
+                        acaoLabel="Encontrar estabelecimentos"
                         onAcao={() => navigation.navigate('Descobrir')}
                     />
                 </View>
@@ -37,9 +37,9 @@ export default function Agendamento({ navigation }: Props) {
             <ScrollView contentContainerStyle={styles.scroll}>
                 <View style={[styles.tenant, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
                     <Text style={styles.tenantLabel}>AGENDANDO EM</Text>
-                    <Text style={[styles.tenantNome, { color: cores.texto }]}>{barbearia.nome}</Text>
-                    <Text style={[styles.tenantCidade, { color: cores.textoSecundario }]}>{barbearia.cidade || 'Localização em atualização'}</Text>
-                    <Text style={styles.trocar} onPress={() => navigation.navigate('Descobrir')}>Trocar barbearia</Text>
+                    <Text style={[styles.tenantNome, { color: cores.texto }]}>{estabelecimento.nome}</Text>
+                    <Text style={[styles.tenantCidade, { color: cores.textoSecundario }]}>{estabelecimento.cidade || 'Localização em atualização'}</Text>
+                    <Text style={styles.trocar} onPress={() => navigation.navigate('Descobrir')}>Trocar estabelecimento</Text>
                 </View>
                 <FormularioAgendamento
                     finalizar={() =>

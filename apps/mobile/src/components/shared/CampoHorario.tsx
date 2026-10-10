@@ -1,4 +1,4 @@
-import { AgendaUtils, DateUtils, Horarios } from '@barbabrutal/core'
+import { AgendaUtils, DateUtils, Horarios } from '@uniflowabs/core'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import useTema from '@/src/data/contexts/ContextoTema'
 

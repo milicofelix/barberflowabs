@@ -42,40 +42,40 @@ export class SaasPrisma {
   }
 
   async onboarding(dados: any) {
-    const slug = this.normalizarSlug(dados.barbearia.slug);
+    const slug = this.normalizarSlug(dados.estabelecimento.slug);
     const planoSlug = dados.planoSlug || 'mensal';
-    const [barbeariaExistente, usuarioExistente, plano, segmentos, especialidades] = await Promise.all([
-      this.prisma.barbearia.findUnique({ where: { slug } }),
+    const [estabelecimentoExistente, usuarioExistente, plano, segmentos, especialidades] = await Promise.all([
+      this.prisma.estabelecimento.findUnique({ where: { slug } }),
       this.prisma.usuario.findUnique({ where: { email: dados.dono.email } }),
       this.prisma.planoAssinatura.findUnique({ where: { slug: planoSlug } }),
-      (this.prisma as any).segmento.count({ where: { id: { in: dados.barbearia.segmentoIds }, ativo: true } }),
+      (this.prisma as any).segmento.count({ where: { id: { in: dados.estabelecimento.segmentoIds }, ativo: true } }),
       (this.prisma as any).especialidade.count({
         where: {
-          id: { in: dados.barbearia.especialidadeIds },
-          segmentoId: { in: dados.barbearia.segmentoIds },
+          id: { in: dados.estabelecimento.especialidadeIds },
+          segmentoId: { in: dados.estabelecimento.segmentoIds },
           ativo: true,
         },
       }),
     ]);
 
-    if (barbeariaExistente) throw new ConflictException('Slug já está em uso');
+    if (estabelecimentoExistente) throw new ConflictException('Slug já está em uso');
     if (usuarioExistente) throw new ConflictException('E-mail do responsável já está em uso');
     if (!plano) throw new BadRequestException('Plano inválido');
-    if (segmentos !== dados.barbearia.segmentoIds.length || especialidades !== dados.barbearia.especialidadeIds.length) {
+    if (segmentos !== dados.estabelecimento.segmentoIds.length || especialidades !== dados.estabelecimento.especialidadeIds.length) {
       throw new BadRequestException('Segmentos ou especialidades incompatíveis');
     }
 
     const trialEndsAt = this.adicionarDias(new Date(), TRIAL_DIAS);
 
     return this.prisma.$transaction(async (tx) => {
-      const barbearia = await tx.barbearia.create({
+      const estabelecimento = await tx.estabelecimento.create({
         data: {
-          nome: dados.barbearia.nome.trim(),
+          nome: dados.estabelecimento.nome.trim(),
           slug,
-          email: dados.barbearia.email?.trim() || null,
-          telefone: dados.barbearia.telefone?.trim() || null,
-          tipoEstabelecimento: dados.barbearia.tipoEstabelecimento,
-          modeloAtendimento: dados.barbearia.modeloAtendimento,
+          email: dados.estabelecimento.email?.trim() || null,
+          telefone: dados.estabelecimento.telefone?.trim() || null,
+          tipoEstabelecimento: dados.estabelecimento.tipoEstabelecimento,
+          modeloAtendimento: dados.estabelecimento.modeloAtendimento,
           status: 'TRIAL',
           reviewStatus: 'PENDING_REVIEW',
           reviewReason: 'Cadastro realizado pelo onboarding público.',
@@ -83,7 +83,7 @@ export class SaasPrisma {
           unidades: {
             create: {
               nome: 'Matriz',
-              telefone: dados.barbearia.telefone?.trim() || null,
+              telefone: dados.estabelecimento.telefone?.trim() || null,
             },
           },
           assinatura: {
@@ -94,13 +94,13 @@ export class SaasPrisma {
             },
           },
           segmentos: {
-            create: dados.barbearia.segmentoIds.map((segmentoId: number, indice: number) => ({
+            create: dados.estabelecimento.segmentoIds.map((segmentoId: number, indice: number) => ({
               segmentoId,
               principal: indice === 0,
             })),
           },
           especialidades: {
-            create: dados.barbearia.especialidadeIds.map((especialidadeId: number) => ({ especialidadeId })),
+            create: dados.estabelecimento.especialidadeIds.map((especialidadeId: number) => ({ especialidadeId })),
           },
         } as any,
         include: { assinatura: { include: { plano: true } }, unidades: true },
@@ -108,83 +108,83 @@ export class SaasPrisma {
 
       const dono = await tx.usuario.create({
         data: {
-          barbeariaId: barbearia.id,
+          estabelecimentoId: estabelecimento.id,
           nome: dados.dono.nome.trim(),
           email: dados.dono.email.trim(),
           telefone: dados.dono.telefone?.trim() || null,
           senha: dados.dono.senha,
-          barbeiro: true,
-          papel: 'BARBERSHOP_OWNER',
+          membroEstabelecimento: true,
+          papel: 'ESTABLISHMENT_OWNER',
         },
-        select: { id: true, nome: true, email: true, telefone: true, barbeiro: true, papel: true },
+        select: { id: true, nome: true, email: true, telefone: true, membroEstabelecimento: true, papel: true },
       });
 
       await tx.logAuditoria.create({
         data: {
-          barbeariaId: barbearia.id,
+          estabelecimentoId: estabelecimento.id,
           usuarioId: dono.id,
           acao: 'SAAS_ONBOARDING',
-          entidade: 'Barbearia',
-          entidadeId: String(barbearia.id),
+          entidade: 'Estabelecimento',
+          entidadeId: String(estabelecimento.id),
           detalhes: {
             planoSlug,
             reviewStatus: 'PENDING_REVIEW',
-            tipoEstabelecimento: dados.barbearia.tipoEstabelecimento,
-            modeloAtendimento: dados.barbearia.modeloAtendimento,
-            segmentoIds: dados.barbearia.segmentoIds,
-            especialidadeIds: dados.barbearia.especialidadeIds,
+            tipoEstabelecimento: dados.estabelecimento.tipoEstabelecimento,
+            modeloAtendimento: dados.estabelecimento.modeloAtendimento,
+            segmentoIds: dados.estabelecimento.segmentoIds,
+            especialidadeIds: dados.estabelecimento.especialidadeIds,
           },
         },
       });
 
       await tx.logAuditoria.create({
         data: {
-          barbeariaId: null,
+          estabelecimentoId: null,
           usuarioId: dono.id,
           acao: 'SAAS_ADMIN_NOTIFICATION',
-          entidade: 'Barbearia',
-          entidadeId: String(barbearia.id),
+          entidade: 'Estabelecimento',
+          entidadeId: String(estabelecimento.id),
           detalhes: {
-            tipo: 'NOVO_CADASTRO_BARBEARIA',
-            titulo: 'Nova barbearia aguardando aprovação',
-            mensagem: `${barbearia.nome} concluiu o cadastro público e precisa de revisão.`,
-            barbeariaId: barbearia.id,
-            barbeariaSlug: barbearia.slug,
+            tipo: 'NOVO_CADASTRO_ESTABELECIMENTO',
+            titulo: 'Novo estabelecimento aguardando aprovação',
+            mensagem: `${estabelecimento.nome} concluiu o cadastro público e precisa de revisão.`,
+            estabelecimentoId: estabelecimento.id,
+            estabelecimentoSlug: estabelecimento.slug,
             planoSlug,
           },
         },
       });
 
-      return { barbearia, dono };
+      return { estabelecimento, dono };
     });
   }
 
-  async billing(barbeariaId: number) {
-    const barbearia = await this.prisma.barbearia.findUnique({
-      where: { id: barbeariaId },
+  async billing(estabelecimentoId: number) {
+    const estabelecimento = await this.prisma.estabelecimento.findUnique({
+      where: { id: estabelecimentoId },
       include: {
         assinatura: { include: { plano: true } },
         _count: { select: { usuarios: true, profissionais: true, unidades: true, servicos: true } },
       },
     });
 
-    if (!barbearia) return null;
-    return this.normalizarBarbearia(barbearia);
+    if (!estabelecimento) return null;
+    return this.normalizarEstabelecimento(estabelecimento);
   }
 
-  async atualizarPlano(barbeariaId: number, planoSlug: string, usuarioId: number) {
+  async atualizarPlano(estabelecimentoId: number, planoSlug: string, usuarioId: number) {
     const plano = await this.prisma.planoAssinatura.findUnique({ where: { slug: planoSlug } });
     if (!plano) throw new BadRequestException('Plano inválido');
 
-    const assinatura = await this.prisma.assinaturaBarbearia.upsert({
-      where: { barbeariaId },
+    const assinatura = await this.prisma.assinaturaEstabelecimento.upsert({
+      where: { estabelecimentoId },
       update: {
         planoId: plano.id,
         status: 'ACTIVE',
         currentPeriodEnd: this.adicionarDias(new Date(), this.diasDoPlano(plano.slug)),
       },
       create: {
-        barbeariaId,
+        estabelecimentoId,
         planoId: plano.id,
         status: 'ACTIVE',
         currentPeriodEnd: this.adicionarDias(new Date(), this.diasDoPlano(plano.slug)),
@@ -192,20 +192,20 @@ export class SaasPrisma {
       include: { plano: true },
     });
 
-    await this.prisma.barbearia.update({
-      where: { id: barbeariaId },
+    await this.prisma.estabelecimento.update({
+      where: { id: estabelecimentoId },
       data: { status: 'ACTIVE' },
     });
 
-    await this.registrarAuditoria(barbeariaId, usuarioId, 'BILLING_CHANGE_PLAN', 'AssinaturaBarbearia', assinatura.id, { planoSlug });
+    await this.registrarAuditoria(estabelecimentoId, usuarioId, 'BILLING_CHANGE_PLAN', 'AssinaturaEstabelecimento', assinatura.id, { planoSlug });
     return {
       ...assinatura,
       plano: this.normalizarPlano(assinatura.plano),
     };
   }
 
-  async listarBarbeariasAdmin() {
-    const barbearias = await this.prisma.barbearia.findMany({
+  async listarEstabelecimentosAdmin() {
+    const estabelecimentos = await this.prisma.estabelecimento.findMany({
       include: {
         assinatura: { include: { plano: true } },
         _count: { select: { usuarios: true, profissionais: true, unidades: true, servicos: true, agendamentos: true } },
@@ -213,11 +213,11 @@ export class SaasPrisma {
       orderBy: { createdAt: 'desc' },
     });
 
-    return barbearias.map((barbearia) => this.normalizarBarbearia(barbearia));
+    return estabelecimentos.map((estabelecimento) => this.normalizarEstabelecimento(estabelecimento));
   }
 
-  async listarBarbeariasPendentesAdmin() {
-    const barbearias = await this.prisma.barbearia.findMany({
+  async listarEstabelecimentosPendentesAdmin() {
+    const estabelecimentos = await this.prisma.estabelecimento.findMany({
       where: { reviewStatus: 'PENDING_REVIEW' } as any,
       include: {
         assinatura: { include: { plano: true } },
@@ -226,11 +226,11 @@ export class SaasPrisma {
       orderBy: { createdAt: 'asc' },
     } as any);
 
-    return barbearias.map((barbearia) => this.normalizarBarbearia(barbearia));
+    return estabelecimentos.map((estabelecimento) => this.normalizarEstabelecimento(estabelecimento));
   }
 
-  async atualizarStatusBarbearia(id: number, status: string, usuarioId: number) {
-    const barbearia = await this.prisma.barbearia.update({
+  async atualizarStatusEstabelecimento(id: number, status: string, usuarioId: number) {
+    const estabelecimento = await this.prisma.estabelecimento.update({
       where: { id },
       data: {
         status,
@@ -241,12 +241,12 @@ export class SaasPrisma {
       include: { assinatura: { include: { plano: true } } },
     });
 
-    await this.registrarAuditoria(id, usuarioId, 'ADMIN_CHANGE_BARBERSHOP_STATUS', 'Barbearia', id, { status });
-    return barbearia;
+    await this.registrarAuditoria(id, usuarioId, 'ADMIN_CHANGE_ESTABLISHMENT_STATUS', 'Estabelecimento', id, { status });
+    return estabelecimento;
   }
 
-  async atualizarDestaqueBarbearia(id: number, destaque: boolean, usuarioId: number) {
-    const barbearia = await this.prisma.barbearia.update({
+  async atualizarDestaqueEstabelecimento(id: number, destaque: boolean, usuarioId: number) {
+    const estabelecimento = await this.prisma.estabelecimento.update({
       where: { id },
       data: { destaque },
       include: {
@@ -255,12 +255,12 @@ export class SaasPrisma {
       },
     });
 
-    await this.registrarAuditoria(id, usuarioId, 'ADMIN_CHANGE_BARBERSHOP_HIGHLIGHT', 'Barbearia', id, { destaque });
-    return this.normalizarBarbearia(barbearia);
+    await this.registrarAuditoria(id, usuarioId, 'ADMIN_CHANGE_ESTABLISHMENT_HIGHLIGHT', 'Estabelecimento', id, { destaque });
+    return this.normalizarEstabelecimento(estabelecimento);
   }
 
-  async atualizarComercialBarbearia(id: number, usuarioId: number, dados: any) {
-    const barbearia = await this.prisma.barbearia.update({
+  async atualizarComercialEstabelecimento(id: number, usuarioId: number, dados: any) {
+    const estabelecimento = await this.prisma.estabelecimento.update({
       where: { id },
       data: {
         comercialStatus: dados.comercialStatus,
@@ -274,17 +274,17 @@ export class SaasPrisma {
       },
     } as any);
 
-    await this.registrarAuditoria(id, usuarioId, 'ADMIN_UPDATE_COMMERCIAL_DETAILS', 'Barbearia', id, {
+    await this.registrarAuditoria(id, usuarioId, 'ADMIN_UPDATE_COMMERCIAL_DETAILS', 'Estabelecimento', id, {
       comercialStatus: dados.comercialStatus,
       ultimoContatoEm: dados.ultimoContatoEm,
       proximoContatoEm: dados.proximoContatoEm,
     });
-    return this.normalizarBarbearia(barbearia);
+    return this.normalizarEstabelecimento(estabelecimento);
   }
 
 
-  async aprovarBarbearia(id: number, usuarioId: number, motivo?: string) {
-    const barbearia = await this.prisma.barbearia.update({
+  async aprovarEstabelecimento(id: number, usuarioId: number, motivo?: string) {
+    const estabelecimento = await this.prisma.estabelecimento.update({
       where: { id },
       data: {
         reviewStatus: 'APPROVED',
@@ -300,14 +300,14 @@ export class SaasPrisma {
       },
     } as any);
 
-    await this.registrarAuditoria(id, usuarioId, 'ADMIN_APPROVE_BARBERSHOP', 'Barbearia', id, {
+    await this.registrarAuditoria(id, usuarioId, 'ADMIN_APPROVE_ESTABLISHMENT', 'Estabelecimento', id, {
       motivo: motivo?.trim() || null,
     });
-    return this.normalizarBarbearia(barbearia);
+    return this.normalizarEstabelecimento(estabelecimento);
   }
 
-  async reprovarBarbearia(id: number, usuarioId: number, motivo: string) {
-    const barbearia = await this.prisma.barbearia.update({
+  async reprovarEstabelecimento(id: number, usuarioId: number, motivo: string) {
+    const estabelecimento = await this.prisma.estabelecimento.update({
       where: { id },
       data: {
         reviewStatus: 'REJECTED',
@@ -321,16 +321,16 @@ export class SaasPrisma {
       },
     } as any);
 
-    await this.registrarAuditoria(id, usuarioId, 'ADMIN_REJECT_BARBERSHOP', 'Barbearia', id, {
+    await this.registrarAuditoria(id, usuarioId, 'ADMIN_REJECT_ESTABLISHMENT', 'Estabelecimento', id, {
       motivo: motivo.trim(),
     });
-    return this.normalizarBarbearia(barbearia);
+    return this.normalizarEstabelecimento(estabelecimento);
   }
 
   listarAuditoriaAdmin() {
     return this.prisma.logAuditoria.findMany({
       include: {
-        barbearia: { select: { id: true, nome: true, slug: true } },
+        estabelecimento: { select: { id: true, nome: true, slug: true } },
         usuario: { select: { id: true, nome: true, email: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -342,7 +342,7 @@ export class SaasPrisma {
     return this.prisma.logAuditoria.findMany({
       where: { acao: 'SAAS_ADMIN_NOTIFICATION' },
       include: {
-        barbearia: { select: { id: true, nome: true, slug: true, reviewStatus: true, status: true } },
+        estabelecimento: { select: { id: true, nome: true, slug: true, reviewStatus: true, status: true } },
         usuario: { select: { id: true, nome: true, email: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -353,7 +353,7 @@ export class SaasPrisma {
   listarDenunciasPerfilAdmin() {
     return (this.prisma as any).denunciaPerfilPublico.findMany({
       include: {
-        barbearia: { select: { id: true, nome: true, slug: true, reviewStatus: true, status: true } },
+        estabelecimento: { select: { id: true, nome: true, slug: true, reviewStatus: true, status: true } },
         revisadoPor: { select: { id: true, nome: true, email: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -371,21 +371,21 @@ export class SaasPrisma {
         revisadoEm: new Date(),
       },
       include: {
-        barbearia: { select: { id: true, nome: true, slug: true } },
+        estabelecimento: { select: { id: true, nome: true, slug: true } },
         revisadoPor: { select: { id: true, nome: true, email: true } },
       },
     });
 
     await this.registrarAuditoria(null, usuarioId, 'ADMIN_REVIEW_PUBLIC_PROFILE_REPORT', 'DenunciaPerfilPublico', id, {
       status: dados.status,
-      barbeariaId: denuncia.barbeariaId,
-      barbeariaSlug: denuncia.barbearia?.slug,
+      estabelecimentoId: denuncia.estabelecimentoId,
+      estabelecimentoSlug: denuncia.estabelecimento?.slug,
     });
     return denuncia;
   }
 
   private async registrarAuditoria(
-    barbeariaId: number | null,
+    estabelecimentoId: number | null,
     usuarioId: number,
     acao: string,
     entidade: string,
@@ -394,7 +394,7 @@ export class SaasPrisma {
   ) {
     await this.prisma.logAuditoria.create({
       data: {
-        barbeariaId,
+        estabelecimentoId,
         usuarioId,
         acao,
         entidade,
@@ -404,12 +404,12 @@ export class SaasPrisma {
     });
   }
 
-  private normalizarBarbearia(barbearia: any) {
-    const plano = barbearia.assinatura?.plano;
+  private normalizarEstabelecimento(estabelecimento: any) {
+    const plano = estabelecimento.assinatura?.plano;
     const uso = {
-      profissionais: barbearia._count?.profissionais ?? 0,
-      unidades: barbearia._count?.unidades ?? 0,
-      servicos: barbearia._count?.servicos ?? 0,
+      profissionais: estabelecimento._count?.profissionais ?? 0,
+      unidades: estabelecimento._count?.unidades ?? 0,
+      servicos: estabelecimento._count?.servicos ?? 0,
     };
     const limites = plano
       ? {
@@ -420,7 +420,7 @@ export class SaasPrisma {
       : null;
 
     return {
-      ...barbearia,
+      ...estabelecimento,
       limites: limites
         ? {
             uso,
@@ -437,10 +437,10 @@ export class SaasPrisma {
             },
           }
         : null,
-      assinatura: barbearia.assinatura
+      assinatura: estabelecimento.assinatura
         ? {
-            ...barbearia.assinatura,
-            plano: this.normalizarPlano(barbearia.assinatura.plano),
+            ...estabelecimento.assinatura,
+            plano: this.normalizarPlano(estabelecimento.assinatura.plano),
           }
         : null,
     };

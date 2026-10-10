@@ -18,7 +18,7 @@ O celular e o computador precisam estar na mesma rede local. O Metro fica dispon
 
 ## Localização
 
-A descoberta de barbearias usa o módulo oficial `expo-location` para solicitar somente a localização em primeiro plano. Depois de atualizar o código, pare o serviço e instale as dependências declaradas no monorepo:
+A descoberta de estabelecimentos usa o módulo oficial `expo-location` para solicitar somente a localização em primeiro plano. Depois de atualizar o código, pare o serviço e instale as dependências declaradas no monorepo:
 
 ```bash
 docker compose stop app
@@ -35,9 +35,9 @@ Não é utilizada localização em segundo plano. O mapa nativo será adicionado
 
 ## Tenant selecionado
 
-A barbearia escolhida pelo cliente é persistida no AsyncStorage. As requisições do fluxo público de agendamento enviam o tenant selecionado pelo header `x-barbearia-slug`. O header `x-barbearia-id` fica reservado ao contexto operacional da barbearia do usuário.
+A estabelecimento escolhida pelo cliente é persistida no AsyncStorage. As requisições do fluxo público de agendamento enviam o tenant selecionado pelo header `x-estabelecimento-slug`. O header `x-estabelecimento-id` fica reservado ao contexto operacional da estabelecimento do usuário.
 
-O marketplace e o fluxo de agendamento ficam disponíveis para todos os perfis autenticados. Assim, um `BARBER`, `BARBERSHOP_OWNER`, `SUPER_ADMIN` ou `APP_OWNER` também pode utilizar o aplicativo como cliente sem misturar a barbearia selecionada com seu tenant operacional.
+O marketplace e o fluxo de agendamento ficam disponíveis para todos os perfis autenticados. Assim, um `ESTABLISHMENT_MEMBER`, `ESTABLISHMENT_OWNER`, `SUPER_ADMIN` ou `APP_OWNER` também pode utilizar o aplicativo como cliente sem misturar a estabelecimento selecionada com seu tenant operacional.
 
 ## Validação manual — Fase 3
 
@@ -83,13 +83,13 @@ docker compose exec app yarn --cwd apps/backend prisma db seed
 
 - [ ] Entrar como cliente.
 - [ ] Confirmar que a primeira aba é **Descobrir**.
-- [ ] Entrar como barbeiro e confirmar que **Descobrir**, **Início** e **Agendar** continuam disponíveis junto da área operacional.
+- [ ] Entrar como membro do estabelecimento e confirmar que **Descobrir**, **Início** e **Agendar** continuam disponíveis junto da área operacional.
 - [ ] Entrar como administrador e confirmar que o marketplace continua disponível junto da área administrativa.
-- [ ] Confirmar que aparecem somente barbearias públicas aprovadas.
+- [ ] Confirmar que aparecem somente estabelecimentos públicas aprovadas.
 - [ ] Conferir em cada card: nome, localização, status, avaliação, distância quando disponível e serviços.
 - [ ] Confirmar que tocar no card abre o perfil correto.
 
-Resultado esperado: a lista apresenta barbearias como `Barber Flow Mooca` e não fica presa à barbearia configurada no `.env.local`.
+Resultado esperado: a lista apresenta estabelecimentos como `Barber Flow Mooca` e não fica presa à estabelecimento configurada no `.env.local`.
 
 ### 3. Validar busca
 
@@ -105,7 +105,7 @@ Resultado esperado: a quantidade encontrada é atualizada e somente resultados c
 
 ### 4. Validar filtros
 
-- [ ] Ativar **Aberta agora** e conferir que barbearias fechadas desaparecem.
+- [ ] Ativar **Aberta agora** e conferir que estabelecimentos fechadas desaparecem.
 - [ ] Selecionar avaliação mínima de `4 estrelas`.
 - [ ] Selecionar avaliação mínima de `4.5 estrelas`.
 - [ ] Voltar para **Qualquer** e conferir que os resultados retornam.
@@ -123,7 +123,7 @@ Resultado esperado: os filtros podem ser combinados com nome, cidade e serviço 
 - [ ] Reduzir o raio atualiza a lista.
 - [ ] Negar a permissão apresenta uma mensagem clara e mantém a busca manual funcionando.
 
-Observação: se o aparelho estiver longe das coordenadas das barbearias de demonstração em São Paulo, uma lista vazia ao usar raios pequenos é o resultado esperado.
+Observação: se o aparelho estiver longe das coordenadas das estabelecimentos de demonstração em São Paulo, uma lista vazia ao usar raios pequenos é o resultado esperado.
 
 ### 6. Validar o perfil público
 
@@ -135,9 +135,9 @@ Abra `Barber Flow Mooca` e confira:
 - [ ] profissionais e suas avaliações;
 - [ ] horários de funcionamento;
 - [ ] comentários de clientes;
-- [ ] botão **Agendar nesta barbearia**.
+- [ ] botão **Agendar nesta estabelecimento**.
 
-Resultado esperado: todos os blocos carregam sem misturar dados de outra barbearia.
+Resultado esperado: todos os blocos carregam sem misturar dados de outra estabelecimento.
 
 ### 7. Validar denúncia de perfil
 
@@ -152,15 +152,15 @@ Atenção: o envio válido cria um registro real de denúncia no ambiente atual.
 
 ### 8. Validar seleção e tenant do agendamento
 
-1. No perfil da Mooca, tocar em **Agendar nesta barbearia**.
+1. No perfil da Mooca, tocar em **Agendar nesta estabelecimento**.
 2. Confirmar que o aplicativo abre a aba **Agendar**.
 3. Conferir o bloco `AGENDANDO EM` com o nome `Barber Flow Mooca`.
 4. Conferir que serviços e profissionais pertencem à unidade Mooca.
 5. Selecionar profissional, serviços, data e horário.
-6. Avançar para o resumo e confirmar que a barbearia correta aparece.
+6. Avançar para o resumo e confirmar que a estabelecimento correta aparece.
 7. Finalizar o agendamento.
 
-Resultado esperado: o agendamento é criado usando o `x-barbearia-slug` da barbearia selecionada, inclusive quando o usuário autenticado também possui perfil operacional em outra barbearia.
+Resultado esperado: o agendamento é criado usando o `x-estabelecimento-slug` da estabelecimento selecionada, inclusive quando o usuário autenticado também possui perfil operacional em outra estabelecimento.
 
 ### 8.1 Validar duração e blocos do agendamento
 
@@ -192,21 +192,21 @@ Se houver uma reserva ativa em outra unidade, o resumo apresenta apenas um lembr
 
 ### 9. Validar troca e persistência
 
-1. Na aba **Agendar**, tocar em **Trocar barbearia**.
-2. Abrir outra barbearia e tocar em **Agendar nesta barbearia**.
+1. Na aba **Agendar**, tocar em **Trocar estabelecimento**.
+2. Abrir outra estabelecimento e tocar em **Agendar nesta estabelecimento**.
 3. Confirmar que profissional, serviços e horários foram recarregados para o novo tenant.
 4. Fechar e abrir novamente o Expo Go.
 5. Voltar à aba **Descobrir**.
 
-Resultado esperado: a última barbearia continua marcada como `Selecionada` e nenhuma seleção antiga do formulário permanece após a troca.
+Resultado esperado: a última estabelecimento continua marcada como `Selecionada` e nenhuma seleção antiga do formulário permanece após a troca.
 
 ### 10. Critério final da fase
 
-- [ ] O cliente encontra uma barbearia por busca ou filtros.
+- [ ] O cliente encontra uma estabelecimento por busca ou filtros.
 - [ ] O cliente consulta perfil, serviços, profissionais, horários e avaliações.
-- [ ] A barbearia selecionada sobrevive à reabertura do aplicativo.
+- [ ] A estabelecimento selecionada sobrevive à reabertura do aplicativo.
 - [ ] O agendamento usa serviços e profissionais do tenant selecionado.
-- [ ] Um usuário operacional consegue agendar em outra barbearia sem usar o próprio `barbeariaId`.
+- [ ] Um usuário operacional consegue agendar em outra estabelecimento sem usar o próprio `estabelecimentoId`.
 - [ ] A denúncia apresenta validação e confirmação.
 - [ ] Erros de rede, localização negada e resultados vazios possuem feedback visual.
 - [ ] O mapa exibe um marcador compatível com o tipo de cada estabelecimento.
@@ -215,7 +215,7 @@ Resultado esperado: a última barbearia continua marcada como `Selecionada` e ne
 
 1. Garanta que existam estabelecimentos aprovados, com latitude e longitude, em tipos diferentes.
 2. Na aba **Descobrir**, alterne de **Lista** para **Mapa**.
-3. Confira os pins de barbearia, salão, esmalteria/manicure, clínica estética e spa.
+3. Confira os pins de estabelecimento, salão, esmalteria/manicure, clínica estética e spa.
 4. Confirme que estúdio, profissional autônomo e tipos desconhecidos usam o marcador geral de beleza.
 5. Toque em cada pin, confira nome e especialidades e abra o perfil pelo balão.
 6. Repita a conferência no mapa da descoberta web.

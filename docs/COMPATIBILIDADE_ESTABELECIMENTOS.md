@@ -1,5 +1,9 @@
 # Compatibilidade Entre Barbearia E Estabelecimento
 
+> Documento historico. A camada transitoria descrita aqui foi encerrada pelo ADR 0002 e pela Etapa 7 de canonicalizacao.
+
+> As regras, aliases e nomes legados abaixo registram apenas o periodo de transicao e nao descrevem mais o contrato ativo. Consulte o ADR 0002 para o estado canonico atual.
+
 ## Decisao
 
 `Estabelecimento` e o vocabulario canonico para novos contratos externos. A persistencia e os modulos existentes continuam usando `Barbearia`, `barbeariaId` e `barbearias` durante a transicao.

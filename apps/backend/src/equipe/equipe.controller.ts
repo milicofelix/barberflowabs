@@ -17,20 +17,20 @@ export class EquipeController {
   @Get()
   async listar(@UsuarioLogado() usuario: any) {
     await this.policy.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
-    return this.repo.listar(usuario.barbeariaId);
+    return this.repo.listar(usuario.estabelecimentoId);
   }
 
   @Get('usuarios-disponiveis')
   async usuariosDisponiveis(@UsuarioLogado() usuario: any) {
     await this.policy.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
-    return this.repo.listarUsuariosDisponiveis(usuario.barbeariaId);
+    return this.repo.listarUsuariosDisponiveis(usuario.estabelecimentoId);
   }
 
   @Post()
   async criar(@Body() dados: SalvarMembroEquipeDto, @UsuarioLogado() usuario: any) {
     await this.policy.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
     this.policy.validarMembro(dados);
-    return this.repo.criar(usuario.barbeariaId, dados);
+    return this.repo.criar(usuario.estabelecimentoId, dados);
   }
 
   @Put(':id')
@@ -38,14 +38,14 @@ export class EquipeController {
     validarNumeroInteiroPositivo(id, 'Membro');
     await this.policy.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
     this.policy.validarMembro(dados);
-    return this.repo.atualizar(Number(id), usuario.barbeariaId, dados);
+    return this.repo.atualizar(Number(id), usuario.estabelecimentoId, dados);
   }
 
   @Get('profissionais/:id/escalas')
   async listarEscalas(@Param('id') id: string, @UsuarioLogado() usuario: any) {
     validarNumeroInteiroPositivo(id, 'Profissional');
     await this.policy.validarPermissao(usuario, 'ESCALAS_GERENCIAR');
-    return this.repo.listarEscalas(Number(id), usuario.barbeariaId);
+    return this.repo.listarEscalas(Number(id), usuario.estabelecimentoId);
   }
 
   @Put('profissionais/:id/escalas')
@@ -53,7 +53,7 @@ export class EquipeController {
     validarNumeroInteiroPositivo(id, 'Profissional');
     await this.policy.validarPermissao(usuario, 'ESCALAS_GERENCIAR');
     this.policy.validarEscalas(dados?.escalas);
-    return this.repo.salvarEscalas(Number(id), usuario.barbeariaId, dados.escalas);
+    return this.repo.salvarEscalas(Number(id), usuario.estabelecimentoId, dados.escalas);
   }
 }
 

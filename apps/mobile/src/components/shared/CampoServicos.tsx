@@ -1,5 +1,5 @@
 import { Image, StyleSheet, Text, Pressable, View } from 'react-native'
-import { Servico } from '@barbabrutal/core'
+import { Servico } from '@uniflowabs/core'
 import useServicos from '@/src/data/hooks/useServicos'
 import imagens from '@/src/data/constants/imagens'
 import Carregando from './Carregando'

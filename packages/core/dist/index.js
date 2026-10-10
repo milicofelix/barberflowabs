@@ -74,8 +74,8 @@ var ExcluirAgendamento = class {
       throw new Error("Agendamento n\xE3o encontrado");
     }
     const cliente = agendamento.usuario.email === usuario.email;
-    const mesmaBarbearia = agendamento.barbeariaId === usuario.barbeariaId;
-    const profissional = usuario.barbeiro && mesmaBarbearia;
+    const mesmaEstabelecimento = agendamento.estabelecimentoId === usuario.estabelecimentoId;
+    const profissional = usuario.membroEstabelecimento && mesmaEstabelecimento;
     if (!cliente && !profissional) {
       throw new Error("Usu\xE1rio n\xE3o autorizado");
     }
@@ -89,13 +89,13 @@ var clientes = [
     id: 1,
     imagemURL: "/clientes/cliente-1.jpg",
     nome: "Ricardo Santos",
-    testemunho: "Consegui encontrar uma barbearia perto de casa, comparar hor\xE1rios dispon\xEDveis e agendar em poucos minutos. O atendimento foi pontual e bem organizado."
+    testemunho: "Consegui encontrar um estabelecimento perto de casa, comparar hor\xE1rios dispon\xEDveis e agendar em poucos minutos. O atendimento foi pontual e bem organizado."
   },
   {
     id: 2,
     imagemURL: "/clientes/cliente-2.jpg",
     nome: "Tiago Oliveira",
-    testemunho: "Gostei de ver os servi\xE7os, pre\xE7os e profissionais antes de marcar. Ficou mais f\xE1cil escolher a barbearia certa para o que eu precisava."
+    testemunho: "Gostei de ver os servi\xE7os, pre\xE7os e profissionais antes de marcar. Ficou mais f\xE1cil escolher o estabelecimento certo para o que eu precisava."
   },
   {
     id: 3,
@@ -432,7 +432,7 @@ var RegistrarUsuario = class {
     const novoUsuario = {
       ...usuario,
       senha: senhaCriptografada,
-      barbeiro: false
+      membroEstabelecimento: false
     };
     await this.repo.salvar(novoUsuario);
   }

@@ -21,13 +21,13 @@ export class MotorAgendaService {
   ) {}
 
   async criar(
-    barbeariaId: number,
+    estabelecimentoId: number,
     dados: CriarAgendamentoUniversalDto,
     usuario: any,
   ) {
     this.policy.validarCriacao(dados, usuario);
     const data = this.policy.validarData(dados.data);
-    const contexto = await this.carregarContexto(barbeariaId, dados);
+    const contexto = await this.carregarContexto(estabelecimentoId, dados);
     this.validarContexto(contexto, dados.enderecoAtendimento);
     const periodo = this.calculador.calcular(
       data,
@@ -36,7 +36,7 @@ export class MotorAgendaService {
       Number(dados.deslocamentoMinutos ?? 0),
     );
     await this.consulta.validarHorarioFuncionamento(
-      barbeariaId,
+      estabelecimentoId,
       contexto.unidadeId,
       periodo.inicioOcupacao,
       periodo.fimOcupacao,
@@ -49,10 +49,10 @@ export class MotorAgendaService {
     });
   }
 
-  async consultarDisponibilidade(barbeariaId: number, dados: ConsultarDisponibilidadeDto) {
+  async consultarDisponibilidade(estabelecimentoId: number, dados: ConsultarDisponibilidadeDto) {
     this.policy.validarDisponibilidade(dados);
     const contexto = await this.consulta.carregarContexto({
-      barbeariaId,
+      estabelecimentoId,
       profissionalId: Number(dados.profissionalId),
       servicoIds: dados.servicoIds.map(Number),
       unidadeId: dados.unidadeId,
@@ -66,7 +66,7 @@ export class MotorAgendaService {
       Number(dados.deslocamentoMinutos ?? 0),
     );
     await this.consulta.validarHorarioFuncionamento(
-      barbeariaId,
+      estabelecimentoId,
       contexto.unidadeId,
       periodo.inicioOcupacao,
       periodo.fimOcupacao,
@@ -77,16 +77,16 @@ export class MotorAgendaService {
 
   async reagendar(
     id: number,
-    barbeariaId: number,
+    estabelecimentoId: number,
     dados: ReagendarAgendamentoDto,
     usuario: any,
   ) {
-    const agendamento = await this.consulta.obterParaReagendar(id, barbeariaId);
+    const agendamento = await this.consulta.obterParaReagendar(id, estabelecimentoId);
     this.policy.validarReagendamento(agendamento, usuario);
     const data = this.policy.validarData(dados.data);
     this.policy.validarDeslocamento(dados.deslocamentoMinutos);
     const contexto = await this.consulta.carregarContexto({
-      barbeariaId,
+      estabelecimentoId,
       profissionalId: agendamento.profissionalId,
       servicoIds: agendamento.itens.map((item) => item.servicoId),
       unidadeId: dados.unidadeId ?? agendamento.unidadeId,
@@ -102,7 +102,7 @@ export class MotorAgendaService {
       Number(dados.deslocamentoMinutos ?? agendamento.deslocamentoMinutos ?? 0),
     );
     await this.consulta.validarHorarioFuncionamento(
-      barbeariaId,
+      estabelecimentoId,
       contexto.unidadeId,
       periodo.inicioOcupacao,
       periodo.fimOcupacao,
@@ -117,9 +117,9 @@ export class MotorAgendaService {
     });
   }
 
-  private carregarContexto(barbeariaId: number, dados: CriarAgendamentoUniversalDto) {
+  private carregarContexto(estabelecimentoId: number, dados: CriarAgendamentoUniversalDto) {
     return this.consulta.carregarContexto({
-      barbeariaId,
+      estabelecimentoId,
       profissionalId: Number(dados.profissional.id),
       servicoIds: dados.servicos.map((servico) => Number(servico.id)),
       unidadeId: dados.unidadeId,

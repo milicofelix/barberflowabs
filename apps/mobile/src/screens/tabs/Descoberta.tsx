@@ -3,7 +3,7 @@ import MapaMarketplace from '@/src/components/marketplace/MapaMarketplace'
 import Carregando from '@/src/components/shared/Carregando'
 import EstadoErro from '@/src/components/shared/EstadoErro'
 import EstadoVazio from '@/src/components/shared/EstadoVazio'
-import useBarbearia from '@/src/data/hooks/useBarbearia'
+import useEstabelecimento from '@/src/data/hooks/useEstabelecimento'
 import useMarketplace, { FILTROS_INICIAIS } from '@/src/data/hooks/useMarketplace'
 import type { FiltrosMarketplace } from '@/src/data/hooks/useMarketplace'
 import type { AbasParamList, StackParamList } from '@/src/navigation/types'
@@ -21,7 +21,7 @@ const RAIOS = [2, 5, 10, 25]
 
 export default function Descoberta({ navigation }: Props) {
     const { cores } = useTema()
-    const { barbearia: selecionado } = useBarbearia()
+    const { estabelecimento: selecionado } = useEstabelecimento()
     const [filtros, setFiltros] = useState<FiltrosMarketplace>(FILTROS_INICIAIS)
     const [mostrarFiltros, setMostrarFiltros] = useState(false)
     const [mostrarMapa, setMostrarMapa] = useState(false)
@@ -30,7 +30,7 @@ export default function Descoberta({ navigation }: Props) {
     const atualizar = <K extends keyof FiltrosMarketplace>(campo: K, valor: FiltrosMarketplace[K]) =>
         setFiltros((atuais) => ({ ...atuais, [campo]: valor }))
     const abrir = (slug: string) => navigation.getParent<NativeStackNavigationProp<StackParamList>>()
-        ?.navigate('PerfilBarbearia', { slug })
+        ?.navigate('PerfilEstabelecimento', { slug })
 
     async function localizar() {
         try {

@@ -3,10 +3,10 @@ import useAPI from './useAPI'
 import useSessao from './useSessao'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
-    extrairBarbeariaDoDestino,
+    extrairEstabelecimentoDoDestino,
     normalizarDestinoInterno,
-    salvarBarbeariaSelecionada,
-} from '../tenant/barbeariaSelecionada'
+    salvarEstabelecimentoSelecionado,
+} from '../tenant/estabelecimentoSelecionado'
 
 export default function useFormAuth() {
     const [modo, setModo] = useState<'login' | 'cadastro'>('login')
@@ -24,8 +24,8 @@ export default function useFormAuth() {
     const destino = param.get('destino')
 
     useEffect(() => {
-        const barbearia = extrairBarbeariaDoDestino(destino)
-        if (barbearia) salvarBarbeariaSelecionada(barbearia)
+        const estabelecimento = extrairEstabelecimentoDoDestino(destino)
+        if (estabelecimento) salvarEstabelecimentoSelecionado(estabelecimento)
     }, [destino])
 
     useEffect(() => {

@@ -1,5 +1,5 @@
 import { StyleSheet, View, Image, Text, Pressable } from 'react-native'
-import { Usuario } from '@barbabrutal/core'
+import { Usuario } from '@uniflowabs/core'
 import React from 'react'
 import { resolverPerfil } from '@/src/data/auth/perfis'
 import useTema from '@/src/data/contexts/ContextoTema'
@@ -14,8 +14,8 @@ export default function PerfilUsuario(props: PerfilUsuarioProps) {
     const perfil = resolverPerfil(props.usuario)
     const nomePerfil = {
         CUSTOMER: 'Cliente',
-        BARBER: 'Profissional',
-        BARBERSHOP_OWNER: 'Responsável pela barbearia',
+        ESTABLISHMENT_MEMBER: 'Profissional',
+        ESTABLISHMENT_OWNER: 'Responsável pelo estabelecimento',
         SUPER_ADMIN: 'Administrador do software',
         APP_OWNER: 'Dono do software',
     }[perfil ?? 'CUSTOMER']

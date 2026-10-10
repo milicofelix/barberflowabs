@@ -1,5 +1,5 @@
-import type { EstabelecimentoResumo } from '@/src/data/barbearias/tipos'
-import { marcadorDoEstabelecimento } from '@/src/data/barbearias/marcadores'
+import type { EstabelecimentoResumo } from '@/src/data/estabelecimentos/tipos'
+import { marcadorDoEstabelecimento } from '@/src/data/estabelecimentos/marcadores'
 import MapView, { Marker } from 'react-native-maps'
 import { Image, StyleSheet, View } from 'react-native'
 

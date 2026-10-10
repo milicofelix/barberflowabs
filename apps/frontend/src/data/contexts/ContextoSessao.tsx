@@ -1,5 +1,5 @@
 'use client'
-import { Usuario } from '@barbabrutal/core'
+import { Usuario } from '@uniflowabs/core'
 import { createContext, useCallback, useEffect, useState } from 'react'
 import cookie from 'js-cookie'
 import { jwtDecode } from 'jwt-decode'
@@ -80,10 +80,10 @@ export function ProvedorSessao(props: any) {
                 token,
                 usuario: {
                     id: payload.id,
-                    barbeariaId: payload.barbeariaId ?? undefined,
+                    estabelecimentoId: payload.estabelecimentoId ?? undefined,
                     nome: payload.nome,
                     email: payload.email,
-                    barbeiro: payload.barbeiro,
+                    membroEstabelecimento: payload.membroEstabelecimento,
                     papel: payload.papel ?? payload.role,
                     role: payload.role,
                     telefone: payload.telefone,

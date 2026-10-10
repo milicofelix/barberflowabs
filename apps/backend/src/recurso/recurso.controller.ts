@@ -15,14 +15,14 @@ export class RecursoController {
   @Get()
   async listar(@UsuarioLogado() usuario: any) {
     await this.policy.validarGestor(usuario);
-    return this.repo.listar(usuario.barbeariaId);
+    return this.repo.listar(usuario.estabelecimentoId);
   }
 
   @Post()
   async criar(@Body() dados: SalvarRecursoDto, @UsuarioLogado() usuario: any) {
     await this.policy.validarGestor(usuario);
     this.policy.validar(dados);
-    return this.repo.criar(usuario.barbeariaId, dados);
+    return this.repo.criar(usuario.estabelecimentoId, dados);
   }
 
   @Put(':id')
@@ -30,21 +30,21 @@ export class RecursoController {
     validarNumeroInteiroPositivo(id, 'Recurso');
     await this.policy.validarGestor(usuario);
     this.policy.validar(dados);
-    return this.repo.atualizar(Number(id), usuario.barbeariaId, dados);
+    return this.repo.atualizar(Number(id), usuario.estabelecimentoId, dados);
   }
 
   @Delete(':id')
   async excluir(@Param('id') id: string, @UsuarioLogado() usuario: any) {
     validarNumeroInteiroPositivo(id, 'Recurso');
     await this.policy.validarGestor(usuario);
-    return this.repo.excluir(Number(id), usuario.barbeariaId);
+    return this.repo.excluir(Number(id), usuario.estabelecimentoId);
   }
 
   @Get(':id/indisponibilidades')
   async listarIndisponibilidades(@Param('id') id: string, @UsuarioLogado() usuario: any) {
     validarNumeroInteiroPositivo(id, 'Recurso');
     await this.policy.validarGestor(usuario);
-    return this.repo.listarIndisponibilidades(Number(id), usuario.barbeariaId);
+    return this.repo.listarIndisponibilidades(Number(id), usuario.estabelecimentoId);
   }
 
   @Post(':id/indisponibilidades')
@@ -52,7 +52,7 @@ export class RecursoController {
     validarNumeroInteiroPositivo(id, 'Recurso');
     await this.policy.validarGestor(usuario);
     this.policy.validarIndisponibilidade(dados);
-    return this.repo.criarIndisponibilidade(Number(id), usuario.barbeariaId, dados);
+    return this.repo.criarIndisponibilidade(Number(id), usuario.estabelecimentoId, dados);
   }
 
   @Delete(':id/indisponibilidades/:indisponibilidadeId')
@@ -60,6 +60,6 @@ export class RecursoController {
     validarNumeroInteiroPositivo(id, 'Recurso');
     validarNumeroInteiroPositivo(indisponibilidadeId, 'Indisponibilidade');
     await this.policy.validarGestor(usuario);
-    return this.repo.removerIndisponibilidade(Number(id), Number(indisponibilidadeId), usuario.barbeariaId);
+    return this.repo.removerIndisponibilidade(Number(id), Number(indisponibilidadeId), usuario.estabelecimentoId);
   }
 }

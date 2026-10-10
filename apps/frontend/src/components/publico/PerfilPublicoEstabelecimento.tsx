@@ -3,12 +3,12 @@
 import Link from 'next/link'
 import { Star } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
-import { salvarBarbeariaSelecionada } from '@/data/tenant/barbeariaSelecionada'
+import { salvarEstabelecimentoSelecionado } from '@/data/tenant/estabelecimentoSelecionado'
 
 const URL_BASE = process.env.NEXT_PUBLIC_API_URL
 
-export default function PerfilPublicoBarbearia({ slug }: { slug: string }) {
-    const [barbearia, setBarbearia] = useState<any>(null)
+export default function PerfilPublicoEstabelecimento({ slug }: { slug: string }) {
+    const [estabelecimento, setEstabelecimento] = useState<any>(null)
     const [carregando, setCarregando] = useState(true)
     const [erro, setErro] = useState('')
     const [denuncia, setDenuncia] = useState({
@@ -23,26 +23,26 @@ export default function PerfilPublicoBarbearia({ slug }: { slug: string }) {
         try {
             setCarregando(true)
             setErro('')
-            const resposta = await fetch(`${URL_BASE}/public/barbearias/${slug}`)
+            const resposta = await fetch(`${URL_BASE}/public/estabelecimentos/${slug}`)
             const dados = await resposta.json()
 
             if (!resposta.ok) {
-                setErro(dados?.message ?? 'Barbearia não encontrada')
-                setBarbearia(null)
+                setErro(dados?.message ?? 'Estabelecimento não encontrado')
+                setEstabelecimento(null)
                 return
             }
 
-            setBarbearia(dados)
+            setEstabelecimento(dados)
         } catch (e) {
-            setErro('Não foi possível carregar a barbearia.')
-            setBarbearia(null)
+            setErro('Não foi possível carregar o estabelecimento.')
+            setEstabelecimento(null)
         } finally {
             setCarregando(false)
         }
     }, [slug])
 
     useEffect(() => {
-        salvarBarbeariaSelecionada(slug)
+        salvarEstabelecimentoSelecionado(slug)
         carregar()
     }, [carregar, slug])
 
@@ -50,7 +50,7 @@ export default function PerfilPublicoBarbearia({ slug }: { slug: string }) {
         setMensagemDenuncia('')
 
         try {
-            const resposta = await fetch(`${URL_BASE}/public/barbearias/${slug}/denuncias`, {
+            const resposta = await fetch(`${URL_BASE}/public/estabelecimentos/${slug}/denuncias`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(denuncia),
@@ -70,47 +70,47 @@ export default function PerfilPublicoBarbearia({ slug }: { slug: string }) {
     }
 
     if (carregando) {
-        return <div className="container py-10 text-zinc-300">Carregando barbearia...</div>
+        return <div className="container py-10 text-zinc-300">Carregando estabelecimento...</div>
     }
 
-    if (erro || !barbearia) {
-        return <div className="container py-10 text-zinc-300">{erro || 'Barbearia não encontrada.'}</div>
+    if (erro || !estabelecimento) {
+        return <div className="container py-10 text-zinc-300">{erro || 'Estabelecimento não encontrado.'}</div>
     }
 
     const endereco = [
-        barbearia.endereco?.logradouro,
-        barbearia.endereco?.bairro,
-        barbearia.endereco?.cidade,
-        barbearia.endereco?.estado,
+        estabelecimento.endereco?.logradouro,
+        estabelecimento.endereco?.bairro,
+        estabelecimento.endereco?.cidade,
+        estabelecimento.endereco?.estado,
     ].filter(Boolean).join(' - ')
 
     return (
         <div className="bg-zinc-950 text-zinc-100">
             <section
                 className="min-h-[420px] bg-cover bg-center"
-                style={{ backgroundImage: `linear-gradient(90deg, rgba(0,0,0,.88), rgba(0,0,0,.46)), url(${barbearia.imagemCapaURL || '/banners/principal.png'})` }}
+                style={{ backgroundImage: `linear-gradient(90deg, rgba(0,0,0,.88), rgba(0,0,0,.46)), url(${estabelecimento.imagemCapaURL || '/banners/principal.png'})` }}
             >
                 <div className="container flex min-h-[420px] flex-col justify-end gap-5 py-10">
-                    <span className={statusClasse(barbearia.statusOperacional?.status)}>
-                        {barbearia.statusOperacional?.label ?? 'Status indisponível'}
+                    <span className={statusClasse(estabelecimento.statusOperacional?.status)}>
+                        {estabelecimento.statusOperacional?.label ?? 'Status indisponível'}
                     </span>
                     <div>
-                        <h1 className="max-w-4xl text-5xl font-black text-white">{barbearia.nome}</h1>
-                        <p className="mt-4 max-w-2xl text-lg text-zinc-300">{barbearia.descricao}</p>
+                        <h1 className="max-w-4xl text-5xl font-black text-white">{estabelecimento.nome}</h1>
+                        <p className="mt-4 max-w-2xl text-lg text-zinc-300">{estabelecimento.descricao}</p>
                     </div>
                     <div className="flex flex-wrap gap-3 text-sm text-zinc-300">
-                        {barbearia.avaliacaoMedia != null && (
+                        {estabelecimento.avaliacaoMedia != null && (
                             <span className="inline-flex items-center gap-1 rounded border border-yellow-400/50 px-3 py-2 text-yellow-300">
                                 <Star size={16} className="fill-yellow-400 text-yellow-400" />
-                                {barbearia.avaliacaoMedia} ({barbearia.quantidadeAvaliacoes} avaliações)
+                                {estabelecimento.avaliacaoMedia} ({estabelecimento.quantidadeAvaliacoes} avaliações)
                             </span>
                         )}
                         {endereco && <span className="rounded border border-zinc-700 px-3 py-2">{endereco}</span>}
-                        {barbearia.telefone && <span className="rounded border border-zinc-700 px-3 py-2">{barbearia.telefone}</span>}
+                        {estabelecimento.telefone && <span className="rounded border border-zinc-700 px-3 py-2">{estabelecimento.telefone}</span>}
                     </div>
-                    {barbearia.aceitaAgendamentoOnline && (
+                    {estabelecimento.aceitaAgendamentoOnline && (
                         <Link
-                            href={`/agendamento?barbearia=${barbearia.slug}`}
+                            href={`/agendamento?estabelecimento=${estabelecimento.slug}`}
                             className="w-fit rounded bg-yellow-400 px-5 py-3 font-bold text-black"
                         >
                             Agendar horário
@@ -121,11 +121,11 @@ export default function PerfilPublicoBarbearia({ slug }: { slug: string }) {
 
             <div className="container grid gap-8 py-10">
                 <section className="grid gap-4 lg:grid-cols-[1fr_360px]">
-                    <ListaServicos servicos={barbearia.servicos ?? []} />
-                    <Horarios horarios={barbearia.horariosFuncionamento ?? []} />
+                    <ListaServicos servicos={estabelecimento.servicos ?? []} />
+                    <Horarios horarios={estabelecimento.horariosFuncionamento ?? []} />
                 </section>
-                <ListaProfissionais profissionais={barbearia.profissionais ?? []} />
-                <ListaAvaliacoes avaliacoes={barbearia.avaliacoes ?? []} />
+                <ListaProfissionais profissionais={estabelecimento.profissionais ?? []} />
+                <ListaAvaliacoes avaliacoes={estabelecimento.avaliacoes ?? []} />
                 <DenunciaPerfil
                     denuncia={denuncia}
                     mensagem={mensagemDenuncia}
@@ -151,7 +151,7 @@ function ListaServicos({ servicos }: { servicos: any[] }) {
                         </p>
                     </div>
                 ))}
-                {servicos.length === 0 && <Vazio texto="Esta barbearia ainda não cadastrou serviços." />}
+                {servicos.length === 0 && <Vazio texto="Este estabelecimento ainda não cadastrou serviços." />}
             </div>
         </section>
     )
@@ -171,7 +171,7 @@ function ListaProfissionais({ profissionais }: { profissionais: any[] }) {
                         </p>
                     </div>
                 ))}
-                {profissionais.length === 0 && <Vazio texto="Esta barbearia ainda não cadastrou profissionais." />}
+                {profissionais.length === 0 && <Vazio texto="Este estabelecimento ainda não cadastrou profissionais." />}
             </div>
         </section>
     )
@@ -213,7 +213,7 @@ function ListaAvaliacoes({ avaliacoes }: { avaliacoes: any[] }) {
                         </p>
                     </article>
                 ))}
-                {avaliacoes.length === 0 && <Vazio texto="Esta barbearia ainda não possui avaliações." />}
+                {avaliacoes.length === 0 && <Vazio texto="Este estabelecimento ainda não possui avaliações." />}
             </div>
         </section>
     )
@@ -244,7 +244,7 @@ function DenunciaPerfil(props: {
                         <option>Dados incorretos</option>
                         <option>Localização incorreta</option>
                         <option>Conteúdo inadequado</option>
-                        <option>Barbearia não existe</option>
+                        <option>Estabelecimento não existe</option>
                         <option>Outro motivo</option>
                     </select>
                 </label>

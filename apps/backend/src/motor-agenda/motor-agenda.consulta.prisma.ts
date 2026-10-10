@@ -8,7 +8,7 @@ export class MotorAgendaConsultaPrisma {
   constructor(private readonly prisma: PrismaService) {}
 
   async carregarContexto(params: {
-    barbeariaId: number;
+    estabelecimentoId: number;
     profissionalId: number;
     servicoIds: number[];
     unidadeId?: number | null;
@@ -16,16 +16,16 @@ export class MotorAgendaConsultaPrisma {
   }): Promise<ContextoAgenda> {
     const cliente = this.prisma as any;
     const [estabelecimento, profissional, servicosEncontrados] = await Promise.all([
-      cliente.barbearia.findUnique({
-        where: { id: params.barbeariaId },
+      cliente.estabelecimento.findUnique({
+        where: { id: params.estabelecimentoId },
         select: { modeloAtendimento: true },
       }),
       cliente.profissional.findFirst({
-        where: { id: params.profissionalId, barbeariaId: params.barbeariaId },
+        where: { id: params.profissionalId, estabelecimentoId: params.estabelecimentoId },
         select: { id: true },
       }),
       cliente.servico.findMany({
-        where: { id: { in: params.servicoIds }, barbeariaId: params.barbeariaId },
+        where: { id: { in: params.servicoIds }, estabelecimentoId: params.estabelecimentoId },
         include: {
           profissionaisHabilitados: {
             where: { profissionalId: params.profissionalId, ativo: true },
@@ -43,13 +43,13 @@ export class MotorAgendaConsultaPrisma {
     }
 
     const modelo = params.modeloAtendimento ?? this.modeloPadrao(estabelecimento.modeloAtendimento);
-    const unidadeId = await this.resolverUnidade(params.barbeariaId, params.unidadeId, modelo);
+    const unidadeId = await this.resolverUnidade(params.estabelecimentoId, params.unidadeId, modelo);
     const porId = new Map<number, ServicoAgenda>(
       (servicosEncontrados as ServicoAgenda[]).map((servico) => [servico.id, servico]),
     );
 
     return {
-      barbeariaId: params.barbeariaId,
+      estabelecimentoId: params.estabelecimentoId,
       modeloEstabelecimento: estabelecimento.modeloAtendimento,
       modeloAtendimento: modelo,
       profissionalId: params.profissionalId,
@@ -58,9 +58,9 @@ export class MotorAgendaConsultaPrisma {
     };
   }
 
-  async obterParaReagendar(id: number, barbeariaId: number) {
+  async obterParaReagendar(id: number, estabelecimentoId: number) {
     const agendamento = await (this.prisma as any).agendamento.findFirst({
-      where: { id, barbeariaId },
+      where: { id, estabelecimentoId },
       include: {
         itens: {
           orderBy: { ordem: 'asc' },
@@ -80,7 +80,7 @@ export class MotorAgendaConsultaPrisma {
   }
 
   async validarHorarioFuncionamento(
-    barbeariaId: number,
+    estabelecimentoId: number,
     unidadeId: number | null,
     inicio: Date,
     fim: Date,
@@ -89,7 +89,7 @@ export class MotorAgendaConsultaPrisma {
     const fimLocal = this.obterPartesLocais(fim);
     const horarios = await this.prisma.horarioFuncionamento.findMany({
       where: {
-        barbeariaId,
+        estabelecimentoId,
         diaSemana: inicioLocal.diaSemana,
         ativo: true,
         OR: unidadeId ? [{ unidadeId }, { unidadeId: null }] : [{ unidadeId: null }],
@@ -114,13 +114,13 @@ export class MotorAgendaConsultaPrisma {
   }
 
   private async resolverUnidade(
-    barbeariaId: number,
+    estabelecimentoId: number,
     unidadeId: number | null | undefined,
     modelo: ModeloAtendimento,
   ) {
     if (modelo === 'DOMICILIAR') return null;
     const unidade = await this.prisma.unidade.findFirst({
-      where: { barbeariaId, ativa: true, ...(unidadeId ? { id: unidadeId } : {}) },
+      where: { estabelecimentoId, ativa: true, ...(unidadeId ? { id: unidadeId } : {}) },
       orderBy: { id: 'asc' },
       select: { id: true },
     });

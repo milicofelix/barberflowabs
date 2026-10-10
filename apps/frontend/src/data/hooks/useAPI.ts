@@ -4,26 +4,26 @@ import { useCallback, useEffect, useState } from 'react'
 import useSessao from './useSessao'
 import {
     estaNoFluxoDeAgendamentoCliente,
-    EVENTO_BARBEARIA_SELECIONADA,
-    obterBarbeariaSelecionada,
-} from '../tenant/barbeariaSelecionada'
+    EVENTO_ESTABELECIMENTO_SELECIONADO,
+    obterEstabelecimentoSelecionado,
+} from '../tenant/estabelecimentoSelecionado'
 
 const URL_BASE = process.env.NEXT_PUBLIC_API_URL
 
 export default function useAPI() {
     const { token, usuario } = useSessao()
-    const [barbeariaSlug, setBarbeariaSlug] = useState(obterBarbeariaSelecionada)
+    const [estabelecimentoSlug, setEstabelecimentoSlug] = useState(obterEstabelecimentoSelecionado)
 
     useEffect(() => {
         function atualizar(evento: Event) {
             const slug = (evento as CustomEvent<string>).detail
-            setBarbeariaSlug(slug || obterBarbeariaSelecionada())
+            setEstabelecimentoSlug(slug || obterEstabelecimentoSelecionado())
         }
 
-        setBarbeariaSlug(obterBarbeariaSelecionada())
-        window.addEventListener(EVENTO_BARBEARIA_SELECIONADA, atualizar)
+        setEstabelecimentoSlug(obterEstabelecimentoSelecionado())
+        window.addEventListener(EVENTO_ESTABELECIMENTO_SELECIONADO, atualizar)
 
-        return () => window.removeEventListener(EVENTO_BARBEARIA_SELECIONADA, atualizar)
+        return () => window.removeEventListener(EVENTO_ESTABELECIMENTO_SELECIONADO, atualizar)
     }, [])
 
     const headersTenant = useCallback(
@@ -32,11 +32,11 @@ export default function useAPI() {
 
             return {
                 Authorization: `Bearer ${token}`,
-                'x-barbearia-slug': barbeariaSlug,
-                ...(usuario?.barbeiro && usuario?.barbeariaId && !fluxoCliente ? { 'x-barbearia-id': String(usuario.barbeariaId) } : {}),
+                'x-estabelecimento-slug': estabelecimentoSlug,
+                ...(usuario?.membroEstabelecimento && usuario?.estabelecimentoId && !fluxoCliente ? { 'x-estabelecimento-id': String(usuario.estabelecimentoId) } : {}),
             }
         },
-        [barbeariaSlug, token, usuario?.barbeariaId, usuario?.barbeiro]
+        [estabelecimentoSlug, token, usuario?.estabelecimentoId, usuario?.membroEstabelecimento]
     )
 
     const httpGet = useCallback(

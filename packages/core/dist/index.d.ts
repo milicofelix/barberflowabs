@@ -1,20 +1,20 @@
-type PapelUsuario = 'SUPER_ADMIN' | 'APP_OWNER' | 'BARBERSHOP_OWNER' | 'BARBER' | 'CUSTOMER';
+type PapelUsuario = 'SUPER_ADMIN' | 'APP_OWNER' | 'ESTABLISHMENT_OWNER' | 'ESTABLISHMENT_MEMBER' | 'CUSTOMER';
 interface Usuario {
     id?: number;
-    barbeariaId?: number;
+    estabelecimentoId?: number;
     nome: string;
     email: string;
     senha?: string;
     telefone?: string;
     dataNascimento?: string | null;
-    barbeiro?: boolean;
+    membroEstabelecimento?: boolean;
     papel?: PapelUsuario;
     role?: PapelUsuario;
 }
 
 interface Profissional {
     id: number;
-    barbeariaId?: number;
+    estabelecimentoId?: number;
     nome: string;
     descricao: string;
     imagemURL: string;
@@ -24,7 +24,7 @@ interface Profissional {
 
 interface Servico {
     id: number;
-    barbeariaId?: number;
+    estabelecimentoId?: number;
     nome: string;
     descricao: string;
     preco: number;
@@ -40,7 +40,7 @@ interface Servico {
 
 interface Agendamento {
     id: number;
-    barbeariaId?: number;
+    estabelecimentoId?: number;
     data: Date;
     dataFim?: Date;
     inicioOcupacao?: Date;
@@ -50,7 +50,7 @@ interface Agendamento {
     enderecoAtendimento?: string | null;
     deslocamentoMinutos?: number;
     status?: string;
-    barbearia?: {
+    estabelecimento?: {
         id: number;
         nome: string;
         slug: string;
