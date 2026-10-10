@@ -39,13 +39,4 @@ export interface EscalaProfissional {
 export interface RecursoOperacional { id: number; nome: string; tipo: string; capacidade: number; ativo: boolean }
 export interface IndisponibilidadeRecurso { id: number; inicio: string; fim: string; motivo?: string | null }
 
-export interface LancamentoFinanceiro {
-    id: number
-    tipo: 'RECEITA' | 'DESPESA'
-    descricao: string
-    categoria?: string | null
-    valor: number
-    data: string
-}
-
 export type SecaoOperacao = 'RESUMO' | 'AGENDA' | 'EQUIPE' | 'CAPACIDADE' | 'FINANCEIRO'

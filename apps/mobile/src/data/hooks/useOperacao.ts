@@ -1,5 +1,5 @@
 import type {
-    AgendamentoOperacional, DashboardOperacional, EscalaProfissional, IndisponibilidadeRecurso, LancamentoFinanceiro, MembroEquipe,
+    AgendamentoOperacional, DashboardOperacional, EscalaProfissional, IndisponibilidadeRecurso, MembroEquipe,
     PermissaoEquipe, ProfissionalOperacional, RecursoOperacional, UsuarioEquipe,
 } from '../operacao/tipos'
 import useAPI, { mensagemDoErro } from './useAPI'
@@ -12,7 +12,6 @@ export default function useOperacao() {
     const [dashboard, setDashboard] = useState<DashboardOperacional | null>(null)
     const [agendamentos, setAgendamentos] = useState<AgendamentoOperacional[]>([])
     const [profissionais, setProfissionais] = useState<ProfissionalOperacional[]>([])
-    const [lancamentos, setLancamentos] = useState<LancamentoFinanceiro[]>([])
     const [membros, setMembros] = useState<MembroEquipe[]>([])
     const [usuariosDisponiveis, setUsuariosDisponiveis] = useState<UsuarioEquipe[]>([])
     const [recursos, setRecursos] = useState<RecursoOperacional[]>([])
@@ -27,16 +26,15 @@ export default function useOperacao() {
             const acessos = await httpGet<PermissaoEquipe[]>('/equipe/minhas-permissoes')
             setPermissoes(acessos)
             const pode = (permissao: PermissaoEquipe) => acessos.includes(permissao)
-            const [resumo, agenda, equipe, financeiro, membrosEquipe, usuarios, recursosEquipe] = await Promise.all([
+            const [resumo, agenda, equipe, membrosEquipe, usuarios, recursosEquipe] = await Promise.all([
                 pode('AGENDA_GERENCIAR') ? httpGet<DashboardOperacional>('/gestao/dashboard') : Promise.resolve(null),
                 pode('AGENDA_GERENCIAR') ? httpGet<AgendamentoOperacional[]>(`/gestao/agendamentos?data=${data}`) : Promise.resolve([]),
                 httpGet<ProfissionalOperacional[]>('/profissionais'),
-                pode('FINANCEIRO_VISUALIZAR') ? httpGet<LancamentoFinanceiro[]>(`/gestao/financeiro?inicio=${data}&fim=${data}`) : Promise.resolve([]),
                 pode('EQUIPE_GERENCIAR') ? httpGet<MembroEquipe[]>('/equipe') : Promise.resolve([]),
                 pode('EQUIPE_GERENCIAR') ? httpGet<UsuarioEquipe[]>('/equipe/usuarios-disponiveis') : Promise.resolve([]),
                 pode('RECURSOS_GERENCIAR') ? httpGet<RecursoOperacional[]>('/recursos') : Promise.resolve([]),
             ])
-            setDashboard(resumo); setAgendamentos(agenda); setProfissionais(equipe); setLancamentos(financeiro)
+            setDashboard(resumo); setAgendamentos(agenda); setProfissionais(equipe)
             setMembros(membrosEquipe); setUsuariosDisponiveis(usuarios); setRecursos(recursosEquipe)
         } catch (e) { setErro(mensagemDoErro(e)) } finally { setCarregando(false) }
     }, [data, httpGet])
@@ -61,9 +59,6 @@ export default function useOperacao() {
     async function criarProfissional(dados: Omit<ProfissionalOperacional, 'id'>) {
         return executarAcao(() => httpPost('/profissionais', { ...dados, avaliacao: 5, quantidadeAvaliacoes: 0 }))
     }
-    async function criarLancamento(dados: Omit<LancamentoFinanceiro, 'id'>) {
-        return executarAcao(() => httpPost('/gestao/financeiro', dados))
-    }
     async function salvarMembro(dados: { usuarioId: number; profissionalId?: number | null; papel: string; permissoes: PermissaoEquipe[] }) {
         return executarAcao(() => httpPost('/equipe', dados))
     }
@@ -75,8 +70,8 @@ export default function useOperacao() {
     const removerIndisponibilidade = (recursoId: number, id: number) => executarAcao(() => httpDelete(`/recursos/${recursoId}/indisponibilidades/${id}`))
 
     return {
-        dashboard, agendamentos, profissionais, lancamentos, membros, usuariosDisponiveis, recursos, permissoes, data, setData, carregando, erro,
-        recarregar: carregar, alterarStatus, criarProfissional, criarLancamento, salvarMembro,
+        dashboard, agendamentos, profissionais, membros, usuariosDisponiveis, recursos, permissoes, data, setData, carregando, erro,
+        recarregar: carregar, alterarStatus, criarProfissional, salvarMembro,
         buscarEscalas, salvarEscalas, criarRecurso, buscarIndisponibilidades, indisponibilizarRecurso, removerIndisponibilidade,
     }
 }

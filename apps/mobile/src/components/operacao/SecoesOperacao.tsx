@@ -1,6 +1,6 @@
 import CampoTexto from '@/src/components/shared/CampoTexto'
 import type {
-    AgendamentoOperacional, DashboardOperacional, LancamentoFinanceiro, ProfissionalOperacional,
+    AgendamentoOperacional, DashboardOperacional, ProfissionalOperacional,
 } from '@/src/data/operacao/tipos'
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
@@ -58,22 +58,13 @@ export function EquipeOperacao({ itens, criar }: {
             <Text style={[styles.descricao, { color: cores.textoSecundario }]}>{item.descricao}</Text><Text style={styles.meta}>★ {Number(item.avaliacao ?? 5).toFixed(1)}</Text></View>)}</View>
 }
 
-export function FinanceiroOperacao({ itens, criar, data, podeGerenciar, abrirCentral }: {
-    itens: LancamentoFinanceiro[]; criar: (dados: Omit<LancamentoFinanceiro, 'id'>) => Promise<boolean>; data: string; podeGerenciar: boolean; abrirCentral: () => void
-}) {
+export function AtalhoCentralFinanceira({ abrir }: { abrir: () => void }) {
     const { cores } = useTema()
-    const [descricao, setDescricao] = useState(''); const [valor, setValor] = useState(''); const [tipo, setTipo] = useState<'RECEITA' | 'DESPESA'>('RECEITA')
-    async function submeter() {
-        if (!descricao.trim() || Number(valor) <= 0) return
-        const criado = await criar({ tipo, descricao: descricao.trim(), valor: Number(valor), data })
-        if (criado) { setDescricao(''); setValor('') }
-    }
-    return <View style={styles.lista}><Pressable style={styles.botao} onPress={abrirCentral}><Text style={styles.botaoTexto}>Abrir central financeira</Text></Pressable>{podeGerenciar ? <View style={[styles.formulario, { backgroundColor: cores.superficie }]}><Text style={[styles.subtitulo, { color: cores.texto }]}>Novo lançamento legado</Text>
-        <View style={styles.acoes}>{(['RECEITA', 'DESPESA'] as const).map((item) => <Pressable key={item} onPress={() => setTipo(item)} style={[styles.chip, { borderColor: cores.borda }, tipo === item && styles.chipAtivo]}><Text style={[styles.chipTexto, { color: cores.texto }]}>{item}</Text></Pressable>)}</View>
-        <CampoTexto label="Descrição" value={descricao} onChangeText={setDescricao} />
-        <CampoTexto label="Valor" value={valor} onChangeText={setValor} keyboardType="decimal-pad" /><Botao texto="Registrar lançamento" acao={submeter} /></View> : null}
-        {itens.map((item) => <View key={item.id} style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}><Text style={[styles.titulo, { color: cores.texto }]}>{item.descricao}</Text>
-            <Text style={[styles.valor, item.tipo === 'DESPESA' && styles.despesa]}>{item.tipo === 'DESPESA' ? '− ' : '+ '}{moeda(item.valor)}</Text></View>)}</View>
+    return <View style={[styles.atalhoFinanceiro, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
+        <Text style={[styles.subtitulo, { color: cores.texto }]}>Central financeira</Text>
+        <Text style={[styles.descricao, { color: cores.textoSecundario }]}>Contas, caixa, comissões, repasses, cobranças, conciliação e auditoria estão reunidos em um único fluxo.</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="Abrir central financeira" style={styles.botao} onPress={abrir}><Text style={styles.botaoTexto}>Abrir central financeira</Text></Pressable>
+    </View>
 }
 
 function Botao({ texto, acao }: { texto: string; acao: () => void }) {
@@ -85,5 +76,5 @@ const styles = StyleSheet.create({
     titulo: { color: '#FFF', fontSize: 16, fontWeight: '800' }, subtitulo: { color: '#FFF', fontSize: 18, fontWeight: '900', marginBottom: 8 }, descricao: { color: '#AEBBCE', marginTop: 5, lineHeight: 19 }, meta: { color: '#E7B84B', marginTop: 8 },
     acoes: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 10 }, chip: { borderWidth: 1, borderColor: '#43516A', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 7 }, chipAtivo: { borderColor: '#E7B84B', backgroundColor: '#493B16' }, chipTexto: { color: '#E7EAF0', fontSize: 10, fontWeight: '800' },
     filtrosAgenda: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 4 }, formulario: { backgroundColor: '#101E33', borderRadius: 14, padding: 15, gap: 7, marginBottom: 5 }, botao: { minHeight: 46, backgroundColor: '#E7B84B', borderRadius: 11, alignItems: 'center', justifyContent: 'center', marginTop: 5 }, botaoTexto: { color: '#081426', fontWeight: '900' },
-    valor: { color: '#48C78E', fontSize: 16, fontWeight: '900', marginTop: 7 }, despesa: { color: '#F97066' },
+    atalhoFinanceiro: { borderWidth: 1, borderRadius: 14, padding: 16 },
 })

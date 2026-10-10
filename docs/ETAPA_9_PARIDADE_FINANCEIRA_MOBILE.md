@@ -1,6 +1,6 @@
 # Etapa 9 — Paridade Financeira Mobile
 
-Status: Fases 1 a 7 implementadas em 2026-10-10, com validacao manual pendente; resta a fase de corte do legado e aceite de paridade.
+Status: Fases 1 a 8 implementadas em 2026-10-10. Implementacao concluida; aceite manual de paridade pendente.
 
 ## Objetivo
 
@@ -8,7 +8,7 @@ Entregar no aplicativo as mesmas capacidades financeiras disponiveis na web, usa
 
 Paridade significa equivalencia funcional e de regras. A interface mobile deve ser adaptada a toque, teclado, telas pequenas e navegacao nativa; nao deve copiar literalmente o layout desktop.
 
-## Estado Atual
+## Estado Inicial
 
 O mobile ainda utiliza o financeiro legado:
 
@@ -16,6 +16,8 @@ O mobile ainda utiliza o financeiro legado:
 - `POST /gestao/financeiro`.
 
 Esse fluxo permite apenas consultar e criar lancamentos simples. Ainda nao oferece contas, caixa, comissoes, repasses, formas de pagamento, cobrancas, conciliacao ou auditoria.
+
+Esse estado foi eliminado na Fase 8. O trecho permanece registrado apenas como contexto historico da migracao.
 
 ## Fase 1 — Fundacao, Contratos, Navegacao E Permissoes
 
@@ -180,6 +182,16 @@ Critério de conclusão: conciliacoes e eventos de auditoria coincidem entre web
 - comparar web e mobile com o mesmo usuario, tenant e periodo;
 - atualizar a documentacao somente depois do aceite manual.
 
+Implementado:
+
+- removidos `FinanceiroOperacao`, `LancamentoFinanceiro` e o estado financeiro de `useOperacao`;
+- removidos `GET /gestao/financeiro` e `POST /gestao/financeiro` do aplicativo mobile;
+- mantida a secao Financeiro da operacao como atalho exclusivo para a Central Financeira;
+- preservados os endpoints legados no backend porque ainda existem consumidores web fora do escopo deste corte mobile;
+- revisados textos, formatos monetarios e de data, teclados numericos, safe area, temas e rotulos de acessibilidade;
+- estados de carregamento, vazio, erro, sucesso, sem permissao e falha de conexao atendidos pela central e pelo `useAPI`;
+- matriz funcional concluida no codigo; comparacao com dados reais permanece como aceite manual.
+
 Critério de conclusão: nenhum recurso financeiro da web fica ausente no mobile para o mesmo perfil, e o mobile nao utiliza mais os endpoints financeiros legados.
 
 ## Arquitetura Prevista
@@ -203,7 +215,7 @@ Critério de conclusão: nenhum recurso financeiro da web fica ausente no mobile
 
 ## Matriz Final De Paridade
 
-| Capacidade | Web | Mobile esperado |
+| Capacidade | Web | Mobile implementado |
 | --- | --- | --- |
 | Resumo e periodo | Sim | Sim |
 | Contas e baixas | Sim | Sim |
@@ -229,5 +241,7 @@ Critério de conclusão: nenhum recurso financeiro da web fica ausente no mobile
 8. Registrar uma conciliacao divergente e comparar a auditoria.
 9. Entrar com perfis de visualizacao, gestao e auditoria para verificar os limites de cada permissao.
 10. Repetir os fluxos nos temas claro e escuro e em uma tela pequena.
+
+O aceite final deve ser registrado somente depois da execucao desta lista. A conclusao da implementacao nao substitui a comparacao manual com o mesmo usuario, estabelecimento e periodo.
 
 Nenhum teste, build, lint, typecheck, migration, seed, instalacao ou reinicio deve ser executado automaticamente durante essas fases, salvo solicitacao explicita.
