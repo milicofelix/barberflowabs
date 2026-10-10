@@ -1,5 +1,6 @@
 import { Agendamento } from '@uniflowabs/core'
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import AgendamentoItem from './AgendamentoItem'
 import React, { useCallback, useState } from 'react'
 import { useFocusEffect } from '@react-navigation/native'
@@ -22,7 +23,7 @@ function agendamentoAtivo(agendamento: Agendamento) {
 }
 
 export default function AgendamentosUsuario() {
-    const { cores } = useTema()
+    const { cores, modo } = useTema()
     const [agendamentos, setAgendamentos] = useState<Agendamento[]>([])
     const [carregando, setCarregando] = useState(true)
     const [erro, setErro] = useState<string | null>(null)
@@ -112,12 +113,10 @@ export default function AgendamentosUsuario() {
                             titulo={filtro === 'ATIVOS' ? 'Você não tem agendamentos ativos' : 'Nenhum agendamento no histórico'}
                             descricao={filtro === 'ATIVOS' ? 'Escolha a aba Agendar para marcar seu próximo horário.' : 'Agendamentos concluídos, cancelados ou não realizados aparecerão aqui.'}
                         />
-                        {filtro === 'ATIVOS' ? (
-                            <Image
-                                source={require('@/assets/images/inicio/garoto-propaganda.png')}
-                                style={styles.garotoPropaganda}
-                            />
-                        ) : null}
+                        {filtro === 'ATIVOS' ? <View style={[styles.ilustracaoVazia, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
+                            <View style={[styles.iconeCalendario, { backgroundColor: cores.superficieElevada }]}><Ionicons name="calendar-outline" size={42} color={modo === 'light' ? '#4F46E5' : '#60A5FA'} /></View>
+                            <View style={styles.detalhesMarca}><View style={[styles.pontoMarca, { backgroundColor: '#00D4FF' }]} /><View style={[styles.pontoMarca, { backgroundColor: '#6366F1' }]} /><View style={[styles.pontoMarca, { backgroundColor: '#C084FC' }]} /></View>
+                        </View> : null}
                     </View>
                 )}
             </View>
@@ -183,9 +182,8 @@ const styles = StyleSheet.create({
         fontSize: 25,
         color: 'white',
     },
-    garotoPropaganda: {
-        marginBottom: 20,
-        marginTop: 20,
-    },
+    ilustracaoVazia: { width: 150, height: 112, marginTop: 20, marginBottom: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 28, shadowColor: '#4F46E5', shadowOpacity: 0.12, shadowRadius: 20, shadowOffset: { width: 0, height: 10 }, elevation: 3 },
+    iconeCalendario: { width: 72, height: 72, alignItems: 'center', justifyContent: 'center', borderRadius: 36 },
+    detalhesMarca: { position: 'absolute', bottom: 10, flexDirection: 'row', gap: 6 }, pontoMarca: { width: 7, height: 7, borderRadius: 4 },
     vazio: { justifyContent: 'center', alignItems: 'center' },
 })
