@@ -16,4 +16,5 @@ export type StackParamList = {
     Sumario: undefined
     PerfilEstabelecimento: { slug: string }
     OnboardingEstabelecimento: undefined
+    CentralFinanceira: undefined
 }

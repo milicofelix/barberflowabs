@@ -11,8 +11,13 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
 import { EscalasEquipe, MembrosEquipe } from '@/src/components/operacao/GestaoEquipe'
 import GestaoRecursos from '@/src/components/operacao/GestaoRecursos'
+import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import type { AbasParamList, StackParamList } from '@/src/navigation/types'
 
-export default function Operacao() {
+type Props = BottomTabScreenProps<AbasParamList, 'Operacao'>
+
+export default function Operacao({ navigation }: Props) {
     const { cores } = useTema()
     const [secao, setSecao] = useState<SecaoOperacao>('RESUMO')
     const dados = useOperacao()
@@ -27,7 +32,8 @@ export default function Operacao() {
         {!dados.carregando && secao === 'AGENDA' ? (dados.agendamentos.length ? <AgendaOperacao itens={dados.agendamentos} alterarStatus={dados.alterarStatus} /> : <EstadoVazio titulo="Agenda livre nesta data" />) : null}
         {!dados.carregando && secao === 'EQUIPE' ? <><EquipeOperacao itens={dados.profissionais} criar={dados.criarProfissional} /><EscalasEquipe profissionais={dados.profissionais} buscar={dados.buscarEscalas} salvar={dados.salvarEscalas} /><MembrosEquipe membros={dados.membros} usuarios={dados.usuariosDisponiveis} profissionais={dados.profissionais} salvar={dados.salvarMembro} /></> : null}
         {!dados.carregando && secao === 'CAPACIDADE' ? <GestaoRecursos itens={dados.recursos} criar={dados.criarRecurso} buscarIndisponibilidades={dados.buscarIndisponibilidades} indisponibilizar={dados.indisponibilizarRecurso} removerIndisponibilidade={dados.removerIndisponibilidade} /> : null}
-        {!dados.carregando && secao === 'FINANCEIRO' ? <FinanceiroOperacao itens={dados.lancamentos} criar={dados.criarLancamento} data={dados.data} podeGerenciar={dados.permissoes.includes('FINANCEIRO_GERENCIAR')} /> : null}
+        {!dados.carregando && secao === 'FINANCEIRO' ? <FinanceiroOperacao itens={dados.lancamentos} criar={dados.criarLancamento} data={dados.data} podeGerenciar={dados.permissoes.includes('FINANCEIRO_GERENCIAR')}
+            abrirCentral={() => navigation.getParent<NativeStackNavigationProp<StackParamList>>()?.navigate('CentralFinanceira')} /> : null}
     </ScrollView></SafeAreaView>
 }
 

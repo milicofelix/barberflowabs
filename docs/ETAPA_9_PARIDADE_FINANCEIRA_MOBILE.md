@@ -1,6 +1,6 @@
 # Etapa 9 — Paridade Financeira Mobile
 
-Status: planejada em 2026-10-10; implementacao pendente.
+Status: Fase 1 implementada em 2026-10-10, com validacao manual pendente; fases funcionais seguintes pendentes.
 
 ## Objetivo
 
@@ -17,7 +17,7 @@ O mobile ainda utiliza o financeiro legado:
 
 Esse fluxo permite apenas consultar e criar lancamentos simples. Ainda nao oferece contas, caixa, comissoes, repasses, formas de pagamento, cobrancas, conciliacao ou auditoria.
 
-## Fase 0 — Fundacao E Contratos Mobile
+## Fase 1 — Fundacao, Contratos, Navegacao E Permissoes
 
 - criar tipos para resumo, contas, formas de pagamento, caixa, comissoes, repasses, assinatura, conciliacao e auditoria;
 - criar um hook financeiro dedicado, sem ampliar `useOperacao`;
@@ -28,9 +28,17 @@ Esse fluxo permite apenas consultar e criar lancamentos simples. Ainda nao ofere
 - impedir envios duplicados e atualizar dados depois de cada mutacao;
 - manter o financeiro legado acessivel apenas durante a transicao.
 
+Implementado:
+
+- contratos mobile tipados para todos os dominios financeiros;
+- hook dedicado consumindo `/financeiro`, com recarga por periodo e bloqueio de envios duplicados;
+- rota tipada e central financeira preparada para os modulos funcionais;
+- leitura condicional da auditoria e ocultacao de acoes conforme permissoes;
+- atalho para a nova central mantendo o financeiro legado durante a transicao.
+
 Critério de conclusão: a central abre para os perfis autorizados, carrega o periodo selecionado e nao apresenta acoes proibidas.
 
-## Fase 1 — Resumo E Relatorios
+## Fase 2 — Resumo E Relatorios
 
 - indicadores de recebido, a receber, pago e repasses pendentes;
 - selecao de periodo com atalhos para hoje, semana e mes;
@@ -41,7 +49,7 @@ Critério de conclusão: a central abre para os perfis autorizados, carrega o pe
 
 Critério de conclusão: os totais do mesmo tenant e periodo coincidem com os exibidos na web.
 
-## Fase 2 — Contas A Pagar E Receber
+## Fase 3 — Contas A Pagar E Receber
 
 - listar contas com status, vencimento, categoria e saldo;
 - filtros por tipo, status e periodo;
@@ -56,7 +64,7 @@ Critério de conclusão: os totais do mesmo tenant e periodo coincidem com os ex
 
 Critério de conclusão: criar, baixar, cancelar e consultar uma conta no mobile produz exatamente o mesmo resultado observado na web.
 
-## Fase 3 — Caixa E Formas De Pagamento
+## Fase 4 — Caixa E Formas De Pagamento
 
 - mostrar caixa atual e historico;
 - abrir caixa com saldo inicial;
@@ -68,7 +76,7 @@ Critério de conclusão: criar, baixar, cancelar e consultar uma conta no mobile
 
 Critério de conclusão: somente um caixa permanece aberto por estabelecimento e as formas ativas coincidem entre web e mobile.
 
-## Fase 4 — Comissoes E Repasses
+## Fase 5 — Comissoes E Repasses
 
 - listar regras de comissao e sua prioridade;
 - configurar comissao padrao, por profissional, por servico ou combinada;
@@ -80,7 +88,7 @@ Critério de conclusão: somente um caixa permanece aberto por estabelecimento e
 
 Critério de conclusão: as regras e os valores calculados no mobile coincidem com a web para o mesmo periodo.
 
-## Fase 5 — Assinatura, Cobrancas E Inadimplencia
+## Fase 6 — Assinatura, Cobrancas E Inadimplencia
 
 - exibir plano, status, fim do periodo e historico de cobrancas;
 - gerar cobranca manual para perfis autorizados;
@@ -91,7 +99,7 @@ Critério de conclusão: as regras e os valores calculados no mobile coincidem c
 
 Critério de conclusão: assinatura e cobrancas exibem o mesmo estado da web, e o bloqueio ocorre pelas mesmas regras do backend.
 
-## Fase 6 — Conciliacao E Auditoria
+## Fase 7 — Conciliacao E Auditoria
 
 - listar conciliacoes e divergencias;
 - registrar conciliacao manual;
@@ -103,7 +111,7 @@ Critério de conclusão: assinatura e cobrancas exibem o mesmo estado da web, e 
 
 Critério de conclusão: conciliacoes e eventos de auditoria coincidem entre web e mobile, sem vazamento entre estabelecimentos.
 
-## Fase 7 — Corte Do Legado E Aceite De Paridade
+## Fase 8 — Corte Do Legado E Aceite De Paridade
 
 - remover `FinanceiroOperacao` e o consumo de `/gestao/financeiro` do mobile;
 - manter a operacao diaria apontando para a nova central financeira;
@@ -128,11 +136,11 @@ Critério de conclusão: nenhum recurso financeiro da web fica ausente no mobile
 ## Ordem Recomendada
 
 1. Aplicar e validar manualmente a migration da Etapa 9 no backend.
-2. Executar a Fase 0.
-3. Entregar as Fases 1 e 2 como primeiro bloco utilizavel.
-4. Entregar as Fases 3 e 4 como operacao financeira do estabelecimento.
-5. Entregar as Fases 5 e 6 como administracao e controle.
-6. Executar a Fase 7 somente apos o aceite das anteriores.
+2. Executar a Fase 1.
+3. Entregar as Fases 2 e 3 como primeiro bloco utilizavel.
+4. Entregar as Fases 4 e 5 como operacao financeira do estabelecimento.
+5. Entregar as Fases 6 e 7 como administracao e controle.
+6. Executar a Fase 8 somente apos o aceite das anteriores.
 
 ## Matriz Final De Paridade
 

@@ -13,6 +13,7 @@ import Autenticacao from './Autenticacao'
 import Sumario from './Sumario'
 import PerfilEstabelecimento from './PerfilEstabelecimento'
 import OnboardingEstabelecimento from './OnboardingEstabelecimento'
+import CentralFinanceira from './CentralFinanceira'
 import AlternadorTema from '@/src/components/shared/AlternadorTema'
 import { ProvedorTema } from '@/src/data/contexts/ContextoTema'
 import useTema from '@/src/data/contexts/ContextoTema'
@@ -53,6 +54,16 @@ function Navegacao() {
                             options={{
                                 title: 'Confirmar Agendamento',
                                 headerBackTitle: 'Voltar',
+                                headerStyle: { backgroundColor: cores.superficie },
+                                headerTintColor: cores.texto,
+                            }}
+                        />
+                        <Stack.Screen
+                            name="CentralFinanceira"
+                            component={CentralFinanceira}
+                            options={{
+                                title: 'Financeiro',
+                                headerBackTitle: 'Operação',
                                 headerStyle: { backgroundColor: cores.superficie },
                                 headerTintColor: cores.texto,
                             }}
