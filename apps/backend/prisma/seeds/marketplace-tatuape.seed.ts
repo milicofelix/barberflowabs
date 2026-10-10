@@ -27,6 +27,8 @@ export async function seedMarketplaceTatuape(prisma: PrismaClient) {
 
     await seedEstruturaDoEstabelecimento(prisma, estabelecimento.id, item);
   }
+
+  return estabelecimentosMarketplaceTatuape.length;
 }
 
 async function seedEstruturaDoEstabelecimento(

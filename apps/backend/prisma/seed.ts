@@ -328,7 +328,8 @@ async function seed() {
   });
 
   await seedBarbeariasZonaLeste();
-  await seedMarketplaceTatuape(prisma);
+  const totalMarketplaceTatuape = await seedMarketplaceTatuape(prisma);
+  console.info(`Seed concluido: ${totalMarketplaceTatuape} estabelecimentos do marketplace do Tatuape.`);
 }
 
 async function seedPlanosAssinatura() {

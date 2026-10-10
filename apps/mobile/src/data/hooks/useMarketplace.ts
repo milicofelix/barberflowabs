@@ -47,7 +47,7 @@ export default function useMarketplace(filtros: FiltrosMarketplace) {
 }
 
 function montarQuery(filtros: FiltrosMarketplace) {
-    const params: Array<[string, string | number]> = []
+    const params: Array<[string, string | number]> = [['limite', 50]]
     const adicionar = (nome: string, valor: string | number | undefined) => {
         if (valor !== undefined && String(valor).trim()) params.push([nome, valor])
     }
