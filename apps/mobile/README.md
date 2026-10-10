@@ -1,4 +1,4 @@
-# Barber Flow ABS Mobile
+# UniFlow ABS Mobile
 
 Aplicativo Expo/React Native com navegação por React Navigation.
 
@@ -62,7 +62,7 @@ Evite `--force-recreate` depois de autenticar o Expo CLI dentro do container, po
 5. No iPhone, confirme que o Expo Go possui permissão de **Rede Local** e está na mesma rede Wi-Fi do computador.
 6. Abra o QR code pelo Expo Go.
 
-Resultado esperado: o aplicativo abre sem erro de plugin, exibe o login do Barber Flow ABS e permite entrar com qualquer perfil autenticado.
+Resultado esperado: o aplicativo abre sem erro de plugin, exibe o login da UniFlow ABS e permite entrar com qualquer perfil autenticado.
 
 Contas do seed para validação:
 

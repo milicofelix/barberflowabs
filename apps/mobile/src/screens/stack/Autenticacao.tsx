@@ -3,13 +3,13 @@ import CampoSenha from '@/src/components/shared/CampoSenha'
 import CampoTexto from '@/src/components/shared/CampoTexto'
 import EstadoErro from '@/src/components/shared/EstadoErro'
 import FeedbackSucesso from '@/src/components/shared/FeedbackSucesso'
+import MarcaUniFlow from '@/src/components/shared/MarcaUniFlow'
 import useFormAuth from '@/src/data/hooks/useFormAuth'
 import type { StackParamList } from '@/src/navigation/types'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
 import { useRef } from 'react'
 import {
     ActivityIndicator,
-    Image,
     KeyboardAvoidingView,
     Platform,
     Pressable,
@@ -46,12 +46,7 @@ export default function Autenticacao({ navigation }: Props) {
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.cabecalho}>
-                        <Image
-                            source={require('@/assets/images/brand/logo-mark-transparent.png')}
-                            style={styles.logo}
-                            resizeMode="contain"
-                            accessibilityLabel="Logo UniFlow ABS"
-                        />
+                        <MarcaUniFlow />
                     </View>
 
                     <View style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda, borderWidth: 1 }]}>
@@ -175,7 +170,6 @@ const styles = StyleSheet.create({
     container: { flex: 1 },
     scroll: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, paddingVertical: 28 },
     cabecalho: { alignItems: 'center', marginBottom: 22 },
-    logo: { width: 230, height: 174 },
     cartao: { width: '100%', maxWidth: 460, borderRadius: 24, backgroundColor: '#FFFFFF', padding: 22,
         shadowColor: '#000000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.24,
         shadowRadius: 24, elevation: 10 },

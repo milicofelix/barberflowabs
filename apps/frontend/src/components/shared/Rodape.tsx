@@ -36,7 +36,7 @@ export default function Rodape() {
                 </div>
                 <div className="flex flex-col md:flex-row items-center gap-1.5">
                     <div className="flex gap-1.5">
-                        <span>Barber Flow ABS</span>
+                        <span>UniFlow ABS</span>
                         <span>em {new Date().getFullYear()}</span>
                     </div>
                     <span className="hidden md:inline-block">-</span>

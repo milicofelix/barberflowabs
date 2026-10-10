@@ -11,6 +11,7 @@ import EstadoVazio from '../shared/EstadoVazio'
 import { mensagemDoErro } from '@/src/data/hooks/useAPI'
 import useTema from '@/src/data/contexts/ContextoTema'
 import Confirmacao from '../shared/Confirmacao'
+import MarcaUniFlow from '../shared/MarcaUniFlow'
 
 type FiltroAgendamento = 'ATIVOS' | 'HISTORICO'
 const STATUS_ATIVOS = ['AGENDADO', 'CONFIRMADO', 'CHECKIN']
@@ -125,12 +126,7 @@ export default function AgendamentosUsuario() {
 
     return (
         <View style={styles.container}>
-            <Image
-                source={require('@/assets/images/brand/logo-mark-transparent.png')}
-                style={styles.logo}
-                resizeMode="contain"
-                accessibilityLabel="Logo UniFlow ABS"
-            />
+            <MarcaUniFlow compacta exibirSlogan={false} />
             <Text style={[styles.titulo, { color: cores.texto }]}>Fala, {usuario?.nome}!</Text>
             {renderizarConteudo()}
             <Confirmacao
@@ -186,11 +182,6 @@ const styles = StyleSheet.create({
     agendamentoHora: {
         fontSize: 25,
         color: 'white',
-    },
-    logo: {
-        width: 220,
-        height: 166,
-        marginTop: 20,
     },
     garotoPropaganda: {
         marginBottom: 20,

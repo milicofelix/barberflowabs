@@ -5,8 +5,8 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-    title: 'Barber Flow ABS',
-    description: 'Marketplace e gestão online para barbearias.',
+    title: 'UniFlow ABS',
+    description: 'Marketplace e gestão para serviços de beleza, estética e bem-estar.',
     icons: {
         icon: '/favicon.png',
         shortcut: '/favicon.png',

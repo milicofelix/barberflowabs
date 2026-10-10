@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "Barber Flow ABS",
+    "name": "UniFlow ABS",
     "slug": "barber-flow-abs",
-    "description": "Agendamentos simples e gestão inteligente para barbearias.",
+    "description": "Serviços, agendamentos e gestão de beleza, estética e bem-estar em uma só plataforma.",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -25,6 +25,7 @@
       "package": "com.barberflowabs.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/brand/android-foreground.png",
+        "monochromeImage": "./assets/images/brand/monochrome-icon.png",
         "backgroundColor": "#081426"
       },
       "edgeToEdgeEnabled": true
@@ -52,7 +53,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Permita que o Barber Flow ABS use sua localização para encontrar barbearias próximas."
+          "locationWhenInUsePermission": "Permita que a UniFlow ABS use sua localização para encontrar estabelecimentos próximos."
         }
       ],
       "expo-status-bar",
