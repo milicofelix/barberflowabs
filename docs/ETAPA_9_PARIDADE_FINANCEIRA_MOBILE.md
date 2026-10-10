@@ -1,6 +1,6 @@
 # Etapa 9 — Paridade Financeira Mobile
 
-Status: Fases 1 a 5 implementadas em 2026-10-10, com validacao manual pendente; fases funcionais seguintes pendentes.
+Status: Fases 1 a 6 implementadas em 2026-10-10, com validacao manual pendente; fases funcionais seguintes pendentes.
 
 ## Objetivo
 
@@ -134,6 +134,16 @@ Critério de conclusão: as regras e os valores calculados no mobile coincidem c
 - apresentar bloqueio `PAST_DUE` com orientacao clara;
 - no perfil `SUPER_ADMIN` ou `APP_OWNER`, disponibilizar o processamento administrativo de inadimplencia;
 - nunca armazenar segredo de webhook ou credencial de gateway no aplicativo.
+
+Implementado:
+
+- resumo do plano, valor mensal, status, trial, periodo atual e cancelamento programado;
+- historico com todos os estados de cobranca e datas de vencimento e pagamento;
+- exibicao de codigo PIX selecionavel e abertura segura do link de pagamento quando fornecidos pela API;
+- geracao manual protegida por permissao e confirmacao, reutilizando cobranca pendente existente;
+- alerta e orientacao para assinatura `PAST_DUE`, mantendo o bloqueio como responsabilidade do backend;
+- processamento global da inadimplencia na area administrativa, exclusivo para `SUPER_ADMIN` e `APP_OWNER`;
+- nenhuma credencial ou segredo de gateway armazenado no aplicativo.
 
 Critério de conclusão: assinatura e cobrancas exibem o mesmo estado da web, e o bloqueio ocorre pelas mesmas regras do backend.
 

@@ -8,11 +8,13 @@ export interface EstabelecimentoAdmin {
 }
 
 export default function useAdministracao() {
-    const { httpGet, httpPut } = useAPI()
+    const { httpGet, httpPost, httpPut } = useAPI()
     const [estabelecimentos, setEstabelecimentos] = useState<EstabelecimentoAdmin[]>([])
     const [pendentes, setPendentes] = useState<EstabelecimentoAdmin[]>([])
     const [carregando, setCarregando] = useState(true)
     const [erro, setErro] = useState<string | null>(null)
+    const [sucesso, setSucesso] = useState<string | null>(null)
+    const [executando, setExecutando] = useState(false)
     const carregar = useCallback(async () => {
         try {
             setCarregando(true); setErro(null)
@@ -31,5 +33,14 @@ export default function useAdministracao() {
             await carregar()
         } catch (e) { setErro(mensagemDoErro(e)) }
     }
-    return { estabelecimentos, pendentes, carregando, erro, carregar, revisar }
+    async function processarInadimplencia() {
+        if (executando) return
+        try {
+            setExecutando(true); setErro(null); setSucesso(null)
+            const resposta = await httpPost<{ processadas: number }>('/saas/admin/inadimplencia/processar', {})
+            setSucesso(`${resposta.processadas} cobrança(s) vencida(s) processada(s).`)
+            await carregar()
+        } catch (e) { setErro(mensagemDoErro(e)) } finally { setExecutando(false) }
+    }
+    return { estabelecimentos, pendentes, carregando, executando, erro, sucesso, carregar, revisar, processarInadimplencia }
 }

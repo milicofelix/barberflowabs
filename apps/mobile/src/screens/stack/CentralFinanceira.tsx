@@ -9,13 +9,14 @@ import CaixaFinanceiro from '@/src/components/financeiro/CaixaFinanceiro'
 import FormasPagamento from '@/src/components/financeiro/FormasPagamento'
 import ComissoesFinanceiras from '@/src/components/financeiro/ComissoesFinanceiras'
 import RepassesFinanceiros from '@/src/components/financeiro/RepassesFinanceiros'
+import AssinaturaFinanceira from '@/src/components/financeiro/AssinaturaFinanceira'
 import useTema from '@/src/data/contexts/ContextoTema'
 import useFinanceiro from '@/src/data/hooks/useFinanceiro'
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 const MODULOS = [
-    ['Assinatura', 'Plano, cobranças e inadimplência'], ['Conciliação', 'Divergências e conferência'],
+    ['Conciliação', 'Divergências e conferência'],
 ] as const
 
 export default function CentralFinanceira() {
@@ -62,6 +63,9 @@ export default function CentralFinanceira() {
                         <Text style={[styles.secaoTitulo, { color: cores.texto }]}>Repasses</Text>
                         <RepassesFinanceiros repasses={financeiro.repasses} inicio={financeiro.inicio} fim={financeiro.fim}
                             podeGerenciar={financeiro.podeGerenciar} executando={financeiro.executando} calcular={financeiro.calcularRepasses} pagar={financeiro.pagarRepasse} />
+                        <Text style={[styles.secaoTitulo, { color: cores.texto }]}>Assinatura e cobranças</Text>
+                        <AssinaturaFinanceira assinatura={financeiro.assinatura} podeGerenciar={financeiro.podeGerenciar}
+                            executando={financeiro.executando} gerarCobranca={financeiro.gerarCobranca} />
                         <Text style={[styles.secaoTitulo, { color: cores.texto }]}>Próximos módulos</Text>
                         <View style={styles.grade}>
                             {MODULOS.map(([titulo, descricao]) => (
