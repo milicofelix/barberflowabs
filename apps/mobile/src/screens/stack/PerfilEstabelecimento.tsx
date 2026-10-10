@@ -3,6 +3,7 @@ import Carregando from '@/src/components/shared/Carregando'
 import EstadoErro from '@/src/components/shared/EstadoErro'
 import EstadoVazio from '@/src/components/shared/EstadoVazio'
 import type { EstabelecimentoPerfil } from '@/src/data/estabelecimentos/tipos'
+import { capaDoEstabelecimento } from '@/src/data/estabelecimentos/capas'
 import { resumirSelecao } from '@/src/data/estabelecimentos/tipos'
 import useAPI, { mensagemDoErro } from '@/src/data/hooks/useAPI'
 import useEstabelecimento from '@/src/data/hooks/useEstabelecimento'
@@ -62,13 +63,13 @@ export default function PerfilEstabelecimento({ route, navigation }: Props) {
     if (erro || !estabelecimento) return <SafeAreaView style={[styles.telaEstado, { backgroundColor: cores.fundo }]}><EstadoErro mensagem={erro ?? 'Estabelecimento não encontrado.'} tentarNovamente={carregar} /></SafeAreaView>
 
     const endereco = [estabelecimento.endereco?.logradouro, estabelecimento.endereco?.bairro, estabelecimento.endereco?.cidade, estabelecimento.endereco?.estado].filter(Boolean).join(' · ')
-    const imagem = estabelecimento.imagemCapaURL?.startsWith('http') ? { uri: estabelecimento.imagemCapaURL } : require('@/assets/images/inicio/fundo.png')
+    const imagem = capaDoEstabelecimento(estabelecimento)
     const estaSelecionada = selecionada?.id === estabelecimento.id
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['bottom']}>
             <ScrollView contentContainerStyle={styles.conteudo}>
-                <ImageBackground source={imagem} style={styles.hero} imageStyle={styles.heroImagem}>
+                <ImageBackground source={imagem} resizeMode="cover" style={styles.hero} imageStyle={styles.heroImagem}>
                     <View style={styles.heroOverlay}>
                         <Text style={[styles.status, estabelecimento.statusOperacional?.status === 'ABERTA' && styles.statusAberta]}>{estabelecimento.statusOperacional?.label}</Text>
                         <View>

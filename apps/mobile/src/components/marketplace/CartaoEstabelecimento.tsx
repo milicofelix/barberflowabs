@@ -1,4 +1,5 @@
 import type { EstabelecimentoResumo } from '@/src/data/estabelecimentos/tipos'
+import { capaDoEstabelecimento } from '@/src/data/estabelecimentos/capas'
 import { Ionicons } from '@expo/vector-icons'
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import useTema from '@/src/data/contexts/ContextoTema'
@@ -8,9 +9,9 @@ export default function CartaoEstabelecimento({ item, selecionado, abrir }: {
 }) {
     const { cores } = useTema()
     const endereco = [item.endereco.bairro, item.endereco.cidade, item.endereco.estado].filter(Boolean).join(' · ')
-    const imagem = item.imagemCapaURL?.startsWith('http') ? { uri: item.imagemCapaURL } : require('@/assets/images/inicio/fundo.png')
+    const imagem = capaDoEstabelecimento(item)
     return <Pressable style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]} onPress={abrir}>
-        <ImageBackground source={imagem} style={styles.capa} imageStyle={styles.capaImagem}>
+        <ImageBackground source={imagem} resizeMode="cover" style={styles.capa} imageStyle={styles.capaImagem}>
             <View style={styles.overlay}><Text style={styles.categoria}>{item.segmentos?.[0]?.nome ?? 'Beleza e bem-estar'}</Text>
                 <Text style={[styles.status, item.statusOperacional.status === 'ABERTA' && styles.aberta]}>{item.statusOperacional.label}</Text></View>
         </ImageBackground>
@@ -33,7 +34,7 @@ const moeda = (valor: number) => valor.toLocaleString('pt-BR', { style: 'currenc
 const styles = StyleSheet.create({
     cartao: { overflow: 'hidden', backgroundColor: '#FFFFFF', borderRadius: 18, marginBottom: 16, borderWidth: 1 },
     capa: { height: 145 }, capaImagem: { borderTopLeftRadius: 18, borderTopRightRadius: 18 },
-    overlay: { flex: 1, padding: 12, flexDirection: 'row', justifyContent: 'space-between', backgroundColor: 'rgba(4,10,19,.35)' },
+    overlay: { flex: 1, padding: 12, flexDirection: 'row', justifyContent: 'space-between', backgroundColor: 'rgba(4,10,19,.18)' },
     categoria: { alignSelf: 'flex-start', backgroundColor: '#E7B84B', color: '#081426', padding: 7, borderRadius: 7, fontSize: 10, fontWeight: '900' },
     status: { alignSelf: 'flex-start', backgroundColor: '#344054', color: '#FFF', padding: 7, borderRadius: 7, fontSize: 10, fontWeight: '800' },
     aberta: { backgroundColor: '#178558' }, conteudo: { padding: 16 },
