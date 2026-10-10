@@ -31,6 +31,7 @@ import {
 } from './saas.dto';
 import { SaasPrisma } from './saas.prisma';
 import { MODELOS_ATENDIMENTO, TIPOS_ESTABELECIMENTO } from 'src/estabelecimento/estabelecimento.constants';
+import { FinanceiroService } from 'src/financeiro/financeiro.service';
 
 const STATUS_ESTABELECIMENTO = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'CANCELED'];
 const STATUS_COMERCIAL = ['NOVO', 'EM_CONTATO', 'APROVADO', 'RECUSADO', 'CONVERTIDO'];
@@ -41,6 +42,7 @@ export class SaasController {
   constructor(
     private readonly repo: SaasPrisma,
     private readonly cripto: BcryptProvider,
+    private readonly financeiro: FinanceiroService,
   ) {}
 
   @Get('planos')
@@ -225,6 +227,12 @@ export class SaasController {
   listarAuditoriaAdmin(@UsuarioLogado() usuario: Usuario) {
     this.validarSuperAdmin(usuario);
     return this.repo.listarAuditoriaAdmin();
+  }
+
+  @Post('admin/inadimplencia/processar')
+  processarInadimplencia(@UsuarioLogado() usuario: Usuario) {
+    this.validarSuperAdmin(usuario);
+    return this.financeiro.processarInadimplencia(usuario.id!);
   }
 
   @Get('admin/notificacoes')

@@ -7,7 +7,10 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 const PERMISSOES: Array<{ id: PermissaoEquipe; nome: string }> = [
     { id: 'EQUIPE_GERENCIAR', nome: 'Equipe' }, { id: 'ESCALAS_GERENCIAR', nome: 'Escalas' },
     { id: 'RECURSOS_GERENCIAR', nome: 'Recursos' }, { id: 'AGENDA_GERENCIAR', nome: 'Agenda' },
-    { id: 'FINANCEIRO_VISUALIZAR', nome: 'Financeiro' }, { id: 'CONFIGURACOES_GERENCIAR', nome: 'Configurações' },
+    { id: 'FINANCEIRO_VISUALIZAR', nome: 'Visualizar financeiro' },
+    { id: 'FINANCEIRO_GERENCIAR', nome: 'Gerenciar financeiro' },
+    { id: 'FINANCEIRO_AUDITAR', nome: 'Auditar financeiro' },
+    { id: 'CONFIGURACOES_GERENCIAR', nome: 'Configurações' },
 ]
 const DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 

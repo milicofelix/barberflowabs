@@ -16,7 +16,7 @@ const statusDenuncia = ['PENDENTE', 'EM_ANALISE', 'RESOLVIDA', 'DESCARTADA']
 
 export default function PainelSuperAdmin() {
     const { usuario } = useSessao()
-    const { httpGet, httpPut } = useAPI()
+    const { httpGet, httpPost, httpPut } = useAPI()
     const [estabelecimentos, setEstabelecimentos] = useState<any[]>([])
     const [pendentes, setPendentes] = useState<any[]>([])
     const [auditoria, setAuditoria] = useState<any[]>([])
@@ -72,6 +72,14 @@ export default function PainelSuperAdmin() {
         if (resposta?.statusCode) return setMensagem(resposta.message)
         await carregar()
         setMensagem('Status atualizado.')
+    }
+
+    async function processarInadimplencia() {
+        setMensagem('')
+        const resposta = await httpPost('/saas/admin/inadimplencia/processar', {})
+        if (resposta?.statusCode) return setMensagem(resposta.message)
+        await carregar()
+        setMensagem(`${resposta?.processadas ?? 0} cobrança(s) vencida(s) processada(s).`)
     }
 
     async function alternarDestaque(id: number, destaqueAtual: boolean) {
@@ -188,9 +196,12 @@ export default function PainelSuperAdmin() {
     return (
         <div className="grid gap-6">
             <section className="rounded border border-zinc-800 bg-zinc-950 p-5">
-                <div>
-                    <h2 className="text-xl font-bold text-zinc-100">Planos e cobrança</h2>
-                    <p className="text-sm text-zinc-400">Valores e limites comerciais da plataforma</p>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h2 className="text-xl font-bold text-zinc-100">Planos e cobrança</h2>
+                        <p className="text-sm text-zinc-400">Valores, limites e inadimplência da plataforma</p>
+                    </div>
+                    <button type="button" className="button-outline" onClick={processarInadimplencia}>Processar inadimplência</button>
                 </div>
                 <div className="mt-4 grid gap-3">
                     {planos.map((plano) => (

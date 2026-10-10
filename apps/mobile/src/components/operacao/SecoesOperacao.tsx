@@ -58,8 +58,8 @@ export function EquipeOperacao({ itens, criar }: {
             <Text style={[styles.descricao, { color: cores.textoSecundario }]}>{item.descricao}</Text><Text style={styles.meta}>★ {Number(item.avaliacao ?? 5).toFixed(1)}</Text></View>)}</View>
 }
 
-export function FinanceiroOperacao({ itens, criar, data }: {
-    itens: LancamentoFinanceiro[]; criar: (dados: Omit<LancamentoFinanceiro, 'id'>) => Promise<boolean>; data: string
+export function FinanceiroOperacao({ itens, criar, data, podeGerenciar }: {
+    itens: LancamentoFinanceiro[]; criar: (dados: Omit<LancamentoFinanceiro, 'id'>) => Promise<boolean>; data: string; podeGerenciar: boolean
 }) {
     const { cores } = useTema()
     const [descricao, setDescricao] = useState(''); const [valor, setValor] = useState(''); const [tipo, setTipo] = useState<'RECEITA' | 'DESPESA'>('RECEITA')
@@ -68,10 +68,10 @@ export function FinanceiroOperacao({ itens, criar, data }: {
         const criado = await criar({ tipo, descricao: descricao.trim(), valor: Number(valor), data })
         if (criado) { setDescricao(''); setValor('') }
     }
-    return <View style={styles.lista}><View style={[styles.formulario, { backgroundColor: cores.superficie }]}><Text style={[styles.subtitulo, { color: cores.texto }]}>Novo lançamento</Text>
+    return <View style={styles.lista}>{podeGerenciar ? <View style={[styles.formulario, { backgroundColor: cores.superficie }]}><Text style={[styles.subtitulo, { color: cores.texto }]}>Novo lançamento</Text>
         <View style={styles.acoes}>{(['RECEITA', 'DESPESA'] as const).map((item) => <Pressable key={item} onPress={() => setTipo(item)} style={[styles.chip, { borderColor: cores.borda }, tipo === item && styles.chipAtivo]}><Text style={[styles.chipTexto, { color: cores.texto }]}>{item}</Text></Pressable>)}</View>
         <CampoTexto label="Descrição" value={descricao} onChangeText={setDescricao} />
-        <CampoTexto label="Valor" value={valor} onChangeText={setValor} keyboardType="decimal-pad" /><Botao texto="Registrar lançamento" acao={submeter} /></View>
+        <CampoTexto label="Valor" value={valor} onChangeText={setValor} keyboardType="decimal-pad" /><Botao texto="Registrar lançamento" acao={submeter} /></View> : null}
         {itens.map((item) => <View key={item.id} style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}><Text style={[styles.titulo, { color: cores.texto }]}>{item.descricao}</Text>
             <Text style={[styles.valor, item.tipo === 'DESPESA' && styles.despesa]}>{item.tipo === 'DESPESA' ? '− ' : '+ '}{moeda(item.valor)}</Text></View>)}</View>
 }

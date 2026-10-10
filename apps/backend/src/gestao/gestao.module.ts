@@ -5,9 +5,10 @@ import { DbModule } from 'src/db/db.module';
 import { GestaoController } from './gestao.controller';
 import { GestaoPrisma } from './gestao.prisma';
 import { EquipeModule } from 'src/equipe/equipe.module';
+import { FinanceiroModule } from 'src/financeiro/financeiro.module';
 
 @Module({
-  imports: [AuthModule, DbModule, EquipeModule],
+  imports: [AuthModule, DbModule, EquipeModule, FinanceiroModule],
   controllers: [GestaoController],
   providers: [GestaoPrisma],
 })

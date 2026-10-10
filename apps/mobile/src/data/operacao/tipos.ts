@@ -26,7 +26,7 @@ export interface ProfissionalOperacional {
     avaliacao?: number
 }
 
-export type PermissaoEquipe = 'EQUIPE_GERENCIAR' | 'ESCALAS_GERENCIAR' | 'RECURSOS_GERENCIAR' | 'AGENDA_GERENCIAR' | 'FINANCEIRO_VISUALIZAR' | 'CONFIGURACOES_GERENCIAR'
+export type PermissaoEquipe = 'EQUIPE_GERENCIAR' | 'ESCALAS_GERENCIAR' | 'RECURSOS_GERENCIAR' | 'AGENDA_GERENCIAR' | 'FINANCEIRO_VISUALIZAR' | 'FINANCEIRO_GERENCIAR' | 'FINANCEIRO_AUDITAR' | 'CONFIGURACOES_GERENCIAR'
 
 export interface UsuarioEquipe { id: number; nome: string; email: string; telefone?: string | null }
 export interface MembroEquipe {

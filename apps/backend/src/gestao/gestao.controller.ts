@@ -31,6 +31,7 @@ import {
 import { GestaoPrisma } from './gestao.prisma';
 import { EquipePolicy } from 'src/equipe/equipe.policy';
 import { PermissaoEquipe } from 'src/equipe/equipe.constants';
+import { FinanceiroService } from 'src/financeiro/financeiro.service';
 
 const STATUS_AGENDAMENTO = ['AGENDADO', 'CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW'];
 const TIPOS_LANCAMENTO = ['RECEITA', 'DESPESA'];
@@ -44,6 +45,7 @@ export class GestaoController {
     private readonly repo: GestaoPrisma,
     private readonly cripto: BcryptProvider,
     private readonly equipePolicy: EquipePolicy,
+    private readonly financeiro: FinanceiroService,
   ) {}
 
   @Get('dashboard')
@@ -135,6 +137,9 @@ export class GestaoController {
       dados.status,
     );
     if (!agendamento) throw new NotFoundException('Agendamento não encontrado');
+    if (dados.status === 'CONCLUIDO') {
+      await this.financeiro.registrarReceitaAgendamento(usuario.estabelecimentoId!, usuario.id!, agendamento);
+    }
     return agendamento;
   }
 
@@ -155,14 +160,14 @@ export class GestaoController {
     @Body() dados: CriarLancamentoFinanceiroDto,
     @UsuarioLogado() usuario: Usuario,
   ) {
-    await this.validarPermissao(usuario, 'FINANCEIRO_VISUALIZAR');
+    await this.validarPermissao(usuario, 'FINANCEIRO_GERENCIAR');
     this.validarLancamento(dados);
     return this.repo.criarLancamento(usuario.estabelecimentoId, dados);
   }
 
   @Delete('financeiro/:id')
   async excluirLancamento(@Param('id') id: string, @UsuarioLogado() usuario: Usuario) {
-    await this.validarPermissao(usuario, 'FINANCEIRO_VISUALIZAR');
+    await this.validarPermissao(usuario, 'FINANCEIRO_GERENCIAR');
     validarNumeroInteiroPositivo(id, 'Lançamento');
     const lancamento = await this.repo.excluirLancamento(Number(id), usuario.estabelecimentoId);
     if (!lancamento) throw new NotFoundException('Lançamento não encontrado');

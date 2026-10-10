@@ -142,8 +142,29 @@ Regra de transicao:
   - Mensal: 30 dias.
   - Trimestral: 90 dias.
   - Anual: 365 dias.
+- O dominio financeiro usa contas, caixas, repasses, cobrancas e conciliacoes isolados por `estabelecimentoId`.
+- A integracao externa e desacoplada por eventos idempotentes; o segredo de webhook vem de `PAYMENT_WEBHOOK_SECRET`.
+- O modo manual permanece como fallback ate a escolha e homologacao de um gateway externo.
 
 ## Contratos Principais De API
+
+Financeiro:
+
+- `GET /financeiro/resumo`
+- `GET|PUT /financeiro/comissoes`
+- `GET|POST /financeiro/contas`
+- `PUT /financeiro/contas/:id/baixar`
+- `PUT /financeiro/contas/:id/cancelar`
+- `GET|POST /financeiro/formas-pagamento`
+- `GET /financeiro/caixas`
+- `POST /financeiro/caixas/abrir`
+- `POST /financeiro/caixas/:id/fechar`
+- `GET /financeiro/repasses`
+- `POST /financeiro/repasses/calcular`
+- `PUT /financeiro/repasses/:id/pagar`
+- `GET|POST /financeiro/conciliacoes`
+- `GET /financeiro/auditoria`
+- `POST /pagamentos/gateway/webhooks/:provedor`
 
 Publico:
 

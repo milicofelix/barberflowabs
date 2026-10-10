@@ -27,7 +27,7 @@ export default function Operacao() {
         {!dados.carregando && secao === 'AGENDA' ? (dados.agendamentos.length ? <AgendaOperacao itens={dados.agendamentos} alterarStatus={dados.alterarStatus} /> : <EstadoVazio titulo="Agenda livre nesta data" />) : null}
         {!dados.carregando && secao === 'EQUIPE' ? <><EquipeOperacao itens={dados.profissionais} criar={dados.criarProfissional} /><EscalasEquipe profissionais={dados.profissionais} buscar={dados.buscarEscalas} salvar={dados.salvarEscalas} /><MembrosEquipe membros={dados.membros} usuarios={dados.usuariosDisponiveis} profissionais={dados.profissionais} salvar={dados.salvarMembro} /></> : null}
         {!dados.carregando && secao === 'CAPACIDADE' ? <GestaoRecursos itens={dados.recursos} criar={dados.criarRecurso} buscarIndisponibilidades={dados.buscarIndisponibilidades} indisponibilizar={dados.indisponibilizarRecurso} removerIndisponibilidade={dados.removerIndisponibilidade} /> : null}
-        {!dados.carregando && secao === 'FINANCEIRO' ? <FinanceiroOperacao itens={dados.lancamentos} criar={dados.criarLancamento} data={dados.data} /> : null}
+        {!dados.carregando && secao === 'FINANCEIRO' ? <FinanceiroOperacao itens={dados.lancamentos} criar={dados.criarLancamento} data={dados.data} podeGerenciar={dados.permissoes.includes('FINANCEIRO_GERENCIAR')} /> : null}
     </ScrollView></SafeAreaView>
 }
 

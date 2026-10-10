@@ -16,6 +16,7 @@ import {
     IconShieldLock,
     IconTool,
     IconMapPin,
+    IconCash,
 } from '@tabler/icons-react'
 import Link from 'next/link'
 
@@ -60,6 +61,14 @@ export default function MenuUsuario() {
                         <Link href="/agendamento" className="flex gap-2">
                             <IconCalendar size={18} />
                             <span>Meus horários</span>
+                        </Link>
+                    </DropdownMenuItem>
+                )}
+                {responsavelEstabelecimento && (
+                    <DropdownMenuItem>
+                        <Link href="/financeiro" className="flex gap-2">
+                            <IconCash size={18} />
+                            <span>Financeiro</span>
                         </Link>
                     </DropdownMenuItem>
                 )}

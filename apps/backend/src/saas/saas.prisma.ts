@@ -102,6 +102,18 @@ export class SaasPrisma {
           especialidades: {
             create: dados.estabelecimento.especialidadeIds.map((especialidadeId: number) => ({ especialidadeId })),
           },
+          configuracoesComissao: {
+            create: { chave: 'PADRAO', percentual: 40 },
+          },
+          formasPagamento: {
+            create: [
+              { nome: 'Dinheiro', tipo: 'DINHEIRO' },
+              { nome: 'PIX', tipo: 'PIX' },
+              { nome: 'Cartão de crédito', tipo: 'CREDITO', prazoRecebimento: 30 },
+              { nome: 'Cartão de débito', tipo: 'DEBITO', prazoRecebimento: 1 },
+              { nome: 'Transferência', tipo: 'TRANSFERENCIA' },
+            ],
+          },
         } as any,
         include: { assinatura: { include: { plano: true } }, unidades: true },
       });
@@ -160,10 +172,10 @@ export class SaasPrisma {
   }
 
   async billing(estabelecimentoId: number) {
-    const estabelecimento = await this.prisma.estabelecimento.findUnique({
+    const estabelecimento = await (this.prisma as any).estabelecimento.findUnique({
       where: { id: estabelecimentoId },
       include: {
-        assinatura: { include: { plano: true } },
+        assinatura: { include: { plano: true, cobrancas: { orderBy: { vencimento: 'desc' }, take: 12 } } },
         _count: { select: { usuarios: true, profissionais: true, unidades: true, servicos: true } },
       },
     });

@@ -24,6 +24,8 @@ model Usuario {
   agendamentos Agendamento[]
   lancamentosFinanceiros LancamentoFinanceiro[]
   logsAuditoria LogAuditoria[]
+  caixasAbertos FechamentoCaixa[] @relation("CaixaAbertoPor")
+  caixasFechados FechamentoCaixa[] @relation("CaixaFechadoPor")
   lembretesRelacionamento LembreteRelacionamento[]
   avaliacoes Avaliacao[]
   denunciasRevisadas DenunciaPerfilPublico[] @relation("DenunciaPerfilRevisor")
@@ -52,6 +54,8 @@ model Profissional {
   servicosHabilitados  ProfissionalServico[]
   vinculoEquipe        MembroEquipe?
   escalas              EscalaProfissional[]
+  configuracoesComissao ConfiguracaoComissao[]
+  repassesFinanceiros   RepasseFinanceiro[]
 
   @@unique([estabelecimentoId, nome])
   @@index([estabelecimentoId])
@@ -79,6 +83,7 @@ model Servico {
   profissionaisHabilitados ProfissionalServico[]
   recursosNecessarios      ServicoRecurso[]
   itensAgendamento         AgendamentoServico[]
+  configuracoesComissao    ConfiguracaoComissao[]
 
   @@unique([estabelecimentoId, nome])
   @@index([estabelecimentoId])
@@ -116,6 +121,7 @@ model Agendamento {
   recursos AgendamentoRecurso[]
   historicoReagendamentos HistoricoReagendamento[]
   avaliacao Avaliacao?
+  contasFinanceiras ContaFinanceira[]
 
   @@index([estabelecimentoId])
   @@index([profissionalId, data])
@@ -181,6 +187,13 @@ model Estabelecimento {
   membrosEquipe                MembroEquipe[]
   escalasProfissionais         EscalaProfissional[]
   indisponibilidadesRecursos   IndisponibilidadeRecurso[]
+  configuracoesComissao        ConfiguracaoComissao[]
+  formasPagamento              FormaPagamento[]
+  contasFinanceiras            ContaFinanceira[]
+  fechamentosCaixa             FechamentoCaixa[]
+  repassesFinanceiros          RepasseFinanceiro[]
+  eventosGateway               EventoGatewayPagamento[]
+  conciliacoesFinanceiras      ConciliacaoFinanceira[]
 
   @@map("estabelecimentos")
 }
@@ -579,6 +592,127 @@ model LancamentoFinanceiro {
   @@map("lancamentos_financeiros")
 }
 
+model ConfiguracaoComissao {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  profissionalId    Int?
+  servicoId         Int?
+  chave             String
+  percentual        Decimal         @db.Decimal(5, 2)
+  ativo             Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  profissional      Profissional?   @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
+  servico           Servico?        @relation(fields: [servicoId], references: [id], onDelete: Cascade)
+
+  @@unique([estabelecimentoId, chave])
+  @@index([estabelecimentoId, ativo])
+  @@index([profissionalId])
+  @@index([servicoId])
+  @@map("configuracoes_comissao")
+}
+
+model FormaPagamento {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  nome              String
+  tipo              String
+  taxaPercentual    Decimal         @default(0) @db.Decimal(5, 2)
+  taxaFixa          Decimal         @default(0) @db.Decimal(10, 2)
+  prazoRecebimento  Int             @default(0)
+  ativa             Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  contas            ContaFinanceira[]
+
+  @@unique([estabelecimentoId, nome])
+  @@index([estabelecimentoId, ativa])
+  @@map("formas_pagamento")
+}
+
+model ContaFinanceira {
+  id                Int              @id @default(autoincrement())
+  estabelecimentoId Int
+  agendamentoId     Int?             @unique
+  formaPagamentoId  Int?
+  tipo              String
+  categoria         String?
+  descricao         String
+  documento         String?
+  valorOriginal     Decimal          @db.Decimal(10, 2)
+  valorPago         Decimal          @default(0) @db.Decimal(10, 2)
+  status            String           @default("PENDENTE")
+  competencia       DateTime
+  vencimento        DateTime
+  pagoEm            DateTime?
+  observacoes       String?          @db.Text
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  estabelecimento   Estabelecimento  @relation(fields: [estabelecimentoId], references: [id])
+  agendamento       Agendamento?     @relation(fields: [agendamentoId], references: [id])
+  formaPagamento    FormaPagamento?  @relation(fields: [formaPagamentoId], references: [id])
+  conciliacoes      ConciliacaoFinanceira[]
+
+  @@index([estabelecimentoId, tipo, status, vencimento])
+  @@index([formaPagamentoId])
+  @@map("contas_financeiras")
+}
+
+model FechamentoCaixa {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  abertoPorId       Int
+  fechadoPorId      Int?
+  status            String          @default("ABERTO")
+  chaveAberto       String?         @unique
+  abertoEm          DateTime        @default(now())
+  fechadoEm         DateTime?
+  saldoInicial      Decimal         @default(0) @db.Decimal(10, 2)
+  totalReceitas     Decimal         @default(0) @db.Decimal(10, 2)
+  totalDespesas     Decimal         @default(0) @db.Decimal(10, 2)
+  saldoEsperado     Decimal         @default(0) @db.Decimal(10, 2)
+  saldoInformado    Decimal?        @db.Decimal(10, 2)
+  diferenca         Decimal?        @db.Decimal(10, 2)
+  observacoes       String?         @db.Text
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  abertoPor         Usuario         @relation("CaixaAbertoPor", fields: [abertoPorId], references: [id])
+  fechadoPor        Usuario?        @relation("CaixaFechadoPor", fields: [fechadoPorId], references: [id])
+
+  @@index([estabelecimentoId, status, abertoEm])
+  @@index([abertoPorId])
+  @@index([fechadoPorId])
+  @@map("fechamentos_caixa")
+}
+
+model RepasseFinanceiro {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  profissionalId    Int
+  periodoInicio     DateTime
+  periodoFim        DateTime
+  receitaBruta      Decimal         @db.Decimal(10, 2)
+  percentualMedio   Decimal         @db.Decimal(5, 2)
+  valorComissao     Decimal         @db.Decimal(10, 2)
+  ajustes           Decimal         @default(0) @db.Decimal(10, 2)
+  valorLiquido      Decimal         @db.Decimal(10, 2)
+  status            String          @default("PENDENTE")
+  pagoEm            DateTime?
+  observacoes       String?         @db.Text
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  profissional      Profissional    @relation(fields: [profissionalId], references: [id])
+
+  @@unique([estabelecimentoId, profissionalId, periodoInicio, periodoFim])
+  @@index([estabelecimentoId, status, periodoFim])
+  @@index([profissionalId])
+  @@map("repasses_financeiros")
+}
+
 model PlanoAssinatura {
   id              Int                  @id @default(autoincrement())
   nome            String               @unique
@@ -609,10 +743,74 @@ model AssinaturaEstabelecimento {
   updatedAt       DateTime         @updatedAt
   estabelecimento       Estabelecimento        @relation(fields: [estabelecimentoId], references: [id])
   plano           PlanoAssinatura  @relation(fields: [planoId], references: [id])
+  cobrancas       CobrancaAssinatura[]
 
   @@index([planoId])
   @@index([status])
   @@map("assinaturas_estabelecimentos")
+}
+
+model CobrancaAssinatura {
+  id             Int                       @id @default(autoincrement())
+  assinaturaId   Int
+  provedor       String                    @default("MANUAL")
+  referenciaExterna String?                @unique
+  valor          Decimal                   @db.Decimal(10, 2)
+  status         String                    @default("PENDENTE")
+  vencimento     DateTime
+  pagoEm         DateTime?
+  tentativas     Int                       @default(0)
+  linkPagamento  String?                   @db.Text
+  codigoPix      String?                   @db.Text
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+  assinatura     AssinaturaEstabelecimento @relation(fields: [assinaturaId], references: [id], onDelete: Cascade)
+
+  @@index([assinaturaId, status, vencimento])
+  @@map("cobrancas_assinaturas")
+}
+
+model EventoGatewayPagamento {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int?
+  provedor          String
+  eventoExternoId   String
+  tipo              String
+  payload           Json
+  status            String          @default("PENDENTE")
+  processadoEm      DateTime?
+  erro              String?         @db.Text
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento? @relation(fields: [estabelecimentoId], references: [id])
+
+  @@unique([provedor, eventoExternoId])
+  @@index([estabelecimentoId, createdAt])
+  @@index([status, createdAt])
+  @@map("eventos_gateway_pagamento")
+}
+
+model ConciliacaoFinanceira {
+  id                 Int             @id @default(autoincrement())
+  estabelecimentoId  Int
+  contaFinanceiraId  Int?
+  provedor           String
+  transacaoExternaId String
+  valorEsperado      Decimal         @db.Decimal(10, 2)
+  valorRecebido      Decimal         @db.Decimal(10, 2)
+  diferenca          Decimal         @db.Decimal(10, 2)
+  status             String          @default("PENDENTE")
+  conciliadoEm       DateTime?
+  observacoes        String?         @db.Text
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  estabelecimento    Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  contaFinanceira    ContaFinanceira? @relation(fields: [contaFinanceiraId], references: [id])
+
+  @@unique([estabelecimentoId, provedor, transacaoExternaId])
+  @@index([estabelecimentoId, status, createdAt])
+  @@index([contaFinanceiraId])
+  @@map("conciliacoes_financeiras")
 }
 
 model LogAuditoria {

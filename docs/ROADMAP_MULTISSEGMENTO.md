@@ -106,9 +106,21 @@ Status: implementacao concluida em 2026-10-10; migration, geracao do Prisma Clie
 - [x] Preservar `BARBEARIA` somente como categoria de estabelecimento.
 - [x] Registrar a decisao no ADR 0002.
 
+## Etapa 9 - Financeiro, Pagamentos E Comissoes
+
+Status: implementacao funcional concluida em 2026-10-10; migration, Prisma Client, reinicio, validacao manual e ativacao de gateway externo pendentes.
+
+- [x] Comissoes configuraveis por estabelecimento, profissional e servico.
+- [x] Fechamento de caixa, contas a pagar e receber.
+- [x] Repasses e formas de pagamento.
+- [x] Cobrancas de assinatura e inadimplencia.
+- [x] Contrato idempotente para eventos de gateway.
+- [x] Relatorios, conciliacao e auditoria financeira.
+- [x] Central financeira web e permissoes especificas.
+- [ ] Selecionar, contratar e ativar um gateway externo em homologacao.
+
 ## Etapas Posteriores
 
-- Financeiro, pagamentos e comissoes.
 - Relacionamento, fidelizacao e notificacoes.
 - Inteligencia artificial com governanca.
 - Homologacao, seguranca e lancamento gradual.

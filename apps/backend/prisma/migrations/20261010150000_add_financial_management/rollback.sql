@@ -1,0 +1,25 @@
+ALTER TABLE `conciliacoes_financeiras` DROP FOREIGN KEY `conciliacao_conta_fkey`;
+ALTER TABLE `conciliacoes_financeiras` DROP FOREIGN KEY `conciliacao_estabelecimento_fkey`;
+ALTER TABLE `eventos_gateway_pagamento` DROP FOREIGN KEY `evento_gateway_estabelecimento_fkey`;
+ALTER TABLE `cobrancas_assinaturas` DROP FOREIGN KEY `cobranca_assinatura_fkey`;
+ALTER TABLE `repasses_financeiros` DROP FOREIGN KEY `repasse_profissional_fkey`;
+ALTER TABLE `repasses_financeiros` DROP FOREIGN KEY `repasse_estabelecimento_fkey`;
+ALTER TABLE `fechamentos_caixa` DROP FOREIGN KEY `caixa_fechado_por_fkey`;
+ALTER TABLE `fechamentos_caixa` DROP FOREIGN KEY `caixa_aberto_por_fkey`;
+ALTER TABLE `fechamentos_caixa` DROP FOREIGN KEY `caixa_estabelecimento_fkey`;
+ALTER TABLE `contas_financeiras` DROP FOREIGN KEY `conta_forma_pagamento_fkey`;
+ALTER TABLE `contas_financeiras` DROP FOREIGN KEY `conta_agendamento_fkey`;
+ALTER TABLE `contas_financeiras` DROP FOREIGN KEY `conta_estabelecimento_fkey`;
+ALTER TABLE `formas_pagamento` DROP FOREIGN KEY `forma_pagamento_estabelecimento_fkey`;
+ALTER TABLE `configuracoes_comissao` DROP FOREIGN KEY `config_comissao_servico_fkey`;
+ALTER TABLE `configuracoes_comissao` DROP FOREIGN KEY `config_comissao_profissional_fkey`;
+ALTER TABLE `configuracoes_comissao` DROP FOREIGN KEY `config_comissao_estabelecimento_fkey`;
+
+DROP TABLE `conciliacoes_financeiras`;
+DROP TABLE `eventos_gateway_pagamento`;
+DROP TABLE `cobrancas_assinaturas`;
+DROP TABLE `repasses_financeiros`;
+DROP TABLE `fechamentos_caixa`;
+DROP TABLE `contas_financeiras`;
+DROP TABLE `formas_pagamento`;
+DROP TABLE `configuracoes_comissao`;

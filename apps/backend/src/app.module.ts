@@ -13,6 +13,7 @@ import { PublicoModule } from './publico/publico.module';
 import { CatalogoModule } from './catalogo/catalogo.module';
 import { RecursoModule } from './recurso/recurso.module';
 import { EquipeModule } from './equipe/equipe.module';
+import { FinanceiroModule } from './financeiro/financeiro.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { EquipeModule } from './equipe/equipe.module';
     CatalogoModule,
     RecursoModule,
     EquipeModule,
+    FinanceiroModule,
   ],
   controllers: [AppController],
 })
