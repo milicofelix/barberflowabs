@@ -1,15 +1,21 @@
 import Carregando from '@/src/components/shared/Carregando'
 import EstadoErro from '@/src/components/shared/EstadoErro'
 import FeedbackSucesso from '@/src/components/shared/FeedbackSucesso'
+import PeriodoFinanceiro from '@/src/components/financeiro/PeriodoFinanceiro'
+import ResumoFinanceiro from '@/src/components/financeiro/ResumoFinanceiro'
+import ContasFinanceiras from '@/src/components/financeiro/ContasFinanceiras'
+import FormularioContaFinanceira from '@/src/components/financeiro/FormularioContaFinanceira'
+import CaixaFinanceiro from '@/src/components/financeiro/CaixaFinanceiro'
+import FormasPagamento from '@/src/components/financeiro/FormasPagamento'
+import ComissoesFinanceiras from '@/src/components/financeiro/ComissoesFinanceiras'
+import RepassesFinanceiros from '@/src/components/financeiro/RepassesFinanceiros'
 import useTema from '@/src/data/contexts/ContextoTema'
 import useFinanceiro from '@/src/data/hooks/useFinanceiro'
-import { RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 const MODULOS = [
-    ['Contas', 'Contas a pagar e receber'], ['Caixa', 'Abertura, fechamento e histórico'],
-    ['Comissões', 'Regras por profissional e serviço'], ['Repasses', 'Cálculo e pagamento'],
-    ['Pagamentos', 'Formas de pagamento e assinatura'], ['Conciliação', 'Divergências e conferência'],
+    ['Assinatura', 'Plano, cobranças e inadimplência'], ['Conciliação', 'Divergências e conferência'],
 ] as const
 
 export default function CentralFinanceira() {
@@ -36,11 +42,27 @@ export default function CentralFinanceira() {
                     </View>
                 ) : (
                     <>
-                        <View style={[styles.periodo, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
-                            <CampoData label="Início" value={financeiro.inicio} onChangeText={financeiro.setInicio} />
-                            <CampoData label="Fim" value={financeiro.fim} onChangeText={financeiro.setFim} />
-                        </View>
+                        <PeriodoFinanceiro inicio={financeiro.inicio} fim={financeiro.fim}
+                            selecionar={(inicio, fim) => { financeiro.setInicio(inicio); financeiro.setFim(fim) }} />
                         {financeiro.sucesso ? <FeedbackSucesso mensagem={financeiro.sucesso} /> : null}
+                        <ResumoFinanceiro resumo={financeiro.resumo} />
+                        <Text style={[styles.secaoTitulo, { color: cores.texto }]}>Contas a pagar e receber</Text>
+                        {financeiro.podeGerenciar ? <FormularioContaFinanceira executando={financeiro.executando} salvar={financeiro.criarConta} /> : null}
+                        <ContasFinanceiras contas={financeiro.contas} formasPagamento={financeiro.formasPagamento} podeGerenciar={financeiro.podeGerenciar}
+                            executando={financeiro.executando} baixar={financeiro.baixarConta} cancelar={financeiro.cancelarConta} />
+                        <Text style={[styles.secaoTitulo, { color: cores.texto }]}>Caixa</Text>
+                        <CaixaFinanceiro caixas={financeiro.caixas} podeGerenciar={financeiro.podeGerenciar} executando={financeiro.executando}
+                            abrir={financeiro.abrirCaixa} fechar={financeiro.fecharCaixa} />
+                        <Text style={[styles.secaoTitulo, { color: cores.texto }]}>Formas de pagamento</Text>
+                        <FormasPagamento formas={financeiro.formasPagamento} podeGerenciar={financeiro.podeGerenciar} executando={financeiro.executando}
+                            salvar={financeiro.salvarFormaPagamento} />
+                        <Text style={[styles.secaoTitulo, { color: cores.texto }]}>Comissões</Text>
+                        <ComissoesFinanceiras regras={financeiro.comissoes} profissionais={financeiro.profissionais} servicos={financeiro.servicos}
+                            podeGerenciar={financeiro.podeGerenciar} executando={financeiro.executando} salvar={financeiro.salvarComissao} />
+                        <Text style={[styles.secaoTitulo, { color: cores.texto }]}>Repasses</Text>
+                        <RepassesFinanceiros repasses={financeiro.repasses} inicio={financeiro.inicio} fim={financeiro.fim}
+                            podeGerenciar={financeiro.podeGerenciar} executando={financeiro.executando} calcular={financeiro.calcularRepasses} pagar={financeiro.pagarRepasse} />
+                        <Text style={[styles.secaoTitulo, { color: cores.texto }]}>Próximos módulos</Text>
                         <View style={styles.grade}>
                             {MODULOS.map(([titulo, descricao]) => (
                                 <View key={titulo} style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
@@ -64,20 +86,12 @@ export default function CentralFinanceira() {
         </SafeAreaView>
     )
 
-    function CampoData(props: { label: string; value: string; onChangeText: (valor: string) => void }) {
-        return <View style={styles.campo}><Text style={[styles.rotulo, { color: cores.textoSecundario }]}>{props.label}</Text><TextInput
-            style={[styles.input, { backgroundColor: cores.campo, borderColor: cores.borda, color: cores.campoTexto }]}
-            defaultValue={props.value} onEndEditing={(evento) => props.onChangeText(evento.nativeEvent.text)}
-            placeholder="AAAA-MM-DD" placeholderTextColor={cores.textoSecundario} returnKeyType="done"
-        /></View>
-    }
 }
 
 const styles = StyleSheet.create({
     safeArea: { flex: 1 }, conteudo: { padding: 18, paddingBottom: 42, gap: 14 },
     sobretitulo: { fontSize: 12, fontWeight: '800', letterSpacing: 1.2 }, titulo: { fontSize: 29, fontWeight: '900' },
-    descricao: { fontSize: 15, lineHeight: 21 }, periodo: { flexDirection: 'row', gap: 10, borderWidth: 1, borderRadius: 14, padding: 14 },
-    campo: { flex: 1, gap: 5 }, rotulo: { fontSize: 12, fontWeight: '700' }, input: { borderWidth: 1, borderRadius: 10, padding: 11 },
+    descricao: { fontSize: 15, lineHeight: 21 }, secaoTitulo: { fontSize: 17, fontWeight: '900', marginTop: 4 },
     grade: { gap: 10 }, cartao: { borderWidth: 1, borderRadius: 14, padding: 15, gap: 5 }, cartaoTitulo: { fontSize: 17, fontWeight: '800' },
     cartaoDescricao: { lineHeight: 19 }, estado: { marginTop: 5, fontSize: 12, fontWeight: '800' },
     aviso: { borderWidth: 1, borderRadius: 14, padding: 18, gap: 7 }, avisoTitulo: { fontSize: 18, fontWeight: '800' }, somenteLeitura: { textAlign: 'center', fontSize: 13 },

@@ -1,6 +1,6 @@
 # Etapa 9 — Paridade Financeira Mobile
 
-Status: Fase 1 implementada em 2026-10-10, com validacao manual pendente; fases funcionais seguintes pendentes.
+Status: Fases 1 a 5 implementadas em 2026-10-10, com validacao manual pendente; fases funcionais seguintes pendentes.
 
 ## Objetivo
 
@@ -47,6 +47,14 @@ Critério de conclusão: a central abre para os perfis autorizados, carrega o pe
 - sinalizacao de divergencias de conciliacao;
 - atualizar por gesto de arrastar e respeitar tema claro/escuro.
 
+Implementado:
+
+- atalhos de periodo para hoje, semana e mes, alem do intervalo informado manualmente;
+- indicadores de recebido, a receber, pago, a pagar e repasses pendentes;
+- valores em Real e separacao visual entre receitas, despesas e obrigacoes;
+- alerta com quantidade e valor das divergencias de conciliacao;
+- atualizacao por gesto e componentes adaptados aos temas claro e escuro.
+
 Critério de conclusão: os totais do mesmo tenant e periodo coincidem com os exibidos na web.
 
 ## Fase 3 — Contas A Pagar E Receber
@@ -62,6 +70,15 @@ Critério de conclusão: os totais do mesmo tenant e periodo coincidem com os ex
 - pedir confirmacao antes de baixa ou cancelamento;
 - apresentar conflitos de concorrencia com mensagem para atualizar a tela.
 
+Implementado:
+
+- listagem por periodo com filtros de tipo e status;
+- destaque de contas atrasadas, saldo pendente e vinculo com atendimento;
+- criacao de contas a pagar e receber para usuarios com permissao de gestao;
+- baixa integral ou parcial com data e forma de pagamento;
+- cancelamento protegido por confirmacao e pelas regras do backend;
+- bloqueio de envios duplicados e exibicao das mensagens de conflito da API.
+
 Critério de conclusão: criar, baixar, cancelar e consultar uma conta no mobile produz exatamente o mesmo resultado observado na web.
 
 ## Fase 4 — Caixa E Formas De Pagamento
@@ -74,6 +91,16 @@ Critério de conclusão: criar, baixar, cancelar e consultar uma conta no mobile
 - criar, ativar e desativar formas de pagamento;
 - manter as acoes protegidas por `FINANCEIRO_GERENCIAR`.
 
+Implementado:
+
+- exibicao do caixa atual e do historico de aberturas e fechamentos;
+- abertura com saldo inicial e observacoes;
+- fechamento confirmado com saldo contado, esperado e diferenca;
+- impedimento visual e protecao do backend contra dois caixas abertos;
+- cadastro de formas de pagamento com taxas e prazo de recebimento;
+- ativacao e desativacao de formas existentes;
+- formularios e acoes restritos a `FINANCEIRO_GERENCIAR`.
+
 Critério de conclusão: somente um caixa permanece aberto por estabelecimento e as formas ativas coincidem entre web e mobile.
 
 ## Fase 5 — Comissoes E Repasses
@@ -85,6 +112,17 @@ Critério de conclusão: somente um caixa permanece aberto por estabelecimento e
 - detalhar receita bruta, percentual medio, ajustes e valor liquido;
 - marcar repasse pendente como pago mediante confirmacao;
 - impedir que recalculos alterem repasses pagos.
+
+Implementado:
+
+- listagem das regras com estado e prioridade explicita;
+- configuracao padrao, por profissional, por servico ou pela combinacao dos dois;
+- seletores com busca para profissionais e servicos;
+- ativacao e desativacao das regras existentes;
+- calculo dos repasses conforme o periodo selecionado na central;
+- detalhamento de receita, percentual medio, comissao, ajustes e valor liquido;
+- confirmacao antes de marcar um repasse pendente como pago;
+- preservacao de repasses pagos garantida pelo backend durante recalculos.
 
 Critério de conclusão: as regras e os valores calculados no mobile coincidem com a web para o mesmo periodo.
 
