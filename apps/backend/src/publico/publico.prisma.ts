@@ -12,6 +12,7 @@ export class PublicoPrisma {
     const latitude = this.numero(filtros.lat);
     const longitude = this.numero(filtros.lng);
     const raioKm = this.numero(filtros.raioKm) ?? 10;
+    const semLimiteDistancia = filtros.semLimiteDistancia === 'true';
     const termo = typeof filtros.q === 'string' ? filtros.q.trim() : '';
     const cidade = typeof filtros.cidade === 'string' ? filtros.cidade.trim() : '';
     const estado = typeof filtros.estado === 'string' ? filtros.estado.trim() : '';
@@ -129,7 +130,7 @@ export class PublicoPrisma {
     return estabelecimentos
       .map((estabelecimento) => this.resumoEstabelecimento(estabelecimento, latitude, longitude))
       .filter((estabelecimento) => {
-        if (latitude !== null && longitude !== null && estabelecimento.distanciaKm !== null && estabelecimento.distanciaKm > raioKm) {
+        if (!semLimiteDistancia && latitude !== null && longitude !== null && estabelecimento.distanciaKm !== null && estabelecimento.distanciaKm > raioKm) {
           return false;
         }
         if (abertaAgora && estabelecimento.statusOperacional.status !== 'ABERTA') {

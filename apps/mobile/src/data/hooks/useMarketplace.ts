@@ -1,6 +1,6 @@
 import type { CategoriaMarketplace, ResultadoMarketplace } from '../estabelecimentos/tipos'
 import useAPI, { mensagemDoErro } from './useAPI'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 export interface FiltrosMarketplace {
     busca: string
@@ -12,12 +12,12 @@ export interface FiltrosMarketplace {
     abertaAgora: boolean
     disponivelEm: string
     posicao: { lat: number; lng: number } | null
-    raioKm: number
+    raioKm: number | null
 }
 
 export const FILTROS_INICIAIS: FiltrosMarketplace = {
     busca: '', cidade: '', segmento: '', especialidade: '', precoMax: '', notaMin: 0,
-    abertaAgora: false, disponivelEm: '', posicao: null, raioKm: 10,
+    abertaAgora: false, disponivelEm: '', posicao: null, raioKm: 2,
 }
 
 export default function useMarketplace(filtros: FiltrosMarketplace) {
@@ -26,16 +26,22 @@ export default function useMarketplace(filtros: FiltrosMarketplace) {
     const [categorias, setCategorias] = useState<CategoriaMarketplace[]>([])
     const [carregando, setCarregando] = useState(true)
     const [erro, setErro] = useState<string | null>(null)
+    const requisicaoAtual = useRef(0)
     const query = useMemo(() => montarQuery(filtros), [filtros])
 
     const carregar = useCallback(async () => {
+        const requisicao = ++requisicaoAtual.current
         try {
             setCarregando(true); setErro(null)
-            setResultado(await httpGet<ResultadoMarketplace>(`/public/marketplace${query}`, { escopoTenant: 'nenhum' }))
+            const dados = await httpGet<ResultadoMarketplace>(`/public/marketplace${query}`, { escopoTenant: 'nenhum' })
+            if (requisicao === requisicaoAtual.current) setResultado(dados)
         } catch (e) {
+            if (requisicao !== requisicaoAtual.current) return
             setResultado({ itens: [], paginacao: { pagina: 1, limite: 20, total: 0, paginas: 0 } })
             setErro(mensagemDoErro(e))
-        } finally { setCarregando(false) }
+        } finally {
+            if (requisicao === requisicaoAtual.current) setCarregando(false)
+        }
     }, [httpGet, query])
 
     useEffect(() => {
@@ -56,7 +62,9 @@ function montarQuery(filtros: FiltrosMarketplace) {
     adicionar('precoMax', filtros.precoMax); adicionar('notaMin', filtros.notaMin || undefined)
     adicionar('disponivelEm', filtros.disponivelEm); if (filtros.abertaAgora) adicionar('abertaAgora', 'true')
     if (filtros.posicao) {
-        adicionar('lat', filtros.posicao.lat); adicionar('lng', filtros.posicao.lng); adicionar('raioKm', filtros.raioKm)
+        adicionar('lat', filtros.posicao.lat); adicionar('lng', filtros.posicao.lng)
+        if (filtros.raioKm === null) adicionar('semLimiteDistancia', 'true')
+        else adicionar('raioKm', filtros.raioKm)
     }
     return params.length ? `?${params.map(([nome, valor]) => `${nome}=${encodeURIComponent(valor)}`).join('&')}` : ''
 }

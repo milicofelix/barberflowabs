@@ -12,6 +12,7 @@ export interface MarketplaceFiltrosDto {
   lat?: string;
   lng?: string;
   raioKm?: string;
+  semLimiteDistancia?: string;
   ordenarPor?: 'RELEVANCIA' | 'PRECO' | 'AVALIACAO' | 'DISTANCIA';
   pagina?: string;
   limite?: string;

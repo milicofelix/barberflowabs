@@ -108,7 +108,7 @@ Status: implementacao concluida em 2026-10-10; migration, geracao do Prisma Clie
 
 ## Etapa 9 - Financeiro, Pagamentos E Comissoes
 
-Status: implementacao funcional concluida em 2026-10-10; migration, Prisma Client, reinicio, validacao manual e ativacao de gateway externo pendentes.
+Status: implementacao funcional web e paridade financeira mobile concluidas em 2026-10-10; migration, Prisma Client, reinicio, aceite manual e ativacao de gateway externo pendentes.
 
 - [x] Comissoes configuraveis por estabelecimento, profissional e servico.
 - [x] Fechamento de caixa, contas a pagar e receber.
@@ -117,7 +117,8 @@ Status: implementacao funcional concluida em 2026-10-10; migration, Prisma Clien
 - [x] Contrato idempotente para eventos de gateway.
 - [x] Relatorios, conciliacao e auditoria financeira.
 - [x] Central financeira web e permissoes especificas.
-- [ ] Executar as Fases 0 a 7 da paridade financeira mobile documentadas em `docs/ETAPA_9_PARIDADE_FINANCEIRA_MOBILE.md`.
+- [x] Implementar as Fases 1 a 8 da paridade financeira mobile documentadas em `docs/ETAPA_9_PARIDADE_FINANCEIRA_MOBILE.md`.
+- [ ] Validar manualmente a paridade financeira entre web e mobile com o mesmo perfil, estabelecimento e periodo.
 - [ ] Selecionar, contratar e ativar um gateway externo em homologacao.
 
 ## Etapas Posteriores

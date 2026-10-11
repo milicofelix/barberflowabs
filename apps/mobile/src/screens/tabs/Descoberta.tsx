@@ -12,7 +12,7 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import * as Location from 'expo-location'
 import { useState } from 'react'
-import { FlatList, ImageBackground, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
+import { ActivityIndicator, FlatList, ImageBackground, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
 import MarcaUniFlow from '@/src/components/shared/MarcaUniFlow'
@@ -76,8 +76,17 @@ export default function Descoberta({ navigation }: Props) {
                 {selecionado ? <Text style={styles.selecao}>✓ Selecionado: {selecionado.nome}</Text> : null}
                 <Text style={[styles.contagem, { color: cores.textoSecundario }]}>{marketplace.carregando ? 'Buscando...' : `${marketplace.paginacao.total} resultado(s)`}</Text>
                 {marketplace.erro ? <EstadoErro mensagem={marketplace.erro} tentarNovamente={marketplace.recarregar} /> : null}
-                {marketplace.carregando ? <Carregando mensagem="Consultando o marketplace..." /> : null}
-                {!marketplace.carregando && mostrarMapa ? <MapaMarketplace estabelecimentos={marketplace.itens} abrir={abrir} /> : null}
+                {marketplace.carregando && !mostrarMapa ? <Carregando mensagem="Consultando o marketplace..." /> : null}
+                {mostrarMapa && marketplace.itens.length ? <View style={styles.mapaArea}>
+                    <MapaMarketplace estabelecimentos={marketplace.itens} abrir={abrir} />
+                    {marketplace.carregando ? <View style={[styles.mapaAtualizando, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
+                        <ActivityIndicator size="small" color={cores.destaque} />
+                        <Text style={[styles.mapaAtualizandoTexto, { color: cores.texto }]}>Atualizando locais...</Text>
+                    </View> : null}
+                </View> : null}
+                {mostrarMapa && marketplace.carregando && !marketplace.itens.length ? <Carregando mensagem="Carregando o mapa..." /> : null}
+                {mostrarMapa && !marketplace.carregando && !marketplace.itens.length && !marketplace.erro
+                    ? <EstadoVazio titulo="Nenhum local encontrado no mapa" descricao="Escolha outra categoria ou altere os filtros." /> : null}
             </View>}
             renderItem={({ item }) => <CartaoEstabelecimento item={item} selecionado={selecionado?.id === item.id} abrir={() => abrir(item.slug)} />}
             ListEmptyComponent={!marketplace.carregando && !marketplace.erro && !mostrarMapa
@@ -140,8 +149,13 @@ function Filtros({ filtros, atualizar }: { filtros: FiltrosMarketplace; atualiza
         <TextInput style={[styles.input, inputTema]} value={filtros.disponivelEm} onChangeText={(v) => atualizar('disponivelEm', v)} placeholder="Disponível em: 2026-10-15T14:00:00-03:00" placeholderTextColor={cores.textoSecundario} autoCapitalize="none" />
         <View style={styles.linha}><Text style={[styles.label, { color: cores.texto }]}>Aberto agora</Text><Switch value={filtros.abertaAgora} onValueChange={(v) => atualizar('abertaAgora', v)} /></View>
         <Text style={[styles.label, { color: cores.texto }]}>Avaliação mínima</Text><View style={styles.chips}>{[0, 4, 4.5].map((nota) => <Chip key={nota} texto={nota ? `${nota}+` : 'Todas'} ativo={filtros.notaMin === nota} acao={() => atualizar('notaMin', nota)} />)}</View>
-        <Text style={[styles.label, { color: cores.texto }]}>Distância {filtros.posicao ? `· até ${filtros.raioKm} km` : '· use sua localização'}</Text>
-        <View style={styles.chips}>{RAIOS.map((raio) => <Chip key={raio} texto={`${raio} km`} ativo={filtros.raioKm === raio} acao={() => atualizar('raioKm', raio)} />)}</View>
+        <Text style={[styles.label, { color: cores.texto }]}>Distância {filtros.posicao
+            ? filtros.raioKm === null ? '· sem limite' : `· até ${filtros.raioKm} km`
+            : '· use sua localização'}</Text>
+        <View style={styles.chips}>
+            {RAIOS.map((raio) => <Chip key={raio} texto={`${raio} km`} ativo={filtros.raioKm === raio} acao={() => atualizar('raioKm', raio)} />)}
+            <Chip texto="Sem limite" ativo={filtros.raioKm === null} acao={() => atualizar('raioKm', null)} />
+        </View>
     </View>
 }
 
@@ -174,4 +188,7 @@ const styles = StyleSheet.create({
     filtros: { backgroundColor: '#101E33', borderRadius: 14, padding: 14, gap: 11 }, input: { minHeight: 45, borderRadius: 10, backgroundColor: '#17263D', color: '#FFF', paddingHorizontal: 13, borderWidth: 1, borderColor: '#31415A' },
     linha: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, label: { color: '#CDD5E1', fontSize: 13, fontWeight: '700' }, chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     selecao: { color: '#C6F5DF', backgroundColor: '#12352E', padding: 12, borderRadius: 11, marginTop: 14 }, contagem: { color: '#AEBBCE', marginVertical: 17 },
+    mapaArea: { position: 'relative' },
+    mapaAtualizando: { position: 'absolute', top: 12, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderRadius: 999, shadowColor: '#000000', shadowOpacity: 0.2, shadowRadius: 7, shadowOffset: { width: 0, height: 2 }, elevation: 6 },
+    mapaAtualizandoTexto: { fontSize: 12, fontWeight: '800' },
 })
