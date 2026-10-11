@@ -101,7 +101,7 @@
     }
 
     .alternador-tema {
-        @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition hover:-translate-y-0.5;
+        @apply relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition hover:-translate-y-0.5;
     }
 
     .cabecalho-home {

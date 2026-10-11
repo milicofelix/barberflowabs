@@ -24,11 +24,12 @@ export type CoresTema = typeof paletas.dark | typeof paletas.light
 interface ContextoTemaValor {
     modo: ModoTema
     cores: CoresTema
+    automatico: boolean
     alternarTema: () => void
 }
 
 const ContextoTema = createContext<ContextoTemaValor>({} as ContextoTemaValor)
-const CHAVE_TEMA = '@uniflowabs/tema'
+const CHAVE_TEMA = '@uniflowabs/tema_preferencia_v2'
 const HORA_INICIO_TEMA_CLARO = 6
 const HORA_INICIO_TEMA_ESCURO = 18
 
@@ -61,13 +62,19 @@ export function ProvedorTema({ children }: { children: ReactNode }) {
     const valor = useMemo(() => ({
         modo,
         cores: paletas[modo],
+        automatico: preferencia === null,
         alternarTema: () => setModo((atual) => {
+            if (preferencia) {
+                setPreferencia(null)
+                AsyncStorage.removeItem(CHAVE_TEMA).catch(() => undefined)
+                return temaDoHorario()
+            }
             const proximo = atual === 'dark' ? 'light' : 'dark'
             setPreferencia(proximo)
             AsyncStorage.setItem(CHAVE_TEMA, proximo).catch(() => undefined)
             return proximo
         }),
-    }), [modo])
+    }), [modo, preferencia])
 
     return <ContextoTema.Provider value={valor}>{children}</ContextoTema.Provider>
 }

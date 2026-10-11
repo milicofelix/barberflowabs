@@ -6,6 +6,7 @@ type Tema = 'light' | 'dark'
 
 interface ContextoTemaProps {
     tema: Tema
+    automatico: boolean
     alternarTema: () => void
 }
 
@@ -52,13 +53,19 @@ export function ProvedorTema({ children }: PropsWithChildren) {
 
     const valor = useMemo(() => ({
         tema,
+        automatico: preferencia === null,
         alternarTema: () => setTema((atual) => {
+            if (preferencia) {
+                setPreferencia(null)
+                window.localStorage.removeItem(CHAVE_TEMA)
+                return temaDoHorario()
+            }
             const proximo = atual === 'light' ? 'dark' : 'light'
             setPreferencia(proximo)
             window.localStorage.setItem(CHAVE_TEMA, proximo)
             return proximo
         }),
-    }), [tema])
+    }), [preferencia, tema])
 
     return <ContextoTema.Provider value={valor}>{children}</ContextoTema.Provider>
 }
