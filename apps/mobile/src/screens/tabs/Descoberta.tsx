@@ -92,11 +92,28 @@ interface CategoriasProps {
 }
 
 function Categorias({ categorias, selecionada, selecionar }: CategoriasProps) {
-    return <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categorias}>
-        <CategoriaCard texto="Todos" slug="" ativo={!selecionada} acao={() => selecionar('')} />
-        {categorias.map((item) => <CategoriaCard key={item.id} texto={item.nome} slug={item.slug}
-            ativo={selecionada === item.slug} acao={() => selecionar(item.slug)} />)}
-    </ScrollView>
+    const { cores } = useTema()
+    const [larguraVisivel, setLarguraVisivel] = useState(0)
+    const [larguraConteudo, setLarguraConteudo] = useState(0)
+    const [deslocamento, setDeslocamento] = useState(0)
+    const temAnterior = deslocamento > 8
+    const temMais = larguraConteudo > larguraVisivel && deslocamento + larguraVisivel < larguraConteudo - 8
+
+    return <View style={styles.categoriasContainer} onLayout={(evento) => setLarguraVisivel(evento.nativeEvent.layout.width)}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categorias}
+            onContentSizeChange={(largura) => setLarguraConteudo(largura)}
+            onScroll={(evento) => setDeslocamento(evento.nativeEvent.contentOffset.x)} scrollEventThrottle={16}>
+            <CategoriaCard texto="Todos" slug="" ativo={!selecionada} acao={() => selecionar('')} />
+            {categorias.map((item) => <CategoriaCard key={item.id} texto={item.nome} slug={item.slug}
+                ativo={selecionada === item.slug} acao={() => selecionar(item.slug)} />)}
+        </ScrollView>
+        {temAnterior ? <View pointerEvents="none" style={[styles.categoriasIndicador, styles.categoriasIndicadorEsquerda, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
+            <Ionicons name="chevron-back" size={22} color={cores.destaque} />
+        </View> : null}
+        {temMais ? <View pointerEvents="none" style={[styles.categoriasIndicador, styles.categoriasIndicadorDireita, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
+            <Ionicons name="chevron-forward" size={22} color={cores.destaque} />
+        </View> : null}
+    </View>
 }
 
 function CategoriaCard({ texto, slug, ativo, acao }: { texto: string; slug: string; ativo: boolean; acao: () => void }) {
@@ -145,7 +162,9 @@ const styles = StyleSheet.create({
     sobretitulo: { color: '#F2C35B', fontSize: 12, fontWeight: '800', letterSpacing: 1.3 }, titulo: { color: '#FFFFFF', fontSize: 30, lineHeight: 35, fontWeight: '900', marginTop: 8, textShadowColor: 'rgba(0,0,0,.75)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 5 },
     descricao: { color: '#F1F5F9', lineHeight: 21, marginTop: 8, textShadowColor: 'rgba(0,0,0,.85)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 }, busca: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 14, backgroundColor: '#FFF', borderRadius: 14, paddingHorizontal: 14 },
     buscaInput: { flex: 1, minHeight: 52, color: '#101828' }, acoes: { flexDirection: 'row', gap: 7, marginTop: 10 }, botao: { flex: 1, minHeight: 42, borderWidth: 1, borderColor: '#35435A', borderRadius: 10, flexDirection: 'row', gap: 5, alignItems: 'center', justifyContent: 'center' },
-    botaoTexto: { color: '#E7EAF0', fontSize: 12, fontWeight: '700' }, categorias: { gap: 9, paddingVertical: 15, paddingRight: 6 },
+    botaoTexto: { color: '#E7EAF0', fontSize: 12, fontWeight: '700' }, categoriasContainer: { position: 'relative' }, categorias: { gap: 9, paddingVertical: 15, paddingRight: 46 },
+    categoriasIndicador: { position: 'absolute', top: 51, width: 38, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 19, borderWidth: 1, shadowColor: '#000000', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 5 },
+    categoriasIndicadorEsquerda: { left: 2 }, categoriasIndicadorDireita: { right: 2 },
     categoriaCard: { width: 116, minHeight: 116, overflow: 'hidden', borderWidth: 2, borderRadius: 15 },
     categoriaImagem: { height: 74, padding: 8 }, categoriaImagemBorda: { borderTopLeftRadius: 13, borderTopRightRadius: 13 },
     categoriaIcone: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center', borderRadius: 15 },
