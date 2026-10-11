@@ -12,10 +12,13 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import * as Location from 'expo-location'
 import { useState } from 'react'
-import { FlatList, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
+import { FlatList, ImageBackground, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
 import MarcaUniFlow from '@/src/components/shared/MarcaUniFlow'
+import { tituloDaCategoria, visualDaCategoria } from '@/src/data/estabelecimentos/categorias-visuais'
+import type { CategoriaMarketplace } from '@/src/data/estabelecimentos/tipos'
+import type { ComponentProps } from 'react'
 
 type Props = BottomTabScreenProps<AbasParamList, 'Descobrir'>
 const RAIOS = [2, 5, 10, 25]
@@ -28,6 +31,7 @@ export default function Descoberta({ navigation }: Props) {
     const [mostrarMapa, setMostrarMapa] = useState(false)
     const [localizando, setLocalizando] = useState(false)
     const marketplace = useMarketplace(filtros)
+    const categoriaSelecionada = marketplace.categorias.find((categoria) => categoria.slug === filtros.segmento)
     const atualizar = <K extends keyof FiltrosMarketplace>(campo: K, valor: FiltrosMarketplace[K]) =>
         setFiltros((atuais) => ({ ...atuais, [campo]: valor }))
     const abrir = (slug: string) => navigation.getParent<NativeStackNavigationProp<StackParamList>>()
@@ -49,7 +53,7 @@ export default function Descoberta({ navigation }: Props) {
             ListHeaderComponent={<View>
                 <View style={styles.marca}><MarcaUniFlow compacta exibirSlogan={false} /></View>
                 <Text style={styles.sobretitulo}>MARKETPLACE UNIFLOW ABS</Text>
-                <Text style={[styles.titulo, { color: cores.texto }]}>Encontre o cuidado ideal para você</Text>
+                <Text style={[styles.titulo, { color: cores.texto }]}>{tituloDaCategoria(categoriaSelecionada?.slug, categoriaSelecionada?.nome)}</Text>
                 <Text style={[styles.descricao, { color: cores.textoSecundario }]}>Explore estabelecimentos, especialidades, preços e horários disponíveis.</Text>
                 <View style={[styles.busca, { backgroundColor: cores.campo, borderColor: cores.borda, borderWidth: 1 }]}><Ionicons name="search-outline" size={21} color={cores.textoSecundario} />
                     <TextInput value={filtros.busca} onChangeText={(v) => atualizar('busca', v)}
@@ -74,11 +78,32 @@ export default function Descoberta({ navigation }: Props) {
     </SafeAreaView>
 }
 
-function Categorias({ categorias, selecionada, selecionar }: any) {
+interface CategoriasProps {
+    categorias: CategoriaMarketplace[]
+    selecionada: string
+    selecionar: (slug: string) => void
+}
+
+function Categorias({ categorias, selecionada, selecionar }: CategoriasProps) {
     return <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categorias}>
-        <Chip texto="Todos" ativo={!selecionada} acao={() => selecionar('')} />
-        {categorias.map((item: any) => <Chip key={item.id} texto={item.nome} ativo={selecionada === item.slug} acao={() => selecionar(item.slug)} />)}
+        <CategoriaCard texto="Todos" slug="" ativo={!selecionada} acao={() => selecionar('')} />
+        {categorias.map((item) => <CategoriaCard key={item.id} texto={item.nome} slug={item.slug}
+            ativo={selecionada === item.slug} acao={() => selecionar(item.slug)} />)}
     </ScrollView>
+}
+
+function CategoriaCard({ texto, slug, ativo, acao }: { texto: string; slug: string; ativo: boolean; acao: () => void }) {
+    const { cores } = useTema()
+    const visual = visualDaCategoria(slug, texto)
+    return <Pressable onPress={acao} style={[styles.categoriaCard, { backgroundColor: cores.superficie, borderColor: ativo ? cores.destaque : cores.borda }]}
+        accessibilityRole="button" accessibilityState={{ selected: ativo }}>
+        <ImageBackground source={visual.imagem} style={styles.categoriaImagem} imageStyle={styles.categoriaImagemBorda} resizeMode="cover">
+            <View style={[styles.categoriaIcone, { backgroundColor: ativo ? cores.destaque : 'rgba(255,255,255,.92)' }]}>
+                <Ionicons name={visual.icone as ComponentProps<typeof Ionicons>['name']} size={17} color={ativo ? cores.destaqueTexto : '#7C3AED'} />
+            </View>
+        </ImageBackground>
+        <Text numberOfLines={2} style={[styles.categoriaTexto, { color: cores.texto }]}>{texto}</Text>
+    </Pressable>
 }
 
 function Filtros({ filtros, atualizar }: { filtros: FiltrosMarketplace; atualizar: <K extends keyof FiltrosMarketplace>(campo: K, valor: FiltrosMarketplace[K]) => void }) {
@@ -111,7 +136,12 @@ const styles = StyleSheet.create({
     sobretitulo: { color: '#E7B84B', fontSize: 12, fontWeight: '800', letterSpacing: 1.3 }, titulo: { color: '#FFF', fontSize: 29, lineHeight: 35, fontWeight: '900', marginTop: 8 },
     descricao: { color: '#AEBBCE', lineHeight: 21, marginTop: 8, marginBottom: 18 }, busca: { flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: '#FFF', borderRadius: 14, paddingHorizontal: 14 },
     buscaInput: { flex: 1, minHeight: 52, color: '#101828' }, acoes: { flexDirection: 'row', gap: 7, marginTop: 10 }, botao: { flex: 1, minHeight: 42, borderWidth: 1, borderColor: '#35435A', borderRadius: 10, flexDirection: 'row', gap: 5, alignItems: 'center', justifyContent: 'center' },
-    botaoTexto: { color: '#E7EAF0', fontSize: 12, fontWeight: '700' }, categorias: { gap: 8, paddingVertical: 15 }, chip: { borderRadius: 999, borderWidth: 1, borderColor: '#43516A', paddingHorizontal: 12, paddingVertical: 8 },
+    botaoTexto: { color: '#E7EAF0', fontSize: 12, fontWeight: '700' }, categorias: { gap: 9, paddingVertical: 15, paddingRight: 6 },
+    categoriaCard: { width: 116, minHeight: 116, overflow: 'hidden', borderWidth: 2, borderRadius: 15 },
+    categoriaImagem: { height: 74, padding: 8 }, categoriaImagemBorda: { borderTopLeftRadius: 13, borderTopRightRadius: 13 },
+    categoriaIcone: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center', borderRadius: 15 },
+    categoriaTexto: { minHeight: 40, paddingHorizontal: 7, paddingVertical: 7, fontSize: 12, lineHeight: 14, fontWeight: '800', textAlign: 'center' },
+    chip: { borderRadius: 999, borderWidth: 1, borderColor: '#43516A', paddingHorizontal: 12, paddingVertical: 8 },
     chipAtivo: { backgroundColor: '#E7B84B', borderColor: '#E7B84B' }, chipTexto: { color: '#CDD5E1', fontSize: 12, fontWeight: '700' }, chipTextoAtivo: { color: '#081426' },
     filtros: { backgroundColor: '#101E33', borderRadius: 14, padding: 14, gap: 11 }, input: { minHeight: 45, borderRadius: 10, backgroundColor: '#17263D', color: '#FFF', paddingHorizontal: 13, borderWidth: 1, borderColor: '#31415A' },
     linha: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, label: { color: '#CDD5E1', fontSize: 13, fontWeight: '700' }, chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
