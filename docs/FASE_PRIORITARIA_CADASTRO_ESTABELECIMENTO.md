@@ -1,6 +1,6 @@
 # Fase Prioritaria — Cadastro E Aprovacao De Estabelecimentos
 
-Status: planejada em 2026-10-11; implementacao pendente.
+Status: Fase A implementada em 2026-10-11; migration, Prisma Client, reinicio e validacao manual pendentes.
 
 Esta fase entra antes da Fase 2 da Etapa 10. Ela evolui o onboarding existente sem duplicar contas, sem publicar dados nao validados e sem exigir latitude ou longitude do solicitante.
 
@@ -182,10 +182,23 @@ Somente `APPROVED` materializa o estabelecimento e permite sua futura publicacao
 
 ### Fase A — Dominio E Contratos
 
-- [ ] Criar solicitacao, endereco estruturado e notificacao persistente.
-- [ ] Criar migration e rollback manual.
-- [ ] Separar solicitacao de estabelecimento operacional.
-- [ ] Criar APIs autenticadas de rascunho, envio e acompanhamento.
+- [x] Criar solicitacao, endereco estruturado e notificacao persistente.
+- [x] Criar migration e rollback manual.
+- [x] Separar solicitacao de estabelecimento operacional.
+- [x] Criar APIs autenticadas de rascunho, envio e acompanhamento.
+
+Contratos implementados:
+
+- `GET /solicitacoes-estabelecimento`
+- `POST /solicitacoes-estabelecimento`
+- `GET /solicitacoes-estabelecimento/configuracao`
+- `GET /solicitacoes-estabelecimento/:id`
+- `PUT /solicitacoes-estabelecimento/:id`
+- `POST /solicitacoes-estabelecimento/:id/enviar`
+
+O `POST` reutiliza um rascunho ou uma solicitacao ativa do mesmo usuario para evitar duplicidade. O `PUT` exige a versao atual e rejeita sobrescrita concorrente. O envio valida campos obrigatorios, plano, tipo, modalidade e compatibilidade entre segmentos e especialidades antes de mudar para `PENDING_REVIEW`.
+
+O onboarding antigo permanece temporariamente ativo. Web e mobile migrarao para os novos contratos nas Fases B e C; sua remocao so ocorrera depois da paridade e do aceite manual.
 
 ### Fase B — Assistente Web
 
@@ -223,4 +236,4 @@ Somente `APPROVED` materializa o estabelecimento e permite sua futura publicacao
 - CNPJ e comprovacao documental devem ser decididos juridicamente antes de serem obrigatorios.
 - Nenhum dado pendente deve alimentar busca publica ou mapa.
 
-Nenhuma migration, teste, build ou integracao externa foi executada nesta fase de planejamento.
+Nenhuma migration, geracao do Prisma Client, teste, build ou integracao externa foi executada automaticamente nesta fase.

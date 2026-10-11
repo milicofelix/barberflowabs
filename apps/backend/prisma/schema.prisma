@@ -34,6 +34,9 @@ model Usuario {
   vinculosEquipe MembroEquipe[]
   preferenciasComunicacao PreferenciaComunicacao[]
   enviosComunicacao EnvioComunicacao[]
+  solicitacoesEstabelecimento SolicitacaoEstabelecimento[] @relation("SolicitanteSolicitacaoEstabelecimento")
+  solicitacoesEstabelecimentoRevisadas SolicitacaoEstabelecimento[] @relation("RevisorSolicitacaoEstabelecimento")
+  notificacoes NotificacaoUsuario[]
 
   @@index([estabelecimentoId])
   @@map("usuarios")
@@ -200,6 +203,7 @@ model Estabelecimento {
   preferenciasComunicacao      PreferenciaComunicacao[]
   templatesComunicacao         TemplateComunicacao[]
   enviosComunicacao             EnvioComunicacao[]
+  notificacoes                  NotificacaoUsuario[]
 
   @@map("estabelecimentos")
 }
@@ -214,6 +218,7 @@ model Segmento {
   updatedAt       DateTime  @updatedAt
   especialidades  Especialidade[]
   estabelecimentos EstabelecimentoSegmento[]
+  solicitacoes      SolicitacaoEstabelecimentoSegmento[]
 
   @@map("segmentos")
 }
@@ -231,6 +236,7 @@ model Especialidade {
   estabelecimentos EstabelecimentoEspecialidade[]
   profissionais    ProfissionalEspecialidade[]
   servicos         ServicoEspecialidade[]
+  solicitacoes     SolicitacaoEstabelecimentoEspecialidade[]
 
   @@unique([segmentoId, slug])
   @@index([segmentoId, ativo])
@@ -264,6 +270,96 @@ model EstabelecimentoEspecialidade {
   @@unique([estabelecimentoId, especialidadeId])
   @@index([especialidadeId])
   @@map("estabelecimentos_especialidades")
+}
+
+model SolicitacaoEstabelecimento {
+  id                  Int       @id @default(autoincrement())
+  usuarioId           Int
+  revisorId           Int?
+  status              String    @default("RASCUNHO")
+  nomePublico         String?
+  emailComercial      String?
+  telefoneComercial   String?
+  tipoEstabelecimento String?
+  modeloAtendimento   String?
+  planoSlug           String?
+  cep                 String?   @db.VarChar(8)
+  logradouro          String?
+  numero              String?
+  complemento         String?
+  pontoReferencia     String?
+  bairro              String?
+  cidade              String?
+  estado              String?   @db.VarChar(2)
+  termosVersao        String?
+  termosAceitosEm     DateTime?
+  enviadoEm           DateTime?
+  revisadoEm          DateTime?
+  motivoRevisao       String?   @db.Text
+  versao              Int       @default(1)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  usuario             Usuario   @relation("SolicitanteSolicitacaoEstabelecimento", fields: [usuarioId], references: [id])
+  revisor             Usuario?  @relation("RevisorSolicitacaoEstabelecimento", fields: [revisorId], references: [id])
+  segmentos           SolicitacaoEstabelecimentoSegmento[]
+  especialidades      SolicitacaoEstabelecimentoEspecialidade[]
+  notificacoes        NotificacaoUsuario[]
+
+  @@index([usuarioId, status, updatedAt])
+  @@index([status, enviadoEm])
+  @@index([revisorId])
+  @@map("solicitacoes_estabelecimentos")
+}
+
+model SolicitacaoEstabelecimentoSegmento {
+  id            Int      @id @default(autoincrement())
+  solicitacaoId Int
+  segmentoId    Int
+  principal     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  solicitacao   SolicitacaoEstabelecimento @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade, map: "solicitacao_segmento_solicitacao_fkey")
+  segmento      Segmento @relation(fields: [segmentoId], references: [id], map: "solicitacao_segmento_segmento_fkey")
+
+  @@unique([solicitacaoId, segmentoId], map: "solicitacao_segmento_unica")
+  @@index([segmentoId], map: "solicitacao_segmento_segmento_idx")
+  @@map("solicitacoes_estabelecimentos_segmentos")
+}
+
+model SolicitacaoEstabelecimentoEspecialidade {
+  id               Int      @id @default(autoincrement())
+  solicitacaoId    Int
+  especialidadeId  Int
+  createdAt        DateTime @default(now())
+  solicitacao      SolicitacaoEstabelecimento @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade, map: "solicitacao_especialidade_solicitacao_fkey")
+  especialidade    Especialidade @relation(fields: [especialidadeId], references: [id], map: "solicitacao_especialidade_especialidade_fkey")
+
+  @@unique([solicitacaoId, especialidadeId], map: "solicitacao_especialidade_unica")
+  @@index([especialidadeId], map: "solicitacao_especialidade_idx")
+  @@map("solicitacoes_estabelecimentos_especialidades")
+}
+
+model NotificacaoUsuario {
+  id                Int       @id @default(autoincrement())
+  usuarioId         Int
+  estabelecimentoId Int?
+  solicitacaoId     Int?
+  tipo              String
+  titulo            String
+  mensagem          String    @db.Text
+  prioridade        String    @default("NORMAL")
+  acaoUrl           String?
+  metadados         Json?
+  lidaEm            DateTime?
+  expiraEm          DateTime?
+  createdAt         DateTime  @default(now())
+  usuario           Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  estabelecimento   Estabelecimento? @relation(fields: [estabelecimentoId], references: [id], onDelete: SetNull)
+  solicitacao       SolicitacaoEstabelecimento? @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, lidaEm, createdAt])
+  @@index([estabelecimentoId, createdAt])
+  @@index([solicitacaoId])
+  @@map("notificacoes_usuarios")
 }
 
 model ProfissionalEspecialidade {

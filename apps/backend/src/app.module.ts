@@ -15,6 +15,7 @@ import { RecursoModule } from './recurso/recurso.module';
 import { EquipeModule } from './equipe/equipe.module';
 import { FinanceiroModule } from './financeiro/financeiro.module';
 import { RelacionamentoModule } from './relacionamento/relacionamento.module';
+import { SolicitacaoEstabelecimentoModule } from './solicitacao-estabelecimento/solicitacao-estabelecimento.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { RelacionamentoModule } from './relacionamento/relacionamento.module';
     EquipeModule,
     FinanceiroModule,
     RelacionamentoModule,
+    SolicitacaoEstabelecimentoModule,
   ],
   controllers: [AppController],
 })
