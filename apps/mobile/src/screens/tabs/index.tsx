@@ -42,12 +42,16 @@ export default function Abas() {
             }}
         >
             <Tab.Screen name="Descobrir" component={Descoberta} options={opcoesAba('Descobrir', 'search-outline', cores.destaque, cores.textoSecundario)} />
-            <Tab.Screen name="Inicio" component={Inicio} options={opcoesAba('Início', 'home-outline', cores.destaque, cores.textoSecundario)} />
-            <Tab.Screen
-                name="Agendamento"
-                component={Agendamento}
-                options={opcoesAba('Agendar', 'calendar-outline', cores.destaque, cores.textoSecundario)}
-            />
+            {usuario ? (
+                <>
+                    <Tab.Screen name="Inicio" component={Inicio} options={opcoesAba('Início', 'home-outline', cores.destaque, cores.textoSecundario)} />
+                    <Tab.Screen
+                        name="Agendamento"
+                        component={Agendamento}
+                        options={opcoesAba('Agendar', 'calendar-outline', cores.destaque, cores.textoSecundario)}
+                    />
+                </>
+            ) : null}
             {operacional ? (
                 <>
                     <Tab.Screen

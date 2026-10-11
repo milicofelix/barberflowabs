@@ -29,25 +29,22 @@ function Navegacao() {
     return (
         <NavigationContainer theme={{ ...(modo === 'dark' ? DarkTheme : DefaultTheme), colors: { primary: cores.destaque, background: cores.fundo, card: cores.superficie, text: cores.texto, border: cores.borda, notification: cores.perigo } }}>
             <Stack.Navigator>
-                {!usuario ? (
+                <Stack.Screen name="Abas" component={Abas} options={{ headerShown: false }} />
+                <Stack.Screen
+                    name="PerfilEstabelecimento"
+                    component={PerfilEstabelecimento}
+                    options={{
+                        title: 'Perfil do estabelecimento',
+                        headerBackTitle: 'Descobrir',
+                        headerStyle: { backgroundColor: cores.superficie },
+                        headerTintColor: cores.texto,
+                    }}
+                />
+                <Stack.Screen name="Autenticacao" component={Autenticacao} options={{ headerShown: false }} />
+                <Stack.Screen name="OnboardingEstabelecimento" component={OnboardingEstabelecimento}
+                    options={{ title: 'Cadastrar estabelecimento', headerStyle: { backgroundColor: cores.superficie }, headerTintColor: cores.texto }} />
+                {usuario ? (
                     <>
-                        <Stack.Screen name="Autenticacao" component={Autenticacao} options={{ headerShown: false }} />
-                        <Stack.Screen name="OnboardingEstabelecimento" component={OnboardingEstabelecimento}
-                            options={{ title: 'Cadastrar estabelecimento', headerStyle: { backgroundColor: cores.superficie }, headerTintColor: cores.texto }} />
-                    </>
-                ) : (
-                    <>
-                        <Stack.Screen name="Abas" component={Abas} options={{ headerShown: false }} />
-                        <Stack.Screen
-                            name="PerfilEstabelecimento"
-                            component={PerfilEstabelecimento}
-                            options={{
-                                title: 'Perfil do estabelecimento',
-                                headerBackTitle: 'Descobrir',
-                                headerStyle: { backgroundColor: cores.superficie },
-                                headerTintColor: cores.texto,
-                            }}
-                        />
                         <Stack.Screen
                             name="Sumario"
                             component={Sumario}
@@ -69,7 +66,7 @@ function Navegacao() {
                             }}
                         />
                     </>
-                )}
+                ) : null}
             </Stack.Navigator>
             <AlternadorTema />
         </NavigationContainer>

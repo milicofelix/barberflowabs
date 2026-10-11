@@ -22,6 +22,13 @@ function agendamentoAtivo(agendamento: Agendamento) {
     return STATUS_ATIVOS.includes(agendamento.status ?? 'AGENDADO') && fim.getTime() > Date.now()
 }
 
+function saudacaoAtual() {
+    const hora = new Date().getHours()
+    if (hora < 12) return 'Bom dia'
+    if (hora < 18) return 'Boa tarde'
+    return 'Boa noite'
+}
+
 export default function AgendamentosUsuario() {
     const { cores, modo } = useTema()
     const [agendamentos, setAgendamentos] = useState<Agendamento[]>([])
@@ -126,7 +133,7 @@ export default function AgendamentosUsuario() {
     return (
         <View style={styles.container}>
             <MarcaUniFlow compacta exibirSlogan={false} />
-            <Text style={[styles.titulo, { color: cores.texto }]}>Fala, {usuario?.nome}!</Text>
+            <Text style={[styles.titulo, { color: cores.texto }]}>{saudacaoAtual()}, {usuario?.nome}!</Text>
             {renderizarConteudo()}
             <Confirmacao
                 visivel={!!agendamentoParaCancelar}

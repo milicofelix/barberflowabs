@@ -11,7 +11,7 @@ export type AbasParamList = {
 }
 
 export type StackParamList = {
-    Autenticacao: undefined
+    Autenticacao: { destino?: 'Agendamento' | 'Inicio' } | undefined
     Abas: NavigatorScreenParams<AbasParamList> | undefined
     Sumario: undefined
     PerfilEstabelecimento: { slug: string }

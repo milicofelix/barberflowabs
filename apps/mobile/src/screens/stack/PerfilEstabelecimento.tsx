@@ -15,6 +15,7 @@ import type { ComponentProps, ReactNode } from 'react'
 import { ActivityIndicator, ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
+import useSessao from '@/src/data/hooks/useSessao'
 
 type Props = NativeStackScreenProps<StackParamList, 'PerfilEstabelecimento'>
 const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
@@ -22,6 +23,7 @@ const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sáb
 export default function PerfilEstabelecimento({ route, navigation }: Props) {
     const { cores } = useTema()
     const { httpGet } = useAPI()
+    const { usuario } = useSessao()
     const { estabelecimento: selecionada, selecionarEstabelecimento } = useEstabelecimento()
     const [estabelecimento, setEstabelecimento] = useState<EstabelecimentoPerfil | null>(null)
     const [carregando, setCarregando] = useState(true)
@@ -51,6 +53,10 @@ export default function PerfilEstabelecimento({ route, navigation }: Props) {
         try {
             setSelecionando(true)
             await selecionarEstabelecimento(resumirSelecao(estabelecimento))
+            if (!usuario) {
+                navigation.navigate('Autenticacao', { destino: 'Agendamento' })
+                return
+            }
             navigation.navigate('Abas', { screen: 'Agendamento' })
         } catch {
             setErro('Não foi possível salvar seu estabelecimento. Tente novamente.')

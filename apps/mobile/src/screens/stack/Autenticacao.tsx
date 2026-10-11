@@ -7,7 +7,7 @@ import MarcaUniFlow from '@/src/components/shared/MarcaUniFlow'
 import useFormAuth from '@/src/data/hooks/useFormAuth'
 import type { StackParamList } from '@/src/navigation/types'
 import type { NativeStackScreenProps } from '@react-navigation/native-stack'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import {
     ActivityIndicator,
     KeyboardAvoidingView,
@@ -21,11 +21,13 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
+import useSessao from '@/src/data/hooks/useSessao'
 
 type Props = NativeStackScreenProps<StackParamList, 'Autenticacao'>
 
-export default function Autenticacao({ navigation }: Props) {
+export default function Autenticacao({ navigation, route }: Props) {
     const { cores } = useTema()
+    const { usuario } = useSessao()
     const {
         nome, email, telefone, senha, confirmacaoSenha, modo, erros, erroGeral, sucesso, processando,
         alterarNome, alterarEmail, alterarTelefone, alterarSenha, alterarConfirmacaoSenha, alterarModo, submeter,
@@ -35,6 +37,14 @@ export default function Autenticacao({ navigation }: Props) {
     const senhaRef = useRef<TextInput>(null)
     const confirmacaoRef = useRef<TextInput>(null)
     const cadastro = modo === 'cadastro'
+
+    useEffect(() => {
+        if (!usuario) return
+        navigation.reset({
+            index: 0,
+            routes: [{ name: 'Abas', params: { screen: route.params?.destino ?? 'Inicio' } }],
+        })
+    }, [navigation, route.params?.destino, usuario])
 
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top', 'right', 'bottom', 'left']}>
@@ -157,6 +167,9 @@ export default function Autenticacao({ navigation }: Props) {
                         {!cadastro ? <Pressable onPress={() => navigation.navigate('OnboardingEstabelecimento')} style={styles.estabelecimento}>
                             <Text style={styles.estabelecimentoTexto}>Quero cadastrar meu estabelecimento</Text>
                         </Pressable> : null}
+                        <Pressable onPress={() => navigation.navigate('Abas', { screen: 'Descobrir' })} style={styles.continuarPublico}>
+                            <Text style={[styles.continuarPublicoTexto, { color: cores.textoSecundario }]}>Continuar explorando sem entrar</Text>
+                        </Pressable>
                     </View>
                     <Text style={[styles.rodape, { color: cores.textoSecundario }]}>Agendamentos simples. Experiências memoráveis.</Text>
                 </ScrollView>
@@ -195,5 +208,7 @@ const styles = StyleSheet.create({
     alternarModoDestaque: { color: '#0A4B78', fontWeight: '800' },
     estabelecimento: { marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: '#EAECF0' },
     estabelecimentoTexto: { color: '#6D4F08', fontWeight: '800', textAlign: 'center' },
+    continuarPublico: { paddingTop: 18, paddingBottom: 4 },
+    continuarPublicoTexto: { fontSize: 13, fontWeight: '700', textAlign: 'center', textDecorationLine: 'underline' },
     rodape: { color: '#91A0B5', fontSize: 12, textAlign: 'center', marginTop: 22 },
 })
