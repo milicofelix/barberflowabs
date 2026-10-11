@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons'
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import * as Location from 'expo-location'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ActivityIndicator, FlatList, ImageBackground, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
@@ -38,15 +38,31 @@ export default function Descoberta({ navigation }: Props) {
     const abrir = (slug: string) => navigation.getParent<NativeStackNavigationProp<StackParamList>>()
         ?.navigate('PerfilEstabelecimento', { slug })
 
-    async function localizar() {
+    async function localizar(raioKm = filtros.raioKm) {
         try {
             setLocalizando(true)
             const permissao = await Location.requestForegroundPermissionsAsync()
             if (!permissao.granted) return
             const local = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })
-            atualizar('posicao', { lat: local.coords.latitude, lng: local.coords.longitude })
+            setFiltros((atuais) => ({
+                ...atuais,
+                posicao: { lat: local.coords.latitude, lng: local.coords.longitude },
+                raioKm,
+            }))
         } finally { setLocalizando(false) }
     }
+
+    function selecionarRaio(raioKm: number | null) {
+        if (raioKm === null || filtros.posicao) {
+            atualizar('raioKm', raioKm)
+            return
+        }
+        void localizar(raioKm)
+    }
+
+    useEffect(() => {
+        void localizar(FILTROS_INICIAIS.raioKm)
+    }, [])
 
     return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}>
         <FlatList data={mostrarMapa ? [] : marketplace.itens} keyExtractor={(item) => String(item.id)}
@@ -68,11 +84,11 @@ export default function Descoberta({ navigation }: Props) {
                 <View style={styles.acoes}>
                     <Botao icone="options-outline" texto="Filtros" acao={() => setMostrarFiltros(!mostrarFiltros)} />
                     <Botao icone="map-outline" texto={mostrarMapa ? 'Lista' : 'Mapa'} acao={() => setMostrarMapa(!mostrarMapa)} />
-                    <Botao icone="locate-outline" texto={localizando ? '...' : 'Localizar'} acao={localizar} />
+                    <Botao icone="locate-outline" texto={localizando ? '...' : 'Localizar'} acao={() => void localizar()} />
                 </View>
                 <Categorias categorias={marketplace.categorias} selecionada={filtros.segmento}
                     selecionar={(segmento: string) => atualizar('segmento', segmento)} />
-                {mostrarFiltros ? <Filtros filtros={filtros} atualizar={atualizar} /> : null}
+                {mostrarFiltros ? <Filtros filtros={filtros} atualizar={atualizar} selecionarRaio={selecionarRaio} /> : null}
                 {selecionado ? <Text style={styles.selecao}>✓ Selecionado: {selecionado.nome}</Text> : null}
                 <Text style={[styles.contagem, { color: cores.textoSecundario }]}>{marketplace.carregando ? 'Buscando...' : `${marketplace.paginacao.total} resultado(s)`}</Text>
                 {marketplace.erro ? <EstadoErro mensagem={marketplace.erro} tentarNovamente={marketplace.recarregar} /> : null}
@@ -139,7 +155,11 @@ function CategoriaCard({ texto, slug, ativo, acao }: { texto: string; slug: stri
     </Pressable>
 }
 
-function Filtros({ filtros, atualizar }: { filtros: FiltrosMarketplace; atualizar: <K extends keyof FiltrosMarketplace>(campo: K, valor: FiltrosMarketplace[K]) => void }) {
+function Filtros({ filtros, atualizar, selecionarRaio }: {
+    filtros: FiltrosMarketplace
+    atualizar: <K extends keyof FiltrosMarketplace>(campo: K, valor: FiltrosMarketplace[K]) => void
+    selecionarRaio: (raioKm: number | null) => void
+}) {
     const { cores } = useTema()
     const inputTema = { backgroundColor: cores.campo, color: cores.campoTexto, borderColor: cores.borda }
     return <View style={[styles.filtros, { backgroundColor: cores.superficie }]}>
@@ -153,8 +173,8 @@ function Filtros({ filtros, atualizar }: { filtros: FiltrosMarketplace; atualiza
             ? filtros.raioKm === null ? '· sem limite' : `· até ${filtros.raioKm} km`
             : '· use sua localização'}</Text>
         <View style={styles.chips}>
-            {RAIOS.map((raio) => <Chip key={raio} texto={`${raio} km`} ativo={filtros.raioKm === raio} acao={() => atualizar('raioKm', raio)} />)}
-            <Chip texto="Sem limite" ativo={filtros.raioKm === null} acao={() => atualizar('raioKm', null)} />
+            {RAIOS.map((raio) => <Chip key={raio} texto={`${raio} km`} ativo={filtros.raioKm === raio} acao={() => selecionarRaio(raio)} />)}
+            <Chip texto="Sem limite" ativo={filtros.raioKm === null} acao={() => selecionarRaio(null)} />
         </View>
     </View>
 }
