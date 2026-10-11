@@ -1,6 +1,6 @@
 # Fase Prioritaria — Cadastro E Aprovacao De Estabelecimentos
 
-Status: Fase A implementada em 2026-10-11; migration, Prisma Client, reinicio e validacao manual pendentes.
+Status: Fases A e B implementadas em 2026-10-11; migration, Prisma Client, reinicio e validacao manual pendentes.
 
 Esta fase entra antes da Fase 2 da Etapa 10. Ela evolui o onboarding existente sem duplicar contas, sem publicar dados nao validados e sem exigir latitude ou longitude do solicitante.
 
@@ -202,10 +202,14 @@ O onboarding antigo permanece temporariamente ativo. Web e mobile migrarao para 
 
 ### Fase B — Assistente Web
 
-- [ ] Reaproveitar conta autenticada.
-- [ ] Criar passos guiados, cards de classificacao e mascaras.
-- [ ] Integrar ViaCEP com tratamento de erro e edicao manual.
-- [ ] Remover slug, latitude e longitude da responsabilidade do usuario.
+- [x] Reaproveitar conta autenticada.
+- [x] Criar passos guiados, cards de classificacao e mascaras.
+- [x] Integrar ViaCEP com tratamento de erro e edicao manual.
+- [x] Remover slug, latitude e longitude da responsabilidade do usuario.
+
+O onboarding web agora exige uma conta pessoal autenticada e retorna ao assistente apos login ou cadastro. O fluxo salva o rascunho entre os passos, sugere segmentos conforme o tipo do negocio, limita as especialidades aos segmentos escolhidos e apresenta revisao antes do envio. Solicitacoes ja enviadas exibem protocolo e estado de acompanhamento em vez de permitir nova edicao.
+
+O CEP possui validacao local, timeout de sete segundos, tratamento de CEP inexistente e preenchimento manual como alternativa. Telefone, CEP, UF e e-mail sao formatados na interface e novamente normalizados pelo backend. Slug e coordenadas nao aparecem no formulario.
 
 ### Fase C — Assistente Mobile
 

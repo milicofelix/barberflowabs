@@ -1,176 +1,37 @@
 'use client'
 
-import useAPI from '@/data/hooks/useAPI'
+import { ArrowRight, Store } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
-import { Campo, GrupoOpcoes, Selecao } from './CamposOnboarding'
-import {
-    MODELOS_ATENDIMENTO_ONBOARDING,
-    TIPOS_ESTABELECIMENTO_ONBOARDING,
-} from './onboarding.config'
-import type { SegmentoOnboarding } from './onboarding.config'
-
-const cadastroInicial = {
-    nomeEstabelecimento: '',
-    slug: '',
-    emailEstabelecimento: '',
-    telefoneEstabelecimento: '',
-    nomeDono: '',
-    emailDono: '',
-    telefoneDono: '',
-    senha: '',
-    planoSlug: 'mensal',
-    tipoEstabelecimento: 'BARBEARIA',
-    modeloAtendimento: 'PRESENCIAL',
-    segmentoIds: [] as number[],
-    especialidadeIds: [] as number[],
-}
+import useSessao from '@/data/hooks/useSessao'
+import AlternadorTema from '../shared/AlternadorTema'
+import Logo from '../shared/Logo'
+import PassosSolicitacaoEstabelecimento from './PassosSolicitacaoEstabelecimento'
 
 export default function OnboardingSaas() {
-    const { httpGet, httpPost } = useAPI()
-    const [planos, setPlanos] = useState<any[]>([])
-    const [segmentos, setSegmentos] = useState<SegmentoOnboarding[]>([])
-    const [form, setForm] = useState(cadastroInicial)
-    const [mensagem, setMensagem] = useState('')
-    const [criado, setCriado] = useState<any>(null)
-
-    useEffect(() => {
-        httpGet('/saas/planos').then((dados) => setPlanos(Array.isArray(dados) ? dados : []))
-        httpGet('/catalogo/segmentos').then((dados) => setSegmentos(Array.isArray(dados) ? dados : []))
-    }, [httpGet])
-
-    function alterar(campo: string, valor: string) {
-        setForm((atual) => ({
-            ...atual,
-            [campo]: valor,
-            ...(campo === 'nomeEstabelecimento' ? { slug: slugify(valor) } : {}),
-        }))
-    }
-
-    function alternarId(campo: 'segmentoIds' | 'especialidadeIds', id: number) {
-        setForm((atual) => ({
-            ...atual,
-            [campo]: atual[campo].includes(id) ? atual[campo].filter((item) => item !== id) : [...atual[campo], id],
-            ...(campo === 'segmentoIds' && atual.segmentoIds.includes(id)
-                ? { especialidadeIds: atual.especialidadeIds.filter((especialidadeId) =>
-                    segmentos.some((segmento) => segmento.id !== id && segmento.especialidades.some((item) => item.id === especialidadeId))) }
-                : {}),
-        }))
-    }
-
-    async function submeter() {
-        setMensagem('')
-        const resposta = await httpPost('/saas/onboarding', {
-            planoSlug: form.planoSlug,
-            estabelecimento: {
-                nome: form.nomeEstabelecimento,
-                slug: form.slug,
-                email: form.emailEstabelecimento,
-                telefone: form.telefoneEstabelecimento,
-                tipoEstabelecimento: form.tipoEstabelecimento,
-                modeloAtendimento: form.modeloAtendimento,
-                segmentoIds: form.segmentoIds,
-                especialidadeIds: form.especialidadeIds,
-            },
-            dono: {
-                nome: form.nomeDono,
-                email: form.emailDono,
-                telefone: form.telefoneDono,
-                senha: form.senha,
-            },
-        })
-
-        if (resposta?.statusCode) return setMensagem(resposta.message)
-        setCriado(resposta)
-        setMensagem('Estabelecimento criado com trial ativo e enviado para revisão.')
-    }
-
-    return (
-        <div className="min-h-screen bg-zinc-950 text-zinc-100">
-            <main className="container flex flex-col gap-8 py-12">
-                <header className="max-w-3xl">
-                    <span className="text-sm font-semibold text-yellow-400">UniFlow ABS</span>
-                    <h1 className="mt-3 text-4xl font-black">Cadastre seu estabelecimento</h1>
-                    <p className="mt-3 text-zinc-400">
-                        Uma plataforma para serviços de beleza, estética e bem-estar, com trial de 14 dias.
-                    </p>
-                </header>
-
-                <section className="grid gap-6 lg:grid-cols-[1fr_420px]">
-                    <div className="grid gap-4 rounded border border-zinc-800 bg-zinc-900 p-5">
-                        <h2 className="text-xl font-bold">Dados do estabelecimento</h2>
-                        <Campo label="Nome do estabelecimento" value={form.nomeEstabelecimento} onChange={(v) => alterar('nomeEstabelecimento', v)} />
-                        <Campo label="Slug" value={form.slug} onChange={(v) => alterar('slug', v)} />
-                        <Campo label="E-mail do estabelecimento" value={form.emailEstabelecimento} onChange={(v) => alterar('emailEstabelecimento', v)} />
-                        <Campo label="Telefone do estabelecimento" value={form.telefoneEstabelecimento} onChange={(v) => alterar('telefoneEstabelecimento', v)} />
-
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <Selecao label="Tipo" value={form.tipoEstabelecimento} onChange={(v) => alterar('tipoEstabelecimento', v)} opcoes={TIPOS_ESTABELECIMENTO_ONBOARDING} />
-                            <Selecao label="Atendimento" value={form.modeloAtendimento} onChange={(v) => alterar('modeloAtendimento', v)} opcoes={MODELOS_ATENDIMENTO_ONBOARDING} />
-                        </div>
-                        <GrupoOpcoes titulo="Segmentos" itens={segmentos} selecionados={form.segmentoIds}
-                            alternar={(id) => alternarId('segmentoIds', id)} />
-                        <GrupoOpcoes titulo="Especialidades" itens={segmentos.filter((item) => form.segmentoIds.includes(item.id)).flatMap((item) => item.especialidades)}
-                            selecionados={form.especialidadeIds} alternar={(id) => alternarId('especialidadeIds', id)} />
-
-                        <h2 className="mt-4 text-xl font-bold">Responsável</h2>
-                        <Campo label="Nome" value={form.nomeDono} onChange={(v) => alterar('nomeDono', v)} />
-                        <Campo label="E-mail" value={form.emailDono} onChange={(v) => alterar('emailDono', v)} />
-                        <Campo label="Telefone" value={form.telefoneDono} onChange={(v) => alterar('telefoneDono', v)} />
-                        <Campo label="Senha" type="password" value={form.senha} onChange={(v) => alterar('senha', v)} />
-
-                        <button type="button" onClick={submeter} className="rounded bg-yellow-400 px-4 py-3 font-bold text-black">
-                            Iniciar trial
-                        </button>
-                        {mensagem && <p className="text-sm text-zinc-300">{mensagem}</p>}
-                        {criado && (
-                            <Link href="/entrar" className="text-sm font-semibold text-yellow-400">
-                                Acessar login
-                            </Link>
-                        )}
-                    </div>
-
-                    <div className="grid content-start gap-3">
-                        {planos.map((plano) => (
-                            <button
-                                key={plano.slug}
-                                type="button"
-                                onClick={() => alterar('planoSlug', plano.slug)}
-                                className={[
-                                    'rounded border p-5 text-left',
-                                    form.planoSlug === plano.slug
-                                        ? 'border-yellow-400 bg-yellow-400 text-black'
-                                        : 'border-zinc-800 bg-zinc-900 text-zinc-100',
-                                ].join(' ')}
-                            >
-                                <strong className="text-lg">{plano.nome}</strong>
-                                <p className="mt-1 text-sm opacity-80">{plano.descricao}</p>
-                                <p className="mt-3 text-2xl font-black">{moeda(plano.valorDoCiclo ?? plano.precoMensal)}</p>
-                                <p className="mt-1 text-sm font-semibold opacity-80">{plano.ciclo?.cobranca ?? 'Pagamento via PIX'}</p>
-                                {Number(plano.economiaPercentual ?? 0) > 0 && (
-                                    <p className="mt-2 text-sm font-bold opacity-90">
-                                        Economize {plano.economiaPercentual}% em relação ao mensal
-                                    </p>
-                                )}
-                            </button>
-                        ))}
-                    </div>
-                </section>
-            </main>
-        </div>
-    )
+    const { usuario, carregando } = useSessao()
+    return <div className="min-h-screen bg-background text-foreground">
+        <header className="border-b border-border bg-card/90 backdrop-blur">
+            <nav className="container flex min-h-24 items-center justify-between gap-4 py-4"><Logo /><AlternadorTema /></nav>
+        </header>
+        <main className="container py-10 sm:py-14">
+            <header className="mx-auto mb-9 max-w-3xl text-center">
+                <span className="inline-flex items-center gap-2 rounded-full bg-violet-100 px-4 py-2 text-sm font-bold text-violet-800 dark:bg-violet-950 dark:text-violet-200"><Store size={17} />Cadastro de estabelecimento</span>
+                <h1 className="mt-4 text-3xl font-black sm:text-5xl">Leve seu negócio para a UniFlow ABS</h1>
+                <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">Preencha as informações em poucos passos. Nossa equipe validará o endereço e a classificação antes de publicar o perfil.</p>
+            </header>
+            {carregando ? <p className="text-center text-muted-foreground">Carregando sua conta...</p>
+                : usuario ? <div className="mx-auto max-w-5xl"><PassosSolicitacaoEstabelecimento /></div>
+                    : <EntradaAutenticacao />}
+        </main>
+    </div>
 }
 
-function moeda(valor: any) {
-    return Number(valor ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
-
-function slugify(valor: string) {
-    return valor
-        .trim()
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
+function EntradaAutenticacao() {
+    return <section className="mx-auto max-w-xl rounded-2xl border border-border bg-card p-7 text-center shadow-xl sm:p-10">
+        <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-sky-500 to-violet-600 text-white"><Store size={30} /></div>
+        <h2 className="mt-5 text-2xl font-black">Primeiro, acesse sua conta</h2>
+        <p className="mt-2 text-muted-foreground">Toda pessoa começa como cliente da plataforma. Depois do acesso, esta página será retomada para você cadastrar seu estabelecimento sem duplicar seus dados.</p>
+        <Link href="/entrar?destino=/onboarding" className="button mt-6 inline-flex items-center gap-2">Entrar ou criar conta <ArrowRight size={18} /></Link>
+        <p className="mt-4 text-xs text-muted-foreground">Seu acesso operacional somente será liberado após a aprovação.</p>
+    </section>
 }
