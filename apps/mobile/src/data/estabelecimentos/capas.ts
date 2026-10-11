@@ -1,5 +1,6 @@
 import type { ImageSourcePropType } from 'react-native'
 import type { EstabelecimentoResumo } from './tipos'
+import { visualDaCategoria } from './categorias-visuais'
 
 const CAPA_PADRAO = require('@/assets/images/inicio/fundo.png')
 const CAPA_BARBEARIA = require('@/assets/images/estabelecimentos/barbearia-default.png')
@@ -20,13 +21,24 @@ const CAPAS_POR_TIPO: Record<string, ImageSourcePropType> = {
 }
 
 export function capaDoEstabelecimento(estabelecimento: EstabelecimentoResumo): ImageSourcePropType {
-    const url = estabelecimento.imagemCapaURL?.trim()
-    if (url && /^https?:\/\//i.test(url)) return { uri: url }
-    if (url?.startsWith('/') && URL_BASE && !CAPAS_PROVISORIAS.includes(url)) {
-        return { uri: `${URL_BASE}${url}` }
-    }
+    return capaRemota(estabelecimento) ?? capaPadraoDoEstabelecimento(estabelecimento)
+}
 
-    return capaPadraoDoEstabelecimento(estabelecimento)
+export function miniaturaDoEstabelecimento(estabelecimento: EstabelecimentoResumo): ImageSourcePropType {
+    const remota = capaRemota(estabelecimento)
+    if (remota) return remota
+
+    const segmentos = estabelecimento.segmentos?.map((segmento) => `${segmento.slug} ${segmento.nome}`).join(' ') ?? ''
+    return visualDaCategoria(estabelecimento.tipoEstabelecimento ?? '', segmentos).imagem
+}
+
+function capaRemota(estabelecimento: EstabelecimentoResumo): ImageSourcePropType | null {
+    const url = estabelecimento.imagemCapaURL?.trim()
+    if (url && /^https?:\/\//i.test(url)) return { uri: url, cache: 'force-cache' }
+    if (url?.startsWith('/') && URL_BASE && !CAPAS_PROVISORIAS.includes(url)) {
+        return { uri: `${URL_BASE}${url}`, cache: 'force-cache' }
+    }
+    return null
 }
 
 function capaPadraoDoEstabelecimento(estabelecimento: EstabelecimentoResumo) {

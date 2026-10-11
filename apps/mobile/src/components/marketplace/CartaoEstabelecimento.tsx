@@ -1,5 +1,5 @@
 import type { EstabelecimentoResumo } from '@/src/data/estabelecimentos/tipos'
-import { capaDoEstabelecimento } from '@/src/data/estabelecimentos/capas'
+import { miniaturaDoEstabelecimento } from '@/src/data/estabelecimentos/capas'
 import { Ionicons } from '@expo/vector-icons'
 import { ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import useTema from '@/src/data/contexts/ContextoTema'
@@ -9,7 +9,7 @@ export default function CartaoEstabelecimento({ item, selecionado, abrir }: {
 }) {
     const { cores } = useTema()
     const endereco = [item.endereco.bairro, item.endereco.cidade, item.endereco.estado].filter(Boolean).join(' · ')
-    const imagem = capaDoEstabelecimento(item)
+    const imagem = miniaturaDoEstabelecimento(item)
     return <Pressable style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]} onPress={abrir}>
         <ImageBackground source={imagem} resizeMode="cover" style={styles.capa} imageStyle={styles.capaImagem}>
             <View style={styles.overlay}><Text style={styles.categoria}>{item.segmentos?.[0]?.nome ?? 'Beleza e bem-estar'}</Text>

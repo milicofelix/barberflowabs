@@ -17,28 +17,39 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
 import useSessao from '@/src/data/hooks/useSessao'
 import MarcaUniFlow from '@/src/components/shared/MarcaUniFlow'
+import { guardarPerfilEmCache, obterPerfilEmCache } from '@/src/data/estabelecimentos/cache-perfis'
 
 type Props = NativeStackScreenProps<StackParamList, 'PerfilEstabelecimento'>
 const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
 
 export default function PerfilEstabelecimento({ route, navigation }: Props) {
+    const perfilEmCache = obterPerfilEmCache(route.params.slug)
     const { cores } = useTema()
     const { httpGet } = useAPI()
     const { usuario } = useSessao()
     const { estabelecimento: selecionada, selecionarEstabelecimento } = useEstabelecimento()
-    const [estabelecimento, setEstabelecimento] = useState<EstabelecimentoPerfil | null>(null)
-    const [carregando, setCarregando] = useState(true)
+    const [estabelecimento, setEstabelecimento] = useState<EstabelecimentoPerfil | null>(perfilEmCache)
+    const [carregando, setCarregando] = useState(!perfilEmCache)
     const [selecionando, setSelecionando] = useState(false)
     const [erro, setErro] = useState<string | null>(null)
     const [denunciaAberta, setDenunciaAberta] = useState(false)
 
-    const carregar = useCallback(async () => {
+    const carregar = useCallback(async (ignorarCache = false) => {
+        const armazenado = ignorarCache ? null : obterPerfilEmCache(route.params.slug)
+        if (armazenado) {
+            setErro(null)
+            setEstabelecimento(armazenado)
+            setCarregando(false)
+            return
+        }
         try {
             setCarregando(true)
             setErro(null)
-            setEstabelecimento(await httpGet<EstabelecimentoPerfil>(`/public/estabelecimentos/${encodeURIComponent(route.params.slug)}`, {
+            const perfil = await httpGet<EstabelecimentoPerfil>(`/public/estabelecimentos/${encodeURIComponent(route.params.slug)}`, {
                 escopoTenant: 'nenhum',
-            }))
+            })
+            guardarPerfilEmCache(route.params.slug, perfil)
+            setEstabelecimento(perfil)
         } catch (e) {
             setEstabelecimento(null)
             setErro(mensagemDoErro(e))
@@ -67,7 +78,7 @@ export default function PerfilEstabelecimento({ route, navigation }: Props) {
     }
 
     if (carregando) return <Carregando mensagem="Carregando perfil do estabelecimento..." />
-    if (erro || !estabelecimento) return <SafeAreaView style={[styles.telaEstado, { backgroundColor: cores.fundo }]}><EstadoErro mensagem={erro ?? 'Estabelecimento não encontrado.'} tentarNovamente={carregar} /></SafeAreaView>
+    if (erro || !estabelecimento) return <SafeAreaView style={[styles.telaEstado, { backgroundColor: cores.fundo }]}><EstadoErro mensagem={erro ?? 'Estabelecimento não encontrado.'} tentarNovamente={() => carregar(true)} /></SafeAreaView>
 
     const endereco = [estabelecimento.endereco?.logradouro, estabelecimento.endereco?.bairro, estabelecimento.endereco?.cidade, estabelecimento.endereco?.estado].filter(Boolean).join(' · ')
     const imagem = capaDoEstabelecimento(estabelecimento)
