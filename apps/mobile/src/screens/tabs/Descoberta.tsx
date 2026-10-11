@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons'
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import * as Location from 'expo-location'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { ActivityIndicator, FlatList, ImageBackground, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
@@ -59,10 +59,6 @@ export default function Descoberta({ navigation }: Props) {
         }
         void localizar(raioKm)
     }
-
-    useEffect(() => {
-        void localizar(FILTROS_INICIAIS.raioKm)
-    }, [])
 
     return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}>
         <FlatList data={mostrarMapa ? [] : marketplace.itens} keyExtractor={(item) => String(item.id)}
@@ -169,9 +165,9 @@ function Filtros({ filtros, atualizar, selecionarRaio }: {
         <TextInput style={[styles.input, inputTema]} value={filtros.disponivelEm} onChangeText={(v) => atualizar('disponivelEm', v)} placeholder="Disponível em: 2026-10-15T14:00:00-03:00" placeholderTextColor={cores.textoSecundario} autoCapitalize="none" />
         <View style={styles.linha}><Text style={[styles.label, { color: cores.texto }]}>Aberto agora</Text><Switch value={filtros.abertaAgora} onValueChange={(v) => atualizar('abertaAgora', v)} /></View>
         <Text style={[styles.label, { color: cores.texto }]}>Avaliação mínima</Text><View style={styles.chips}>{[0, 4, 4.5].map((nota) => <Chip key={nota} texto={nota ? `${nota}+` : 'Todas'} ativo={filtros.notaMin === nota} acao={() => atualizar('notaMin', nota)} />)}</View>
-        <Text style={[styles.label, { color: cores.texto }]}>Distância {filtros.posicao
-            ? filtros.raioKm === null ? '· sem limite' : `· até ${filtros.raioKm} km`
-            : '· use sua localização'}</Text>
+        <Text style={[styles.label, { color: cores.texto }]}>Distância {filtros.raioKm === null
+            ? '· sem limite'
+            : filtros.posicao ? `· até ${filtros.raioKm} km` : '· use sua localização'}</Text>
         <View style={styles.chips}>
             {RAIOS.map((raio) => <Chip key={raio} texto={`${raio} km`} ativo={filtros.raioKm === raio} acao={() => selecionarRaio(raio)} />)}
             <Chip texto="Sem limite" ativo={filtros.raioKm === null} acao={() => selecionarRaio(null)} />

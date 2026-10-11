@@ -17,7 +17,7 @@ export interface FiltrosMarketplace {
 
 export const FILTROS_INICIAIS: FiltrosMarketplace = {
     busca: '', cidade: '', segmento: '', especialidade: '', precoMax: '', notaMin: 0,
-    abertaAgora: false, disponivelEm: '', posicao: null, raioKm: 2,
+    abertaAgora: false, disponivelEm: '', posicao: null, raioKm: null,
 }
 
 export default function useMarketplace(filtros: FiltrosMarketplace) {
@@ -61,10 +61,10 @@ function montarQuery(filtros: FiltrosMarketplace) {
     adicionar('segmento', filtros.segmento); adicionar('especialidade', filtros.especialidade)
     adicionar('precoMax', filtros.precoMax); adicionar('notaMin', filtros.notaMin || undefined)
     adicionar('disponivelEm', filtros.disponivelEm); if (filtros.abertaAgora) adicionar('abertaAgora', 'true')
+    if (filtros.raioKm === null) adicionar('semLimiteDistancia', 'true')
     if (filtros.posicao) {
         adicionar('lat', filtros.posicao.lat); adicionar('lng', filtros.posicao.lng)
-        if (filtros.raioKm === null) adicionar('semLimiteDistancia', 'true')
-        else adicionar('raioKm', filtros.raioKm)
+        if (filtros.raioKm !== null) adicionar('raioKm', filtros.raioKm)
     }
     return params.length ? `?${params.map(([nome, valor]) => `${nome}=${encodeURIComponent(valor)}`).join('&')}` : ''
 }

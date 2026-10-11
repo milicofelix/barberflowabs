@@ -36,6 +36,8 @@ Contratos iniciais:
 
 ## Fase 2 — Orquestracao E Provedores
 
+Esta fase fica bloqueada ate a conclusao da fase prioritaria de cadastro e aprovacao descrita em `docs/FASE_PRIORITARIA_CADASTRO_ESTABELECIMENTO.md`.
+
 - [ ] Criar fila persistente e worker concorrente com bloqueio seguro.
 - [ ] Implementar politica exponencial de retentativas e fila morta.
 - [ ] Criar adaptadores de push, e-mail e WhatsApp.
