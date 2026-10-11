@@ -14,6 +14,7 @@ import { CatalogoModule } from './catalogo/catalogo.module';
 import { RecursoModule } from './recurso/recurso.module';
 import { EquipeModule } from './equipe/equipe.module';
 import { FinanceiroModule } from './financeiro/financeiro.module';
+import { RelacionamentoModule } from './relacionamento/relacionamento.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { FinanceiroModule } from './financeiro/financeiro.module';
     RecursoModule,
     EquipeModule,
     FinanceiroModule,
+    RelacionamentoModule,
   ],
   controllers: [AppController],
 })

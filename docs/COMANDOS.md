@@ -312,7 +312,7 @@ Regenera o cliente a partir do `schema.prisma`. Execute depois de migrations que
 docker compose exec -T app sh -lc 'cd apps/backend && npx prisma db seed'
 ```
 
-Cria ou atualiza os dados de demonstracao definidos em `apps/backend/prisma/seed.ts`. Isso inclui os 12 estabelecimentos multissegmento do Tatuape usados para validar os seis marcadores do marketplace. Mesmo usando operacoes idempotentes, o seed altera dados e deve ser revisado antes da execucao.
+Cria ou atualiza os dados de demonstracao definidos em `apps/backend/prisma/seed.ts`. Isso inclui os 12 estabelecimentos multissegmento do Tatuape, 48 clientes e 240 atendimentos concluidos distribuidos entre 1 e 10 de outubro de 2026. O historico cobre barbearia, salao de beleza, manicure e pedicure, clinica de estetica, spa e estudios de beleza. Mesmo usando operacoes idempotentes, o seed altera dados e deve ser revisado antes da execucao.
 
 ### Sequencia apos migrations
 

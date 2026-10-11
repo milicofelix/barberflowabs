@@ -10,6 +10,8 @@ const PERMISSOES: Array<{ id: PermissaoEquipe; nome: string }> = [
     { id: 'FINANCEIRO_VISUALIZAR', nome: 'Visualizar financeiro' },
     { id: 'FINANCEIRO_GERENCIAR', nome: 'Gerenciar financeiro' },
     { id: 'FINANCEIRO_AUDITAR', nome: 'Auditar financeiro' },
+    { id: 'RELACIONAMENTO_VISUALIZAR', nome: 'Visualizar relacionamento' },
+    { id: 'RELACIONAMENTO_GERENCIAR', nome: 'Gerenciar relacionamento' },
     { id: 'CONFIGURACOES_GERENCIAR', nome: 'Configurações' },
 ]
 const DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']

@@ -32,6 +32,8 @@ model Usuario {
   estabelecimentosCliente ClienteEstabelecimento[]
   reagendamentosRealizados HistoricoReagendamento[] @relation("HistoricoReagendamentoAutor")
   vinculosEquipe MembroEquipe[]
+  preferenciasComunicacao PreferenciaComunicacao[]
+  enviosComunicacao EnvioComunicacao[]
 
   @@index([estabelecimentoId])
   @@map("usuarios")
@@ -122,6 +124,7 @@ model Agendamento {
   historicoReagendamentos HistoricoReagendamento[]
   avaliacao Avaliacao?
   contasFinanceiras ContaFinanceira[]
+  enviosComunicacao EnvioComunicacao[]
 
   @@index([estabelecimentoId])
   @@index([profissionalId, data])
@@ -194,6 +197,9 @@ model Estabelecimento {
   repassesFinanceiros          RepasseFinanceiro[]
   eventosGateway               EventoGatewayPagamento[]
   conciliacoesFinanceiras      ConciliacaoFinanceira[]
+  preferenciasComunicacao      PreferenciaComunicacao[]
+  templatesComunicacao         TemplateComunicacao[]
+  enviosComunicacao             EnvioComunicacao[]
 
   @@map("estabelecimentos")
 }
@@ -498,6 +504,10 @@ model ClienteEstabelecimento {
   origem      String    @default("AGENDAMENTO")
   primeiroAgendamentoEm DateTime?
   ultimoAgendamentoEm   DateTime?
+  status      String    @default("ATIVO")
+  tags        Json?
+  observacoes String?   @db.Text
+  ultimaInteracaoEm DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -507,6 +517,97 @@ model ClienteEstabelecimento {
   @@unique([estabelecimentoId, usuarioId])
   @@index([usuarioId])
   @@map("clientes_estabelecimentos")
+}
+
+model PreferenciaComunicacao {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  usuarioId         Int
+  canal             String
+  consentido        Boolean         @default(false)
+  origem            String          @default("USUARIO")
+  versaoTermos      String?
+  consentidoEm      DateTime?
+  revogadoEm        DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  usuario           Usuario         @relation(fields: [usuarioId], references: [id])
+
+  @@unique([estabelecimentoId, usuarioId, canal])
+  @@index([estabelecimentoId, canal, consentido])
+  @@index([usuarioId])
+  @@map("preferencias_comunicacao")
+}
+
+model TemplateComunicacao {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  nome              String
+  evento            String
+  canal             String
+  assunto           String?
+  conteudo          String          @db.Text
+  ativo             Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  envios            EnvioComunicacao[]
+
+  @@unique([estabelecimentoId, nome, canal])
+  @@index([estabelecimentoId, evento, canal, ativo])
+  @@map("templates_comunicacao")
+}
+
+model EnvioComunicacao {
+  id                Int                   @id @default(autoincrement())
+  estabelecimentoId Int
+  usuarioId         Int?
+  agendamentoId     Int?
+  templateId        Int?
+  canal             String
+  tipo              String
+  destinatario      String
+  assunto           String?
+  conteudo          String                @db.Text
+  status            String                @default("AGENDADO")
+  agendadoPara      DateTime
+  proximaTentativaEm DateTime?
+  tentativasRealizadas Int                 @default(0)
+  maximoTentativas  Int                   @default(3)
+  enviadoEm         DateTime?
+  erro              String?               @db.Text
+  metadados         Json?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  estabelecimento   Estabelecimento       @relation(fields: [estabelecimentoId], references: [id])
+  usuario           Usuario?              @relation(fields: [usuarioId], references: [id])
+  agendamento       Agendamento?          @relation(fields: [agendamentoId], references: [id])
+  template          TemplateComunicacao?  @relation(fields: [templateId], references: [id])
+  tentativas        TentativaEnvioComunicacao[]
+
+  @@index([estabelecimentoId, status, agendadoPara])
+  @@index([usuarioId, createdAt])
+  @@index([agendamentoId])
+  @@map("envios_comunicacao")
+}
+
+model TentativaEnvioComunicacao {
+  id            Int              @id @default(autoincrement())
+  envioId       Int
+  numero        Int
+  status        String
+  provedor      String?
+  referenciaExterna String?
+  resposta      Json?
+  erro          String?          @db.Text
+  iniciadaEm    DateTime         @default(now())
+  finalizadaEm  DateTime?
+  envio         EnvioComunicacao @relation(fields: [envioId], references: [id], onDelete: Cascade)
+
+  @@unique([envioId, numero])
+  @@index([status, iniciadaEm])
+  @@map("tentativas_envios_comunicacao")
 }
 
 model Unidade {

@@ -121,8 +121,21 @@ Status: implementacao funcional web e paridade financeira mobile concluidas em 2
 - [ ] Validar manualmente a paridade financeira entre web e mobile com o mesmo perfil, estabelecimento e periodo.
 - [ ] Selecionar, contratar e ativar um gateway externo em homologacao.
 
+## Etapa 10 - Relacionamento, Fidelizacao E Notificacoes
+
+Status: Fase 1 implementada em 2026-10-11; migration, Prisma Client, reinicio e validacao manual pendentes.
+
+- [x] Fundacao da central de clientes, consentimentos, templates e auditoria de envios.
+- [ ] Orquestracao de filas e adaptadores push, e-mail e WhatsApp.
+- [ ] Confirmacao e lembrete automatico de agendamentos.
+- [ ] Campanhas segmentadas.
+- [ ] Pontos, niveis, recompensas, cupons e indicacoes.
+- [ ] Metricas de retorno, retencao e conversao.
+- [ ] Paridade funcional web e mobile.
+
+Plano detalhado: `docs/ETAPA_10_RELACIONAMENTO_FIDELIZACAO_NOTIFICACOES.md`.
+
 ## Etapas Posteriores
 
-- Relacionamento, fidelizacao e notificacoes.
 - Inteligencia artificial com governanca.
 - Homologacao, seguranca e lancamento gradual.
