@@ -10,6 +10,7 @@ import type { ReactNode } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
+import MarcaUniFlow from '@/src/components/shared/MarcaUniFlow'
 
 type Props = NativeStackScreenProps<StackParamList, 'OnboardingEstabelecimento'>
 const TIPOS = [['BARBEARIA', 'Barbearia'], ['SALAO_BELEZA', 'Salão'], ['CLINICA_ESTETICA', 'Clínica'], ['SPA_BEM_ESTAR', 'Spa'], ['ESTUDIO_BELEZA', 'Estúdio'], ['PROFISSIONAL_AUTONOMO', 'Autônomo']]
@@ -21,6 +22,7 @@ export default function OnboardingEstabelecimento({ navigation }: Props) {
     if (dados.concluido) return <SafeAreaView style={[styles.sucesso, { backgroundColor: cores.fundo }]}><FeedbackSucesso mensagem="Cadastro enviado para revisão. Você poderá entrar após a aprovação." />
         <Botao texto="Voltar para o login" acao={() => navigation.goBack()} /></SafeAreaView>
     return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['bottom']}><ScrollView contentContainerStyle={styles.conteudo} keyboardShouldPersistTaps="handled">
+        <View style={styles.marca}><MarcaUniFlow compacta /></View>
         <Text style={styles.sobretitulo}>NOVO ESTABELECIMENTO</Text><Text style={[styles.titulo, { color: cores.texto }]}>Comece na UniFlow ABS</Text>
         <Bloco titulo="Negócio"><CampoTexto label="Nome do estabelecimento" value={f.nome} onChangeText={(v) => dados.alterar('nome', v)} />
             <CampoTexto label="Slug" value={f.slug} onChangeText={(v) => dados.alterar('slug', v)} autoCapitalize="none" />
@@ -44,7 +46,7 @@ function Opcoes({ itens, selecionados, alternar }: { itens: string[][]; selecion
 function Botao({ texto, acao }: { texto: string; acao: () => void }) { return <Pressable style={styles.botao} onPress={acao}><Text style={styles.botaoTexto}>{texto}</Text></Pressable> }
 const moeda = (v?: number) => Number(v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 const styles = StyleSheet.create({
-    safeArea: { flex: 1, backgroundColor: '#081426' }, conteudo: { padding: 18, paddingBottom: 40, gap: 14 }, sucesso: { flex: 1, backgroundColor: '#081426', justifyContent: 'center', padding: 22, gap: 18 },
+    safeArea: { flex: 1, backgroundColor: '#081426' }, conteudo: { padding: 18, paddingBottom: 40, gap: 14 }, marca: { alignItems: 'center', marginBottom: 4 }, sucesso: { flex: 1, backgroundColor: '#081426', justifyContent: 'center', padding: 22, gap: 18 },
     sobretitulo: { color: '#E7B84B', fontSize: 12, fontWeight: '800', letterSpacing: 1.2 }, titulo: { color: '#FFF', fontSize: 29, fontWeight: '900' }, bloco: { backgroundColor: '#FFF', borderRadius: 16, padding: 16, gap: 8 }, blocoTitulo: { color: '#081426', fontSize: 19, fontWeight: '900', marginBottom: 5 }, label: { color: '#475467', fontWeight: '700', marginTop: 5 },
     opcoes: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 }, chip: { borderWidth: 1, borderColor: '#B8C0CC', borderRadius: 999, paddingHorizontal: 11, paddingVertical: 8 }, chipAtivo: { backgroundColor: '#E7B84B', borderColor: '#E7B84B' }, chipTexto: { color: '#344054', fontSize: 12, fontWeight: '700' }, chipTextoAtivo: { color: '#081426' },
     botao: { minHeight: 52, borderRadius: 13, backgroundColor: '#E7B84B', alignItems: 'center', justifyContent: 'center' }, botaoTexto: { color: '#081426', fontWeight: '900', fontSize: 15 },

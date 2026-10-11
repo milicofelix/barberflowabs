@@ -15,6 +15,7 @@ import { useState } from 'react'
 import { FlatList, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
+import MarcaUniFlow from '@/src/components/shared/MarcaUniFlow'
 
 type Props = BottomTabScreenProps<AbasParamList, 'Descobrir'>
 const RAIOS = [2, 5, 10, 25]
@@ -46,6 +47,7 @@ export default function Descoberta({ navigation }: Props) {
         <FlatList data={mostrarMapa ? [] : marketplace.itens} keyExtractor={(item) => String(item.id)}
             contentContainerStyle={styles.lista} keyboardShouldPersistTaps="handled"
             ListHeaderComponent={<View>
+                <View style={styles.marca}><MarcaUniFlow compacta exibirSlogan={false} /></View>
                 <Text style={styles.sobretitulo}>MARKETPLACE UNIFLOW ABS</Text>
                 <Text style={[styles.titulo, { color: cores.texto }]}>Encontre o cuidado ideal para você</Text>
                 <Text style={[styles.descricao, { color: cores.textoSecundario }]}>Explore estabelecimentos, especialidades, preços e horários disponíveis.</Text>
@@ -105,6 +107,7 @@ function Chip({ texto, ativo, acao }: { texto: string; ativo: boolean; acao: () 
 
 const styles = StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: '#081426' }, lista: { padding: 18, paddingBottom: 36 },
+    marca: { alignItems: 'center', marginBottom: 20 },
     sobretitulo: { color: '#E7B84B', fontSize: 12, fontWeight: '800', letterSpacing: 1.3 }, titulo: { color: '#FFF', fontSize: 29, lineHeight: 35, fontWeight: '900', marginTop: 8 },
     descricao: { color: '#AEBBCE', lineHeight: 21, marginTop: 8, marginBottom: 18 }, busca: { flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: '#FFF', borderRadius: 14, paddingHorizontal: 14 },
     buscaInput: { flex: 1, minHeight: 52, color: '#101828' }, acoes: { flexDirection: 'row', gap: 7, marginTop: 10 }, botao: { flex: 1, minHeight: 42, borderWidth: 1, borderColor: '#35435A', borderRadius: 10, flexDirection: 'row', gap: 5, alignItems: 'center', justifyContent: 'center' },

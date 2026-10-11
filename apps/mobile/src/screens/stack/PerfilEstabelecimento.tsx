@@ -16,6 +16,7 @@ import { ActivityIndicator, ImageBackground, Pressable, ScrollView, StyleSheet, 
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
 import useSessao from '@/src/data/hooks/useSessao'
+import MarcaUniFlow from '@/src/components/shared/MarcaUniFlow'
 
 type Props = NativeStackScreenProps<StackParamList, 'PerfilEstabelecimento'>
 const DIAS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
@@ -75,6 +76,9 @@ export default function PerfilEstabelecimento({ route, navigation }: Props) {
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['bottom']}>
             <ScrollView contentContainerStyle={styles.conteudo}>
+                <View style={[styles.marca, { backgroundColor: cores.superficie, borderBottomColor: cores.borda }]}>
+                    <MarcaUniFlow compacta exibirSlogan={false} />
+                </View>
                 <ImageBackground source={imagem} resizeMode="cover" style={styles.hero} imageStyle={styles.heroImagem}>
                     <View style={styles.heroOverlay}>
                         <Text style={[styles.status, estabelecimento.statusOperacional?.status === 'ABERTA' && styles.statusAberta]}>{estabelecimento.statusOperacional?.label}</Text>
@@ -170,6 +174,7 @@ const styles = StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: '#081426' },
     telaEstado: { flex: 1, justifyContent: 'center', backgroundColor: '#081426' },
     conteudo: { paddingBottom: 120 },
+    marca: { alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1 },
     hero: { minHeight: 330 },
     heroImagem: { opacity: 0.92 },
     heroOverlay: { minHeight: 330, justifyContent: 'space-between', padding: 20, backgroundColor: 'rgba(4,10,19,.58)' },

@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { useColorScheme } from 'react-native'
 
 export type ModoTema = 'dark' | 'light'
 
@@ -30,22 +29,41 @@ interface ContextoTemaValor {
 
 const ContextoTema = createContext<ContextoTemaValor>({} as ContextoTemaValor)
 const CHAVE_TEMA = '@uniflowabs/tema'
+const HORA_INICIO_TEMA_CLARO = 6
+const HORA_INICIO_TEMA_ESCURO = 18
+
+function temaDoHorario(): ModoTema {
+    const hora = new Date().getHours()
+    return hora >= HORA_INICIO_TEMA_CLARO && hora < HORA_INICIO_TEMA_ESCURO ? 'light' : 'dark'
+}
 
 export function ProvedorTema({ children }: { children: ReactNode }) {
-    const esquema = useColorScheme()
-    const [modo, setModo] = useState<ModoTema>(esquema === 'light' ? 'light' : 'dark')
+    const [modo, setModo] = useState<ModoTema>(temaDoHorario)
+    const [preferencia, setPreferencia] = useState<ModoTema | null>(null)
 
     useEffect(() => {
         AsyncStorage.getItem(CHAVE_TEMA).then((salvo) => {
-            if (salvo === 'light' || salvo === 'dark') setModo(salvo)
+            if (salvo === 'light' || salvo === 'dark') {
+                setPreferencia(salvo)
+                setModo(salvo)
+            }
         }).catch(() => undefined)
     }, [])
+
+    useEffect(() => {
+        if (preferencia) return
+        const atualizarPeloHorario = () => setModo(temaDoHorario())
+        atualizarPeloHorario()
+        const intervalo = setInterval(atualizarPeloHorario, 60_000)
+        return () => clearInterval(intervalo)
+    }, [preferencia])
 
     const valor = useMemo(() => ({
         modo,
         cores: paletas[modo],
         alternarTema: () => setModo((atual) => {
             const proximo = atual === 'dark' ? 'light' : 'dark'
+            setPreferencia(proximo)
             AsyncStorage.setItem(CHAVE_TEMA, proximo).catch(() => undefined)
             return proximo
         }),

@@ -6,6 +6,7 @@ import useTema from '@/src/data/contexts/ContextoTema'
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { AbasParamList, StackParamList } from '@/src/navigation/types'
+import MarcaUniFlow from '@/src/components/shared/MarcaUniFlow'
 
 type Props = BottomTabScreenProps<AbasParamList, 'Usuario'>
 
@@ -21,6 +22,7 @@ export default function Usuario({ navigation }: Props) {
         const entrar = () => navigation.getParent<NativeStackNavigationProp<StackParamList>>()?.navigate('Autenticacao')
         return (
             <SafeAreaView style={[styles.container, styles.visitante, { backgroundColor: cores.fundo }]}>
+                <MarcaUniFlow compacta />
                 <Text style={[styles.titulo, { color: cores.texto }]}>Sua conta UniFlow ABS</Text>
                 <Text style={[styles.descricao, { color: cores.textoSecundario }]}>Entre ou crie uma conta para agendar e acompanhar seus horários.</Text>
                 <Pressable onPress={entrar} style={[styles.entrar, { backgroundColor: cores.destaque }]}>
@@ -45,7 +47,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'black',
     },
     visitante: { justifyContent: 'center', alignItems: 'center', padding: 28 },
-    titulo: { fontSize: 25, fontWeight: '900', textAlign: 'center' },
+    titulo: { marginTop: 24, fontSize: 25, fontWeight: '900', textAlign: 'center' },
     descricao: { maxWidth: 340, marginTop: 10, fontSize: 15, lineHeight: 22, textAlign: 'center' },
     entrar: { minHeight: 50, marginTop: 24, paddingHorizontal: 24, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
     entrarTexto: { fontSize: 15, fontWeight: '900' },
