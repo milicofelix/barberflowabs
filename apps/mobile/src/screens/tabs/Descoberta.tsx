@@ -32,6 +32,7 @@ export default function Descoberta({ navigation }: Props) {
     const [localizando, setLocalizando] = useState(false)
     const marketplace = useMarketplace(filtros)
     const categoriaSelecionada = marketplace.categorias.find((categoria) => categoria.slug === filtros.segmento)
+    const visualSelecionado = visualDaCategoria(categoriaSelecionada?.slug, categoriaSelecionada?.nome)
     const atualizar = <K extends keyof FiltrosMarketplace>(campo: K, valor: FiltrosMarketplace[K]) =>
         setFiltros((atuais) => ({ ...atuais, [campo]: valor }))
     const abrir = (slug: string) => navigation.getParent<NativeStackNavigationProp<StackParamList>>()
@@ -51,10 +52,16 @@ export default function Descoberta({ navigation }: Props) {
         <FlatList data={mostrarMapa ? [] : marketplace.itens} keyExtractor={(item) => String(item.id)}
             contentContainerStyle={styles.lista} keyboardShouldPersistTaps="handled"
             ListHeaderComponent={<View>
-                <View style={styles.marca}><MarcaUniFlow compacta exibirSlogan={false} /></View>
-                <Text style={styles.sobretitulo}>MARKETPLACE UNIFLOW ABS</Text>
-                <Text style={[styles.titulo, { color: cores.texto }]}>{tituloDaCategoria(categoriaSelecionada?.slug, categoriaSelecionada?.nome)}</Text>
-                <Text style={[styles.descricao, { color: cores.textoSecundario }]}>Explore estabelecimentos, especialidades, preços e horários disponíveis.</Text>
+                <ImageBackground source={visualSelecionado.imagem} style={styles.hero} imageStyle={styles.heroImagem} resizeMode="cover">
+                    <View style={styles.heroSobreposicao}>
+                        <View style={styles.marca}><MarcaUniFlow horizontal contraste /></View>
+                        <View>
+                            <Text style={styles.sobretitulo}>MARKETPLACE UNIFLOW ABS</Text>
+                            <Text style={styles.titulo}>{tituloDaCategoria(categoriaSelecionada?.slug, categoriaSelecionada?.nome)}</Text>
+                            <Text style={styles.descricao}>Explore estabelecimentos, especialidades, preços e horários disponíveis.</Text>
+                        </View>
+                    </View>
+                </ImageBackground>
                 <View style={[styles.busca, { backgroundColor: cores.campo, borderColor: cores.borda, borderWidth: 1 }]}><Ionicons name="search-outline" size={21} color={cores.textoSecundario} />
                     <TextInput value={filtros.busca} onChangeText={(v) => atualizar('busca', v)}
                         placeholder="Estabelecimento, bairro ou cidade" placeholderTextColor={cores.textoSecundario} style={[styles.buscaInput, { color: cores.campoTexto }]} /></View>
@@ -132,9 +139,11 @@ function Chip({ texto, ativo, acao }: { texto: string; ativo: boolean; acao: () 
 
 const styles = StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: '#081426' }, lista: { padding: 18, paddingBottom: 36 },
-    marca: { alignItems: 'center', marginBottom: 20 },
-    sobretitulo: { color: '#E7B84B', fontSize: 12, fontWeight: '800', letterSpacing: 1.3 }, titulo: { color: '#FFF', fontSize: 29, lineHeight: 35, fontWeight: '900', marginTop: 8 },
-    descricao: { color: '#AEBBCE', lineHeight: 21, marginTop: 8, marginBottom: 18 }, busca: { flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: '#FFF', borderRadius: 14, paddingHorizontal: 14 },
+    hero: { minHeight: 310, marginHorizontal: -18, marginTop: -18 }, heroImagem: { opacity: 1 },
+    heroSobreposicao: { flex: 1, minHeight: 310, justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24, backgroundColor: 'rgba(3,8,24,.56)' },
+    marca: { alignSelf: 'flex-start', maxWidth: '88%', paddingRight: 8, borderRadius: 18, backgroundColor: 'rgba(3,8,24,.52)' },
+    sobretitulo: { color: '#F2C35B', fontSize: 12, fontWeight: '800', letterSpacing: 1.3 }, titulo: { color: '#FFFFFF', fontSize: 30, lineHeight: 35, fontWeight: '900', marginTop: 8, textShadowColor: 'rgba(0,0,0,.75)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 5 },
+    descricao: { color: '#F1F5F9', lineHeight: 21, marginTop: 8, textShadowColor: 'rgba(0,0,0,.85)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 }, busca: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 14, backgroundColor: '#FFF', borderRadius: 14, paddingHorizontal: 14 },
     buscaInput: { flex: 1, minHeight: 52, color: '#101828' }, acoes: { flexDirection: 'row', gap: 7, marginTop: 10 }, botao: { flex: 1, minHeight: 42, borderWidth: 1, borderColor: '#35435A', borderRadius: 10, flexDirection: 'row', gap: 5, alignItems: 'center', justifyContent: 'center' },
     botaoTexto: { color: '#E7EAF0', fontSize: 12, fontWeight: '700' }, categorias: { gap: 9, paddingVertical: 15, paddingRight: 6 },
     categoriaCard: { width: 116, minHeight: 116, overflow: 'hidden', borderWidth: 2, borderRadius: 15 },
