@@ -32,6 +32,19 @@ export class SolicitacaoEstabelecimentoRepository {
   }
 
   async criarOuObterRascunho(usuarioId: number) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: usuarioId },
+      select: { estabelecimentoId: true, membroEstabelecimento: true, papel: true },
+    });
+    if (!usuario) throw new NotFoundException('Usuário não encontrado');
+    if (usuario.estabelecimentoId || usuario.membroEstabelecimento || ['ESTABLISHMENT_OWNER', 'ESTABLISHMENT_MEMBER'].includes(usuario.papel)) {
+      const aprovada = await (this.prisma as any).solicitacaoEstabelecimento.findFirst({
+        where: { usuarioId, status: 'APPROVED', estabelecimentoGeradoId: usuario.estabelecimentoId ?? undefined },
+        include: incluirSolicitacao, orderBy: { revisadoEm: 'desc' },
+      });
+      if (aprovada) return aprovada;
+      throw new ConflictException('Esta conta já está vinculada a um estabelecimento');
+    }
     const chaveAtiva = `usuario:${usuarioId}`;
     return (this.prisma as any).solicitacaoEstabelecimento.upsert({
       where: { chaveAtiva }, update: {}, create: { usuarioId, chaveAtiva }, include: incluirSolicitacao,
@@ -179,6 +192,14 @@ export class SolicitacaoEstabelecimentoRepository {
 
   private async materializar(tx: any, solicitacao: any, revisorId: number) {
     if (solicitacao.estabelecimentoGeradoId) return solicitacao.estabelecimentoGeradoId;
+    const solicitante = await tx.usuario.findUnique({
+      where: { id: solicitacao.usuarioId },
+      select: { estabelecimentoId: true, membroEstabelecimento: true, papel: true },
+    });
+    if (!solicitante) throw new NotFoundException('Solicitante não encontrado');
+    if (solicitante.estabelecimentoId || solicitante.membroEstabelecimento || ['ESTABLISHMENT_OWNER', 'ESTABLISHMENT_MEMBER'].includes(solicitante.papel)) {
+      throw new ConflictException('Solicitante já está vinculado a outro estabelecimento');
+    }
     const plano = await tx.planoAssinatura.findUnique({ where: { slug: solicitacao.planoSlug } });
     if (!plano) throw new ConflictException('Plano da solicitação não está mais disponível');
     const base = this.slug(solicitacao.nomePublico);

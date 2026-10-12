@@ -352,6 +352,8 @@ O aceite foi iniciado contra o ambiente local e encontrou dois defeitos, corrigi
 1. a retomada do cadastro falhava porque o `upsert` do Prisma recebia `data` em vez de `create`;
 2. um estabelecimento aprovado podia responder pelo perfil público antes de possuir servico, profissional e horario.
 
+Uma terceira falha foi identificada durante o uso em dois aparelhos: o token antigo ainda identificava o solicitante como cliente após a aprovação e permitia iniciar outra solicitação. O backend agora consulta o vínculo atual do usuário no banco antes de criar ou aprovar qualquer cadastro, retorna a solicitação já aprovada para contas promovidas e impede uma segunda materialização. Web e mobile também renovam a sessão ao receber a notificação de aprovação.
+
 Depois da correcao e reinicio do servico, foi confirmado:
 
 - rotas de solicitacao, administracao e notificacao registradas pelo backend;

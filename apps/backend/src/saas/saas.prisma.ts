@@ -218,6 +218,7 @@ export class SaasPrisma {
 
   async listarEstabelecimentosAdmin() {
     const estabelecimentos = await this.prisma.estabelecimento.findMany({
+      where: { status: { not: 'CANCELED' } },
       include: {
         assinatura: { include: { plano: true } },
         _count: { select: { usuarios: true, profissionais: true, unidades: true, servicos: true, agendamentos: true } },

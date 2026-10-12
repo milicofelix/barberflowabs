@@ -3,17 +3,24 @@ import { useCallback, useEffect, useState } from 'react'
 import { AppState, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import useAPI, { mensagemDoErro } from '@/src/data/hooks/useAPI'
 import useTema from '@/src/data/contexts/ContextoTema'
+import useSessao from '@/src/data/hooks/useSessao'
 
-interface Notificacao { id: number; titulo: string; mensagem: string; lidaEm?: string | null }
+interface Notificacao { id: number; tipo: string; titulo: string; mensagem: string; lidaEm?: string | null }
 const INTERVALO_ATUALIZACAO_MS = 15_000
 
 export default function SinoNotificacoes() {
     const { cores } = useTema(); const { httpGet, httpPut } = useAPI()
+    const { usuario, renovarSessao } = useSessao()
     const [aberto, setAberto] = useState(false); const [itens, setItens] = useState<Notificacao[]>([]); const [erro, setErro] = useState('')
     const carregar = useCallback(async () => {
-        try { setItens(await httpGet<Notificacao[]>('/notificacoes', { escopoTenant: 'nenhum' })); setErro('') }
+        try {
+            const notificacoes = await httpGet<Notificacao[]>('/notificacoes', { escopoTenant: 'nenhum' })
+            setItens(notificacoes); setErro('')
+            const responsavel = usuario?.papel === 'ESTABLISHMENT_OWNER' || usuario?.role === 'ESTABLISHMENT_OWNER'
+            if (!responsavel && notificacoes.some((item) => item.tipo === 'SOLICITACAO_APPROVED')) await renovarSessao()
+        }
         catch (e) { setErro(mensagemDoErro(e)) }
-    }, [httpGet])
+    }, [httpGet, renovarSessao, usuario?.papel, usuario?.role])
     useEffect(() => {
         carregar()
         const intervalo = setInterval(carregar, INTERVALO_ATUALIZACAO_MS)

@@ -16,6 +16,7 @@ interface ContextoSessaoProps {
     token: string | null
     usuario: Usuario | null
     iniciarSessao: (token: string) => void
+    renovarSessao: () => Promise<boolean>
     encerrarSessao: () => void
 }
 
@@ -59,6 +60,16 @@ export function ProvedorSessao(props: any) {
     function encerrarSessao() {
         cookie.remove(nomeCookie)
         setSessao({ token: null, usuario: null })
+    }
+
+    async function renovarSessao() {
+        const atual = obterSessao()
+        if (!atual.token) return false
+        const tokenAtualizado = await renovarToken(atual.token)
+        if (!tokenAtualizado) return false
+        cookie.set(nomeCookie, tokenAtualizado, { expires: 1 })
+        setSessao(obterSessao(tokenAtualizado))
+        return true
     }
 
     function obterSessao(tokenRecebido?: string): Sessao {
@@ -117,6 +128,7 @@ export function ProvedorSessao(props: any) {
                 token: sessao.token,
                 usuario: sessao.usuario,
                 iniciarSessao,
+                renovarSessao,
                 encerrarSessao,
             }}
         >
