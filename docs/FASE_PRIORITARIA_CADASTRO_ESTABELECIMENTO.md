@@ -379,7 +379,7 @@ O mobile agora oferece **Operação → Serviços** para o responsável cadastra
 Depois da aprovação, o responsável deve configurar:
 
 1. os serviços em **Operação → Serviços**;
-2. os profissionais em **Operação → Equipe**; quando o próprio gestor também atende, deve criar seu perfil profissional e vinculá-lo ao membro `GESTOR`, sem criar outra conta;
+2. os profissionais em **Operação → Equipe**; quando o próprio gestor também atende e ainda não existe nenhum profissional, a ação **Criar e vincular perfil** cria o perfil operacional e o associa ao membro `GESTOR`, sem criar outra conta;
 3. as escalas e os horários de atendimento;
 4. os recursos necessários, quando aplicável.
 

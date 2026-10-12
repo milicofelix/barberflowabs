@@ -62,6 +62,24 @@ export default function useOperacao() {
     async function salvarMembro(dados: { usuarioId: number; profissionalId?: number | null; papel: string; permissoes: PermissaoEquipe[]; ativo?: boolean }, membroId?: number) {
         return executarAcao(() => membroId ? httpPut(`/equipe/${membroId}`, dados) : httpPost('/equipe', dados))
     }
+    async function criarPerfilParaMembro(membro: MembroEquipe) {
+        return executarAcao(async () => {
+            const profissional = await httpPost<ProfissionalOperacional>('/profissionais', {
+                nome: membro.usuario.nome,
+                descricao: `Atendimento realizado por ${membro.usuario.nome}`,
+                imagemURL: '/profissionais/profissional-1.jpg',
+                avaliacao: 5,
+                quantidadeAvaliacoes: 0,
+            })
+            await httpPut(`/equipe/${membro.id}`, {
+                usuarioId: membro.usuarioId,
+                profissionalId: profissional.id,
+                papel: membro.papel,
+                permissoes: membro.permissoes,
+                ativo: membro.ativo,
+            })
+        })
+    }
     const removerMembro = (id: number) => executarAcao(() => httpDelete(`/equipe/${id}`))
     const buscarEscalas = (profissionalId: number) => httpGet<EscalaProfissional[]>(`/equipe/profissionais/${profissionalId}/escalas`)
     const salvarEscalas = (profissionalId: number, escalas: EscalaProfissional[]) => executarAcao(() => httpPut(`/equipe/profissionais/${profissionalId}/escalas`, { escalas }))
@@ -72,7 +90,7 @@ export default function useOperacao() {
 
     return {
         dashboard, agendamentos, profissionais, membros, usuariosDisponiveis, recursos, permissoes, data, setData, carregando, erro,
-        recarregar: carregar, alterarStatus, criarProfissional, salvarMembro, removerMembro,
+        recarregar: carregar, alterarStatus, criarProfissional, salvarMembro, criarPerfilParaMembro, removerMembro,
         buscarEscalas, salvarEscalas, criarRecurso, buscarIndisponibilidades, indisponibilizarRecurso, removerIndisponibilidade,
     }
 }

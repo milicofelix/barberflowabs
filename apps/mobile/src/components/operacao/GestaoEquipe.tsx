@@ -16,9 +16,10 @@ const PERMISSOES: Array<{ id: PermissaoEquipe; nome: string }> = [
 ]
 const DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
-export function MembrosEquipe({ membros, usuarios, profissionais, salvar, remover }: {
+export function MembrosEquipe({ membros, usuarios, profissionais, salvar, criarPerfil, remover }: {
     membros: MembroEquipe[]; usuarios: UsuarioEquipe[]; profissionais: ProfissionalOperacional[]
     salvar: (dados: { usuarioId: number; profissionalId?: number | null; papel: string; permissoes: PermissaoEquipe[]; ativo?: boolean }, membroId?: number) => Promise<boolean>
+    criarPerfil: (membro: MembroEquipe) => Promise<boolean>
     remover: (id: number) => Promise<boolean>
 }) {
     const { cores } = useTema(); const [usuarioId, setUsuarioId] = useState<number | null>(null)
@@ -45,19 +46,22 @@ export function MembrosEquipe({ membros, usuarios, profissionais, salvar, remove
     </View>{membros.map((item) => <View key={item.id} style={[styles.bloco, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
         <Text style={[styles.nome, { color: cores.texto }]}>{item.usuario.nome}</Text><Text style={[styles.texto, { color: cores.textoSecundario }]}>{item.papel} · {item.profissional?.nome ?? 'Sem perfil profissional'}</Text>
         <Text style={[styles.texto, { color: cores.textoSecundario }]}>{item.permissoes.map((id) => PERMISSOES.find((p) => p.id === id)?.nome ?? id).join(' · ') || 'Sem permissões operacionais'}</Text>
-        {!item.profissional ? <VincularPerfil membro={item} profissionais={profissionais.filter((profissional) => !membros.some((membro) => membro.profissionalId === profissional.id))} salvar={salvar} /> : null}
+        {!item.profissional ? <VincularPerfil membro={item} profissionais={profissionais.filter((profissional) => !membros.some((membro) => membro.profissionalId === profissional.id))} salvar={salvar} criarPerfil={criarPerfil} /> : null}
         <Pressable onPress={() => removerMembro(item)} style={styles.botaoRemover}><Text style={styles.botaoRemoverTexto}>Remover membro</Text></Pressable>
     </View>)}</View>
 }
 
-function VincularPerfil({ membro, profissionais, salvar }: {
+function VincularPerfil({ membro, profissionais, salvar, criarPerfil }: {
     membro: MembroEquipe; profissionais: ProfissionalOperacional[]
     salvar: (dados: { usuarioId: number; profissionalId?: number | null; papel: string; permissoes: PermissaoEquipe[]; ativo?: boolean }, membroId?: number) => Promise<boolean>
+    criarPerfil: (membro: MembroEquipe) => Promise<boolean>
 }) {
     const { cores } = useTema()
+    const [criando, setCriando] = useState(false)
     const [profissionalId, setProfissionalId] = useState<number | null>(profissionais.length === 1 ? profissionais[0].id : null)
     useEffect(() => { if (profissionais.length === 1) setProfissionalId(profissionais[0].id) }, [profissionais])
-    if (!profissionais.length) return <Text style={[styles.aviso, { color: cores.textoSecundario }]}>Cadastre acima o perfil profissional do próprio gestor para poder vinculá-lo.</Text>
+    if (!profissionais.length) return <View style={styles.vinculo}><Text style={[styles.aviso, { color: cores.textoSecundario }]}>Ainda não existe um perfil profissional para este membro.</Text>
+        <Botao texto={criando ? 'Criando perfil...' : `Criar e vincular perfil de ${membro.usuario.nome}`} desabilitado={criando} acao={async () => { setCriando(true); await criarPerfil(membro); setCriando(false) }} /></View>
     const vincular = () => profissionalId && salvar({
         usuarioId: membro.usuarioId, profissionalId, papel: membro.papel,
         permissoes: membro.permissoes, ativo: membro.ativo,
