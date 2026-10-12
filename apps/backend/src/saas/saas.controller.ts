@@ -223,6 +223,19 @@ export class SaasController {
     return this.repo.reprovarEstabelecimento(Number(id), usuario.id!, dados.motivo!);
   }
 
+  @Put('admin/estabelecimentos/:id/coordenadas')
+  atualizarCoordenadas(
+    @Param('id') id: string,
+    @Body() dados: { latitude: number | string; longitude: number | string },
+    @UsuarioLogado() usuario: Usuario,
+  ) {
+    this.validarSuperAdmin(usuario);
+    validarNumeroInteiroPositivo(id, 'Estabelecimento');
+    const latitude = this.validarCoordenada(dados?.latitude, -90, 90, 'Latitude');
+    const longitude = this.validarCoordenada(dados?.longitude, -180, 180, 'Longitude');
+    return this.repo.atualizarCoordenadasEstabelecimento(Number(id), usuario.id!, latitude, longitude);
+  }
+
   @Get('admin/auditoria')
   listarAuditoriaAdmin(@UsuarioLogado() usuario: Usuario) {
     this.validarSuperAdmin(usuario);
@@ -349,5 +362,11 @@ export class SaasController {
     }
 
     return data;
+  }
+
+  private validarCoordenada(valor: unknown, minimo: number, maximo: number, campo: string) {
+    const numero = Number(valor);
+    if (!Number.isFinite(numero) || numero < minimo || numero > maximo) throw new BadRequestException(`${campo} inválida`);
+    return numero;
   }
 }

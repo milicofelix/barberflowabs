@@ -4,6 +4,7 @@ import useTema from '@/src/data/contexts/ContextoTema'
 
 const SECOES: Array<{ id: SecaoOperacao; nome: string; permissao: PermissaoEquipe }> = [
     { id: 'RESUMO', nome: 'Resumo', permissao: 'AGENDA_GERENCIAR' }, { id: 'AGENDA', nome: 'Agenda', permissao: 'AGENDA_GERENCIAR' },
+    { id: 'SERVICOS', nome: 'Serviços', permissao: 'CONFIGURACOES_GERENCIAR' },
     { id: 'EQUIPE', nome: 'Equipe', permissao: 'EQUIPE_GERENCIAR' }, { id: 'FINANCEIRO', nome: 'Financeiro', permissao: 'FINANCEIRO_VISUALIZAR' },
     { id: 'CAPACIDADE', nome: 'Recursos', permissao: 'RECURSOS_GERENCIAR' },
 ]
@@ -23,8 +24,8 @@ export function CartaoMetrica({ titulo, valor, destaque }: { titulo: string; val
 export const moeda = (valor: number) => Number(valor ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
 const styles = StyleSheet.create({
-    seletor: { flexDirection: 'row', backgroundColor: '#101E33', borderRadius: 12, padding: 4, marginVertical: 16 },
-    aba: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 9 }, abaAtiva: { backgroundColor: '#E7B84B' },
+    seletor: { flexDirection: 'row', flexWrap: 'wrap', backgroundColor: '#101E33', borderRadius: 12, padding: 4, marginVertical: 16 },
+    aba: { minWidth: '31%', flexGrow: 1, alignItems: 'center', paddingHorizontal: 7, paddingVertical: 10, borderRadius: 9 }, abaAtiva: { backgroundColor: '#E7B84B' },
     abaTexto: { color: '#AEBBCE', fontSize: 11, fontWeight: '800' }, abaTextoAtivo: { color: '#081426' },
     metrica: { flex: 1, minWidth: '46%', backgroundColor: '#101E33', borderRadius: 14, padding: 15, borderWidth: 1, borderColor: '#26364E' },
     metricaDestaque: { borderColor: '#92701E' }, metricaTitulo: { color: '#AEBBCE', fontSize: 12 },

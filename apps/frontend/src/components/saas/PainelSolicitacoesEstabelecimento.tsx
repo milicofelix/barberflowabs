@@ -15,10 +15,19 @@ export default function PainelSolicitacoesEstabelecimento() {
         document.addEventListener('visibilitychange', atualizarAoRetornar)
         return () => { window.clearInterval(intervalo); document.removeEventListener('visibilitychange', atualizarAoRetornar) }
     }, [carregar])
-    async function revisar(id: number, acao: 'aprovar' | 'solicitar-correcao' | 'reprovar') {
+    async function revisar(item: Solicitacao, acao: 'aprovar' | 'solicitar-correcao' | 'reprovar') {
         const motivo = acao === 'aprovar' ? undefined : window.prompt(acao === 'reprovar' ? 'Motivo da reprovação:' : 'Quais dados devem ser corrigidos?')
         if (acao !== 'aprovar' && !motivo?.trim()) return
-        const resposta: any = await httpPut(`/admin/solicitacoes-estabelecimento/${id}/${acao}`, { motivo })
+        let coordenadas = {}
+        if (acao === 'aprovar' && item.modeloAtendimento !== 'DOMICILIAR') {
+            const latitude = window.prompt('Latitude validada pelo superadmin:')?.replace(',', '.')
+            const longitude = window.prompt('Longitude validada pelo superadmin:')?.replace(',', '.')
+            if (!latitude || !longitude || !Number.isFinite(Number(latitude)) || !Number.isFinite(Number(longitude))) {
+                return setMensagem('Informe latitude e longitude válidas para aprovar.')
+            }
+            coordenadas = { latitude: Number(latitude), longitude: Number(longitude) }
+        }
+        const resposta: any = await httpPut(`/admin/solicitacoes-estabelecimento/${item.id}/${acao}`, { motivo, ...coordenadas })
         setMensagem(resposta?.statusCode ? resposta.message : 'Solicitação revisada com sucesso.'); await carregar()
     }
     return <section className="mb-10 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-900">
@@ -28,7 +37,7 @@ export default function PainelSolicitacoesEstabelecimento() {
             <div className="flex flex-wrap justify-between gap-3"><div><h3 className="font-bold">{item.nomePublico}</h3><p className="text-sm text-slate-500">{item.tipoEstabelecimento} · {item.modeloAtendimento} · {item.segmentos.map(s => s.segmento.nome).join(', ')}</p><p className="mt-1 text-sm">Responsável: {item.usuario.nome} ({item.usuario.email})</p><p className="text-sm">{[item.logradouro, item.numero, item.bairro, item.cidade, item.estado].filter(Boolean).join(', ')}</p></div>
                 <a className="text-sm text-indigo-500" target="_blank" rel="noreferrer" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([item.logradouro, item.numero, item.bairro, item.cidade, item.estado].filter(Boolean).join(', '))}`}>Validar endereço</a></div>
             {item.possiveisDuplicidades?.length ? <p className="mt-3 rounded-lg bg-amber-50 p-2 text-sm text-amber-800">Possível duplicidade: {item.possiveisDuplicidades.map(d => `${d.nome} (#${d.id})`).join(', ')}</p> : null}
-            <div className="mt-4 flex flex-wrap gap-2"><button onClick={() => revisar(item.id, 'aprovar')} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white">Aprovar</button><button onClick={() => revisar(item.id, 'solicitar-correcao')} className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-white">Solicitar correção</button><button onClick={() => revisar(item.id, 'reprovar')} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white">Reprovar</button></div>
+            <div className="mt-4 flex flex-wrap gap-2"><button onClick={() => revisar(item, 'aprovar')} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white">Aprovar</button><button onClick={() => revisar(item, 'solicitar-correcao')} className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-white">Solicitar correção</button><button onClick={() => revisar(item, 'reprovar')} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white">Reprovar</button></div>
         </article>) : <p className="py-5 text-center text-slate-500">Nenhuma solicitação pendente.</p>}</div>
     </section>
 }

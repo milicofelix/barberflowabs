@@ -26,6 +26,26 @@ export interface ProfissionalOperacional {
     avaliacao?: number
 }
 
+export type ModeloAtendimentoServico = 'PRESENCIAL' | 'DOMICILIAR' | 'HIBRIDO'
+
+export interface ServicoOperacional {
+    id: number
+    nome: string
+    descricao: string
+    preco: number
+    qtdeSlots: number
+    imagemURL: string
+    observacoes?: string | null
+    modeloAtendimento?: ModeloAtendimentoServico
+    duracaoMinutos?: number
+    preparoAntesMinutos?: number
+    preparoDepoisMinutos?: number
+    deslocamentoMinutos?: number
+    profissionalIds?: number[]
+}
+
+export type DadosServicoOperacional = Omit<ServicoOperacional, 'id' | 'qtdeSlots'>
+
 export type PermissaoEquipe = 'EQUIPE_GERENCIAR' | 'ESCALAS_GERENCIAR' | 'RECURSOS_GERENCIAR' | 'AGENDA_GERENCIAR' | 'FINANCEIRO_VISUALIZAR' | 'FINANCEIRO_GERENCIAR' | 'FINANCEIRO_AUDITAR' | 'RELACIONAMENTO_VISUALIZAR' | 'RELACIONAMENTO_GERENCIAR' | 'CONFIGURACOES_GERENCIAR'
 
 export interface UsuarioEquipe { id: number; nome: string; email: string; telefone?: string | null }
@@ -39,4 +59,4 @@ export interface EscalaProfissional {
 export interface RecursoOperacional { id: number; nome: string; tipo: string; capacidade: number; ativo: boolean }
 export interface IndisponibilidadeRecurso { id: number; inicio: string; fim: string; motivo?: string | null }
 
-export type SecaoOperacao = 'RESUMO' | 'AGENDA' | 'EQUIPE' | 'CAPACIDADE' | 'FINANCEIRO'
+export type SecaoOperacao = 'RESUMO' | 'AGENDA' | 'SERVICOS' | 'EQUIPE' | 'CAPACIDADE' | 'FINANCEIRO'

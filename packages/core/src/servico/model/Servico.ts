@@ -12,4 +12,5 @@ export default interface Servico {
     deslocamentoMinutos?: number
     modeloAtendimento?: 'PRESENCIAL' | 'DOMICILIAR' | 'HIBRIDO'
     observacoes?: string | null
+    profissionalIds?: number[]
 }

@@ -26,4 +26,6 @@ export interface EnviarSolicitacaoEstabelecimentoDto {
 
 export interface RevisarSolicitacaoEstabelecimentoDto {
   motivo?: string;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
 }

@@ -371,6 +371,19 @@ Os tres itens ainda desmarcados exigem interacao manual completa nas interfaces.
 2. um ciclo para cada um dos oito tipos de estabelecimento e três modelos de atendimento;
 3. máscaras e cenários de CEP válido, inexistente, indisponibilidade do ViaCEP e preenchimento manual.
 
+#### Configuração operacional após a aprovação
+
+O mobile agora oferece **Operação → Serviços** para o responsável cadastrar, editar e excluir o catálogo do estabelecimento. O formulário contempla preço, duração real, modelo de atendimento, tempos de preparação e deslocamento, imagem, requisitos, observações e profissionais habilitados. A permissão utilizada é `CONFIGURACOES_GERENCIAR`, preservando a separação entre operação e administração da plataforma.
+
+Depois da aprovação, o responsável deve configurar:
+
+1. os serviços em **Operação → Serviços**;
+2. os profissionais em **Operação → Equipe**;
+3. as escalas e os horários de atendimento;
+4. os recursos necessários, quando aplicável.
+
+Latitude e longitude não fazem parte do cadastro operacional do responsável. Para atendimentos presenciais ou híbridos, a aprovação administrativa exige que o superadmin informe as coordenadas que validou a partir do endereço; elas são gravadas junto com a materialização do estabelecimento e auditadas. A administração também pode corrigir coordenadas de estabelecimentos já aprovados, sempre com registro de auditoria. Ter o cadastro aprovado não basta para publicação: o estabelecimento também precisa atender aos critérios operacionais mínimos da API pública.
+
 O reinicio do container `app` foi executado apenas para carregar as correcoes encontradas no aceite. Nenhum build, migration, seed ou suíte automatizada foi executado.
 
 ## Dependencias E Limites

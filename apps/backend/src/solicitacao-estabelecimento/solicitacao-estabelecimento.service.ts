@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, ForbiddenException, Injectable 
 import { MODELOS_ATENDIMENTO, TIPOS_ESTABELECIMENTO } from 'src/estabelecimento/estabelecimento.constants';
 import { validarEmail, validarNumeroInteiroPositivo, validarTextoObrigatorio } from 'src/shared/validacao';
 import { STATUS_SOLICITACAO_EDITAVEIS, TERMOS_CADASTRO_ESTABELECIMENTO_VERSAO } from './solicitacao-estabelecimento.constants';
-import { EnviarSolicitacaoEstabelecimentoDto, SalvarSolicitacaoEstabelecimentoDto } from './solicitacao-estabelecimento.dto';
+import { EnviarSolicitacaoEstabelecimentoDto, RevisarSolicitacaoEstabelecimentoDto, SalvarSolicitacaoEstabelecimentoDto } from './solicitacao-estabelecimento.dto';
 import { SolicitacaoEstabelecimentoRepository } from './solicitacao-estabelecimento.repository';
 
 @Injectable()
@@ -27,11 +27,25 @@ export class SolicitacaoEstabelecimentoService {
     if (!solicitacao) throw new BadRequestException('Solicitação não encontrada');
     return solicitacao;
   }
-  async revisar(id: number, usuarioId: number, decisao: 'APPROVED' | 'CORRECTION_REQUESTED' | 'REJECTED', motivo?: string) {
+  async revisar(id: number, usuarioId: number, decisao: 'APPROVED' | 'CORRECTION_REQUESTED' | 'REJECTED', dados: RevisarSolicitacaoEstabelecimentoDto = {}) {
     await this.validarAdministrador(usuarioId);
-    const texto = motivo?.trim();
+    const texto = dados.motivo?.trim();
     if (decisao !== 'APPROVED' && !texto) throw new BadRequestException('Informe o motivo da decisão');
-    return this.repository.revisar(id, usuarioId, decisao, texto);
+    const solicitacao = await this.repository.buscarParaRevisao(id);
+    if (!solicitacao) throw new BadRequestException('Solicitação não encontrada');
+    const latitude = this.coordenada(dados.latitude, -90, 90, 'Latitude');
+    const longitude = this.coordenada(dados.longitude, -180, 180, 'Longitude');
+    if (decisao === 'APPROVED' && solicitacao.modeloAtendimento !== 'DOMICILIAR' && (latitude === null || longitude === null)) {
+      throw new BadRequestException('Latitude e longitude devem ser validadas pelo superadmin antes da aprovação');
+    }
+    return this.repository.revisar(id, usuarioId, decisao, texto, latitude, longitude);
+  }
+
+  private coordenada(valor: unknown, minimo: number, maximo: number, campo: string) {
+    if (valor === null || valor === undefined || valor === '') return null;
+    const numero = Number(valor);
+    if (!Number.isFinite(numero) || numero < minimo || numero > maximo) throw new BadRequestException(`${campo} inválida`);
+    return numero;
   }
 
   async salvar(id: number, usuarioId: number, dados: SalvarSolicitacaoEstabelecimentoDto) {

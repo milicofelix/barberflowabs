@@ -71,14 +71,14 @@ export class SolicitacaoEstabelecimentoRepository {
     return (this.prisma as any).solicitacaoEstabelecimento.findUnique({ where: { id }, include: incluirSolicitacao });
   }
 
-  async revisar(id: number, revisorId: number, decisao: 'APPROVED' | 'CORRECTION_REQUESTED' | 'REJECTED', motivo?: string) {
+  async revisar(id: number, revisorId: number, decisao: 'APPROVED' | 'CORRECTION_REQUESTED' | 'REJECTED', motivo?: string, latitude?: number | null, longitude?: number | null) {
     return this.prisma.$transaction(async (tx) => {
       const solicitacao = await (tx as any).solicitacaoEstabelecimento.findUnique({ where: { id }, include: incluirSolicitacao });
       if (!solicitacao) throw new NotFoundException('Solicitação não encontrada');
       if (solicitacao.status !== 'PENDING_REVIEW') throw new ConflictException('Solicitação já foi revisada');
 
       let estabelecimentoId: number | null = null;
-      if (decisao === 'APPROVED') estabelecimentoId = await this.materializar(tx as any, solicitacao, revisorId);
+      if (decisao === 'APPROVED') estabelecimentoId = await this.materializar(tx as any, solicitacao, revisorId, latitude, longitude);
 
       await (tx as any).solicitacaoEstabelecimento.update({
         where: { id }, data: {
@@ -99,7 +99,7 @@ export class SolicitacaoEstabelecimentoRepository {
       } });
       await (tx as any).logAuditoria.create({ data: {
         estabelecimentoId, usuarioId: revisorId, acao: `REVIEW_ESTABLISHMENT_APPLICATION_${decisao}`,
-        entidade: 'SolicitacaoEstabelecimento', entidadeId: String(id), detalhes: { motivo, estabelecimentoId },
+        entidade: 'SolicitacaoEstabelecimento', entidadeId: String(id), detalhes: { motivo, estabelecimentoId, latitude, longitude },
       } });
       return (tx as any).solicitacaoEstabelecimento.findUnique({ where: { id }, include: incluirSolicitacao });
     });
@@ -190,7 +190,7 @@ export class SolicitacaoEstabelecimentoRepository {
     return Object.fromEntries(campos.filter((campo) => dados[campo] !== undefined).map((campo) => [campo, dados[campo]]));
   }
 
-  private async materializar(tx: any, solicitacao: any, revisorId: number) {
+  private async materializar(tx: any, solicitacao: any, revisorId: number, latitude?: number | null, longitude?: number | null) {
     if (solicitacao.estabelecimentoGeradoId) return solicitacao.estabelecimentoGeradoId;
     const solicitante = await tx.usuario.findUnique({
       where: { id: solicitacao.usuarioId },
@@ -212,6 +212,7 @@ export class SolicitacaoEstabelecimentoRepository {
       email: solicitacao.emailComercial, telefone: solicitacao.telefoneComercial,
       tipoEstabelecimento: solicitacao.tipoEstabelecimento, modeloAtendimento: solicitacao.modeloAtendimento,
       endereco: endereco || null, bairro: solicitacao.bairro, cidade: solicitacao.cidade, estado: solicitacao.estado,
+      latitude: latitude ?? null, longitude: longitude ?? null,
       status: 'TRIAL', reviewStatus: 'APPROVED', approvedAt: agora, approvedById: revisorId, trialEndsAt,
       unidades: { create: { nome: 'Matriz', endereco: endereco || null, telefone: solicitacao.telefoneComercial } },
       assinatura: { create: { planoId: plano.id, status: 'TRIAL', trialEndsAt } },

@@ -14,12 +14,12 @@ export class SolicitacaoEstabelecimentoAdminController {
     validarNumeroInteiroPositivo(id, 'Solicitação'); return this.service.obterParaRevisao(Number(id), usuario.id!);
   }
   @Put(':id/aprovar') aprovar(@Param('id') id: string, @Body() dados: RevisarSolicitacaoEstabelecimentoDto, @UsuarioLogado() usuario: Usuario) {
-    validarNumeroInteiroPositivo(id, 'Solicitação'); return this.service.revisar(Number(id), usuario.id!, 'APPROVED', dados?.motivo);
+    validarNumeroInteiroPositivo(id, 'Solicitação'); return this.service.revisar(Number(id), usuario.id!, 'APPROVED', dados);
   }
   @Put(':id/solicitar-correcao') corrigir(@Param('id') id: string, @Body() dados: RevisarSolicitacaoEstabelecimentoDto, @UsuarioLogado() usuario: Usuario) {
-    validarNumeroInteiroPositivo(id, 'Solicitação'); return this.service.revisar(Number(id), usuario.id!, 'CORRECTION_REQUESTED', dados?.motivo);
+    validarNumeroInteiroPositivo(id, 'Solicitação'); return this.service.revisar(Number(id), usuario.id!, 'CORRECTION_REQUESTED', dados);
   }
   @Put(':id/reprovar') reprovar(@Param('id') id: string, @Body() dados: RevisarSolicitacaoEstabelecimentoDto, @UsuarioLogado() usuario: Usuario) {
-    validarNumeroInteiroPositivo(id, 'Solicitação'); return this.service.revisar(Number(id), usuario.id!, 'REJECTED', dados?.motivo);
+    validarNumeroInteiroPositivo(id, 'Solicitação'); return this.service.revisar(Number(id), usuario.id!, 'REJECTED', dados);
   }
 }

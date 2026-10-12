@@ -3,9 +3,10 @@ import { ServicoPrisma } from './servico.prisma';
 import { TenantService } from 'src/shared/tenant.service';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import { Usuario } from '@uniflowabs/core';
-import { validarNumeroInteiroPositivo, validarTextoObrigatorio } from 'src/shared/validacao';
+import { validarNumeroInteiroNaoNegativo, validarNumeroInteiroPositivo, validarTextoObrigatorio } from 'src/shared/validacao';
 import { CriarServicoDto } from './servico.dto';
 import { PlanoLimitesService } from 'src/saas/plano-limites.service';
+import { EquipePolicy } from 'src/equipe/equipe.policy';
 
 @Controller('servicos')
 export class ServicoController {
@@ -13,6 +14,7 @@ export class ServicoController {
     private readonly repo: ServicoPrisma,
     private readonly tenant: TenantService,
     private readonly limites: PlanoLimitesService,
+    private readonly equipePolicy: EquipePolicy,
   ) {}
 
   @Get()
@@ -23,7 +25,7 @@ export class ServicoController {
 
   @Post()
   async criarServico(@Body() dados: CriarServicoDto, @UsuarioLogado() usuario: Usuario) {
-    this.validarPermissao(usuario);
+    await this.validarPermissao(usuario);
     this.validarServico(dados);
     await this.limites.validarEstabelecimentoOperacional(usuario.estabelecimentoId);
     await this.limites.validarNovoServico(usuario.estabelecimentoId);
@@ -36,7 +38,7 @@ export class ServicoController {
     @Body() dados: CriarServicoDto,
     @UsuarioLogado() usuario: Usuario,
   ) {
-    this.validarPermissao(usuario);
+    await this.validarPermissao(usuario);
     validarNumeroInteiroPositivo(id, 'Serviço');
     this.validarServico(dados);
     await this.limites.validarEstabelecimentoOperacional(usuario.estabelecimentoId);
@@ -45,16 +47,17 @@ export class ServicoController {
 
   @Delete(':id')
   async excluirServico(@Param('id') id: string, @UsuarioLogado() usuario: Usuario) {
-    this.validarPermissao(usuario);
+    await this.validarPermissao(usuario);
     validarNumeroInteiroPositivo(id, 'Serviço');
     await this.limites.validarEstabelecimentoOperacional(usuario.estabelecimentoId);
     return this.repo.excluir(Number(id), usuario.estabelecimentoId);
   }
 
-  private validarPermissao(usuario: Usuario) {
+  private async validarPermissao(usuario: Usuario) {
     if (!usuario?.membroEstabelecimento) {
       throw new ForbiddenException('Apenas membroEstabelecimentos podem gerenciar serviços');
     }
+    await this.equipePolicy.validarPermissao(usuario, 'CONFIGURACOES_GERENCIAR');
   }
 
   private validarServico(dados: CriarServicoDto) {
@@ -62,6 +65,20 @@ export class ServicoController {
     validarTextoObrigatorio(dados?.descricao, 'Descrição');
     validarTextoObrigatorio(dados?.imagemURL, 'Imagem');
     validarNumeroInteiroPositivo(dados?.qtdeSlots, 'Quantidade de slots');
+
+    const duracao = Number(dados?.duracaoMinutos ?? Number(dados?.qtdeSlots) * 15);
+    validarNumeroInteiroPositivo(duracao, 'Duração');
+    const modelo = dados?.modeloAtendimento ?? 'PRESENCIAL';
+    if (!['PRESENCIAL', 'DOMICILIAR', 'HIBRIDO'].includes(modelo)) {
+      throw new BadRequestException('Modelo de atendimento inválido');
+    }
+    validarNumeroInteiroNaoNegativo(dados?.preparoAntesMinutos ?? 0, 'Preparo anterior');
+    validarNumeroInteiroNaoNegativo(dados?.preparoDepoisMinutos ?? 0, 'Preparo posterior');
+    validarNumeroInteiroNaoNegativo(dados?.deslocamentoMinutos ?? 0, 'Deslocamento');
+    if (dados?.profissionalIds !== undefined && (!Array.isArray(dados.profissionalIds)
+      || dados.profissionalIds.some((id) => !Number.isInteger(Number(id)) || Number(id) <= 0))) {
+      throw new BadRequestException('Profissionais habilitados inválidos');
+    }
 
     if (!Number.isFinite(Number(dados?.preco)) || Number(dados.preco) <= 0) {
       throw new BadRequestException('Preço inválido');

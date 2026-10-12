@@ -295,6 +295,18 @@ export class SaasPrisma {
     return this.normalizarEstabelecimento(estabelecimento);
   }
 
+  async atualizarCoordenadasEstabelecimento(id: number, usuarioId: number, latitude: number, longitude: number) {
+    const estabelecimento = await this.prisma.estabelecimento.update({
+      where: { id }, data: { latitude, longitude },
+      include: {
+        assinatura: { include: { plano: true } },
+        _count: { select: { usuarios: true, profissionais: true, unidades: true, servicos: true, agendamentos: true } },
+      },
+    });
+    await this.registrarAuditoria(id, usuarioId, 'ADMIN_VALIDATE_ESTABLISHMENT_COORDINATES', 'Estabelecimento', id, { latitude, longitude });
+    return this.normalizarEstabelecimento(estabelecimento);
+  }
+
 
   async aprovarEstabelecimento(id: number, usuarioId: number, motivo?: string) {
     const estabelecimento = await this.prisma.estabelecimento.update({
