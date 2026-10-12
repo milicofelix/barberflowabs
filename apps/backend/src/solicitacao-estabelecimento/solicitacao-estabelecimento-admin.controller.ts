@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Param, Put } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
 import { Usuario } from '@uniflowabs/core';
 import { validarNumeroInteiroPositivo } from 'src/shared/validacao';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
-import { RevisarSolicitacaoEstabelecimentoDto } from './solicitacao-estabelecimento.dto';
+import { ResolverCoordenadasDto, RevisarSolicitacaoEstabelecimentoDto } from './solicitacao-estabelecimento.dto';
 import { SolicitacaoEstabelecimentoService } from './solicitacao-estabelecimento.service';
 
 @Controller('admin/solicitacoes-estabelecimento')
@@ -12,6 +12,14 @@ export class SolicitacaoEstabelecimentoAdminController {
   @Get() listar(@UsuarioLogado() usuario: Usuario) { return this.service.listarPendentes(usuario.id!); }
   @Get(':id') obter(@Param('id') id: string, @UsuarioLogado() usuario: Usuario) {
     validarNumeroInteiroPositivo(id, 'Solicitação'); return this.service.obterParaRevisao(Number(id), usuario.id!);
+  }
+  @Post(':id/resolver-coordenadas') resolverCoordenadas(
+    @Param('id') id: string,
+    @Body() dados: ResolverCoordenadasDto,
+    @UsuarioLogado() usuario: Usuario,
+  ) {
+    validarNumeroInteiroPositivo(id, 'Solicitação');
+    return this.service.resolverCoordenadas(Number(id), usuario.id!, dados?.googleMapsUrl);
   }
   @Put(':id/aprovar') aprovar(@Param('id') id: string, @Body() dados: RevisarSolicitacaoEstabelecimentoDto, @UsuarioLogado() usuario: Usuario) {
     validarNumeroInteiroPositivo(id, 'Solicitação'); return this.service.revisar(Number(id), usuario.id!, 'APPROVED', dados);

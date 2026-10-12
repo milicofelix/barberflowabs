@@ -1,13 +1,17 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable } from '@nestjs/common';
 import { MODELOS_ATENDIMENTO, TIPOS_ESTABELECIMENTO } from 'src/estabelecimento/estabelecimento.constants';
 import { validarEmail, validarNumeroInteiroPositivo, validarTextoObrigatorio } from 'src/shared/validacao';
+import { GeocodificacaoEnderecoService } from 'src/geocodificacao/geocodificacao-endereco.service';
 import { STATUS_SOLICITACAO_EDITAVEIS, TERMOS_CADASTRO_ESTABELECIMENTO_VERSAO } from './solicitacao-estabelecimento.constants';
 import { EnviarSolicitacaoEstabelecimentoDto, RevisarSolicitacaoEstabelecimentoDto, SalvarSolicitacaoEstabelecimentoDto } from './solicitacao-estabelecimento.dto';
 import { SolicitacaoEstabelecimentoRepository } from './solicitacao-estabelecimento.repository';
 
 @Injectable()
 export class SolicitacaoEstabelecimentoService {
-  constructor(private readonly repository: SolicitacaoEstabelecimentoRepository) {}
+  constructor(
+    private readonly repository: SolicitacaoEstabelecimentoRepository,
+    private readonly geocodificacao: GeocodificacaoEnderecoService,
+  ) {}
 
   listar(usuarioId: number) { return this.repository.listarDoUsuario(usuarioId); }
   configuracao() {
@@ -26,6 +30,13 @@ export class SolicitacaoEstabelecimentoService {
     const solicitacao = await this.repository.buscarParaRevisao(id);
     if (!solicitacao) throw new BadRequestException('Solicitação não encontrada');
     return solicitacao;
+  }
+  async resolverCoordenadas(id: number, usuarioId: number, googleMapsUrl?: string | null) {
+    const solicitacao = await this.obterParaRevisao(id, usuarioId);
+    if (solicitacao.modeloAtendimento === 'DOMICILIAR') {
+      throw new BadRequestException('Atendimento exclusivamente domiciliar não exige coordenadas do estabelecimento');
+    }
+    return this.geocodificacao.resolver(solicitacao, googleMapsUrl);
   }
   async revisar(id: number, usuarioId: number, decisao: 'APPROVED' | 'CORRECTION_REQUESTED' | 'REJECTED', dados: RevisarSolicitacaoEstabelecimentoDto = {}) {
     await this.validarAdministrador(usuarioId);

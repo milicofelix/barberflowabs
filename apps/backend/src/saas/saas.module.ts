@@ -6,9 +6,10 @@ import { SaasController } from './saas.controller';
 import { SaasPrisma } from './saas.prisma';
 import { PlanoLimitesService } from './plano-limites.service';
 import { FinanceiroModule } from 'src/financeiro/financeiro.module';
+import { GeocodificacaoModule } from 'src/geocodificacao/geocodificacao.module';
 
 @Module({
-  imports: [AuthModule, DbModule, FinanceiroModule],
+  imports: [AuthModule, DbModule, FinanceiroModule, GeocodificacaoModule],
   controllers: [SaasController],
   providers: [SaasPrisma, PlanoLimitesService],
   exports: [PlanoLimitesService],

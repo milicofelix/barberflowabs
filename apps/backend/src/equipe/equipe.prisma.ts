@@ -41,6 +41,12 @@ export class EquipePrisma {
     });
   }
 
+  async remover(id: number, estabelecimentoId: number) {
+    const resultado = await (this.prisma as any).membroEquipe.deleteMany({ where: { id, estabelecimentoId } });
+    if (!resultado.count) throw new NotFoundException('Membro da equipe não encontrado');
+    return { removido: true };
+  }
+
   listarEscalas(profissionalId: number, estabelecimentoId: number) {
     return (this.prisma as any).escalaProfissional.findMany({
       where: { profissionalId, estabelecimentoId },

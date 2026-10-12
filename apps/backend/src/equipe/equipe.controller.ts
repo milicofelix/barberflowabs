@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import { validarNumeroInteiroPositivo } from 'src/shared/validacao';
 import { SalvarEscalasDto, SalvarMembroEquipeDto } from './equipe.dto';
@@ -39,6 +39,13 @@ export class EquipeController {
     await this.policy.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
     this.policy.validarMembro(dados);
     return this.repo.atualizar(Number(id), usuario.estabelecimentoId, dados);
+  }
+
+  @Delete(':id')
+  async remover(@Param('id') id: string, @UsuarioLogado() usuario: any) {
+    validarNumeroInteiroPositivo(id, 'Membro');
+    await this.policy.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
+    return this.repo.remover(Number(id), usuario.estabelecimentoId);
   }
 
   @Get('profissionais/:id/escalas')

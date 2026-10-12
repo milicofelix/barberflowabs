@@ -7,13 +7,15 @@ const INTERVALO_ATUALIZACAO_MS = 15_000
 export interface EstabelecimentoAdmin {
     id: number; nome: string; slug: string; status: string; reviewStatus: string; tipoEstabelecimento?: string
     latitude?: number | null; longitude?: number | null
+    endereco?: string; cep?: string; logradouro?: string; numero?: string; complemento?: string; bairro?: string; cidade?: string; estado?: string
     _count?: { usuarios: number; profissionais: number; servicos: number; agendamentos: number }
     assinatura?: { plano?: { nome: string }; status: string } | null
 }
 export interface SolicitacaoAdmin {
     id: number; nomePublico: string; tipoEstabelecimento: string; modeloAtendimento: string
-    logradouro?: string; numero?: string; bairro?: string; cidade?: string; estado?: string; usuario: { nome: string; email: string }
+    cep?: string; logradouro?: string; numero?: string; complemento?: string; bairro?: string; cidade?: string; estado?: string; usuario: { nome: string; email: string }
 }
+export interface CoordenadasResolvidas { latitude: number; longitude: number; origem: string; mapsUrl: string }
 
 export default function useAdministracao() {
     const { httpGet, httpPost, httpPut } = useAPI()
@@ -56,13 +58,21 @@ export default function useAdministracao() {
             await carregar()
         } catch (e) { setErro(mensagemDoErro(e)) } finally { setExecutando(false) }
     }
-    async function salvarCoordenadas(id: number, latitude: number, longitude: number) {
+    async function resolverCoordenadasSolicitacao(id: number, googleMapsUrl?: string) {
         try {
             setErro(null); setSucesso(null)
-            await httpPut(`/saas/admin/estabelecimentos/${id}/coordenadas`, { latitude, longitude }, { escopoTenant: 'nenhum' })
-            setSucesso('Coordenadas validadas e salvas.')
-            await carregar()
-        } catch (e) { setErro(mensagemDoErro(e)) }
+            const resposta = await httpPost<CoordenadasResolvidas>(`/admin/solicitacoes-estabelecimento/${id}/resolver-coordenadas`, { googleMapsUrl }, { escopoTenant: 'nenhum' })
+            setSucesso('Localização encontrada. Confira o ponto antes de aprovar.')
+            return resposta
+        } catch (e) { setErro(mensagemDoErro(e)); throw e }
     }
-    return { estabelecimentos, pendentes, carregando, executando, erro, sucesso, carregar, revisar, salvarCoordenadas, processarInadimplencia }
+    async function resolverCoordenadasEstabelecimento(id: number, googleMapsUrl?: string) {
+        try {
+            setErro(null); setSucesso(null)
+            const resposta = await httpPost<CoordenadasResolvidas>(`/saas/admin/estabelecimentos/${id}/resolver-coordenadas`, { googleMapsUrl }, { escopoTenant: 'nenhum' })
+            setSucesso('Coordenadas localizadas e salvas automaticamente.')
+            await carregar(); return resposta
+        } catch (e) { setErro(mensagemDoErro(e)); throw e }
+    }
+    return { estabelecimentos, pendentes, carregando, executando, erro, sucesso, carregar, revisar, resolverCoordenadasSolicitacao, resolverCoordenadasEstabelecimento, processarInadimplencia }
 }

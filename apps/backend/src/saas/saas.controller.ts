@@ -32,6 +32,7 @@ import {
 import { SaasPrisma } from './saas.prisma';
 import { MODELOS_ATENDIMENTO, TIPOS_ESTABELECIMENTO } from 'src/estabelecimento/estabelecimento.constants';
 import { FinanceiroService } from 'src/financeiro/financeiro.service';
+import { GeocodificacaoEnderecoService } from 'src/geocodificacao/geocodificacao-endereco.service';
 
 const STATUS_ESTABELECIMENTO = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'CANCELED'];
 const STATUS_COMERCIAL = ['NOVO', 'EM_CONTATO', 'APROVADO', 'RECUSADO', 'CONVERTIDO'];
@@ -43,6 +44,7 @@ export class SaasController {
     private readonly repo: SaasPrisma,
     private readonly cripto: BcryptProvider,
     private readonly financeiro: FinanceiroService,
+    private readonly geocodificacao: GeocodificacaoEnderecoService,
   ) {}
 
   @Get('planos')
@@ -234,6 +236,23 @@ export class SaasController {
     const latitude = this.validarCoordenada(dados?.latitude, -90, 90, 'Latitude');
     const longitude = this.validarCoordenada(dados?.longitude, -180, 180, 'Longitude');
     return this.repo.atualizarCoordenadasEstabelecimento(Number(id), usuario.id!, latitude, longitude);
+  }
+
+  @Post('admin/estabelecimentos/:id/resolver-coordenadas')
+  async resolverCoordenadasEstabelecimento(
+    @Param('id') id: string,
+    @Body() dados: { googleMapsUrl?: string | null },
+    @UsuarioLogado() usuario: Usuario,
+  ) {
+    this.validarSuperAdmin(usuario);
+    validarNumeroInteiroPositivo(id, 'Estabelecimento');
+    const estabelecimento = await this.repo.buscarEnderecoEstabelecimento(Number(id));
+    if (!estabelecimento) throw new NotFoundException('Estabelecimento não encontrado');
+    const coordenadas = await this.geocodificacao.resolver(estabelecimento, dados?.googleMapsUrl);
+    await this.repo.atualizarCoordenadasEstabelecimento(
+      Number(id), usuario.id!, coordenadas.latitude, coordenadas.longitude,
+    );
+    return coordenadas;
   }
 
   @Get('admin/auditoria')

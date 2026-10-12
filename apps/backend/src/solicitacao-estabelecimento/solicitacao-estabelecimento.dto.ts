@@ -29,3 +29,7 @@ export interface RevisarSolicitacaoEstabelecimentoDto {
   latitude?: number | string | null;
   longitude?: number | string | null;
 }
+
+export interface ResolverCoordenadasDto {
+  googleMapsUrl?: string | null;
+}

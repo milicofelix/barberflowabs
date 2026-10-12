@@ -59,9 +59,10 @@ export default function useOperacao() {
     async function criarProfissional(dados: Omit<ProfissionalOperacional, 'id'>) {
         return executarAcao(() => httpPost('/profissionais', { ...dados, avaliacao: 5, quantidadeAvaliacoes: 0 }))
     }
-    async function salvarMembro(dados: { usuarioId: number; profissionalId?: number | null; papel: string; permissoes: PermissaoEquipe[] }) {
-        return executarAcao(() => httpPost('/equipe', dados))
+    async function salvarMembro(dados: { usuarioId: number; profissionalId?: number | null; papel: string; permissoes: PermissaoEquipe[]; ativo?: boolean }, membroId?: number) {
+        return executarAcao(() => membroId ? httpPut(`/equipe/${membroId}`, dados) : httpPost('/equipe', dados))
     }
+    const removerMembro = (id: number) => executarAcao(() => httpDelete(`/equipe/${id}`))
     const buscarEscalas = (profissionalId: number) => httpGet<EscalaProfissional[]>(`/equipe/profissionais/${profissionalId}/escalas`)
     const salvarEscalas = (profissionalId: number, escalas: EscalaProfissional[]) => executarAcao(() => httpPut(`/equipe/profissionais/${profissionalId}/escalas`, { escalas }))
     const criarRecurso = (dados: Omit<RecursoOperacional, 'id'>) => executarAcao(() => httpPost('/recursos', dados))
@@ -71,7 +72,7 @@ export default function useOperacao() {
 
     return {
         dashboard, agendamentos, profissionais, membros, usuariosDisponiveis, recursos, permissoes, data, setData, carregando, erro,
-        recarregar: carregar, alterarStatus, criarProfissional, salvarMembro,
+        recarregar: carregar, alterarStatus, criarProfissional, salvarMembro, removerMembro,
         buscarEscalas, salvarEscalas, criarRecurso, buscarIndisponibilidades, indisponibilizarRecurso, removerIndisponibilidade,
     }
 }

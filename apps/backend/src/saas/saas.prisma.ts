@@ -229,6 +229,15 @@ export class SaasPrisma {
     return estabelecimentos.map((estabelecimento) => this.normalizarEstabelecimento(estabelecimento));
   }
 
+  buscarEnderecoEstabelecimento(id: number) {
+    return this.prisma.estabelecimento.findUnique({
+      where: { id },
+      select: {
+        endereco: true, bairro: true, cidade: true, estado: true,
+      },
+    });
+  }
+
   async listarEstabelecimentosPendentesAdmin() {
     const estabelecimentos = await this.prisma.estabelecimento.findMany({
       where: { reviewStatus: 'PENDING_REVIEW' } as any,

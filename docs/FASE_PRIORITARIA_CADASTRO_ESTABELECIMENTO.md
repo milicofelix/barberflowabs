@@ -94,7 +94,7 @@ Opcionais:
 
 Ao receber oito digitos, o frontend consulta `https://viacep.com.br/ws/{cep}/json/` e preenche logradouro, bairro, cidade e UF. CEP inexistente retorna `erro: true`; formato invalido deve ser bloqueado antes da consulta. O endereco continua editavel porque a fonte pode estar desatualizada.
 
-O ViaCEP nao fornece coordenadas geograficas. Latitude e longitude permanecem nulas na solicitacao e serao preenchidas ou validadas posteriormente pelo super admin por meio de um provedor de geocodificacao ainda a escolher.
+O ViaCEP nao fornece coordenadas geograficas. Latitude e longitude permanecem fora da responsabilidade do solicitante. Na revisao, o superadmin abre a busca do endereço no Google Maps e aciona o preenchimento automatico: o backend extrai as coordenadas de uma URL de ponto exato quando fornecida ou geocodifica o CEP e endereço completo como alternativa.
 
 ### Passo 5 — Revisao E Envio
 
@@ -319,6 +319,7 @@ Contratos administrativos implementados:
 - `GET /admin/solicitacoes-estabelecimento`
 - `GET /admin/solicitacoes-estabelecimento/:id`
 - `PUT /admin/solicitacoes-estabelecimento/:id/aprovar`
+- `POST /admin/solicitacoes-estabelecimento/:id/resolver-coordenadas`
 - `PUT /admin/solicitacoes-estabelecimento/:id/solicitar-correcao`
 - `PUT /admin/solicitacoes-estabelecimento/:id/reprovar`
 
@@ -378,19 +379,21 @@ O mobile agora oferece **Operação → Serviços** para o responsável cadastra
 Depois da aprovação, o responsável deve configurar:
 
 1. os serviços em **Operação → Serviços**;
-2. os profissionais em **Operação → Equipe**;
+2. os profissionais em **Operação → Equipe**; quando o próprio gestor também atende, deve criar seu perfil profissional e vinculá-lo ao membro `GESTOR`, sem criar outra conta;
 3. as escalas e os horários de atendimento;
 4. os recursos necessários, quando aplicável.
 
-Latitude e longitude não fazem parte do cadastro operacional do responsável. Para atendimentos presenciais ou híbridos, a aprovação administrativa exige que o superadmin informe as coordenadas que validou a partir do endereço; elas são gravadas junto com a materialização do estabelecimento e auditadas. A administração também pode corrigir coordenadas de estabelecimentos já aprovados, sempre com registro de auditoria. Ter o cadastro aprovado não basta para publicação: o estabelecimento também precisa atender aos critérios operacionais mínimos da API pública.
+Na gestão de membros, as permissões podem ser selecionadas ou removidas em conjunto. Remover um membro desfaz apenas seu vínculo com a equipe; a conta do usuário e o perfil profissional são preservados para permitir uma nova vinculação.
+
+Latitude e longitude não fazem parte do cadastro operacional do responsável. Para atendimentos presenciais ou híbridos, o superadmin abre o endereço no Google Maps e solicita o preenchimento automático das coordenadas. Uma URL de ponto exato pode ser colada para extrair latitude e longitude; sem ela, o backend geocodifica o endereço completo cadastrado. As coordenadas validadas são gravadas junto com a materialização do estabelecimento e auditadas. A administração também pode repetir esse fluxo em estabelecimentos já aprovados. Ter o cadastro aprovado não basta para publicação: o estabelecimento também precisa atender aos critérios operacionais mínimos da API pública.
 
 O reinicio do container `app` foi executado apenas para carregar as correcoes encontradas no aceite. Nenhum build, migration, seed ou suíte automatizada foi executado.
 
 ## Dependencias E Limites
 
 - O ViaCEP deve ser usado para conveniencia, nao como prova de existencia do estabelecimento.
-- A integracao deve ter timeout e permitir preenchimento manual quando indisponivel.
-- Geocodificacao exige outro provedor e decisao sobre custo, termos e privacidade.
+- A integracao deve ter timeout e permitir informar a URL do ponto exato quando a busca pelo endereço não for suficiente.
+- A geocodificacao automatica usa Nominatim como alternativa à coordenada presente na URL do Google Maps; antes de produção, revisar limites de uso, privacidade e a necessidade de um provedor contratado.
 - CNPJ e comprovacao documental devem ser decididos juridicamente antes de serem obrigatorios.
 - Nenhum dado pendente deve alimentar busca publica ou mapa.
 
