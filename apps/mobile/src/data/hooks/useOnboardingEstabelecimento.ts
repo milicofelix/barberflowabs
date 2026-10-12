@@ -1,70 +1,139 @@
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+    FORMULARIO_VAZIO, FormularioSolicitacao, mapearFormulario, PlanoOnboarding, SegmentoOnboarding,
+    SolicitacaoEstabelecimento, somenteDigitos, sugerirSegmentos,
+} from '../onboarding/solicitacao-estabelecimento'
 import useAPI, { mensagemDoErro } from './useAPI'
-import { useEffect, useMemo, useState } from 'react'
+import useLocalStorage from './useLocalStorage'
+import useSessao from './useSessao'
 
-interface Segmento { id: number; nome: string; especialidades: Array<{ id: number; nome: string }> }
-interface Plano { slug: string; nome: string; valorDoCiclo?: number; precoMensal?: number }
-
-const inicial = {
-    nome: '', slug: '', emailEstabelecimento: '', telefoneEstabelecimento: '', tipoEstabelecimento: 'BARBEARIA',
-    modeloAtendimento: 'PRESENCIAL', segmentoIds: [] as number[], especialidadeIds: [] as number[],
-    nomeResponsavel: '', emailResponsavel: '', telefoneResponsavel: '', senha: '', planoSlug: 'mensal',
-}
+interface Configuracao { termosVersao: string; tiposEstabelecimento: string[]; modelosAtendimento: string[] }
+interface RascunhoLocal { solicitacaoId: number; versao: number; passo: number; form: FormularioSolicitacao }
+const STATUS_EDITAVEIS = ['RASCUNHO', 'REJECTED', 'CORRECTION_REQUESTED']
 
 export default function useOnboardingEstabelecimento() {
-    const { httpGet, httpPost } = useAPI()
-    const [form, setForm] = useState(inicial)
-    const [segmentos, setSegmentos] = useState<Segmento[]>([])
-    const [planos, setPlanos] = useState<Plano[]>([])
+    const { usuario } = useSessao()
+    const { httpGet, httpPost, httpPut } = useAPI()
+    const { get, set, remove } = useLocalStorage()
+    const [form, setForm] = useState<FormularioSolicitacao>(FORMULARIO_VAZIO)
+    const [solicitacao, setSolicitacao] = useState<SolicitacaoEstabelecimento | null>(null)
+    const [configuracao, setConfiguracao] = useState<Configuracao | null>(null)
+    const [segmentos, setSegmentos] = useState<SegmentoOnboarding[]>([])
+    const [planos, setPlanos] = useState<PlanoOnboarding[]>([])
+    const [passo, setPasso] = useState(0)
+    const [carregando, setCarregando] = useState(true)
     const [processando, setProcessando] = useState(false)
     const [erro, setErro] = useState<string | null>(null)
-    const [concluido, setConcluido] = useState(false)
-    useEffect(() => {
-        Promise.all([
-            httpGet<Segmento[]>('/catalogo/segmentos', { escopoTenant: 'nenhum' }),
-            httpGet<Plano[]>('/saas/planos', { escopoTenant: 'nenhum' }),
-        ])
-            .then(([catalogo, opcoes]) => { setSegmentos(catalogo); setPlanos(opcoes) }).catch((e) => setErro(mensagemDoErro(e)))
-    }, [httpGet])
-    const especialidades = useMemo(() => segmentos.filter((s) => form.segmentoIds.includes(s.id)).flatMap((s) => s.especialidades), [form.segmentoIds, segmentos])
-    function alterar(campo: string, valor: any) {
-        setForm((atual) => ({ ...atual, [campo]: valor, ...(campo === 'nome' ? { slug: slugify(valor) } : {}) })); setErro(null)
-    }
-    function alternar(campo: 'segmentoIds' | 'especialidadeIds', id: number) {
-        setErro(null)
-        setForm((atual) => {
-            const selecionados = atual[campo]
-            const removendo = selecionados.includes(id)
-            const novosIds = removendo ? selecionados.filter((item) => item !== id) : [...selecionados, id]
-            if (campo === 'especialidadeIds' || !removendo) return { ...atual, [campo]: novosIds }
+    const [mensagem, setMensagem] = useState<string | null>(null)
+    const [hidratado, setHidratado] = useState(false)
+    const chaveRascunho = `@uniflowabs/solicitacao-estabelecimento:${usuario?.id ?? 'anonimo'}`
 
-            const idsIncompativeis = new Set(segmentos.find((segmento) => segmento.id === id)?.especialidades.map((item) => item.id) ?? [])
-            return {
-                ...atual,
-                segmentoIds: novosIds,
-                especialidadeIds: atual.especialidadeIds.filter((item) => !idsIncompativeis.has(item)),
-            }
-        })
-    }
-    async function submeter() {
-        if (processando) return
-        if (!form.nome || !form.nomeResponsavel || !form.emailResponsavel || form.senha.length < 6 || !form.segmentoIds.length || !form.especialidadeIds.length) {
-            setErro('Preencha os dados obrigatórios e selecione segmento e especialidade.'); return
-        }
+    const carregar = useCallback(async () => {
+        if (!usuario) return
         try {
-            setProcessando(true); setErro(null)
-            await httpPost('/saas/onboarding', {
-                planoSlug: form.planoSlug,
-                estabelecimento: { nome: form.nome, slug: form.slug, email: form.emailEstabelecimento, telefone: form.telefoneEstabelecimento,
-                    tipoEstabelecimento: form.tipoEstabelecimento, modeloAtendimento: form.modeloAtendimento,
-                    segmentoIds: form.segmentoIds, especialidadeIds: form.especialidadeIds },
-                dono: { nome: form.nomeResponsavel, email: form.emailResponsavel, telefone: form.telefoneResponsavel, senha: form.senha },
+            setCarregando(true); setErro(null)
+            const [registro, opcoes, catalogo, planosDisponiveis] = await Promise.all([
+                httpPost<SolicitacaoEstabelecimento>('/solicitacoes-estabelecimento', {}, { escopoTenant: 'nenhum' }),
+                httpGet<Configuracao>('/solicitacoes-estabelecimento/configuracao', { escopoTenant: 'nenhum' }),
+                httpGet<SegmentoOnboarding[]>('/catalogo/segmentos', { escopoTenant: 'nenhum' }),
+                httpGet<PlanoOnboarding[]>('/saas/planos', { escopoTenant: 'nenhum' }),
+            ])
+            const formularioServidor = mapearFormulario(registro)
+            const local = await get(chaveRascunho).catch(() => null) as RascunhoLocal | null
+            const localValido = local?.solicitacaoId === registro.id && local.versao === registro.versao && STATUS_EDITAVEIS.includes(registro.status)
+            setSolicitacao(registro); setConfiguracao(opcoes); setSegmentos(catalogo); setPlanos(planosDisponiveis)
+            setForm(localValido ? local.form : formularioServidor)
+            setPasso(localValido ? local.passo : determinarPassoRetomada(formularioServidor))
+            if (!STATUS_EDITAVEIS.includes(registro.status)) await remove(chaveRascunho).catch(() => undefined)
+            setHidratado(true)
+        } catch (e) { setErro(mensagemDoErro(e)) } finally { setCarregando(false) }
+    }, [chaveRascunho, get, httpGet, httpPost, remove, usuario])
+
+    useEffect(() => { carregar() }, [carregar])
+    useEffect(() => {
+        if (!hidratado || !solicitacao || !STATUS_EDITAVEIS.includes(solicitacao.status)) return
+        const timeout = setTimeout(() => set(chaveRascunho, { solicitacaoId: solicitacao.id, versao: solicitacao.versao, passo, form }).catch(() => undefined), 250)
+        return () => clearTimeout(timeout)
+    }, [chaveRascunho, form, hidratado, passo, set, solicitacao])
+
+    const especialidades = useMemo(() => segmentos.filter((item) => form.segmentoIds.includes(item.id)).flatMap((item) => item.especialidades), [form.segmentoIds, segmentos])
+
+    function alterar<K extends keyof FormularioSolicitacao>(campo: K, valor: FormularioSolicitacao[K]) {
+        setForm((atual) => ({ ...atual, [campo]: valor })); limparFeedback()
+    }
+    function selecionarTipo(tipo: string) {
+        const sugeridos = sugerirSegmentos(tipo, segmentos)
+        setForm((atual) => {
+            const segmentoIds = sugeridos.length ? sugeridos : atual.segmentoIds
+            const permitidas = idsEspecialidades(segmentos, segmentoIds)
+            return { ...atual, tipoEstabelecimento: tipo, segmentoIds, especialidadeIds: atual.especialidadeIds.filter((id) => permitidas.has(id)) }
+        }); limparFeedback()
+    }
+    function alternarSegmento(id: number) {
+        setForm((atual) => {
+            const segmentoIds = atual.segmentoIds.includes(id) ? atual.segmentoIds.filter((item) => item !== id) : [...atual.segmentoIds, id]
+            const permitidas = idsEspecialidades(segmentos, segmentoIds)
+            return { ...atual, segmentoIds, especialidadeIds: atual.especialidadeIds.filter((item) => permitidas.has(item)) }
+        }); limparFeedback()
+    }
+    function alternarEspecialidade(id: number) {
+        setForm((atual) => ({ ...atual, especialidadeIds: atual.especialidadeIds.includes(id)
+            ? atual.especialidadeIds.filter((item) => item !== id) : [...atual.especialidadeIds, id] })); limparFeedback()
+    }
+    async function avancar() {
+        const problema = validarPasso(passo, form)
+        if (problema) return setErro(problema)
+        if (passo === 0) return setPasso(1)
+        if (passo < 4 && await salvar()) setPasso((atual) => atual + 1)
+    }
+    async function salvar() {
+        if (!solicitacao || processando) return null
+        try {
+            setProcessando(true); limparFeedback()
+            const atualizado = await httpPut<SolicitacaoEstabelecimento>(`/solicitacoes-estabelecimento/${solicitacao.id}`, {
+                ...form, versao: solicitacao.versao, telefoneComercial: somenteDigitos(form.telefoneComercial),
+                cep: somenteDigitos(form.cep), estado: form.estado.toUpperCase(),
             }, { escopoTenant: 'nenhum' })
-            setConcluido(true)
+            setSolicitacao(atualizado); setMensagem('Rascunho salvo.'); return atualizado
+        } catch (e) { setErro(mensagemDoErro(e)); return null } finally { setProcessando(false) }
+    }
+    async function enviar(aceitouTermos: boolean) {
+        if (!solicitacao || !configuracao || processando) return
+        const problema = validarPasso(4, form)
+        if (problema) return setErro(problema)
+        if (!aceitouTermos) return setErro('Confirme os termos e a veracidade das informações.')
+        const atualizado = await salvar()
+        if (!atualizado) return
+        try {
+            setProcessando(true); limparFeedback()
+            const enviado = await httpPost<SolicitacaoEstabelecimento>(`/solicitacoes-estabelecimento/${atualizado.id}/enviar`, {
+                versao: atualizado.versao, aceitouTermos: true, termosVersao: configuracao.termosVersao,
+            }, { escopoTenant: 'nenhum' })
+            setSolicitacao(enviado); await remove(chaveRascunho).catch(() => undefined); setMensagem('Cadastro enviado para análise.')
         } catch (e) { setErro(mensagemDoErro(e)) } finally { setProcessando(false) }
     }
-    return { form, segmentos, especialidades, planos, processando, erro, concluido, alterar, alternar, submeter }
+    function limparFeedback() { setErro(null); setMensagem(null) }
+
+    return {
+        form, solicitacao, configuracao, segmentos, especialidades, planos, passo, carregando, processando, erro, mensagem,
+        alterar, selecionarTipo, alternarSegmento, alternarEspecialidade, avancar, salvar, enviar,
+        voltar: () => { setPasso((atual) => Math.max(0, atual - 1)); limparFeedback() },
+    }
 }
 
-function slugify(valor: string) {
-    return valor.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+function idsEspecialidades(segmentos: SegmentoOnboarding[], ids: number[]) {
+    return new Set(segmentos.filter((item) => ids.includes(item.id)).flatMap((item) => item.especialidades.map((especialidade) => especialidade.id)))
+}
+function validarPasso(passo: number, form: FormularioSolicitacao): string | null {
+    if (passo === 1 && (!form.tipoEstabelecimento || !form.segmentoIds.length || !form.especialidadeIds.length)) return 'Selecione o tipo, ao menos um segmento e uma especialidade.'
+    if (passo === 2 && (!form.nomePublico.trim() || !/^\S+@\S+\.\S+$/.test(form.emailComercial) || !/^\d{10,11}$/.test(somenteDigitos(form.telefoneComercial)) || !form.planoSlug)) return 'Preencha corretamente os dados comerciais e o plano.'
+    if (passo === 3 && form.modeloAtendimento !== 'DOMICILIAR' && (somenteDigitos(form.cep).length !== 8 || !form.logradouro.trim() || !form.numero.trim() || !form.bairro.trim() || !form.cidade.trim() || form.estado.length !== 2)) return 'Preencha o endereço completo para o atendimento presencial.'
+    if (passo === 4) return validarPasso(1, form) || validarPasso(2, form) || validarPasso(3, form)
+    return null
+}
+function determinarPassoRetomada(form: FormularioSolicitacao) {
+    if (!form.tipoEstabelecimento || !form.segmentoIds.length || !form.especialidadeIds.length) return 0
+    if (!form.nomePublico || !form.emailComercial || !form.telefoneComercial) return 2
+    if (form.modeloAtendimento !== 'DOMICILIAR' && (!form.cep || !form.logradouro || !form.numero || !form.cidade || !form.estado)) return 3
+    return 4
 }

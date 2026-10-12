@@ -17,6 +17,7 @@ export default function Usuario({ navigation }: Props) {
     async function logout() {
         await encerrarSessao()
     }
+    const abrirCadastroEstabelecimento = () => navigation.getParent<NativeStackNavigationProp<StackParamList>>()?.navigate('OnboardingEstabelecimento')
 
     if (!usuario) {
         const entrar = () => navigation.getParent<NativeStackNavigationProp<StackParamList>>()?.navigate('Autenticacao')
@@ -35,7 +36,7 @@ export default function Usuario({ navigation }: Props) {
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: cores.fundo }]}>
             <View style={{ flex: 1, paddingTop: 15 }}>
-                <PerfilUsuario usuario={usuario!} logout={logout} />
+                <PerfilUsuario usuario={usuario!} logout={logout} cadastrarEstabelecimento={abrirCadastroEstabelecimento} />
             </View>
         </SafeAreaView>
     )

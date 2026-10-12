@@ -40,9 +40,20 @@ export default function Autenticacao({ navigation, route }: Props) {
 
     useEffect(() => {
         if (!usuario) return
+        if (route.params?.destino === 'OnboardingEstabelecimento') {
+            navigation.reset({
+                index: 1,
+                routes: [
+                    { name: 'Abas', params: { screen: 'Inicio' } },
+                    { name: 'OnboardingEstabelecimento' },
+                ],
+            })
+            return
+        }
+        const destinoAba = route.params?.destino === 'Agendamento' ? 'Agendamento' : 'Inicio'
         navigation.reset({
             index: 0,
-            routes: [{ name: 'Abas', params: { screen: route.params?.destino ?? 'Inicio' } }],
+            routes: [{ name: 'Abas', params: { screen: destinoAba } }],
         })
     }, [navigation, route.params?.destino, usuario])
 

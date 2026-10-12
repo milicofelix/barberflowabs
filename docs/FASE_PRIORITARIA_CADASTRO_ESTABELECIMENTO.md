@@ -1,6 +1,6 @@
 # Fase Prioritaria — Cadastro E Aprovacao De Estabelecimentos
 
-Status: Fases A e B implementadas em 2026-10-11; migration, Prisma Client, reinicio e validacao manual pendentes.
+Status: Fases A, B e C implementadas em 2026-10-11; migration, Prisma Client, reinicio e validacao manual pendentes.
 
 Esta fase entra antes da Fase 2 da Etapa 10. Ela evolui o onboarding existente sem duplicar contas, sem publicar dados nao validados e sem exigir latitude ou longitude do solicitante.
 
@@ -213,9 +213,13 @@ O CEP possui validacao local, timeout de sete segundos, tratamento de CEP inexis
 
 ### Fase C — Assistente Mobile
 
-- [ ] Replicar contratos, passos, mascaras e ViaCEP.
-- [ ] Preservar rascunho entre fechamentos do aplicativo.
-- [ ] Garantir paridade visual e funcional com a web.
+- [x] Replicar contratos, passos, mascaras e ViaCEP.
+- [x] Preservar rascunho entre fechamentos do aplicativo.
+- [x] Garantir paridade visual e funcional com a web.
+
+O mobile passou a utilizar a solicitacao autenticada da Fase A e deixou de criar outro usuario responsavel pelo endpoint legado. O retorno apos login ou cadastro preserva o destino do assistente. Os cinco passos, classificacao guiada, mascaras, consulta de CEP, revisao, aceite, protocolo e acompanhamento seguem as mesmas regras da web.
+
+O rascunho e o passo atual tambem sao mantidos no armazenamento local por usuario, solicitacao e versao. Dados locais somente sao restaurados quando ainda correspondem a versao do servidor, evitando sobrescrever uma alteracao mais recente feita em outro dispositivo.
 
 ### Fase D — Revisao E Notificacoes
 
