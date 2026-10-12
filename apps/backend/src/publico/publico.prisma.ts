@@ -380,9 +380,10 @@ export class PublicoPrisma {
   private criteriosPublicacao() {
     return {
       reviewStatus: 'APPROVED',
-      status: { notIn: ['SUSPENDED', 'CANCELED'] },
+      status: { notIn: ['PAST_DUE', 'SUSPENDED', 'CANCELED'] },
       servicos: { some: {} },
       profissionais: { some: {} },
+      profissionaisServicos: { some: { ativo: true } },
       horariosFuncionamento: { some: { ativo: true } },
       AND: [{ OR: [
           { modeloAtendimento: 'DOMICILIAR' },

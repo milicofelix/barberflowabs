@@ -340,13 +340,30 @@ Web e mobile atualizam notificacoes e a fila administrativa a cada 15 segundos, 
 7. Na web e no mobile, abrir o sino, ler uma notificacao e usar **Marcar todas como lidas**; confirmar o contador zerado.
 8. Confirmar que uma solicitacao pendente continua ausente do marketplace e que uma aprovada só será publicada depois da configuracao operacional minima.
 
-### Fase E — Aceite
+### Fase E — Prontidão operacional e aceite de publicação
+
+Status: diagnóstico autoritativo e checklist web/mobile implementados em 2026-10-12; aceite manual completo permanece pendente.
+
+- [x] Criar diagnóstico único de prontidão no backend.
+- [x] Separar aprovação administrativa de publicação efetiva.
+- [x] Exibir progresso e pendências nas configurações web e mobile.
+- [x] Diferenciar elegibilidade para lista pública e para mapa.
+- [x] Exigir serviço, profissional, vínculo ativo e horário geral de funcionamento.
+- [x] Considerar endereço, coordenadas, assinatura e revisão administrativa.
+- [x] Permitir adicionar e remover dias específicos da agenda geral.
+- [x] Impedir que um dia removido volte a oferecer horários padrão.
 
 - [ ] Validar cadastro novo e solicitacao por cliente existente.
 - [ ] Validar todos os tipos de estabelecimento.
 - [x] Confirmar que pendentes e reprovados nao aparecem publicamente.
 - [x] Confirmar promocao para responsavel somente apos aprovacao.
 - [ ] Validar mascaras, CEP inexistente, falha do ViaCEP e preenchimento manual.
+
+Contrato operacional implementado:
+
+- `GET /estabelecimentos/minha/prontidao-publicacao`
+
+O contrato retorna `prontoParaLista`, `prontoParaMapa`, percentual de progresso e os requisitos individuais. A lista pública aceita estabelecimentos domiciliares sem endereço comercial; o mapa sempre exige coordenadas válidas. Aprovação isolada não é mais apresentada como sinônimo de publicação.
 
 #### Resultado Do Aceite Técnico — 12/10/2026
 

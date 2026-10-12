@@ -55,6 +55,61 @@ export class EstabelecimentoPrisma {
     return this.normalizarPerfilPublico(estabelecimento);
   }
 
+  async buscarProntidaoPublicacao(estabelecimentoId: number) {
+    const estabelecimento = await this.prisma.estabelecimento.findUnique({
+      where: { id: estabelecimentoId },
+      select: {
+        reviewStatus: true,
+        status: true,
+        modeloAtendimento: true,
+        endereco: true,
+        bairro: true,
+        cidade: true,
+        estado: true,
+        latitude: true,
+        longitude: true,
+        aceitaAgendamentoOnline: true,
+        _count: {
+          select: {
+            servicos: true,
+            profissionais: true,
+            horariosFuncionamento: { where: { ativo: true } },
+            profissionaisServicos: { where: { ativo: true } },
+          },
+        },
+      },
+    });
+
+    if (!estabelecimento) throw new BadRequestException('Estabelecimento não encontrado');
+
+    const exigeEndereco = estabelecimento.modeloAtendimento !== 'DOMICILIAR';
+    const enderecoCompleto = !exigeEndereco || Boolean(
+      estabelecimento.endereco && estabelecimento.bairro && estabelecimento.cidade && estabelecimento.estado,
+    );
+    const coordenadasValidas = Boolean(estabelecimento.latitude !== null && estabelecimento.longitude !== null);
+    const statusOperacional = !['SUSPENDED', 'CANCELED', 'PAST_DUE'].includes(estabelecimento.status);
+    const itens = [
+      this.itemProntidao('APROVACAO', 'Aprovação administrativa', estabelecimento.reviewStatus === 'APPROVED', 'Aguarde a aprovação ou consulte o motivo da revisão.', 'PERFIL'),
+      this.itemProntidao('STATUS', 'Assinatura operacional', statusOperacional, 'Regularize a assinatura para liberar a publicação.', 'FINANCEIRO'),
+      this.itemProntidao('ENDERECO', 'Endereço completo', enderecoCompleto, 'Complete o endereço público do estabelecimento.', 'PERFIL'),
+      this.itemProntidao('COORDENADAS', 'Localização validada', coordenadasValidas, 'Solicite ao superadmin a validação da localização.', 'PERFIL'),
+      this.itemProntidao('SERVICO', 'Serviço cadastrado', estabelecimento._count.servicos > 0, 'Cadastre pelo menos um serviço.', 'SERVICOS'),
+      this.itemProntidao('PROFISSIONAL', 'Profissional cadastrado', estabelecimento._count.profissionais > 0, 'Cadastre ou vincule pelo menos um profissional.', 'EQUIPE'),
+      this.itemProntidao('VINCULO', 'Profissional habilitado em serviço', estabelecimento._count.profissionaisServicos > 0, 'Vincule um profissional a um serviço.', 'SERVICOS'),
+      this.itemProntidao('HORARIO', 'Horário geral de funcionamento', estabelecimento._count.horariosFuncionamento > 0, 'Configure ao menos um dia de funcionamento.', 'AGENDA'),
+    ];
+    const codigosLista = ['APROVACAO', 'STATUS', 'ENDERECO', 'SERVICO', 'PROFISSIONAL', 'VINCULO', 'HORARIO'];
+    const prontoParaLista = itens.filter((item) => codigosLista.includes(item.codigo)).every((item) => item.concluido);
+
+    return {
+      prontoParaLista,
+      prontoParaMapa: prontoParaLista && coordenadasValidas,
+      aceitaAgendamentoOnline: estabelecimento.aceitaAgendamentoOnline,
+      progresso: Math.round((itens.filter((item) => item.concluido).length / itens.length) * 100),
+      itens,
+    };
+  }
+
   async atualizarPerfilPublico(
     estabelecimentoId: number,
     usuarioId: number,
@@ -79,8 +134,8 @@ export class EstabelecimentoPrisma {
       bairro: this.textoOuNulo(dados.bairro),
       cidade: this.textoOuNulo(dados.cidade),
       estado: this.textoOuNulo(dados.estado)?.toUpperCase() ?? null,
-      latitude: this.numeroOuNulo(dados.latitude),
-      longitude: this.numeroOuNulo(dados.longitude),
+      latitude: atual.latitude,
+      longitude: atual.longitude,
       aceitaAgendamentoOnline: Boolean(dados.aceitaAgendamentoOnline),
     };
 
@@ -222,8 +277,6 @@ export class EstabelecimentoPrisma {
       'bairro',
       'cidade',
       'estado',
-      'latitude',
-      'longitude',
     ];
 
     return atual.reviewStatus === 'APPROVED' && campos.some((campo) => String(atual[campo] ?? '') !== String(novo[campo] ?? ''));
@@ -235,9 +288,7 @@ export class EstabelecimentoPrisma {
     return texto.length > 0 ? texto : null;
   }
 
-  private numeroOuNulo(valor: unknown) {
-    if (valor === null || valor === undefined || valor === '') return null;
-    const numero = Number(valor);
-    return Number.isFinite(numero) ? numero : null;
+  private itemProntidao(codigo: string, titulo: string, concluido: boolean, orientacao: string, destino: string) {
+    return { codigo, titulo, concluido, orientacao: concluido ? null : orientacao, destino };
   }
 }

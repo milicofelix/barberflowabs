@@ -20,6 +20,12 @@ export class EstabelecimentoController {
     return this.repo.buscarPerfilPublico(usuario.estabelecimentoId!);
   }
 
+  @Get('minha/prontidao-publicacao')
+  buscarMinhaProntidaoPublicacao(@UsuarioLogado() usuario: Usuario) {
+    this.validarPermissao(usuario);
+    return this.repo.buscarProntidaoPublicacao(usuario.estabelecimentoId!);
+  }
+
   @Put('minha/perfil-publico')
   atualizarMeuPerfilPublico(
     @Body() dados: AtualizarPerfilPublicoEstabelecimentoDto,

@@ -12,9 +12,9 @@ import { EstabelecimentoPrisma } from './estabelecimento.prisma';
 })
 export class EstabelecimentoModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuthMiddleware).forRoutes({
-      path: 'estabelecimentos/minha/perfil-publico',
-      method: RequestMethod.ALL,
-    });
+    consumer.apply(AuthMiddleware).forRoutes(
+      { path: 'estabelecimentos/minha/perfil-publico', method: RequestMethod.ALL },
+      { path: 'estabelecimentos/minha/prontidao-publicacao', method: RequestMethod.GET },
+    );
   }
 }
