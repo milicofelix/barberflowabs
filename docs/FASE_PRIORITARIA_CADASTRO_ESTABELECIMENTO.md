@@ -339,9 +339,35 @@ A central persistente de notificacoes está disponível nos cabecalhos autentica
 
 - [ ] Validar cadastro novo e solicitacao por cliente existente.
 - [ ] Validar todos os tipos de estabelecimento.
-- [ ] Confirmar que pendentes e reprovados nao aparecem publicamente.
-- [ ] Confirmar promocao para responsavel somente apos aprovacao.
+- [x] Confirmar que pendentes e reprovados nao aparecem publicamente.
+- [x] Confirmar promocao para responsavel somente apos aprovacao.
 - [ ] Validar mascaras, CEP inexistente, falha do ViaCEP e preenchimento manual.
+
+#### Resultado Do Aceite Técnico — 12/10/2026
+
+O aceite foi iniciado contra o ambiente local e encontrou dois defeitos, corrigidos durante a verificacao:
+
+1. a retomada do cadastro falhava porque o `upsert` do Prisma recebia `data` em vez de `create`;
+2. um estabelecimento aprovado podia responder pelo perfil público antes de possuir servico, profissional e horario.
+
+Depois da correcao e reinicio do servico, foi confirmado:
+
+- rotas de solicitacao, administracao e notificacao registradas pelo backend;
+- solicitacao real `#1` aprovada e vinculada ao estabelecimento `#24`;
+- solicitante promovido de cliente para `ESTABLISHMENT_OWNER` somente na aprovacao;
+- criacao transacional de matriz, assinatura trial, segmento, especialidade, comissao e formas de pagamento;
+- notificacoes de envio e aprovacao persistidas para o solicitante;
+- rascunho concorrente `#2` consolidado como cancelado;
+- perfil aprovado, mas ainda sem servico, profissional e horario, retornando `404` na API pública;
+- filtros públicos exigindo `APPROVED` e configuração operacional mínima.
+
+Os tres itens ainda desmarcados exigem interacao manual completa nas interfaces. Devem ser executados em web, Android e iOS antes de encerrar a fase:
+
+1. cadastro partindo de uma conta recém-criada e de outra conta cliente já existente;
+2. um ciclo para cada um dos oito tipos de estabelecimento e três modelos de atendimento;
+3. máscaras e cenários de CEP válido, inexistente, indisponibilidade do ViaCEP e preenchimento manual.
+
+O reinicio do container `app` foi executado apenas para carregar as correcoes encontradas no aceite. Nenhum build, migration, seed ou suíte automatizada foi executado.
 
 ## Dependencias E Limites
 
@@ -351,4 +377,4 @@ A central persistente de notificacoes está disponível nos cabecalhos autentica
 - CNPJ e comprovacao documental devem ser decididos juridicamente antes de serem obrigatorios.
 - Nenhum dado pendente deve alimentar busca publica ou mapa.
 
-Nenhuma migration, geracao do Prisma Client, teste, build ou integracao externa foi executada automaticamente nesta fase.
+Nenhuma migration, geracao do Prisma Client, build ou suíte automatizada foi executada nesta fase.

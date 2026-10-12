@@ -19,8 +19,7 @@ export class PublicoPrisma {
     const servico = typeof filtros.servico === 'string' ? filtros.servico.trim() : '';
     const abertaAgora = filtros.abertaAgora === 'true' || filtros.status === 'ABERTA';
     const where: any = {
-      reviewStatus: 'APPROVED',
-      status: { notIn: ['SUSPENDED', 'CANCELED'] },
+      ...this.criteriosPublicacao(),
       ...(termo
         ? {
             OR: [
@@ -157,8 +156,7 @@ export class PublicoPrisma {
     const estabelecimento: any = await this.prisma.estabelecimento.findFirst({
       where: {
         slug,
-        reviewStatus: 'APPROVED',
-        status: { notIn: ['SUSPENDED', 'CANCELED'] },
+        ...this.criteriosPublicacao(),
       } as any,
       include: {
         servicos: {
@@ -299,8 +297,7 @@ export class PublicoPrisma {
     const estabelecimento = await this.prisma.estabelecimento.findFirst({
       where: {
         slug,
-        reviewStatus: 'APPROVED',
-        status: { notIn: ['SUSPENDED', 'CANCELED'] },
+        ...this.criteriosPublicacao(),
       } as any,
       select: { id: true, nome: true, slug: true },
     });
@@ -378,6 +375,20 @@ export class PublicoPrisma {
     }
 
     return { status: 'FECHADA', label: 'Fechada agora' };
+  }
+
+  private criteriosPublicacao() {
+    return {
+      reviewStatus: 'APPROVED',
+      status: { notIn: ['SUSPENDED', 'CANCELED'] },
+      servicos: { some: {} },
+      profissionais: { some: {} },
+      horariosFuncionamento: { some: { ativo: true } },
+      AND: [{ OR: [
+          { modeloAtendimento: 'DOMICILIAR' },
+          { endereco: { not: null }, bairro: { not: null }, cidade: { not: null }, estado: { not: null } },
+      ] }],
+    };
   }
 
   private obterAgoraLocal() {

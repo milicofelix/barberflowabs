@@ -34,7 +34,7 @@ export class SolicitacaoEstabelecimentoRepository {
   async criarOuObterRascunho(usuarioId: number) {
     const chaveAtiva = `usuario:${usuarioId}`;
     return (this.prisma as any).solicitacaoEstabelecimento.upsert({
-      where: { chaveAtiva }, update: {}, data: { usuarioId, chaveAtiva }, include: incluirSolicitacao,
+      where: { chaveAtiva }, update: {}, create: { usuarioId, chaveAtiva }, include: incluirSolicitacao,
     });
   }
 
