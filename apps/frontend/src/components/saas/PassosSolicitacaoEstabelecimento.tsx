@@ -68,7 +68,8 @@ export default function PassosSolicitacaoEstabelecimento() {
                     </button>
                 })}</div>
                 <GrupoOpcoes titulo="Segmentos oferecidos" itens={segmentos} selecionados={fluxo.form.segmentoIds} alternar={fluxo.alternarSegmento} />
-                <GrupoOpcoes titulo="Especialidades" descricao="Marque ao menos um serviço que represente sua atuação." itens={fluxo.especialidadesDisponiveis} selecionados={fluxo.form.especialidadeIds} alternar={fluxo.alternarEspecialidade} />
+                <GrupoOpcoes titulo="Especialidades" descricao="Marque ao menos uma especialidade que represente sua atuação." itens={fluxo.especialidadesDisponiveis} selecionados={fluxo.form.especialidadeIds} alternar={fluxo.alternarEspecialidade}
+                    mensagemSemOpcoes={fluxo.form.segmentoIds.length ? 'Este segmento ainda não possui especialidades cadastradas.' : 'Selecione ao menos um segmento.'} />
             </div>}
 
             {fluxo.passo === 2 && <div className="grid gap-5">

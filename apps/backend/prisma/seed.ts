@@ -2,6 +2,7 @@ import { profissionais, servicos, Usuario } from '@uniflowabs/core';
 import { PrismaClient } from '@prisma/client';
 import { seedMarketplaceTatuape } from './seeds/marketplace-tatuape.seed';
 import { seedHistoricoClientesOutubro } from './seeds/historico-clientes-outubro.seed';
+import { seedCatalogoMultissegmento } from './seeds/catalogo-multissegmento.seed';
 
 const prisma = new PrismaClient();
 const ESTABELECIMENTO_PADRAO_ID = 1;
@@ -331,6 +332,8 @@ async function seed() {
   await seedEstabelecimentosZonaLeste();
   const totalMarketplaceTatuape = await seedMarketplaceTatuape(prisma);
   console.info(`Seed concluido: ${totalMarketplaceTatuape} estabelecimentos do marketplace do Tatuape.`);
+  const totalEspecialidades = await seedCatalogoMultissegmento(prisma);
+  console.info(`Seed concluido: ${totalEspecialidades} especialidades do catalogo multissegmento.`);
   const historico = await seedHistoricoClientesOutubro(prisma);
   console.info(`Seed concluido: ${historico.clientes} clientes e ${historico.agendamentos} atendimentos entre ${historico.inicio} e ${historico.fim}.`);
 }

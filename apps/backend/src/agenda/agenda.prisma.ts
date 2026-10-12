@@ -16,7 +16,7 @@ export class AgendaPrisma {
     const dataReferencia = this.criarDataReferencia(params.data);
     const diaSemana = dataReferencia.getUTCDay();
 
-    const [estabelecimento, horariosFuncionamento, escalasProfissional] = await Promise.all([
+    const [estabelecimento, horariosFuncionamento, escalasProfissional, totalHorariosConfigurados] = await Promise.all([
       this.prisma.estabelecimento.findUnique({
         where: { id: params.estabelecimentoId },
         select: { antecedenciaMinutos: true },
@@ -42,6 +42,9 @@ export class AgendaPrisma {
           orderBy: { inicio: 'asc' },
         })
         : Promise.resolve([]),
+      this.prisma.horarioFuncionamento.count({
+        where: { estabelecimentoId: params.estabelecimentoId, ativo: true },
+      }),
     ]);
 
     const possuiEscalaConfigurada = params.profissionalId
@@ -53,6 +56,7 @@ export class AgendaPrisma {
 
     if (periodos.length === 0) {
       if (possuiEscalaConfigurada) return { manha: [], tardeNoite: [] };
+      if (totalHorariosConfigurados > 0) return { manha: [], tardeNoite: [] };
       return this.removerHorariosSemAntecedencia(
         AgendaUtils.horariosDoDia(),
         params.data,

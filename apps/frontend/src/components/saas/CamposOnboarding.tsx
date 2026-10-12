@@ -31,6 +31,7 @@ export function GrupoOpcoes(props: {
     itens: Array<{ id: number; nome: string }>
     selecionados: number[]
     alternar: (id: number) => void
+    mensagemSemOpcoes?: string
 }) {
     return <fieldset className="grid gap-3 rounded-xl border border-border bg-background/60 p-4">
         <legend className="px-2 text-sm font-bold text-foreground">{props.titulo}</legend>
@@ -41,6 +42,6 @@ export function GrupoOpcoes(props: {
                 className={['rounded-full border px-3 py-2 text-sm transition', ativo ? 'border-violet-500 bg-violet-600 text-white' : 'border-border bg-card text-foreground hover:border-violet-400'].join(' ')}>
                 {item.nome}
             </button>
-        })}</div> : <p className="text-sm text-muted-foreground">Selecione ao menos um segmento.</p>}
+        })}</div> : <p className="text-sm text-muted-foreground">{props.mensagemSemOpcoes ?? 'Selecione ao menos um segmento.'}</p>}
     </fieldset>
 }
