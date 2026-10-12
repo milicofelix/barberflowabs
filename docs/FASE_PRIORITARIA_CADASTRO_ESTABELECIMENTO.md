@@ -221,6 +221,88 @@ O mobile passou a utilizar a solicitacao autenticada da Fase A e deixou de criar
 
 O rascunho e o passo atual tambem sao mantidos no armazenamento local por usuario, solicitacao e versao. Dados locais somente sao restaurados quando ainda correspondem a versao do servidor, evitando sobrescrever uma alteracao mais recente feita em outro dispositivo.
 
+#### Passo A Passo Manual — Fase C
+
+Pre-requisitos:
+
+1. Aplicar a migration da Fase A e gerar o Prisma Client usando os comandos registrados em `docs/COMANDOS.md`.
+2. Reiniciar o container da aplicacao para o backend carregar o novo modulo e o Prisma Client atualizado.
+3. Iniciar o Expo com o IP correto da maquina e abrir o aplicativo pelo QR Code.
+4. Usar uma conta sem solicitacao enviada. Depois do envio, a mesma conta mostrara o acompanhamento e nao iniciara outro rascunho.
+
+Cenario 1 — Entrada sem autenticacao e retorno apos login:
+
+1. Sair da conta no aplicativo.
+2. Na tela de login, tocar em **Quero cadastrar meu estabelecimento**.
+3. Confirmar que a tela explica que primeiro e necessario acessar uma conta.
+4. Tocar em **Entrar ou criar conta**.
+5. Entrar com uma conta existente ou criar uma conta pessoal.
+6. Confirmar que o aplicativo retorna automaticamente ao assistente de cadastro.
+7. Confirmar que nome, e-mail e telefone do responsavel sao os dados da conta atual e que nao existem campos de nova senha ou novo responsavel.
+
+Cenario 2 — Entrada pela conta de cliente existente:
+
+1. Entrar normalmente no aplicativo.
+2. Abrir a aba de perfil do usuario.
+3. Tocar em **Cadastrar meu estabelecimento**.
+4. Confirmar que o mesmo assistente e aberto e que nao e criada outra conta.
+
+Cenario 3 — Tipo, segmentos e especialidades:
+
+1. Avancar pelo passo do responsavel.
+2. Selecionar cada card de tipo de negocio e observar a sugestao de segmentos.
+3. Selecionar e remover segmentos.
+4. Confirmar que somente especialidades pertencentes aos segmentos atuais permanecem selecionadas.
+5. Tentar continuar sem segmento ou especialidade e confirmar a mensagem de validacao.
+6. Selecionar pelo menos um segmento e uma especialidade e continuar.
+
+Cenario 4 — Dados comerciais e mascaras:
+
+1. Informar nome publico, e-mail e telefone comercial.
+2. Confirmar a mascara de telefone `(00) 00000-0000` ou `(00) 0000-0000`.
+3. Selecionar atendimento presencial, domiciliar e hibrido, conferindo as opcoes.
+4. Selecionar um plano.
+5. Tentar continuar com e-mail ou telefone invalido e confirmar que o passo e bloqueado.
+6. Corrigir os dados e continuar.
+7. Confirmar que nenhum campo solicita slug, latitude ou longitude.
+
+Cenario 5 — ViaCEP e preenchimento manual:
+
+1. Para atendimento presencial ou hibrido, informar um CEP valido com oito digitos.
+2. Tocar no icone de busca e confirmar o preenchimento de logradouro, bairro, cidade e UF.
+3. Alterar manualmente um dos campos preenchidos e confirmar que a edicao e permitida.
+4. Informar numero, complemento e ponto de referencia.
+5. Testar um CEP inexistente e confirmar a mensagem sem apagar a possibilidade de preenchimento manual.
+6. Tentar continuar sem os campos obrigatorios e confirmar o bloqueio.
+7. Voltar ao passo comercial, escolher atendimento domiciliar e confirmar que o endereco deixa de ser obrigatorio.
+
+Cenario 6 — Persistencia do rascunho:
+
+1. Preencher parcialmente um dos passos e aguardar pelo menos um segundo.
+2. Fechar completamente o aplicativo, sem enviar a solicitacao.
+3. Abrir o aplicativo novamente com a mesma conta.
+4. Retornar ao cadastro do estabelecimento.
+5. Confirmar que o passo e os valores digitados foram restaurados.
+6. Alterar um dado, avancar e repetir o fechamento para confirmar tambem o rascunho salvo no backend.
+
+Cenario 7 — Revisao e envio:
+
+1. Conferir tipo, nome, contato, segmentos, especialidades e endereco no resumo.
+2. Tentar enviar sem marcar a declaracao e confirmar o bloqueio.
+3. Marcar a declaracao de veracidade e aceite dos termos.
+4. Tocar em **Enviar para analise** apenas uma vez.
+5. Confirmar a exibicao do protocolo, do estado **Em analise** e da data de envio.
+6. Fechar e abrir o aplicativo e confirmar que a tela continua exibindo o acompanhamento, sem criar novo rascunho.
+
+Cenario 8 — Protecao da publicacao:
+
+1. Voltar para a busca publica e para o mapa.
+2. Pesquisar pelo nome informado no cadastro.
+3. Confirmar que a solicitacao pendente nao aparece como estabelecimento publico.
+4. Confirmar que a conta continua com perfil de cliente enquanto aguarda a Fase D de aprovacao.
+
+Resultado esperado: todos os cenarios acima funcionam igualmente em Android e iOS. Qualquer divergencia deve ser registrada com plataforma, passo, dados utilizados, mensagem apresentada e captura de tela.
+
 ### Fase D — Revisao E Notificacoes
 
 - [ ] Evoluir o painel do super admin.
