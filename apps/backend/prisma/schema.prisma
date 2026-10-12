@@ -671,10 +671,15 @@ model EnvioComunicacao {
   assunto           String?
   conteudo          String                @db.Text
   status            String                @default("AGENDADO")
+  chaveIdempotencia String?
   agendadoPara      DateTime
   proximaTentativaEm DateTime?
   tentativasRealizadas Int                 @default(0)
   maximoTentativas  Int                   @default(3)
+  bloqueadoEm       DateTime?
+  bloqueadoPor      String?
+  provedor          String?
+  referenciaExterna String?
   enviadoEm         DateTime?
   erro              String?               @db.Text
   metadados         Json?
@@ -685,8 +690,12 @@ model EnvioComunicacao {
   agendamento       Agendamento?          @relation(fields: [agendamentoId], references: [id])
   template          TemplateComunicacao?  @relation(fields: [templateId], references: [id])
   tentativas        TentativaEnvioComunicacao[]
+  callbacks         CallbackEnvioComunicacao[]
 
+  @@unique([estabelecimentoId, chaveIdempotencia])
   @@index([estabelecimentoId, status, agendadoPara])
+  @@index([status, proximaTentativaEm, bloqueadoEm])
+  @@index([provedor, referenciaExterna])
   @@index([usuarioId, createdAt])
   @@index([agendamentoId])
   @@map("envios_comunicacao")
@@ -708,6 +717,25 @@ model TentativaEnvioComunicacao {
   @@unique([envioId, numero])
   @@index([status, iniciadaEm])
   @@map("tentativas_envios_comunicacao")
+}
+
+model CallbackEnvioComunicacao {
+  id                Int                @id @default(autoincrement())
+  envioId           Int?
+  provedor          String
+  eventoExternoId   String
+  referenciaExterna String?
+  tipo              String
+  payload           Json
+  recebidoEm        DateTime           @default(now())
+  processadoEm      DateTime?
+  erro              String?            @db.Text
+  envio             EnvioComunicacao?  @relation(fields: [envioId], references: [id], onDelete: SetNull)
+
+  @@unique([provedor, eventoExternoId])
+  @@index([referenciaExterna])
+  @@index([processadoEm, recebidoEm])
+  @@map("callbacks_envios_comunicacao")
 }
 
 model Unidade {

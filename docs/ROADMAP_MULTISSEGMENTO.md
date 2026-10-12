@@ -123,11 +123,11 @@ Status: implementacao funcional web e paridade financeira mobile concluidas em 2
 
 ## Etapa 10 - Relacionamento, Fidelizacao E Notificacoes
 
-Status: Fase 1 implementada em 2026-10-11; migration, Prisma Client, reinicio e validacao manual pendentes.
+Status: Fases 1 e 2 implementadas; migrations, Prisma Client, reinicio e validacao manual pendentes.
 
 - [x] Fundacao da central de clientes, consentimentos, templates e auditoria de envios.
 - [x] Prioridade: cadastro e aprovacao de estabelecimentos, endereco via CEP, mascaras e central de notificacoes. Fases A–D concluidas; aceite manual permanece na Fase E.
-- [ ] Orquestracao de filas e adaptadores push, e-mail e WhatsApp.
+- [x] Orquestracao persistente, retentativas, fila morta, callbacks idempotentes e adaptadores simulados de push, e-mail e WhatsApp.
 - [ ] Confirmacao e lembrete automatico de agendamentos.
 - [ ] Campanhas segmentadas.
 - [ ] Pontos, niveis, recompensas, cupons e indicacoes.

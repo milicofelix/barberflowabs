@@ -3,7 +3,7 @@ import { Usuario } from '@uniflowabs/core';
 import { EquipePolicy } from 'src/equipe/equipe.policy';
 import { validarNumeroInteiroPositivo } from 'src/shared/validacao';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
-import { AtualizarClienteDto, SalvarPreferenciasDto, SalvarTemplateDto } from './relacionamento.dto';
+import { AtualizarClienteDto, EnfileirarComunicacaoDto, ListarEnviosDto, ReprocessarEnvioDto, SalvarPreferenciasDto, SalvarTemplateDto } from './relacionamento.dto';
 import { RelacionamentoService } from './relacionamento.service';
 
 @Controller('relacionamento')
@@ -53,6 +53,28 @@ export class RelacionamentoController {
   async atualizarTemplate(@Param('id') id: string, @Body() dados: SalvarTemplateDto, @UsuarioLogado() usuario: Usuario) {
     await this.gerenciar(usuario); validarNumeroInteiroPositivo(id, 'Template');
     return this.service.salvarTemplate(usuario.estabelecimentoId!, dados, Number(id));
+  }
+
+  @Post('envios')
+  async enfileirar(@Body() dados: EnfileirarComunicacaoDto, @UsuarioLogado() usuario: Usuario) {
+    await this.gerenciar(usuario); return this.service.enfileirar(usuario.estabelecimentoId!, dados);
+  }
+
+  @Get('envios')
+  async listarEnvios(@Query() filtros: ListarEnviosDto, @UsuarioLogado() usuario: Usuario) {
+    await this.visualizar(usuario); return this.service.listarEnvios(usuario.estabelecimentoId!, filtros);
+  }
+
+  @Get('envios/:id')
+  async obterEnvio(@Param('id') id: string, @UsuarioLogado() usuario: Usuario) {
+    await this.visualizar(usuario); validarNumeroInteiroPositivo(id, 'Envio');
+    return this.service.obterEnvio(Number(id), usuario.estabelecimentoId!);
+  }
+
+  @Post('envios/:id/reprocessar')
+  async reprocessar(@Param('id') id: string, @Body() dados: ReprocessarEnvioDto, @UsuarioLogado() usuario: Usuario) {
+    await this.gerenciar(usuario); validarNumeroInteiroPositivo(id, 'Envio');
+    return this.service.reprocessarEnvio(Number(id), usuario.estabelecimentoId!, dados);
   }
 
   private visualizar(usuario: Usuario) { return this.policy.validarPermissao(usuario, 'RELACIONAMENTO_VISUALIZAR'); }

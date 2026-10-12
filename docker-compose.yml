@@ -13,6 +13,9 @@ services:
       DATABASE_URL: ${DATABASE_URL:-mysql://barberflow:barberflow@infra-mysql-1:3306/barberflow_abs}
       JWT_SECRET: ${JWT_SECRET:-barberflow_abs_dev_secret}
       SUPER_ADMIN_EMAILS: ${SUPER_ADMIN_EMAILS:-marcao@barberflowabs.app}
+      NOTIFICACOES_WORKER_ATIVO: ${NOTIFICACOES_WORKER_ATIVO:-true}
+      NOTIFICACOES_WORKER_INTERVALO_MS: ${NOTIFICACOES_WORKER_INTERVALO_MS:-5000}
+      NOTIFICACOES_CALLBACK_SECRET: ${NOTIFICACOES_CALLBACK_SECRET:-uniflow-simulado-local}
       PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET:-uniflow_abs_dev_webhook_secret}
       EXPO_DEVTOOLS_LISTEN_ADDRESS: 0.0.0.0
       # O Expo usa esta variavel para anunciar ao celular o IP da maquina host,

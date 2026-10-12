@@ -6,11 +6,17 @@ import { EquipeModule } from 'src/equipe/equipe.module';
 import { RelacionamentoController } from './relacionamento.controller';
 import { RelacionamentoRepository } from './relacionamento.repository';
 import { RelacionamentoService } from './relacionamento.service';
+import { ComunicacaoCallbackController } from './comunicacao-callback.controller';
+import { ComunicacaoWorker } from './comunicacao.worker';
+import { ComunicacaoProviderRegistry, EmailSimuladoProvider, PushSimuladoProvider, WhatsappSimuladoProvider } from './comunicacao.provider';
 
 @Module({
   imports: [AuthModule, DbModule, EquipeModule],
-  controllers: [RelacionamentoController],
-  providers: [RelacionamentoRepository, RelacionamentoService],
+  controllers: [RelacionamentoController, ComunicacaoCallbackController],
+  providers: [
+    RelacionamentoRepository, RelacionamentoService, ComunicacaoWorker,
+    ComunicacaoProviderRegistry, PushSimuladoProvider, EmailSimuladoProvider, WhatsappSimuladoProvider,
+  ],
   exports: [RelacionamentoService],
 })
 export class RelacionamentoModule {

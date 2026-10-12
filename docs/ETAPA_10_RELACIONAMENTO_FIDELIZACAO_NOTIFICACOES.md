@@ -1,6 +1,6 @@
 # Etapa 10 — Relacionamento, Fidelizacao E Notificacoes
 
-Status: Fase 1 implementada em 2026-10-11; migration, Prisma Client, reinicio e validacao manual pendentes.
+Status: Fases 1 e 2 implementadas; migrations, Prisma Client, reinicio e validacao manual pendentes.
 
 ## Principios
 
@@ -36,13 +36,31 @@ Contratos iniciais:
 
 ## Fase 2 — Orquestracao E Provedores
 
-Esta fase fica bloqueada ate a conclusao da fase prioritaria de cadastro e aprovacao descrita em `docs/FASE_PRIORITARIA_CADASTRO_ESTABELECIMENTO.md`.
+Status: implementada em 2026-10-12; ativacao no banco e validacao manual pendentes.
 
-- [ ] Criar fila persistente e worker concorrente com bloqueio seguro.
-- [ ] Implementar politica exponencial de retentativas e fila morta.
-- [ ] Criar adaptadores de push, e-mail e WhatsApp.
-- [ ] Processar callbacks dos provedores de forma idempotente.
-- [ ] Expor consulta de envios, tentativas, falhas e reprocessamento.
+- [x] Criar fila persistente e worker concorrente com lock expirante de cinco minutos.
+- [x] Implementar politica exponencial de retentativas, limitada a uma hora, e fila morta.
+- [x] Criar adaptadores simulados de push, e-mail e WhatsApp atras de um registro de provedores.
+- [x] Processar callbacks dos provedores com chave idempotente por provedor e evento.
+- [x] Expor consulta paginada de envios, historico completo, falhas e reprocessamento.
+- [x] Isolar criacao, consulta e reprocessamento por estabelecimento e permissoes de relacionamento.
+- [ ] Aplicar migration, gerar Prisma Client, reiniciar e validar manualmente.
+
+Contratos da orquestracao:
+
+- `POST /relacionamento/envios` — cria um envio idempotente a partir de cliente, template e consentimento.
+- `GET /relacionamento/envios` — lista por `status`, `canal`, `pagina` e `limite`.
+- `GET /relacionamento/envios/:id` — retorna mensagem, tentativas e callbacks.
+- `POST /relacionamento/envios/:id/reprocessar` — devolve falha permanente ou fila morta para processamento.
+- `POST /relacionamento/callbacks/:provedor` — callback publico autenticado pelo header `x-uniflow-callback-secret`.
+
+Operacao inicial simulada:
+
+- `NOTIFICACOES_WORKER_ATIVO` habilita ou desabilita o worker no processo do backend;
+- `NOTIFICACOES_WORKER_INTERVALO_MS` controla a frequencia de busca, com minimo efetivo de um segundo;
+- `NOTIFICACOES_CALLBACK_SECRET` protege os callbacks; o valor padrao local e apenas para desenvolvimento;
+- destinos contendo `falha-temporaria` simulam retentativas e destinos contendo `falha-permanente` simulam descarte imediato;
+- a substituicao futura por provedores reais fica restrita aos adaptadores, sem alterar fila, API ou dominio.
 
 ## Fase 3 — Jornada Do Agendamento
 
