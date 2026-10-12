@@ -204,6 +204,7 @@ model Estabelecimento {
   templatesComunicacao         TemplateComunicacao[]
   enviosComunicacao             EnvioComunicacao[]
   notificacoes                  NotificacaoUsuario[]
+  solicitacaoOrigem             SolicitacaoEstabelecimento? @relation("EstabelecimentoGeradoSolicitacao")
 
   @@map("estabelecimentos")
 }
@@ -276,6 +277,8 @@ model SolicitacaoEstabelecimento {
   id                  Int       @id @default(autoincrement())
   usuarioId           Int
   revisorId           Int?
+  estabelecimentoGeradoId Int? @unique
+  chaveAtiva          String?   @unique
   status              String    @default("RASCUNHO")
   nomePublico         String?
   emailComercial      String?
@@ -301,6 +304,7 @@ model SolicitacaoEstabelecimento {
   updatedAt           DateTime  @updatedAt
   usuario             Usuario   @relation("SolicitanteSolicitacaoEstabelecimento", fields: [usuarioId], references: [id])
   revisor             Usuario?  @relation("RevisorSolicitacaoEstabelecimento", fields: [revisorId], references: [id])
+  estabelecimentoGerado Estabelecimento? @relation("EstabelecimentoGeradoSolicitacao", fields: [estabelecimentoGeradoId], references: [id])
   segmentos           SolicitacaoEstabelecimentoSegmento[]
   especialidades      SolicitacaoEstabelecimentoEspecialidade[]
   notificacoes        NotificacaoUsuario[]

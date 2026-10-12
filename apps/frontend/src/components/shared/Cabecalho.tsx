@@ -4,6 +4,7 @@ import Logo from './Logo'
 import useSessao from '@/data/hooks/useSessao'
 import MenuUsuario from './MenuUsuario'
 import AlternadorTema from './AlternadorTema'
+import CentralNotificacoes from './CentralNotificacoes'
 
 interface CabecalhoProps {
     semFundo?: boolean
@@ -17,7 +18,7 @@ export default function Cabecalho({ semFundo = false }: CabecalhoProps) {
                 <Logo />
                 <div>
                     {usuario ? (
-                        <div className="flex items-center gap-3"><MenuUsuario /><AlternadorTema /></div>
+                        <div className="flex items-center gap-3"><CentralNotificacoes /><MenuUsuario /><AlternadorTema /></div>
                     ) : (
                         <div className="flex items-center gap-5">
                             <Link href="/estabelecimentos">Estabelecimentos</Link>

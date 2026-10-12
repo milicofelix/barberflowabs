@@ -2,6 +2,7 @@
 
 import PainelSuperAdmin from '@/components/saas/PainelSuperAdmin'
 import CabecalhoComTitulo from '@/components/shared/CabecalhoComTitulo'
+import PainelSolicitacoesEstabelecimento from '@/components/saas/PainelSolicitacoesEstabelecimento'
 
 export default function Page() {
     return (
@@ -11,6 +12,7 @@ export default function Page() {
                 descricao="Acompanhe estabelecimentos, assinaturas e auditoria."
             />
             <div className="container py-10">
+                <PainelSolicitacoesEstabelecimento />
                 <PainelSuperAdmin />
             </div>
         </div>

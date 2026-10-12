@@ -299,16 +299,41 @@ Cenario 8 — Protecao da publicacao:
 1. Voltar para a busca publica e para o mapa.
 2. Pesquisar pelo nome informado no cadastro.
 3. Confirmar que a solicitacao pendente nao aparece como estabelecimento publico.
-4. Confirmar que a conta continua com perfil de cliente enquanto aguarda a Fase D de aprovacao.
+4. Confirmar que a conta continua com perfil de cliente enquanto aguarda a aprovacao administrativa.
 
 Resultado esperado: todos os cenarios acima funcionam igualmente em Android e iOS. Qualquer divergencia deve ser registrada com plataforma, passo, dados utilizados, mensagem apresentada e captura de tela.
 
 ### Fase D — Revisao E Notificacoes
 
-- [ ] Evoluir o painel do super admin.
-- [ ] Implementar aprovacao transacional e pedido de correcao.
-- [ ] Criar sino, contador e central web/mobile.
-- [ ] Notificar solicitante e administradores em cada mudanca relevante.
+- [x] Evoluir o painel do super admin.
+- [x] Implementar aprovacao transacional e pedido de correcao.
+- [x] Criar sino, contador e central web/mobile.
+- [x] Notificar solicitante e administradores em cada mudanca relevante.
+
+O painel administrativo passou a consultar diretamente as solicitacoes criadas pelas Fases A–C. A aprovacao materializa, em uma unica transacao, o estabelecimento, a matriz, a assinatura de teste, segmentos, especialidades, comissao e formas de pagamento iniciais; somente depois promove o solicitante a responsavel. Correcao e reprovacao nao criam registros operacionais.
+
+Uma chave unica por usuario protege o ciclo ativo contra rascunhos concorrentes. A migration consolida duplicidades antigas, preservando a solicitacao pendente mais relevante e cancelando apenas rascunhos ativos excedentes. A solicitacao aprovada guarda o estabelecimento gerado para garantir rastreabilidade e idempotencia.
+
+Contratos administrativos implementados:
+
+- `GET /admin/solicitacoes-estabelecimento`
+- `GET /admin/solicitacoes-estabelecimento/:id`
+- `PUT /admin/solicitacoes-estabelecimento/:id/aprovar`
+- `PUT /admin/solicitacoes-estabelecimento/:id/solicitar-correcao`
+- `PUT /admin/solicitacoes-estabelecimento/:id/reprovar`
+
+A central persistente de notificacoes está disponível nos cabecalhos autenticados da web e nas telas principais do mobile, com contador, leitura individual e coletiva. As decisoes administrativas geram notificacao para o solicitante e auditoria da operacao.
+
+#### Passo A Passo Manual — Fase D
+
+1. Aplicar a migration e gerar o Prisma Client pelos comandos já documentados em `docs/COMANDOS.md`; reiniciar a aplicacao.
+2. Enviar uma solicitacao com uma conta de cliente e confirmar o sino do super admin.
+3. Abrir **Admin SaaS** na web e confirmar responsável, classificacao, endereco e link de conferencia.
+4. Solicitar correcao com motivo e confirmar que o cliente recebe a notificacao e volta a editar o mesmo cadastro.
+5. Reenviar e aprovar; confirmar que o estabelecimento, a matriz e a assinatura foram criados uma unica vez e que a conta virou responsavel.
+6. Repetir com uma solicitacao destinada à reprovacao e confirmar que nenhum estabelecimento foi materializado.
+7. Na web e no mobile, abrir o sino, ler uma notificacao e usar **Marcar todas como lidas**; confirmar o contador zerado.
+8. Confirmar que uma solicitacao pendente continua ausente do marketplace e que uma aprovada só será publicada depois da configuracao operacional minima.
 
 ### Fase E — Aceite
 

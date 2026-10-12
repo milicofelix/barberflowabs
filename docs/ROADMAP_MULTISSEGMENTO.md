@@ -126,7 +126,7 @@ Status: implementacao funcional web e paridade financeira mobile concluidas em 2
 Status: Fase 1 implementada em 2026-10-11; migration, Prisma Client, reinicio e validacao manual pendentes.
 
 - [x] Fundacao da central de clientes, consentimentos, templates e auditoria de envios.
-- [ ] Prioridade: evoluir cadastro e aprovacao de estabelecimentos, endereco via CEP, mascaras e central de notificacoes. Fases A, B e C de dominio, contratos e assistentes web/mobile concluidas.
+- [x] Prioridade: cadastro e aprovacao de estabelecimentos, endereco via CEP, mascaras e central de notificacoes. Fases A–D concluidas; aceite manual permanece na Fase E.
 - [ ] Orquestracao de filas e adaptadores push, e-mail e WhatsApp.
 - [ ] Confirmacao e lembrete automatico de agendamentos.
 - [ ] Campanhas segmentadas.

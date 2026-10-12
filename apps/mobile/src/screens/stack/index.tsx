@@ -17,6 +17,7 @@ import CentralFinanceira from './CentralFinanceira'
 import AlternadorTema from '@/src/components/shared/AlternadorTema'
 import { ProvedorTema } from '@/src/data/contexts/ContextoTema'
 import useTema from '@/src/data/contexts/ContextoTema'
+import SinoNotificacoesGlobal from '@/src/components/notificacoes/SinoNotificacoesGlobal'
 
 const Stack = createNativeStackNavigator<StackParamList>()
 
@@ -68,6 +69,7 @@ function Navegacao() {
                     </>
                 ) : null}
             </Stack.Navigator>
+            <SinoNotificacoesGlobal />
             <AlternadorTema />
         </NavigationContainer>
     )

@@ -23,3 +23,7 @@ export interface EnviarSolicitacaoEstabelecimentoDto {
   aceitouTermos: boolean;
   termosVersao: string;
 }
+
+export interface RevisarSolicitacaoEstabelecimentoDto {
+  motivo?: string;
+}

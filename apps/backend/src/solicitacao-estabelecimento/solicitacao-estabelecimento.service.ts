@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable } from '@nestjs/common';
 import { MODELOS_ATENDIMENTO, TIPOS_ESTABELECIMENTO } from 'src/estabelecimento/estabelecimento.constants';
 import { validarEmail, validarNumeroInteiroPositivo, validarTextoObrigatorio } from 'src/shared/validacao';
 import { STATUS_SOLICITACAO_EDITAVEIS, TERMOS_CADASTRO_ESTABELECIMENTO_VERSAO } from './solicitacao-estabelecimento.constants';
@@ -19,6 +19,20 @@ export class SolicitacaoEstabelecimentoService {
   }
   obter(id: number, usuarioId: number) { return this.repository.buscarDoUsuarioOuFalhar(id, usuarioId); }
   criarRascunho(usuarioId: number) { return this.repository.criarOuObterRascunho(usuarioId); }
+
+  async listarPendentes(usuarioId: number) { await this.validarAdministrador(usuarioId); return this.repository.listarPendentes(); }
+  async obterParaRevisao(id: number, usuarioId: number) {
+    await this.validarAdministrador(usuarioId);
+    const solicitacao = await this.repository.buscarParaRevisao(id);
+    if (!solicitacao) throw new BadRequestException('Solicitação não encontrada');
+    return solicitacao;
+  }
+  async revisar(id: number, usuarioId: number, decisao: 'APPROVED' | 'CORRECTION_REQUESTED' | 'REJECTED', motivo?: string) {
+    await this.validarAdministrador(usuarioId);
+    const texto = motivo?.trim();
+    if (decisao !== 'APPROVED' && !texto) throw new BadRequestException('Informe o motivo da decisão');
+    return this.repository.revisar(id, usuarioId, decisao, texto);
+  }
 
   async salvar(id: number, usuarioId: number, dados: SalvarSolicitacaoEstabelecimentoDto) {
     validarNumeroInteiroPositivo(dados?.versao, 'Versão');
@@ -91,5 +105,10 @@ export class SolicitacaoEstabelecimentoService {
 
   private rotulo(campo: string) {
     return ({ cep: 'CEP', logradouro: 'Logradouro', numero: 'Número', bairro: 'Bairro', cidade: 'Cidade', estado: 'UF' } as Record<string, string>)[campo];
+  }
+
+  private async validarAdministrador(usuarioId: number) {
+    const usuario = await this.repository.buscarPapelUsuario(usuarioId);
+    if (!usuario || !['SUPER_ADMIN', 'APP_OWNER'].includes(usuario.papel)) throw new ForbiddenException('Acesso restrito à administração da plataforma');
   }
 }
