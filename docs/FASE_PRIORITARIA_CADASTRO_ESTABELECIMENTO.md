@@ -4,6 +4,8 @@ Status: Fases A, B e C implementadas em 2026-10-11; migration, Prisma Client, re
 
 Esta fase entra antes da Fase 2 da Etapa 10. Ela evolui o onboarding existente sem duplicar contas, sem publicar dados nao validados e sem exigir latitude ou longitude do solicitante.
 
+Contas de clientes não recebem `estabelecimentoId` no registro público. Cadastros legados que ainda possuam esse campo não são considerados membros apenas por isso: o bloqueio de uma nova solicitação depende de papel operacional, flag de membro ou vínculo ativo na equipe.
+
 ## Diagnostico Do Estado Atual
 
 Ja existem:

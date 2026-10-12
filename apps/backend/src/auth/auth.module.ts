@@ -4,7 +4,6 @@ import { DbModule } from 'src/db/db.module';
 import { UsuarioPrisma } from './usuario.prisma';
 import { BcryptProvider } from './bcrypt.provider';
 import { AuthMiddleware } from './auth.middleware';
-import { TenantService } from 'src/shared/tenant.service';
 import { RateLimitMiddleware } from './rate-limit.middleware';
 
 @Module({
@@ -14,7 +13,6 @@ import { RateLimitMiddleware } from './rate-limit.middleware';
     UsuarioPrisma,
     BcryptProvider,
     AuthMiddleware,
-    TenantService,
     RateLimitMiddleware,
   ],
   exports: [AuthMiddleware, UsuarioPrisma, BcryptProvider],

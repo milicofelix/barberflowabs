@@ -34,10 +34,13 @@ export class SolicitacaoEstabelecimentoRepository {
   async criarOuObterRascunho(usuarioId: number) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { id: usuarioId },
-      select: { estabelecimentoId: true, membroEstabelecimento: true, papel: true },
+      select: {
+        estabelecimentoId: true, membroEstabelecimento: true, papel: true,
+        vinculosEquipe: { where: { ativo: true }, select: { id: true }, take: 1 },
+      },
     });
     if (!usuario) throw new NotFoundException('Usuário não encontrado');
-    if (usuario.estabelecimentoId || usuario.membroEstabelecimento || ['ESTABLISHMENT_OWNER', 'ESTABLISHMENT_MEMBER'].includes(usuario.papel)) {
+    if (this.possuiVinculoOperacional(usuario)) {
       const aprovada = await (this.prisma as any).solicitacaoEstabelecimento.findFirst({
         where: { usuarioId, status: 'APPROVED', estabelecimentoGeradoId: usuario.estabelecimentoId ?? undefined },
         include: incluirSolicitacao, orderBy: { revisadoEm: 'desc' },
@@ -194,10 +197,13 @@ export class SolicitacaoEstabelecimentoRepository {
     if (solicitacao.estabelecimentoGeradoId) return solicitacao.estabelecimentoGeradoId;
     const solicitante = await tx.usuario.findUnique({
       where: { id: solicitacao.usuarioId },
-      select: { estabelecimentoId: true, membroEstabelecimento: true, papel: true },
+      select: {
+        estabelecimentoId: true, membroEstabelecimento: true, papel: true,
+        vinculosEquipe: { where: { ativo: true }, select: { id: true }, take: 1 },
+      },
     });
     if (!solicitante) throw new NotFoundException('Solicitante não encontrado');
-    if (solicitante.estabelecimentoId || solicitante.membroEstabelecimento || ['ESTABLISHMENT_OWNER', 'ESTABLISHMENT_MEMBER'].includes(solicitante.papel)) {
+    if (this.possuiVinculoOperacional(solicitante)) {
       throw new ConflictException('Solicitante já está vinculado a outro estabelecimento');
     }
     const plano = await tx.planoAssinatura.findUnique({ where: { slug: solicitacao.planoSlug } });
@@ -233,5 +239,11 @@ export class SolicitacaoEstabelecimentoRepository {
 
   private slug(valor: string) {
     return valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'estabelecimento';
+  }
+
+  private possuiVinculoOperacional(usuario: { membroEstabelecimento: boolean; papel: string; vinculosEquipe?: Array<{ id: number }> }) {
+    return usuario.membroEstabelecimento
+      || ['ESTABLISHMENT_OWNER', 'ESTABLISHMENT_MEMBER'].includes(usuario.papel)
+      || Boolean(usuario.vinculosEquipe?.length);
   }
 }

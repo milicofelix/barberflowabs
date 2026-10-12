@@ -1,9 +1,8 @@
-import { Body, Controller, Post, Req, UnauthorizedException } from '@nestjs/common';
+import { Body, Controller, Post, UnauthorizedException } from '@nestjs/common';
 import { LoginUsuario, RegistrarUsuario, Usuario } from '@uniflowabs/core';
 import { UsuarioPrisma } from './usuario.prisma';
 import { BcryptProvider } from './bcrypt.provider';
 import * as jwt from 'jsonwebtoken';
-import { TenantService } from 'src/shared/tenant.service';
 import { validarEmail, validarSenha, validarTextoObrigatorio } from 'src/shared/validacao';
 import {
   AuthTokenPayload,
@@ -17,16 +16,14 @@ export class AuthController {
   constructor(
     private readonly repo: UsuarioPrisma,
     private readonly cripto: BcryptProvider,
-    private readonly tenant: TenantService,
   ) {}
 
   @Post('registrar')
-  async registrar(@Body() usuario: RegistrarUsuarioDto, @Req() req: any) {
+  async registrar(@Body() usuario: RegistrarUsuarioDto) {
     this.validarRegistro(usuario);
 
-    const estabelecimentoId = await this.tenant.resolverEstabelecimentoId(req);
     const casoDeUso = new RegistrarUsuario(this.repo, this.cripto);
-    await casoDeUso.executar({ ...usuario, estabelecimentoId });
+    await casoDeUso.executar({ ...usuario, estabelecimentoId: undefined, papel: 'CUSTOMER' });
   }
 
   @Post('login')

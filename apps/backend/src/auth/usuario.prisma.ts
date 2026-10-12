@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RepositorioUsuario, Usuario } from '@uniflowabs/core';
 import { PrismaService } from 'src/db/prisma.service';
-import { DEFAULT_ESTABELECIMENTO_ID } from 'src/shared/tenant';
 
 @Injectable()
 export class UsuarioPrisma implements RepositorioUsuario {
@@ -10,7 +9,8 @@ export class UsuarioPrisma implements RepositorioUsuario {
   async salvar(usuario: Usuario): Promise<void> {
     const dados = {
       ...usuario,
-      estabelecimentoId: usuario.estabelecimentoId ?? DEFAULT_ESTABELECIMENTO_ID,
+      estabelecimentoId: usuario.estabelecimentoId ?? null,
+      papel: usuario.papel ?? 'CUSTOMER',
     };
 
     await this.prisma.usuario.upsert({
