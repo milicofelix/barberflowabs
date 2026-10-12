@@ -3,11 +3,18 @@ import { useCallback, useEffect, useState } from 'react'
 import useAPI from '@/data/hooks/useAPI'
 
 interface Solicitacao { id: number; nomePublico: string; tipoEstabelecimento: string; modeloAtendimento: string; logradouro?: string; numero?: string; bairro?: string; cidade?: string; estado?: string; enviadoEm: string; usuario: { nome: string; email: string }; segmentos: Array<{ segmento: { nome: string } }>; possiveisDuplicidades?: Array<{ id: number; nome: string; slug: string }> }
+const INTERVALO_ATUALIZACAO_MS = 15_000
 
 export default function PainelSolicitacoesEstabelecimento() {
     const { httpGet, httpPut } = useAPI(); const [itens, setItens] = useState<Solicitacao[]>([]); const [mensagem, setMensagem] = useState('')
     const carregar = useCallback(async () => { const resposta = await httpGet('/admin/solicitacoes-estabelecimento'); setItens(Array.isArray(resposta) ? resposta : []) }, [httpGet])
-    useEffect(() => { carregar() }, [carregar])
+    useEffect(() => {
+        carregar()
+        const intervalo = window.setInterval(carregar, INTERVALO_ATUALIZACAO_MS)
+        const atualizarAoRetornar = () => { if (document.visibilityState === 'visible') carregar() }
+        document.addEventListener('visibilitychange', atualizarAoRetornar)
+        return () => { window.clearInterval(intervalo); document.removeEventListener('visibilitychange', atualizarAoRetornar) }
+    }, [carregar])
     async function revisar(id: number, acao: 'aprovar' | 'solicitar-correcao' | 'reprovar') {
         const motivo = acao === 'aprovar' ? undefined : window.prompt(acao === 'reprovar' ? 'Motivo da reprovação:' : 'Quais dados devem ser corrigidos?')
         if (acao !== 'aprovar' && !motivo?.trim()) return

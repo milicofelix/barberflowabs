@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons'
 import { useCallback, useEffect, useState } from 'react'
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { AppState, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import useAPI, { mensagemDoErro } from '@/src/data/hooks/useAPI'
 import useTema from '@/src/data/contexts/ContextoTema'
 
 interface Notificacao { id: number; titulo: string; mensagem: string; lidaEm?: string | null }
+const INTERVALO_ATUALIZACAO_MS = 15_000
 
 export default function SinoNotificacoes() {
     const { cores } = useTema(); const { httpGet, httpPut } = useAPI()
@@ -13,11 +14,16 @@ export default function SinoNotificacoes() {
         try { setItens(await httpGet<Notificacao[]>('/notificacoes', { escopoTenant: 'nenhum' })); setErro('') }
         catch (e) { setErro(mensagemDoErro(e)) }
     }, [httpGet])
-    useEffect(() => { carregar() }, [carregar])
+    useEffect(() => {
+        carregar()
+        const intervalo = setInterval(carregar, INTERVALO_ATUALIZACAO_MS)
+        const assinatura = AppState.addEventListener('change', (estado) => { if (estado === 'active') carregar() })
+        return () => { clearInterval(intervalo); assinatura.remove() }
+    }, [carregar])
     async function ler(item: Notificacao) { if (!item.lidaEm) await httpPut(`/notificacoes/${item.id}/ler`, {}, { escopoTenant: 'nenhum' }); await carregar() }
     async function lerTodas() { await httpPut('/notificacoes/ler-todas', {}, { escopoTenant: 'nenhum' }); await carregar() }
     const total = itens.filter(item => !item.lidaEm).length
-    return <><Pressable accessibilityLabel="Notificações" onPress={() => setAberto(true)} style={[styles.sino, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
+    return <><Pressable accessibilityLabel="Notificações" onPress={() => { setAberto(true); carregar() }} style={[styles.sino, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
         <Ionicons name="notifications-outline" size={22} color={cores.texto} />{total ? <Text style={styles.contador}>{total}</Text> : null}
     </Pressable><Modal visible={aberto} transparent animationType="fade" onRequestClose={() => setAberto(false)}><View style={styles.fundo}><View style={[styles.painel, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
         <View style={styles.topo}><Text style={[styles.titulo, { color: cores.texto }]}>Notificações</Text><Pressable onPress={() => setAberto(false)}><Ionicons name="close" size={25} color={cores.texto} /></Pressable></View>

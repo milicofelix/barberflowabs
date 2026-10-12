@@ -1,5 +1,8 @@
 import useAPI, { mensagemDoErro } from './useAPI'
 import { useCallback, useEffect, useState } from 'react'
+import { AppState } from 'react-native'
+
+const INTERVALO_ATUALIZACAO_MS = 15_000
 
 export interface EstabelecimentoAdmin {
     id: number; nome: string; slug: string; status: string; reviewStatus: string; tipoEstabelecimento?: string
@@ -29,7 +32,12 @@ export default function useAdministracao() {
             setEstabelecimentos(todos); setPendentes(revisao)
         } catch (e) { setErro(mensagemDoErro(e)) } finally { setCarregando(false) }
     }, [httpGet])
-    useEffect(() => { carregar() }, [carregar])
+    useEffect(() => {
+        carregar()
+        const intervalo = setInterval(carregar, INTERVALO_ATUALIZACAO_MS)
+        const assinatura = AppState.addEventListener('change', (estado) => { if (estado === 'active') carregar() })
+        return () => { clearInterval(intervalo); assinatura.remove() }
+    }, [carregar])
     async function revisar(id: number, decisao: 'aprovar' | 'solicitar-correcao' | 'reprovar') {
         try {
             setErro(null)

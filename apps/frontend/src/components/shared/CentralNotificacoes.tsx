@@ -6,9 +6,9 @@ import useNotificacoes from '@/data/hooks/useNotificacoes'
 
 export default function CentralNotificacoes() {
     const [aberta, setAberta] = useState(false)
-    const { itens, naoLidas, ler, lerTodas } = useNotificacoes()
+    const { itens, naoLidas, carregar, ler, lerTodas } = useNotificacoes()
     return <div className="relative">
-        <button aria-label="Notificações" onClick={() => setAberta(!aberta)} className="relative rounded-full border border-white/25 bg-black/25 p-2.5 text-white">
+        <button aria-label="Notificações" onClick={() => { const proximoEstado = !aberta; setAberta(proximoEstado); if (proximoEstado) carregar() }} className="relative rounded-full border border-white/25 bg-black/25 p-2.5 text-white">
             <Bell size={20} />{naoLidas ? <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-fuchsia-500 px-1 text-xs font-bold">{naoLidas}</span> : null}
         </button>
         {aberta ? <div className="absolute right-0 z-50 mt-2 w-[min(90vw,380px)] rounded-2xl border border-slate-200 bg-white p-3 text-slate-900 shadow-2xl dark:border-slate-700 dark:bg-slate-900 dark:text-white">

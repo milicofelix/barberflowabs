@@ -324,6 +324,8 @@ Contratos administrativos implementados:
 
 A central persistente de notificacoes está disponível nos cabecalhos autenticados da web e nas telas principais do mobile, com contador, leitura individual e coletiva. As decisoes administrativas geram notificacao para o solicitante e auditoria da operacao.
 
+Web e mobile atualizam notificacoes e a fila administrativa a cada 15 segundos, imediatamente ao retornar para a aba/aplicativo e sempre que a central é aberta. Assim, solicitante e administrador recebem as mudancas sem refresh manual, mantendo o backend HTTP atual sem introduzir infraestrutura de WebSocket nesta etapa.
+
 #### Passo A Passo Manual — Fase D
 
 1. Aplicar a migration e gerar o Prisma Client pelos comandos já documentados em `docs/COMANDOS.md`; reiniciar a aplicacao.
