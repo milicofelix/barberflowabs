@@ -260,6 +260,16 @@ docker compose exec -T app sh -lc 'cd apps/mobile && npx expo install NOME_DO_PA
 
 Instala a versao recomendada para o SDK Expo atual. Esse comando altera dependencias e lockfile.
 
+### Instalar a biblioteca da agenda operacional
+
+```bash
+docker compose stop app
+docker compose run --rm --no-deps app yarn install --ignore-scripts --network-timeout 600000 --network-concurrency 1
+docker compose up --force-recreate app
+```
+
+Atualiza o volume de dependencias depois da inclusao da linha estavel e MIT do calendario usado pelo adaptador mobile. O container e interrompido antes para evitar concorrencia ao relincar `node_modules`. `--ignore-scripts` evita os `postinstall` dos demais workspaces; nao executa build nem testes.
+
 ## Prisma E Banco De Dados
 
 O banco MySQL e compartilhado. Revise a migration e tenha backup antes de alterar sua estrutura. Nao use `prisma migrate dev` nesse banco, pois o comando tenta criar um shadow database e pode falhar ou operar no ambiente errado.

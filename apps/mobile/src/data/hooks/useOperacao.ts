@@ -1,7 +1,7 @@
 import type {
     AgendamentoOperacional, DashboardOperacional, EscalaProfissional, IndisponibilidadeRecurso, MembroEquipe,
     PermissaoEquipe, ProfissionalOperacional, RecursoOperacional, UsuarioEquipe,
-    RespostaAgendaOperacional,
+    RespostaAgendaOperacional, VisualizacaoAgenda,
 } from '../operacao/tipos'
 import useAPI, { mensagemDoErro } from './useAPI'
 import { useCallback, useEffect, useState } from 'react'
@@ -14,14 +14,19 @@ const dataLocal = (data: Date) => {
 }
 const hoje = () => dataLocal(new Date())
 
-const intervaloDoDia = (data: string) => {
+const intervaloDaAgenda = (data: string, visualizacao: VisualizacaoAgenda) => {
     const inicio = new Date(`${data}T00:00:00`)
+    if (visualizacao === 'week') {
+        const distanciaSegunda = (inicio.getDay() + 6) % 7
+        inicio.setDate(inicio.getDate() - distanciaSegunda)
+    }
     const fim = new Date(inicio)
-    fim.setDate(fim.getDate() + 1)
+    const dias = visualizacao === 'day' ? 1 : visualizacao === '3days' ? 3 : visualizacao === 'week' ? 7 : 31
+    fim.setDate(fim.getDate() + dias)
     return { inicio: inicio.toISOString(), fim: fim.toISOString() }
 }
 
-export default function useOperacao() {
+export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'day') {
     const { httpDelete, httpGet, httpPost, httpPut } = useAPI()
     const [dashboard, setDashboard] = useState<DashboardOperacional | null>(null)
     const [agendamentos, setAgendamentos] = useState<AgendamentoOperacional[]>([])
@@ -41,7 +46,7 @@ export default function useOperacao() {
             const acessos = await httpGet<PermissaoEquipe[]>('/equipe/minhas-permissoes')
             setPermissoes(acessos)
             const pode = (permissao: PermissaoEquipe) => acessos.includes(permissao)
-            const periodo = intervaloDoDia(data)
+            const periodo = intervaloDaAgenda(data, visualizacaoAgenda)
             const [resumo, agenda, equipe, membrosEquipe, usuarios, recursosEquipe] = await Promise.all([
                 pode('AGENDA_GERENCIAR') ? httpGet<DashboardOperacional>('/gestao/dashboard') : Promise.resolve(null),
                 pode('AGENDA_GERENCIAR')
@@ -55,7 +60,7 @@ export default function useOperacao() {
             setDashboard(resumo); setAgendamentos(agenda?.itens ?? []); setFusoHorario(agenda?.periodo.fusoHorario ?? 'America/Sao_Paulo'); setProfissionais(equipe)
             setMembros(membrosEquipe); setUsuariosDisponiveis(usuarios); setRecursos(recursosEquipe)
         } catch (e) { setErro(mensagemDoErro(e)) } finally { setCarregando(false) }
-    }, [data, httpGet])
+    }, [data, httpGet, visualizacaoAgenda])
 
     useEffect(() => { carregar() }, [carregar])
 

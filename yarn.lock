@@ -4558,6 +4558,11 @@ cac@^6.7.14:
   resolved "https://registry.npmjs.org/cac/-/cac-6.7.14.tgz"
   integrity sha512-b6Ilus+c3RrdDk+JhLKUAQfzzgLEPy6wcXqS7f/xe1EETvsDP6GORG7SFuOs6cID5YkqchW/LXZbX5bc8j7ZcQ==
 
+calendarize@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/calendarize/-/calendarize-1.1.1.tgz#0fa8b8de6b5e6ff9f9fbb89cc3a8c01aace291c2"
+  integrity sha512-C2JyBAtNp2NG4DX4fA1EILggLt/5PlYzvQR0crHktoAPBc9TlIfdhzg7tWekCbe+pH6+9qoK+FhPbi+vYJJlqw==
+
 call-bind-apply-helpers@^1.0.1, call-bind-apply-helpers@^1.0.2:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/call-bind-apply-helpers/-/call-bind-apply-helpers-1.0.2.tgz#4b5428c222be985d79c3d82657479dbe0b59b2d6"
@@ -5258,6 +5263,11 @@ data-view-byte-offset@^1.0.0:
     call-bind "^1.0.6"
     es-errors "^1.3.0"
     is-data-view "^1.0.1"
+
+dayjs@^1.11.13:
+  version "1.11.23"
+  resolved "https://registry.yarnpkg.com/dayjs/-/dayjs-1.11.23.tgz#b0a363506dde5f36cf5075e42ebe8115165a8c79"
+  integrity sha512-QDTCU0M0MxR3hQfnlDJfwekQiaanm1ubOD231u73WBckQ/fsamwRLiE2GBz6D3a/xF1NgfiDLJjXBa1hYOYTtQ==
 
 debug@2.6.9, debug@^2.6.9:
   version "2.6.9"
@@ -10558,6 +10568,14 @@ react-is@^19.1.0, react-is@^19.2.3:
   version "19.3.0"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-19.3.0.tgz#716028d67e9993d23a2d353c6d08a3c1ef2bbeb4"
   integrity sha512-UpMYezM4v5/18F28aC66AEsjXIgE02kyEMH6yLdgLXu/UTfa1Ntwck/nNLrbqJsEXW7gPb0coNO9FQse9WTovA==
+
+react-native-big-calendar@4.19.0:
+  version "4.19.0"
+  resolved "https://registry.yarnpkg.com/react-native-big-calendar/-/react-native-big-calendar-4.19.0.tgz#7c553f2c1a132cf35ffd36f845598af65543dcf5"
+  integrity sha512-srX0iRjBi+6jUgMXHqMh1s6JOb+T/Q9lEpD9dTjlhhVlSupYrwTBvPRmaLrsvj1LWefgZaVd4JpnLPbvR25WFw==
+  dependencies:
+    calendarize "^1.1.1"
+    dayjs "^1.11.13"
 
 react-native-dotenv@^3.4.11:
   version "3.4.11"

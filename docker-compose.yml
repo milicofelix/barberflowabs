@@ -38,7 +38,9 @@ services:
     volumes:
       - .:/workspace/barberFlowABS
       - barberflow_node_modules:/workspace/barberFlowABS/node_modules
-    command: yarn turbo dev --ui=stream
+    # O schema fica em bind mount e pode mudar sem reconstruir a imagem. Gere o
+    # client antes dos processos para impedir um Prisma Client desatualizado.
+    command: sh -lc "yarn --cwd apps/backend prisma:generate && yarn turbo dev --ui=stream"
     restart: unless-stopped
     networks:
       - shared

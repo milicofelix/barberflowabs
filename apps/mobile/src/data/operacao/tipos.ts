@@ -84,3 +84,4 @@ export interface RecursoOperacional { id: number; nome: string; tipo: string; ca
 export interface IndisponibilidadeRecurso { id: number; inicio: string; fim: string; motivo?: string | null }
 
 export type SecaoOperacao = 'RESUMO' | 'AGENDA' | 'SERVICOS' | 'EQUIPE' | 'CAPACIDADE' | 'FINANCEIRO'
+export type VisualizacaoAgenda = 'day' | '3days' | 'week' | 'schedule'

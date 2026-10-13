@@ -1,10 +1,9 @@
 import Carregando from '@/src/components/shared/Carregando'
 import EstadoErro from '@/src/components/shared/EstadoErro'
-import EstadoVazio from '@/src/components/shared/EstadoVazio'
 import { SeletorOperacao } from '@/src/components/operacao/ComponentesOperacao'
-import { AgendaOperacao, AtalhoCentralFinanceira, EquipeOperacao, ResumoOperacao } from '@/src/components/operacao/SecoesOperacao'
+import { AtalhoCentralFinanceira, EquipeOperacao, ResumoOperacao } from '@/src/components/operacao/SecoesOperacao'
 import useOperacao from '@/src/data/hooks/useOperacao'
-import type { SecaoOperacao } from '@/src/data/operacao/tipos'
+import type { SecaoOperacao, VisualizacaoAgenda } from '@/src/data/operacao/tipos'
 import { useState } from 'react'
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -16,23 +15,27 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { AbasParamList, StackParamList } from '@/src/navigation/types'
 import GestaoServicos from '@/src/components/operacao/GestaoServicos'
 import useGestaoServicos from '@/src/data/hooks/useGestaoServicos'
+import AgendaCalendario from '@/src/components/operacao/AgendaCalendario'
 
 type Props = BottomTabScreenProps<AbasParamList, 'Operacao'>
 
 export default function Operacao({ navigation }: Props) {
     const { cores } = useTema()
     const [secao, setSecao] = useState<SecaoOperacao>('RESUMO')
-    const dados = useOperacao()
+    const [visualizacaoAgenda, setVisualizacaoAgenda] = useState<VisualizacaoAgenda>('day')
+    const dados = useOperacao(visualizacaoAgenda)
     const gestaoServicos = useGestaoServicos(secao === 'SERVICOS')
     return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}><ScrollView contentContainerStyle={styles.conteudo}
         refreshControl={<RefreshControl refreshing={dados.carregando} onRefresh={dados.recarregar} tintColor="#E7B84B" />}>
         <Text style={styles.sobretitulo}>OPERAÇÃO DO ESTABELECIMENTO</Text><Text style={[styles.titulo, { color: cores.texto }]}>Gestão diária</Text>
         <SeletorOperacao atual={secao} selecionar={setSecao} permissoes={dados.permissoes} />
-        {secao === 'AGENDA' ? <NavegacaoData data={dados.data} alterar={dados.setData} /> : null}
+        {secao === 'AGENDA' ? <NavegacaoData data={dados.data} alterar={dados.setData} visualizacao={visualizacaoAgenda} /> : null}
         {dados.erro ? <EstadoErro mensagem={dados.erro} tentarNovamente={dados.recarregar} /> : null}
         {dados.carregando && !dados.dashboard ? <Carregando mensagem="Carregando operação..." /> : null}
         {!dados.carregando && secao === 'RESUMO' ? <ResumoOperacao dados={dados.dashboard} /> : null}
-        {!dados.carregando && secao === 'AGENDA' ? (dados.agendamentos.length ? <AgendaOperacao itens={dados.agendamentos} alterarStatus={dados.alterarStatus} /> : <EstadoVazio titulo="Agenda livre nesta data" />) : null}
+        {!dados.carregando && secao === 'AGENDA' ? <AgendaCalendario itens={dados.agendamentos} data={dados.data}
+            visualizacao={visualizacaoAgenda} alterarVisualizacao={setVisualizacaoAgenda} alterarData={dados.setData}
+            alterarStatus={dados.alterarStatus} fusoHorario={dados.fusoHorario} /> : null}
         {secao === 'SERVICOS' ? <GestaoServicos itens={gestaoServicos.servicos} profissionais={dados.profissionais} carregando={gestaoServicos.carregando}
             erro={gestaoServicos.erro} recarregar={gestaoServicos.carregar} salvar={gestaoServicos.salvar} excluir={gestaoServicos.excluir} /> : null}
         {!dados.carregando && secao === 'EQUIPE' ? <><EquipeOperacao itens={dados.profissionais} criar={dados.criarProfissional} /><EscalasEquipe profissionais={dados.profissionais} buscar={dados.buscarEscalas} salvar={dados.salvarEscalas} /><MembrosEquipe membros={dados.membros} usuarios={dados.usuariosDisponiveis} profissionais={dados.profissionais} salvar={dados.salvarMembro} criarPerfil={dados.criarPerfilParaMembro} remover={dados.removerMembro} /></> : null}
@@ -42,7 +45,7 @@ export default function Operacao({ navigation }: Props) {
     </ScrollView></SafeAreaView>
 }
 
-function NavegacaoData({ data, alterar }: { data: string; alterar: (data: string) => void }) {
+function NavegacaoData({ data, alterar, visualizacao }: { data: string; alterar: (data: string) => void; visualizacao: VisualizacaoAgenda }) {
     const { cores } = useTema()
     const mover = (dias: number) => {
         const atual = new Date(`${data}T12:00:00`)
@@ -55,12 +58,16 @@ function NavegacaoData({ data, alterar }: { data: string; alterar: (data: string
     }
     return <View style={styles.navegacaoData}>
         <View style={styles.acoesData}>
-            <Pressable onPress={() => mover(-1)} style={[styles.botaoData, { borderColor: cores.borda }]}><Text style={[styles.botaoDataTexto, { color: cores.texto }]}>‹ Anterior</Text></Pressable>
+            <Pressable onPress={() => mover(-passoVisualizacao(visualizacao))} style={[styles.botaoData, { borderColor: cores.borda }]}><Text style={[styles.botaoDataTexto, { color: cores.texto }]}>‹ Anterior</Text></Pressable>
             <Pressable onPress={hoje} style={[styles.botaoData, { borderColor: cores.destaque }]}><Text style={[styles.botaoDataTexto, { color: cores.destaque }]}>Hoje</Text></Pressable>
-            <Pressable onPress={() => mover(1)} style={[styles.botaoData, { borderColor: cores.borda }]}><Text style={[styles.botaoDataTexto, { color: cores.texto }]}>Próximo ›</Text></Pressable>
+            <Pressable onPress={() => mover(passoVisualizacao(visualizacao))} style={[styles.botaoData, { borderColor: cores.borda }]}><Text style={[styles.botaoDataTexto, { color: cores.texto }]}>Próximo ›</Text></Pressable>
         </View>
         <TextInput style={[styles.data, { backgroundColor: cores.campo, color: cores.campoTexto, borderColor: cores.borda }]} value={data} onChangeText={alterar} placeholder="AAAA-MM-DD" placeholderTextColor={cores.textoSecundario} />
     </View>
+}
+
+function passoVisualizacao(visualizacao: VisualizacaoAgenda) {
+    return visualizacao === 'day' ? 1 : visualizacao === '3days' ? 3 : visualizacao === 'week' ? 7 : 31
 }
 
 const styles = StyleSheet.create({

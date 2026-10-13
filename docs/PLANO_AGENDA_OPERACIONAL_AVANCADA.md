@@ -1,6 +1,6 @@
 # Plano — Agenda Operacional Avancada
 
-Status: Fase 1 implementada; fundacao visual e calendario avancado pendentes.
+Status: Fases 1 e 2 implementadas; operacao avancada da agenda pendente.
 
 ## Objetivo
 
@@ -34,13 +34,21 @@ Substituir progressivamente a lista diaria da Gestao Diaria por uma agenda opera
 
 ## Fase 2 — Fundacao Visual E Biblioteca
 
-- [ ] Fazer uma prova tecnica com bibliotecas compativeis com a versao atual do Expo e React Native.
-- [ ] Avaliar manutencao, acessibilidade, desempenho, suporte a gestos, recursos por coluna e licenca comercial.
-- [ ] Encapsular a biblioteca escolhida em componentes proprios para evitar dependencia direta nas telas.
-- [ ] Implementar modos dia, tres dias, semana e lista.
-- [ ] Criar linha de horario atual, zoom e navegacao por gesto.
+- [x] Fazer uma prova tecnica com bibliotecas compativeis com a versao atual do Expo e React Native.
+- [x] Avaliar manutencao, acessibilidade, desempenho, suporte a gestos, recursos por coluna e licenca comercial.
+- [x] Encapsular a biblioteca escolhida em componentes proprios para evitar dependencia direta nas telas.
+- [x] Implementar modos dia, tres dias, semana e lista.
+- [x] Criar linha de horario atual, zoom e navegacao por gesto.
 
-Nenhuma biblioteca sera instalada antes dessa prova tecnica e da confirmacao de licenca e compatibilidade.
+### Decisao tecnica
+
+- Biblioteca escolhida: `react-native-big-calendar` 4.19, linha estavel v4 e licenca MIT.
+- Compatibilidade declarada: React Native em Android, iOS e Web; a integracao usa apenas APIs JavaScript compativeis com Expo.
+- Recursos utilizados: modos `day`, `3days`, `week` e `schedule`, indicador do horario atual, gesto lateral, temas e eventos customizaveis.
+- A biblioteca fica isolada em `AgendaCalendario`; telas e contratos nao importam sua API diretamente.
+- A agenda limita cada consulta a sua janela visivel e usa os contratos paginados da Fase 1.
+- Arrastar e soltar nao integra esta fase: a linha v4 estavel nao oferece o recurso nativamente. A operacao sera avaliada separadamente na Fase 3, sem adotar a linha v5 experimental descontinuada.
+- Colunas por profissional/recurso pertencem a Fase 3 e serao compostas fora da biblioteca caso a prova operacional confirme essa necessidade.
 
 ## Fase 3 — Operacao De Agenda
 
