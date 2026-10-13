@@ -91,7 +91,7 @@ export class RelacionamentoRepository {
       (this.prisma as any).clienteEstabelecimento.findFirst({
         where: { id: Number(dados.clienteId), estabelecimentoId, status: 'ATIVO' },
         include: {
-          usuario: { select: { id: true, email: true, telefone: true } },
+          usuario: { select: { id: true, email: true, emailContato: true, emailTecnico: true, telefone: true } },
         },
       }),
       (this.prisma as any).templateComunicacao.findFirst({
@@ -103,7 +103,19 @@ export class RelacionamentoRepository {
     const preferencia = await (this.prisma as any).preferenciaComunicacao.findUnique({
       where: { estabelecimentoId_usuarioId_canal: { estabelecimentoId, usuarioId: cliente.usuarioId, canal: template.canal } },
     });
-    return { cliente, template, preferencia };
+    return {
+      cliente: {
+        ...cliente,
+        usuario: {
+          ...cliente.usuario,
+          email: cliente.usuario.emailTecnico ? null : (cliente.usuario.emailContato ?? cliente.usuario.email),
+          emailContato: undefined,
+          emailTecnico: undefined,
+        },
+      },
+      template,
+      preferencia,
+    };
   }
 
   criarEnvio(data: Record<string, unknown>) {

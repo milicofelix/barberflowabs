@@ -30,6 +30,8 @@ import {
   CriarLembreteRelacionamentoDto,
   CriarLancamentoFinanceiroDto,
   SalvarClienteDto,
+  SimularImportacaoContatosDto,
+  ConfirmarImportacaoContatosDto,
 } from './gestao.dto';
 import { GestaoPrisma } from './gestao.prisma';
 import { EquipePolicy } from 'src/equipe/equipe.policy';
@@ -40,6 +42,7 @@ import { ConflitoAgendaError } from 'src/motor-agenda/conflito-agenda.error';
 import { AgendaOperacionalService } from './agenda-operacional.service';
 import { AgendaAtualizacaoService } from 'src/motor-agenda/agenda-atualizacao.service';
 import { randomUUID } from 'crypto';
+import { ImportacaoContatosService } from './importacao-contatos.service';
 
 const STATUS_AGENDAMENTO = ['AGENDADO', 'CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW'];
 const ORIGENS_AGENDAMENTO_ASSISTIDO = ['RECEPCAO', 'TELEFONE', 'WHATSAPP', 'PRESENCIAL', 'OUTRO'];
@@ -58,6 +61,7 @@ export class GestaoController {
     private readonly motorAgenda: MotorAgendaService,
     private readonly agendaOperacional: AgendaOperacionalService,
     private readonly atualizacoesAgenda: AgendaAtualizacaoService,
+    private readonly importacaoContatos: ImportacaoContatosService,
   ) {}
 
   @Get('dashboard')
@@ -80,6 +84,22 @@ export class GestaoController {
       ...dados,
       senha: await this.cripto.criptografar(dados.senha || randomUUID()),
     });
+  }
+
+  @Post('clientes/importacoes/simular')
+  async simularImportacaoContatos(@Body() dados: SimularImportacaoContatosDto, @UsuarioLogado() usuario: Usuario) {
+    await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
+    return this.importacaoContatos.simular(usuario.estabelecimentoId!, usuario.id!, dados);
+  }
+
+  @Post('clientes/importacoes/:loteId/confirmar')
+  async confirmarImportacaoContatos(
+    @Param('loteId') loteId: string,
+    @Body() dados: ConfirmarImportacaoContatosDto,
+    @UsuarioLogado() usuario: Usuario,
+  ) {
+    await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
+    return this.importacaoContatos.confirmar(usuario.estabelecimentoId!, usuario.id!, loteId, dados);
   }
 
   @Put('clientes/:id')
@@ -325,7 +345,12 @@ export class GestaoController {
 
   private validarCliente(dados: SalvarClienteDto, exigirSenha: boolean) {
     validarTextoObrigatorio(dados?.nome, 'Nome');
-    validarEmail(dados?.email);
+    if (!dados?.email && !dados?.telefone) throw new BadRequestException('Informe telefone ou e-mail');
+    if (dados?.email) validarEmail(dados.email);
+    if (dados?.telefone) {
+      const quantidadeDigitos = String(dados.telefone).replace(/\D/g, '').length;
+      if (quantidadeDigitos < 10 || quantidadeDigitos > 15) throw new BadRequestException('Telefone inválido');
+    }
 
     if (exigirSenha || dados?.senha) {
       validarSenha(dados.senha);

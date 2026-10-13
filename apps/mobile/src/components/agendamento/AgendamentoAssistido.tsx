@@ -75,11 +75,11 @@ export default function AgendamentoAssistido({ dataInicial, chaveInicial }: Prop
 
     async function cadastrarCliente() {
         if (salvando) return
-        if (!nome.trim() || !email.trim()) { setErro('Informe nome e e-mail do cliente.'); return }
+        if (!nome.trim() || (!email.trim() && !somenteDigitos(telefone))) { setErro('Informe o nome e ao menos um telefone ou e-mail.'); return }
         try {
             setSalvando(true); setErro(null)
             const criado = await httpPost<ClienteAgenda>('/gestao/clientes', {
-                nome: nome.trim(), email: email.trim().toLowerCase(), telefone: somenteDigitos(telefone) || undefined,
+                nome: nome.trim(), email: email.trim().toLowerCase() || undefined, telefone: somenteDigitos(telefone) || undefined,
             })
             setClienteId(criado.id); setNovoCliente(false); setNome(''); setEmail(''); setTelefone('')
             setBusca(criado.nome); await carregarClientes(criado.nome)

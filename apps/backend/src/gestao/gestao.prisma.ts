@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
+import { randomUUID } from 'crypto';
 
 const STATUS_ATENDIDOS = ['CONCLUIDO'];
 const PERCENTUAL_COMISSAO_PADRAO = 40;
@@ -57,6 +58,7 @@ export class GestaoPrisma {
             id: true,
             nome: true,
             email: true,
+            emailTecnico: true,
             telefone: true,
             dataNascimento: true,
             membroEstabelecimento: true,
@@ -77,7 +79,7 @@ export class GestaoPrisma {
           id: relacao.usuario.id,
           relacaoId: relacao.id,
           nome: relacao.usuario.nome,
-          email: relacao.usuario.email,
+          email: relacao.usuario.emailTecnico ? null : relacao.usuario.email,
           telefone: relacao.usuario.telefone,
           dataNascimento: relacao.usuario.dataNascimento?.toISOString().slice(0, 10) ?? null,
           cadastroOperacional: relacao.usuario.membroEstabelecimento || relacao.usuario.papel === 'ESTABLISHMENT_MEMBER' || relacao.usuario.papel === 'SUPER_ADMIN',
@@ -133,23 +135,31 @@ export class GestaoPrisma {
 
   async criarCliente(estabelecimentoId: number, dados: any) {
     const dataNascimento = dados.dataNascimento ? new Date(`${dados.dataNascimento}T00:00:00.000Z`) : null;
-    const existente = await this.prisma.usuario.findUnique({
-      where: { email: dados.email },
-      select: { id: true, nome: true, email: true, telefone: true, dataNascimento: true, membroEstabelecimento: true },
+    const emailContato = dados.email?.trim().toLowerCase() || null;
+    const telefoneNormalizado = this.normalizarTelefone(dados.telefone);
+    const existente = emailContato ? await (this.prisma as any).usuario.findUnique({
+      where: { email: emailContato },
+      select: { id: true, nome: true, email: true, emailTecnico: true, telefone: true, dataNascimento: true, membroEstabelecimento: true },
+    }) : await (this.prisma as any).usuario.findFirst({
+      where: { OR: [{ telefoneNormalizado }, { telefone: telefoneNormalizado }] },
+      select: { id: true, nome: true, email: true, emailTecnico: true, telefone: true, dataNascimento: true, membroEstabelecimento: true },
     });
 
-    const cliente = existente ?? (await this.prisma.usuario.create({
+    const cliente = existente ?? (await (this.prisma as any).usuario.create({
       data: {
         estabelecimentoId: null,
         nome: dados.nome,
-        email: dados.email,
-        telefone: dados.telefone || null,
+        email: emailContato ?? `contato+${randomUUID()}@interno.uniflowabs.invalid`,
+        emailContato,
+        emailTecnico: !emailContato,
+        telefone: telefoneNormalizado,
+        telefoneNormalizado,
         dataNascimento,
         senha: dados.senha,
         membroEstabelecimento: false,
         papel: 'CUSTOMER',
       },
-      select: { id: true, nome: true, email: true, telefone: true, dataNascimento: true, membroEstabelecimento: true },
+      select: { id: true, nome: true, email: true, emailTecnico: true, telefone: true, dataNascimento: true, membroEstabelecimento: true },
     }));
 
     await (this.prisma as any).clienteEstabelecimento.upsert({
@@ -164,6 +174,8 @@ export class GestaoPrisma {
 
     return {
       ...cliente,
+      email: emailContato ?? (existente && !cliente.emailTecnico ? cliente.email : null),
+      emailTecnico: undefined,
       membroEstabelecimento: undefined,
       dataNascimento: cliente.dataNascimento?.toISOString().slice(0, 10) ?? null,
       totalAgendamentos: 0,
@@ -178,12 +190,16 @@ export class GestaoPrisma {
 
     if (!relacao) return null;
 
-    const atualizado = await this.prisma.usuario.update({
+    const emailContato = dados.email?.trim().toLowerCase() || null;
+    const telefoneNormalizado = this.normalizarTelefone(dados.telefone);
+    const atual = await (this.prisma as any).usuario.findUnique({ where: { id }, select: { emailTecnico: true } });
+    const atualizado = await (this.prisma as any).usuario.update({
       where: { id },
       data: {
         nome: dados.nome,
-        email: dados.email,
-        telefone: dados.telefone || null,
+        ...(emailContato ? { email: emailContato, emailContato, emailTecnico: false } : atual?.emailTecnico ? { emailContato: null } : {}),
+        telefone: telefoneNormalizado,
+        telefoneNormalizado,
         dataNascimento: dados.dataNascimento ? new Date(`${dados.dataNascimento}T00:00:00.000Z`) : null,
         ...(dados.senha ? { senha: dados.senha } : {}),
       },
@@ -254,10 +270,13 @@ export class GestaoPrisma {
           { telefone: { contains: termo } },
         ] } } : {}),
       },
-      select: { usuario: { select: { id: true, nome: true, telefone: true, email: true } } },
+      select: { usuario: { select: { id: true, nome: true, telefone: true, email: true, emailTecnico: true } } },
       orderBy: { usuario: { nome: 'asc' } },
       take: termo ? 30 : 8,
-    }).then((itens: any[]) => itens.map((item) => item.usuario));
+    }).then((itens: any[]) => itens.map((item) => ({
+      id: item.usuario.id, nome: item.usuario.nome, telefone: item.usuario.telefone,
+      email: item.usuario.emailTecnico ? null : item.usuario.email,
+    })));
   }
 
   contextoAgendamentoAssistido(estabelecimentoId: number) {
@@ -727,5 +746,13 @@ export class GestaoPrisma {
   private diferencaDias(inicio: Date, fim: Date) {
     const dia = 24 * 60 * 60 * 1000;
     return Math.max(0, Math.ceil((fim.getTime() - inicio.getTime()) / dia));
+  }
+
+  private normalizarTelefone(valor?: string | null) {
+    let digitos = String(valor ?? '').replace(/\D/g, '');
+    if (!digitos) return null;
+    if (digitos.startsWith('00')) digitos = digitos.slice(2);
+    if ((digitos.length === 10 || digitos.length === 11) && !digitos.startsWith('55')) digitos = `55${digitos}`;
+    return digitos.length >= 10 && digitos.length <= 15 ? `+${digitos}` : null;
   }
 }

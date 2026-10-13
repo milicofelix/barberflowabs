@@ -8,11 +8,12 @@ import { EquipeModule } from 'src/equipe/equipe.module';
 import { FinanceiroModule } from 'src/financeiro/financeiro.module';
 import { MotorAgendaModule } from 'src/motor-agenda/motor-agenda.module';
 import { AgendaOperacionalService } from './agenda-operacional.service';
+import { ImportacaoContatosService } from './importacao-contatos.service';
 
 @Module({
   imports: [AuthModule, DbModule, EquipeModule, FinanceiroModule, MotorAgendaModule],
   controllers: [GestaoController],
-  providers: [GestaoPrisma, AgendaOperacionalService],
+  providers: [GestaoPrisma, AgendaOperacionalService, ImportacaoContatosService],
 })
 export class GestaoModule {
   configure(consumer: MiddlewareConsumer) {

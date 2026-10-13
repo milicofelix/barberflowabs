@@ -39,10 +39,27 @@ export interface CriarLancamentoFinanceiroDto {
 
 export interface SalvarClienteDto {
   nome: string;
-  email: string;
+  email?: string;
   telefone?: string;
   dataNascimento?: string;
   senha?: string;
+}
+
+export interface ContatoImportacaoDto {
+  referencia: string;
+  nome: string;
+  telefone?: string;
+  email?: string;
+}
+
+export interface SimularImportacaoContatosDto {
+  chaveIdempotencia: string;
+  contatos: ContatoImportacaoDto[];
+}
+
+export interface ConfirmarImportacaoContatosDto {
+  contatos: ContatoImportacaoDto[];
+  confirmarCorrespondencias?: boolean;
 }
 
 export interface CriarLembreteRelacionamentoDto {

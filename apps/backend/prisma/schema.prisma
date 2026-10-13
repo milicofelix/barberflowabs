@@ -15,8 +15,11 @@ model Usuario {
   estabelecimentoId  Int?
   nome         String
   email        String        @unique
+  emailContato String?
+  emailTecnico Boolean       @default(false)
   senha        String
   telefone     String?
+  telefoneNormalizado String?
   dataNascimento DateTime?
   membroEstabelecimento     Boolean
   papel        String        @default("CUSTOMER")
@@ -38,8 +41,11 @@ model Usuario {
   solicitacoesEstabelecimento SolicitacaoEstabelecimento[] @relation("SolicitanteSolicitacaoEstabelecimento")
   solicitacoesEstabelecimentoRevisadas SolicitacaoEstabelecimento[] @relation("RevisorSolicitacaoEstabelecimento")
   notificacoes NotificacaoUsuario[]
+  importacoesContatosOperadas ImportacaoContatoLote[] @relation("ImportacaoContatoOperador")
+  itensImportacaoContato ImportacaoContatoItem[]
 
   @@index([estabelecimentoId])
+  @@index([telefoneNormalizado])
   @@map("usuarios")
 }
 
@@ -213,6 +219,7 @@ model Estabelecimento {
   templatesComunicacao         TemplateComunicacao[]
   enviosComunicacao             EnvioComunicacao[]
   notificacoes                  NotificacaoUsuario[]
+  importacoesContatos           ImportacaoContatoLote[]
   solicitacaoOrigem             SolicitacaoEstabelecimento? @relation("EstabelecimentoGeradoSolicitacao")
 
   @@map("estabelecimentos")
@@ -626,6 +633,48 @@ model ClienteEstabelecimento {
   @@unique([estabelecimentoId, usuarioId])
   @@index([usuarioId])
   @@map("clientes_estabelecimentos")
+}
+
+model ImportacaoContatoLote {
+  id                 String   @id @default(uuid())
+  estabelecimentoId  Int
+  operadorId         Int
+  chaveIdempotencia  String
+  status             String   @default("SIMULADO")
+  totalRecebidos     Int      @default(0)
+  totalNovos         Int      @default(0)
+  totalExistentes    Int      @default(0)
+  totalInvalidos     Int      @default(0)
+  totalConflitos     Int      @default(0)
+  totalImportados    Int      @default(0)
+  confirmadoEm       DateTime?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  estabelecimento    Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  operador           Usuario @relation("ImportacaoContatoOperador", fields: [operadorId], references: [id])
+  itens              ImportacaoContatoItem[]
+
+  @@unique([estabelecimentoId, chaveIdempotencia])
+  @@index([estabelecimentoId, createdAt])
+  @@index([operadorId])
+  @@map("importacoes_contatos_lotes")
+}
+
+model ImportacaoContatoItem {
+  id          Int      @id @default(autoincrement())
+  loteId      String
+  usuarioId   Int?
+  referencia  String
+  fingerprint String
+  resultado   String
+  motivo      String?
+  createdAt   DateTime @default(now())
+  lote        ImportacaoContatoLote @relation(fields: [loteId], references: [id], onDelete: Cascade)
+  usuario     Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  @@unique([loteId, referencia])
+  @@index([usuarioId])
+  @@map("importacoes_contatos_itens")
 }
 
 model PreferenciaComunicacao {

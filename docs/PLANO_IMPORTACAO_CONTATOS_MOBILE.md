@@ -1,6 +1,6 @@
 # Plano — Importacao Assistida De Contatos No Mobile
 
-Status: planejado; implementacao ainda nao iniciada.
+Status: Fase 1 implementada; migration, geracao do Prisma Client, reinicio e aceite manual pendentes.
 
 ## Objetivo
 
@@ -21,13 +21,22 @@ O importador VCF existente permanece como ferramenta administrativa excepcional 
 
 ## Fase 1 — Dominio, Identidade E Contratos
 
-- [ ] Permitir cliente operacional com nome e ao menos um meio de contato valido: telefone ou e-mail.
-- [ ] Separar e-mail real de identificador tecnico interno; endereco sintetico nunca podera ser usado para comunicacao.
-- [ ] Definir telefone canonico, preferencialmente no formato E.164, preservando o valor original apenas quando necessario para revisao.
-- [ ] Definir deduplicacao por estabelecimento e correspondencia segura com contas existentes.
-- [ ] Criar origem `IMPORTACAO_CONTATOS` e registrar lote, operador, data, totais e resultado.
-- [ ] Criar contrato de simulacao do lote, sem gravacao, retornando `NOVO`, `JA_VINCULADO`, `POSSIVEL_DUPLICADO`, `INVALIDO` ou `CONFLITO`.
-- [ ] Criar contrato idempotente de confirmacao, com uma chave unica por lote e suporte a envio em blocos.
+- [x] Permitir cliente operacional com nome e ao menos um meio de contato valido: telefone ou e-mail.
+- [x] Separar e-mail real de identificador tecnico interno; endereco sintetico nunca podera ser usado para comunicacao.
+- [x] Definir telefone canonico no formato E.164 para novos cadastros e importacoes.
+- [x] Definir deduplicacao por estabelecimento e correspondencia segura com contas existentes.
+- [x] Criar origem `IMPORTACAO_CONTATOS` e registrar lote, operador, data, totais e resultado.
+- [x] Criar contrato de simulacao do lote, sem vincular clientes, retornando `NOVO`, `JA_VINCULADO`, `POSSIVEL_DUPLICADO`, `INVALIDO` ou `CONFLITO`.
+- [x] Criar contrato idempotente de confirmacao, com uma chave unica por lote e limite de 200 contatos.
+
+### Contratos entregues
+
+- `POST /gestao/clientes/importacoes/simular`: recebe `chaveIdempotencia` e os contatos selecionados; cria somente a auditoria anonimizada do lote e devolve a classificacao individual.
+- `POST /gestao/clientes/importacoes/:loteId/confirmar`: revalida os mesmos fingerprints, exige confirmacao para possiveis correspondencias e cria ou vincula os clientes.
+- Cada contato possui `referencia`, `nome` e ao menos `telefone` ou `email`.
+- O servidor normaliza telefones brasileiros para E.164, limita o lote a 200 itens e nao devolve dados privados de contas encontradas.
+- A chave de idempotencia e unica dentro do estabelecimento. Repetir a simulacao ou a confirmacao devolve o lote existente sem duplicar vinculos.
+- A auditoria persiste apenas fingerprint, referencia local, resultado e identificador interno quando aplicavel; nomes, telefones e e-mails nao sao copiados para o historico do lote.
 
 ### Regras de correspondencia
 
