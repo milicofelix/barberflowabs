@@ -8,7 +8,7 @@ import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'r
 import { SafeAreaView } from 'react-native-safe-area-context'
 
 type Resultado = 'NOVO' | 'JA_VINCULADO' | 'POSSIVEL_DUPLICADO' | 'INVALIDO' | 'CONFLITO' | 'IMPORTADO'
-interface ItemPrevia { referencia: string; resultado: Resultado; motivo?: string | null }
+interface ItemPrevia { referencia: string; resultado: Resultado; motivo?: string | null; clienteId?: number }
 interface RespostaLote {
     loteId: string; status: string
     totais: { recebidos: number; novos: number; existentes: number; invalidos: number; conflitos: number; importados: number }
@@ -16,8 +16,15 @@ interface RespostaLote {
 }
 interface EscolhaContato { telefone?: string; email?: string }
 interface ContatoEnvio { referencia: string; nome: string; telefone?: string; email?: string }
+interface ClienteImportado { id: number; nome: string }
+interface ResultadoImportacao { loteId: string; clientes: ClienteImportado[] }
+interface Props {
+    aoConcluir?: (resultado: ResultadoImportacao) => void | Promise<void>
+    aoUsarCliente?: (cliente: ClienteImportado) => void | Promise<void>
+    compacto?: boolean
+}
 
-export default function ImportadorContatos({ aoConcluir, compacto = false }: { aoConcluir?: () => void | Promise<void>; compacto?: boolean }) {
+export default function ImportadorContatos({ aoConcluir, aoUsarCliente, compacto = false }: Props) {
     const { cores } = useTema()
     const { httpPost } = useAPI()
     const dispositivo = useContatosDispositivo()
@@ -27,6 +34,8 @@ export default function ImportadorContatos({ aoConcluir, compacto = false }: { a
     const [escolhas, setEscolhas] = useState<Record<string, EscolhaContato>>({})
     const [previa, setPrevia] = useState<RespostaLote | null>(null)
     const [payload, setPayload] = useState<ContatoEnvio[]>([])
+    const [correcoes, setCorrecoes] = useState<Record<string, ContatoEnvio>>({})
+    const [ignorados, setIgnorados] = useState<Set<string>>(new Set())
     const [processando, setProcessando] = useState(false)
     const [erro, setErro] = useState<string | null>(null)
 
@@ -112,7 +121,51 @@ export default function ImportadorContatos({ aoConcluir, compacto = false }: { a
                 contatos: payload, confirmarCorrespondencias: true,
             })
             setPrevia(resposta)
-            await aoConcluir?.()
+            const clientes = resposta.itens.flatMap((item) => {
+                const contato = payload.find((atual) => atual.referencia === item.referencia)
+                return item.clienteId && contato ? [{ id: item.clienteId, nome: contato.nome }] : []
+            })
+            await aoConcluir?.({ loteId: resposta.loteId, clientes })
+        } catch (error) { setErro(mensagemDoErro(error)) }
+        finally { setProcessando(false) }
+    }
+    function alterarCorrecao(referencia: string, campo: keyof Omit<ContatoEnvio, 'referencia'>, valor: string) {
+        const original = payload.find((item) => item.referencia === referencia)
+        if (!original) return
+        setErro(null)
+        setCorrecoes((atuais) => ({ ...atuais, [referencia]: { ...(atuais[referencia] ?? original), [campo]: valor } }))
+    }
+    function alternarIgnorado(referencia: string) {
+        setIgnorados((atuais) => {
+            const proximos = new Set(atuais)
+            proximos.has(referencia) ? proximos.delete(referencia) : proximos.add(referencia)
+            return proximos
+        })
+    }
+    async function reenviarCorrecoes() {
+        if (!previa || processando) return
+        const referencias = new Set(previa.itens.filter((item) => ['INVALIDO', 'CONFLITO'].includes(item.resultado) && !ignorados.has(item.referencia)).map((item) => item.referencia))
+        const contatos = payload.filter((item) => referencias.has(item.referencia)).map((item) => correcoes[item.referencia] ?? item)
+            .map((item) => ({ ...item, nome: item.nome.trim(), telefone: normalizarTelefone(item.telefone) || undefined, email: item.email?.trim().toLowerCase() || undefined }))
+        if (!contatos.length || contatos.some((item) => !item.nome || (!item.telefone && !item.email))) {
+            setErro('Corrija o nome e informe ao menos um telefone ou e-mail em cada contato.'); return
+        }
+        try {
+            setProcessando(true); setErro(null)
+            const resposta = await httpPost<RespostaLote>('/gestao/clientes/importacoes/simular', {
+                chaveIdempotencia: `mobile-correcao-${Date.now()}-${Math.random().toString(36).slice(2)}`, contatos,
+            })
+            setPayload(contatos); setCorrecoes({}); setIgnorados(new Set()); setPrevia(resposta)
+        } catch (error) { setErro(mensagemDoErro(error)) }
+        finally { setProcessando(false) }
+    }
+    async function usarCliente(item: ItemPrevia) {
+        const contato = payload.find((atual) => atual.referencia === item.referencia)
+        if (!item.clienteId || !contato || !aoUsarCliente) return
+        try {
+            setProcessando(true); setErro(null)
+            await aoUsarCliente({ id: item.clienteId, nome: contato.nome })
+            setVisivel(false)
         } catch (error) { setErro(mensagemDoErro(error)) }
         finally { setProcessando(false) }
     }
@@ -136,15 +189,24 @@ export default function ImportadorContatos({ aoConcluir, compacto = false }: { a
                     <Pressable onPress={() => setVisivel(false)}><Text style={[styles.link, { color: cores.destaque }]}>Continuar com cadastro manual</Text></Pressable>
                 </View> : previa ? <View style={styles.flex}>
                     <View style={[styles.resumo, { backgroundColor: cores.superficie, borderColor: cores.borda }]}><Text style={[styles.subtitulo, { color: cores.texto }]}>{previa.status === 'CONFIRMADO' ? 'Importação concluída' : 'Revise antes de importar'}</Text>
-                        <Text style={[styles.ajuda, { color: cores.textoSecundario }]}>Novos: {previa.totais.novos} · existentes: {previa.totais.existentes} · inválidos: {previa.totais.invalidos} · conflitos: {previa.totais.conflitos}</Text>
-                        {previa.status === 'CONFIRMADO' ? <Text style={[styles.sucesso, { color: cores.sucesso }]}>{previa.totais.importados} cliente(s) importado(s) ou vinculado(s).</Text>
-                            : <><Text style={[styles.aviso, { color: cores.textoSecundario }]}>Correspondências existentes serão vinculadas a este estabelecimento. Itens inválidos e conflitos serão ignorados.</Text>
+                        <Text style={[styles.ajuda, { color: cores.textoSecundario }]}>{resumoResultados(previa, ignorados)}</Text>
+                        {previa.status === 'CONFIRMADO' ? <Text style={[styles.sucesso, { color: cores.sucesso }]}>{previa.totais.importados} cliente(s) importado(s).</Text>
+                            : <><Text style={[styles.aviso, { color: cores.textoSecundario }]}>Correspondências existentes serão vinculadas a este estabelecimento. Itens inválidos ou conflitantes poderão ser corrigidos depois da confirmação.</Text>
                                 <Pressable disabled={processando} onPress={confirmar} style={[styles.primario, { backgroundColor: cores.destaque }]}><Text style={{ color: cores.destaqueTexto, fontWeight: '900' }}>{processando ? 'Importando...' : 'Confirmar importação'}</Text></Pressable></>}
-                        <Pressable onPress={() => setPrevia(null)}><Text style={[styles.link, { color: cores.destaque }]}>{previa.status === 'CONFIRMADO' ? 'Importar mais contatos' : 'Voltar e revisar seleção'}</Text></Pressable></View>
+                        {previa.status === 'CONFIRMADO' && previa.itens.some((item) => ['INVALIDO', 'CONFLITO'].includes(item.resultado) && !ignorados.has(item.referencia))
+                            ? <Pressable disabled={processando} onPress={reenviarCorrecoes} style={[styles.primario, { backgroundColor: cores.destaque }]}><Text style={{ color: cores.destaqueTexto, fontWeight: '900' }}>{processando ? 'Analisando correções...' : 'Revisar contatos corrigidos'}</Text></Pressable> : null}
+                        <Pressable onPress={() => { setPrevia(null); setCorrecoes({}); setIgnorados(new Set()) }}><Text style={[styles.link, { color: cores.destaque }]}>{previa.status === 'CONFIRMADO' ? 'Importar mais contatos' : 'Voltar e revisar seleção'}</Text></Pressable></View>
+                    {erro ? <EstadoErro mensagem={erro} tentarNovamente={() => setErro(null)} /> : null}
                     <FlatList data={previa.itens} keyExtractor={(item) => item.referencia} contentContainerStyle={styles.lista} renderItem={({ item }) => <View style={[styles.itemPrevia, { borderColor: cores.borda }]}>
                         <Text style={[styles.nome, { color: cores.texto }]}>{payload.find((contato) => contato.referencia === item.referencia)?.nome ?? 'Contato'}</Text>
                         <Text style={[styles.ajuda, { color: cores.textoSecundario }]}>{rotuloResultado(item.resultado)}</Text>
-                        {item.motivo ? <Text style={[styles.ajuda, { color: cores.textoSecundario }]}>{item.motivo}</Text> : null}</View>} />
+                        {item.motivo ? <Text style={[styles.ajuda, { color: cores.textoSecundario }]}>{item.motivo}</Text> : null}
+                        {previa.status === 'CONFIRMADO' && ['INVALIDO', 'CONFLITO'].includes(item.resultado) ? <>
+                            {!ignorados.has(item.referencia) ? <EditorCorrecao item={correcoes[item.referencia] ?? payload.find((contato) => contato.referencia === item.referencia)!} alterar={(campo, valor) => alterarCorrecao(item.referencia, campo, valor)} /> : null}
+                            <Pressable onPress={() => alternarIgnorado(item.referencia)}><Text style={[styles.linkItem, { color: cores.destaque }]}>{ignorados.has(item.referencia) ? 'Voltar a corrigir' : 'Ignorar este contato'}</Text></Pressable>
+                        </> : null}
+                        {previa.status === 'CONFIRMADO' && item.clienteId && aoUsarCliente ? <Pressable onPress={() => usarCliente(item)} style={[styles.usar, { borderColor: cores.destaque }]}><Text style={{ color: cores.destaque, fontWeight: '900' }}>Usar na agenda</Text></Pressable> : null}
+                    </View>} />
                 </View> : <View style={styles.flex}>
                     <View style={styles.buscaLinha}><TextInput value={busca} onChangeText={setBusca} placeholder="Buscar nome, telefone ou e-mail" placeholderTextColor={cores.textoSecundario} style={[styles.busca, { color: cores.campoTexto, backgroundColor: cores.campo, borderColor: cores.borda }]} />
                         <Pressable onPress={selecionarVisiveis} style={[styles.selecionar, { borderColor: cores.borda }]}><Text style={{ color: cores.texto, fontWeight: '800', fontSize: 11 }}>Selecionar visíveis</Text></Pressable></View>
@@ -167,6 +229,14 @@ function Chip({ texto, ativo, onPress }: { texto: string; ativo: boolean; onPres
     const { cores } = useTema()
     return <Pressable onPress={onPress} style={[styles.chip, { borderColor: ativo ? cores.destaque : cores.borda, backgroundColor: ativo ? cores.superficieElevada : 'transparent' }]}><Text numberOfLines={1} style={{ color: ativo ? cores.destaque : cores.texto, fontSize: 10 }}>{texto}</Text></Pressable>
 }
+function EditorCorrecao({ item, alterar }: { item: ContatoEnvio; alterar: (campo: 'nome' | 'telefone' | 'email', valor: string) => void }) {
+    const { cores } = useTema()
+    return <View style={styles.correcao}>
+        <TextInput value={item.nome} onChangeText={(valor) => alterar('nome', valor)} placeholder="Nome" placeholderTextColor={cores.textoSecundario} style={[styles.campoCorrecao, { color: cores.campoTexto, backgroundColor: cores.campo, borderColor: cores.borda }]} />
+        <TextInput value={item.telefone ?? ''} onChangeText={(valor) => alterar('telefone', valor)} placeholder="Telefone" keyboardType="phone-pad" placeholderTextColor={cores.textoSecundario} style={[styles.campoCorrecao, { color: cores.campoTexto, backgroundColor: cores.campo, borderColor: cores.borda }]} />
+        <TextInput value={item.email ?? ''} onChangeText={(valor) => alterar('email', valor)} placeholder="E-mail" keyboardType="email-address" autoCapitalize="none" placeholderTextColor={cores.textoSecundario} style={[styles.campoCorrecao, { color: cores.campoTexto, backgroundColor: cores.campo, borderColor: cores.borda }]} />
+    </View>
+}
 function normalizarTelefone(valor?: string) {
     let digitos = String(valor ?? '').replace(/\D/g, '')
     if (digitos.startsWith('00')) digitos = digitos.slice(2)
@@ -174,6 +244,12 @@ function normalizarTelefone(valor?: string) {
     return digitos.length >= 10 && digitos.length <= 15 ? `+${digitos}` : ''
 }
 function rotuloResultado(resultado: Resultado) { return ({ NOVO: 'Novo cliente', JA_VINCULADO: 'Já pertence ao estabelecimento', POSSIVEL_DUPLICADO: 'Conta existente encontrada', INVALIDO: 'Contato inválido', CONFLITO: 'Requer correção', IMPORTADO: 'Importado' } as Record<Resultado, string>)[resultado] }
+function resumoResultados(previa: RespostaLote, ignorados: Set<string>) {
+    if (previa.status !== 'CONFIRMADO') return `Novos: ${previa.totais.novos} · existentes: ${previa.totais.existentes} · inválidos: ${previa.totais.invalidos} · conflitos: ${previa.totais.conflitos}`
+    const quantidade = (resultados: Resultado[]) => previa.itens.filter((item) => resultados.includes(item.resultado)).length
+    const comProblema = quantidade(['INVALIDO', 'CONFLITO'])
+    return `Importados: ${quantidade(['IMPORTADO'])} · já existentes: ${quantidade(['JA_VINCULADO'])} · ignorados: ${ignorados.size} · corrigir: ${Math.max(0, comProblema - ignorados.size)}`
+}
 
 const styles = StyleSheet.create({
     abrir: { minHeight: 42, borderWidth: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12 }, abrirCompacto: { minHeight: 38 }, abrirTexto: { fontSize: 12, fontWeight: '900' },
@@ -181,5 +257,6 @@ const styles = StyleSheet.create({
     permissao: { borderWidth: 1, borderRadius: 14, padding: 16, gap: 12 }, primario: { minHeight: 48, borderRadius: 11, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 }, link: { textAlign: 'center', fontWeight: '800', padding: 8 }, aviso: { fontSize: 12, lineHeight: 18 }, sucesso: { fontWeight: '900', marginTop: 5 },
     buscaLinha: { flexDirection: 'row', gap: 8 }, busca: { flex: 1, minHeight: 44, borderWidth: 1, borderRadius: 10, paddingHorizontal: 11 }, selecionar: { maxWidth: 105, borderWidth: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 }, contagem: { fontSize: 11, marginVertical: 8 }, lista: { gap: 8, paddingBottom: 14 },
     contato: { borderWidth: 1, borderRadius: 12, padding: 12, gap: 7 }, contatoTopo: { flexDirection: 'row', alignItems: 'center', gap: 10 }, check: { width: 24, height: 24, borderWidth: 1, borderRadius: 7, alignItems: 'center', justifyContent: 'center' }, nome: { fontWeight: '900', flex: 1 }, chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 }, chip: { maxWidth: '100%', borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 7 }, vazio: { textAlign: 'center', padding: 24 },
-    resumo: { borderWidth: 1, borderRadius: 14, padding: 15, gap: 10, marginBottom: 10 }, itemPrevia: { borderWidth: 1, borderRadius: 10, padding: 11 },
+    resumo: { borderWidth: 1, borderRadius: 14, padding: 15, gap: 10, marginBottom: 10 }, itemPrevia: { borderWidth: 1, borderRadius: 10, padding: 11, gap: 6 },
+    correcao: { gap: 7, marginTop: 5 }, campoCorrecao: { minHeight: 42, borderWidth: 1, borderRadius: 9, paddingHorizontal: 10 }, usar: { minHeight: 40, borderWidth: 1, borderRadius: 9, alignItems: 'center', justifyContent: 'center', marginTop: 4 }, linkItem: { fontSize: 12, fontWeight: '800', paddingVertical: 5 },
 })

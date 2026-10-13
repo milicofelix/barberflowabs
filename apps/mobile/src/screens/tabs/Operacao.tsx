@@ -88,7 +88,7 @@ export default function Operacao({ navigation }: Props) {
             <View style={[styles.clientesCartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
                 <Text style={[styles.clientesTitulo, { color: cores.texto }]}>Clientes</Text>
                 <Text style={[styles.clientesAjuda, { color: cores.textoSecundario }]}>Selecione contatos do aparelho, revise os dados e importe somente os clientes desejados.</Text>
-                <ImportadorContatos aoConcluir={dados.recarregar} />
+                <ImportadorContatos aoConcluir={() => dados.recarregar()} />
             </View></> : null}
         {secao === 'SERVICOS' ? <GestaoServicos itens={gestaoServicos.servicos} profissionais={dados.profissionais} carregando={gestaoServicos.carregando}
             erro={gestaoServicos.erro} recarregar={gestaoServicos.carregar} salvar={gestaoServicos.salvar} excluir={gestaoServicos.excluir} /> : null}

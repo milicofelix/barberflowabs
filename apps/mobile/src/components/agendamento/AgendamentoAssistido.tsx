@@ -144,7 +144,9 @@ export default function AgendamentoAssistido({ dataInicial, chaveInicial }: Prop
             <View style={styles.cabecalho}><View style={styles.cabecalhoTexto}><Text style={[styles.titulo, { color: cores.texto }]}>1. Cliente</Text>
                 <Text style={[styles.ajuda, { color: cores.textoSecundario }]}>Busque por nome, telefone ou e-mail, ou crie um cadastro para quem não usa o aplicativo.</Text></View>
                 <Pressable onPress={() => setNovoCliente((atual) => !atual)} style={[styles.botaoSecundario, { borderColor: cores.destaque }]}><Text style={{ color: cores.destaque, fontWeight: '900' }}>{novoCliente ? 'Fechar' : '+ Novo'}</Text></Pressable></View>
-            <ImportadorContatos compacto aoConcluir={() => carregarClientes(busca)} />
+            <ImportadorContatos compacto aoConcluir={() => carregarClientes(busca)} aoUsarCliente={async (cliente) => {
+                setClienteId(cliente.id); setBusca(cliente.nome); await carregarClientes(cliente.nome)
+            }} />
             {novoCliente ? <View style={styles.formNovo}><Campo value={nome} onChangeText={setNome} placeholder="Nome completo" /><Campo value={email} onChangeText={setEmail} placeholder="E-mail" keyboardType="email-address" autoCapitalize="none" />
                 <Campo value={telefone} onChangeText={(valor) => setTelefone(mascaraTelefone(valor))} placeholder="Telefone" keyboardType="phone-pad" />
                 <Pressable disabled={salvando} onPress={cadastrarCliente} style={[styles.botaoPrincipal, { backgroundColor: cores.destaque }]}><Text style={{ color: cores.destaqueTexto, fontWeight: '900' }}>{salvando ? 'Salvando...' : 'Cadastrar e selecionar'}</Text></Pressable></View>

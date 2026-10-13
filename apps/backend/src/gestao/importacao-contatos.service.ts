@@ -247,7 +247,12 @@ export class ImportacaoContatosService {
     return {
       loteId: lote.id, status: lote.status,
       totais: { recebidos: lote.totalRecebidos, novos: lote.totalNovos, existentes: lote.totalExistentes, invalidos: lote.totalInvalidos, conflitos: lote.totalConflitos, importados: lote.totalImportados },
-      itens: lote.itens?.map((item: any) => ({ referencia: item.referencia, resultado: item.resultado, motivo: item.motivo })) ?? [],
+      itens: lote.itens?.map((item: any) => ({
+        referencia: item.referencia,
+        resultado: item.resultado,
+        motivo: item.motivo,
+        ...(['IMPORTADO', 'JA_VINCULADO'].includes(item.resultado) && item.usuarioId ? { clienteId: item.usuarioId } : {}),
+      })) ?? [],
       confirmadoEm: lote.confirmadoEm,
     };
   }

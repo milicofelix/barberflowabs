@@ -1,6 +1,6 @@
 # Plano — Importacao Assistida De Contatos No Mobile
 
-Status: Fases 1, 2, 3 e 4 implementadas; migration, geracao do Prisma Client, novo build nativo, reinicio e aceite manual pendentes.
+Status: Fases 1 a 5 implementadas; novo build nativo e aceite manual pendentes.
 
 ## Objetivo
 
@@ -110,11 +110,20 @@ O importador VCF existente permanece como ferramenta administrativa excepcional 
 
 ## Fase 5 — Resultado, Correcao E Uso Na Agenda
 
-- [ ] Exibir resumo final: importados, ja existentes, ignorados e pendentes de correcao.
-- [ ] Permitir corrigir nome, telefone ou e-mail somente dos itens com problema e reenviar esses itens.
-- [ ] Atualizar imediatamente a busca de clientes do agendamento assistido.
-- [ ] Permitir selecionar um cliente recem-importado e continuar o agendamento sem trocar de tela.
-- [ ] Impedir que repetir o mesmo lote gere usuarios ou vinculos duplicados.
+- [x] Exibir resumo final: importados, ja existentes, ignorados e pendentes de correcao.
+- [x] Permitir corrigir nome, telefone ou e-mail somente dos itens com problema e reenviar esses itens.
+- [x] Atualizar imediatamente a busca de clientes do agendamento assistido.
+- [x] Permitir selecionar um cliente recem-importado e continuar o agendamento sem trocar de tela.
+- [x] Impedir que repetir o mesmo lote gere usuarios ou vinculos duplicados.
+
+### Resultado e continuidade entregues
+
+- O resultado final separa clientes importados, ja existentes, ignorados pelo operador e contatos ainda pendentes de correcao.
+- Somente itens `INVALIDO` ou `CONFLITO` liberam edicao de nome, telefone e e-mail; o operador tambem pode ignora-los sem alterar os demais resultados.
+- Contatos corrigidos sao simulados em um novo lote, preservando a auditoria e os fingerprints do lote original.
+- O backend devolve `clienteId` apenas para itens importados ou ja vinculados ao mesmo estabelecimento, sem expor correspondencias externas durante a simulacao.
+- Dentro do agendamento assistido, **Usar na agenda** atualiza a busca, seleciona o cliente e fecha o importador sem trocar de tela.
+- Repetir a confirmacao do mesmo lote devolve o resultado persistido e nao recria usuario, vinculo ou preferencia.
 
 ## Fase 6 — Privacidade, Seguranca E Aceite
 
@@ -133,11 +142,12 @@ O importador VCF existente permanece como ferramenta administrativa excepcional 
 4. Pesquise, selecione alguns contatos e confirme que contatos sem nome sao ignorados.
 5. Execute a simulacao e confira novos, existentes, duplicados, invalidos e conflitos antes de gravar.
 6. Confirme a importacao e verifique que os clientes aparecem somente no estabelecimento ativo.
-7. Repita o mesmo lote e confirme que nenhum usuario ou vinculo e duplicado.
-8. Abra o agendamento assistido e selecione imediatamente um cliente importado.
-9. Confira que e-mail e WhatsApp permanecem sem consentimento ate uma autorizacao explicita do cliente.
-10. Revogue a permissao no aparelho e confirme que dados ja importados permanecem no estabelecimento, mas nenhuma nova leitura local ocorre.
+7. Corrija um item invalido, ignore outro e confirme que o resumo e o novo lote refletem essas escolhas.
+8. Repita o mesmo lote e confirme que nenhum usuario ou vinculo e duplicado.
+9. No agendamento assistido, toque em **Usar na agenda** e confirme que o cliente fica selecionado sem trocar de tela.
+10. Confira que e-mail e WhatsApp permanecem sem consentimento ate uma autorizacao explicita do cliente.
+11. Revogue a permissao no aparelho e confirme que dados ja importados permanecem no estabelecimento, mas nenhuma nova leitura local ocorre.
 
 ## Ordem Recomendada
 
-Executar primeiro a Fase 1, pois o contrato atual exige e-mail e muitos contatos reais possuem apenas telefone. Depois seguir Fases 2 e 3 no mobile, Fase 4 no backend e concluir com as Fases 5 e 6. A importacao VCF/seeder nao deve ser removida antes do aceite completo deste fluxo.
+As Fases 1 a 5 estao implementadas. Concluir agora a Fase 6 e o aceite manual em dispositivos iOS e Android antes de remover a importacao VCF/seeder usada como contingencia administrativa.
