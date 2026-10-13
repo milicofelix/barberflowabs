@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import FormularioAgendamento from './FormularioAgendamento'
 import ImportadorContatos from '@/src/components/clientes/ImportadorContatos'
+import { useFocusEffect } from '@react-navigation/native'
 
 interface ClienteAgenda { id: number; nome: string; telefone?: string | null; email?: string | null }
 interface UnidadeAgenda { id: number; nome: string; endereco?: string | null }
@@ -73,6 +74,17 @@ export default function AgendamentoAssistido({ dataInicial, chaveInicial }: Prop
         const atraso = setTimeout(() => carregarClientes(busca), 300)
         return () => clearTimeout(atraso)
     }, [busca, carregarClientes])
+    useFocusEffect(useCallback(() => () => {
+        setBusca('')
+        setClienteId(null)
+        setClientes([])
+        setNovoCliente(false)
+        setNome('')
+        setEmail('')
+        setTelefone('')
+        setErro(null)
+        setSucesso(null)
+    }, []))
 
     async function cadastrarCliente() {
         if (salvando) return
