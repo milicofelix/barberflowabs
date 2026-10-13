@@ -256,7 +256,7 @@ export class GestaoPrisma {
       },
       select: { usuario: { select: { id: true, nome: true, telefone: true, email: true } } },
       orderBy: { usuario: { nome: 'asc' } },
-      take: 30,
+      take: termo ? 30 : 8,
     }).then((itens: any[]) => itens.map((item) => item.usuario));
   }
 

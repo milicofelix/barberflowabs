@@ -4,7 +4,7 @@ import useAgendamento from '@/src/data/hooks/useAgendamento'
 import useAPI, { mensagemDoErro } from '@/src/data/hooks/useAPI'
 import useTema from '@/src/data/contexts/ContextoTema'
 import { useCallback, useEffect, useState } from 'react'
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import FormularioAgendamento from './FormularioAgendamento'
 
 interface ClienteAgenda { id: number; nome: string; telefone?: string | null; email?: string | null }
@@ -134,10 +134,11 @@ export default function AgendamentoAssistido() {
             {novoCliente ? <View style={styles.formNovo}><Campo value={nome} onChangeText={setNome} placeholder="Nome completo" /><Campo value={email} onChangeText={setEmail} placeholder="E-mail" keyboardType="email-address" autoCapitalize="none" />
                 <Campo value={telefone} onChangeText={(valor) => setTelefone(mascaraTelefone(valor))} placeholder="Telefone" keyboardType="phone-pad" />
                 <Pressable disabled={salvando} onPress={cadastrarCliente} style={[styles.botaoPrincipal, { backgroundColor: cores.destaque }]}><Text style={{ color: cores.destaqueTexto, fontWeight: '900' }}>{salvando ? 'Salvando...' : 'Cadastrar e selecionar'}</Text></Pressable></View>
-                : <><Campo value={busca} onChangeText={setBusca} placeholder="Buscar cliente" /><View style={styles.opcoes}>{clientes.map((cliente) => <Pressable key={cliente.id} onPress={() => setClienteId(cliente.id)}
+                : <><Campo value={busca} onChangeText={setBusca} placeholder="Buscar cliente por nome, telefone ou e-mail" /><ScrollView style={styles.opcoes} contentContainerStyle={styles.opcoesConteudo}
+                    nestedScrollEnabled keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={clientes.length > 4}>{clientes.map((cliente) => <Pressable key={cliente.id} onPress={() => setClienteId(cliente.id)}
                     style={[styles.cliente, { borderColor: clienteId === cliente.id ? cores.destaque : cores.borda, backgroundColor: clienteId === cliente.id ? cores.superficieElevada : cores.superficie }]}>
                     <Text style={[styles.clienteNome, { color: cores.texto }]}>{cliente.nome}</Text><Text style={[styles.clienteContato, { color: cores.textoSecundario }]}>{cliente.telefone || cliente.email || 'Sem contato informado'}</Text>
-                </Pressable>)}</View></>}
+                </Pressable>)}{!clientes.length ? <Text style={[styles.semResultados, { color: cores.textoSecundario }]}>Nenhum cliente encontrado.</Text> : null}</ScrollView></>}
         </View>
 
         <View style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
@@ -188,7 +189,7 @@ const styles = StyleSheet.create({
     cabecalho: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 }, cabecalhoTexto: { flex: 1 },
     titulo: { fontSize: 19, fontWeight: '900' }, ajuda: { lineHeight: 19, fontSize: 12 }, rotulo: { fontSize: 12, fontWeight: '900', marginTop: 3 },
     campo: { minHeight: 46, borderWidth: 1, borderRadius: 11, paddingHorizontal: 12 }, formNovo: { gap: 9 },
-    opcoes: { gap: 8, maxHeight: 260 }, cliente: { borderWidth: 1, borderRadius: 10, padding: 12 }, clienteNome: { fontWeight: '800' }, clienteContato: { marginTop: 3, fontSize: 12 },
+    opcoes: { maxHeight: 260 }, opcoesConteudo: { gap: 8, paddingRight: 3 }, cliente: { borderWidth: 1, borderRadius: 10, padding: 12 }, clienteNome: { fontWeight: '800' }, clienteContato: { marginTop: 3, fontSize: 12 }, semResultados: { paddingVertical: 14, textAlign: 'center', fontSize: 12 },
     chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 }, chip: { minHeight: 36, paddingHorizontal: 11, borderWidth: 1, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
     botaoSecundario: { minHeight: 38, borderWidth: 1, borderRadius: 9, paddingHorizontal: 12, alignItems: 'center', justifyContent: 'center' },
     botaoPrincipal: { minHeight: 46, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },

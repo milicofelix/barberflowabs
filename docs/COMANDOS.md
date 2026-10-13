@@ -439,6 +439,32 @@ sed -n 'INICIO,FIMp' CAMINHO_DO_ARQUIVO
 
 Mostra apenas o intervalo de linhas solicitado, sem editar o arquivo.
 
+## Importacao De Clientes Por VCard
+
+### Copiar o arquivo de contatos para o container
+
+```bash
+docker compose cp '/Users/adrianofreitas/Downloads/contacts.vcf' app:/tmp/ricosty-contacts.vcf
+```
+
+Copia o arquivo exportado pelo celular para uma area temporaria do container. Repita este comando caso o container seja recriado.
+
+### Conferir a importacao sem alterar o banco
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && VCF_PATH=/tmp/ricosty-contacts.vcf npx ts-node prisma/seeds/importar-clientes-vcf.seed.ts'
+```
+
+Analisa o VCF, localiza `ricosty-emagracimento`, normaliza os telefones, remove duplicidades e apresenta o resumo. Sem `CONFIRMAR_IMPORTACAO=SIM`, nenhum cliente e gravado.
+
+### Importar os clientes da Ricosty
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && VCF_PATH=/tmp/ricosty-contacts.vcf CONFIRMAR_IMPORTACAO=SIM npx ts-node prisma/seeds/importar-clientes-vcf.seed.ts'
+```
+
+Cria somente os usuarios inexistentes e vincula os contatos ao estabelecimento Ricosty. O processo e idempotente: novas execucoes reconhecem telefones e vinculos ja existentes.
+
 ## Git
 
 ### Conferir alteracoes locais
