@@ -11,6 +11,9 @@ export interface DashboardOperacional {
 export interface AgendamentoOperacional {
     id: number
     data: string
+    dataFim?: string | null
+    inicioOcupacao?: string | null
+    fimOcupacao?: string | null
     status: string
     valorTotal: number
     usuario?: { id?: number; nome: string; email?: string; telefone?: string }

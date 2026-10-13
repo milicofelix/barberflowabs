@@ -5,7 +5,11 @@ import type {
     FiltrosAgendaOperacional, RestricaoAgendaOperacional,
 } from '../operacao/tipos'
 import useAPI, { mensagemDoErro } from './useAPI'
-import { useCallback, useEffect, useState } from 'react'
+import useSessao from './useSessao'
+import { useCallback, useEffect, useRef, useState } from 'react'
+
+const CACHE_AGENDA = new Map<string, { resposta: RespostaAgendaOperacional; salvoEm: number }>()
+const CACHE_AGENDA_MS = 5 * 60_000
 
 const dataLocal = (data: Date) => {
     const ano = data.getFullYear()
@@ -31,6 +35,7 @@ const filtrosIniciais: FiltrosAgendaOperacional = { profissionalId: null, recurs
 
 export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'day') {
     const { httpDelete, httpGet, httpPost, httpPut } = useAPI()
+    const { usuario } = useSessao()
     const [dashboard, setDashboard] = useState<DashboardOperacional | null>(null)
     const [agendamentos, setAgendamentos] = useState<AgendamentoOperacional[]>([])
     const [restricoesAgenda, setRestricoesAgenda] = useState<RestricaoAgendaOperacional[]>([])
@@ -44,22 +49,35 @@ export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'da
     const [fusoHorario, setFusoHorario] = useState('America/Sao_Paulo')
     const [carregando, setCarregando] = useState(true)
     const [erro, setErro] = useState<string | null>(null)
+    const inicializado = useRef(false)
+    const revisaoAgenda = useRef<number | null>(null)
+
+    const consultarAgenda = useCallback(async (forcar = false) => {
+        const periodo = intervaloDaAgenda(data, visualizacaoAgenda)
+        const parametros = new URLSearchParams({ inicio: periodo.inicio, fim: periodo.fim })
+        if (filtrosAgenda.profissionalId) parametros.set('profissionalId', String(filtrosAgenda.profissionalId))
+        if (filtrosAgenda.recursoId) parametros.set('recursoId', String(filtrosAgenda.recursoId))
+        if (filtrosAgenda.status) parametros.set('status', filtrosAgenda.status)
+        const consulta = parametros.toString()
+        const chave = `${usuario?.estabelecimentoId ?? 'sem-estabelecimento'}:${consulta}`
+        const cache = CACHE_AGENDA.get(chave)
+        if (!forcar && cache && Date.now() - cache.salvoEm < CACHE_AGENDA_MS) return cache.resposta
+        const resposta = await httpGet<RespostaAgendaOperacional>(`/gestao/agenda?${consulta}`)
+        CACHE_AGENDA.set(chave, { resposta, salvoEm: Date.now() })
+        return resposta
+    }, [data, filtrosAgenda.profissionalId, filtrosAgenda.recursoId, filtrosAgenda.status, httpGet, usuario?.estabelecimentoId, visualizacaoAgenda])
 
     const carregar = useCallback(async () => {
         try {
-            setCarregando(true); setErro(null)
+            if (!inicializado.current) setCarregando(true)
+            setErro(null)
             const acessos = await httpGet<PermissaoEquipe[]>('/equipe/minhas-permissoes')
             setPermissoes(acessos)
             const pode = (permissao: PermissaoEquipe) => acessos.includes(permissao)
-            const periodo = intervaloDaAgenda(data, visualizacaoAgenda)
-            const parametrosAgenda = new URLSearchParams({ inicio: periodo.inicio, fim: periodo.fim })
-            if (filtrosAgenda.profissionalId) parametrosAgenda.set('profissionalId', String(filtrosAgenda.profissionalId))
-            if (filtrosAgenda.recursoId) parametrosAgenda.set('recursoId', String(filtrosAgenda.recursoId))
-            if (filtrosAgenda.status) parametrosAgenda.set('status', filtrosAgenda.status)
             const [resumo, agenda, equipe, membrosEquipe, usuarios, recursosEquipe] = await Promise.all([
                 pode('AGENDA_GERENCIAR') ? httpGet<DashboardOperacional>('/gestao/dashboard') : Promise.resolve(null),
                 pode('AGENDA_GERENCIAR')
-                    ? httpGet<RespostaAgendaOperacional>(`/gestao/agenda?${parametrosAgenda.toString()}`)
+                    ? consultarAgenda()
                     : Promise.resolve(null),
                 httpGet<ProfissionalOperacional[]>('/profissionais'),
                 pode('EQUIPE_GERENCIAR') ? httpGet<MembroEquipe[]>('/equipe') : Promise.resolve([]),
@@ -68,16 +86,37 @@ export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'da
             ])
             setDashboard(resumo); setAgendamentos(agenda?.itens ?? []); setRestricoesAgenda(agenda?.restricoes ?? []); setFusoHorario(agenda?.periodo.fusoHorario ?? 'America/Sao_Paulo'); setProfissionais(equipe)
             setMembros(membrosEquipe); setUsuariosDisponiveis(usuarios); setRecursos(recursosEquipe)
-        } catch (e) { setErro(mensagemDoErro(e)) } finally { setCarregando(false) }
-    }, [data, filtrosAgenda.profissionalId, filtrosAgenda.recursoId, filtrosAgenda.status, httpGet, visualizacaoAgenda])
+        } catch (e) { setErro(mensagemDoErro(e)) } finally { inicializado.current = true; setCarregando(false) }
+    }, [consultarAgenda, httpGet])
 
     useEffect(() => { carregar() }, [carregar])
 
-    async function executarAcao(acao: () => Promise<unknown>) {
+    useEffect(() => {
+        const sincronizar = async () => {
+            try {
+                const atual = await httpGet<{ revisao: number }>('/gestao/agenda/revisao')
+                if (revisaoAgenda.current === null) revisaoAgenda.current = atual.revisao
+                else if (atual.revisao !== revisaoAgenda.current) {
+                    revisaoAgenda.current = atual.revisao
+                    CACHE_AGENDA.clear()
+                    const agenda = await consultarAgenda(true)
+                    setAgendamentos(agenda.itens); setRestricoesAgenda(agenda.restricoes); setFusoHorario(agenda.periodo.fusoHorario)
+                }
+            } catch { /* a sincronização volta a tentar sem interromper a agenda */ }
+        }
+        const intervalo = setInterval(() => { void sincronizar() }, 5_000)
+        return () => clearInterval(intervalo)
+    }, [consultarAgenda, httpGet])
+
+    async function executarAcao(acao: () => Promise<unknown>, somenteAgenda = false) {
         try {
             setErro(null)
             await acao()
-            await carregar()
+            CACHE_AGENDA.clear()
+            if (somenteAgenda) {
+                const agenda = await consultarAgenda(true)
+                setAgendamentos(agenda.itens); setRestricoesAgenda(agenda.restricoes); setFusoHorario(agenda.periodo.fusoHorario)
+            } else await carregar()
             return true
         } catch (e) {
             setErro(mensagemDoErro(e))
@@ -86,14 +125,22 @@ export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'da
     }
 
     async function alterarStatus(id: number, status: string) {
-        return executarAcao(() => httpPut(`/gestao/agendamentos/${id}/status`, { status }))
+        const anteriores = agendamentos
+        setAgendamentos((atuais) => atuais.map((item) => item.id === id ? { ...item, status } : item))
+        const sucesso = await executarAcao(() => httpPut(`/gestao/agendamentos/${id}/status`, { status }), true)
+        if (!sucesso) setAgendamentos(anteriores)
+        return sucesso
     }
     async function reagendar(item: AgendamentoOperacional, novaData: string, motivo?: string) {
         if (!item.profissional?.id || !item.servicos?.length) {
             setErro('O agendamento não possui profissional e serviços suficientes para reagendar.')
             return false
         }
-        return executarAcao(async () => {
+        const anteriores = agendamentos
+        const diferenca = new Date(novaData).getTime() - new Date(item.data).getTime()
+        setAgendamentos((atuais) => atuais.map((atual) => atual.id === item.id
+            ? deslocarAgendamento(atual, novaData, diferenca) : atual))
+        const sucesso = await executarAcao(async () => {
             const disponibilidade = await httpPost<{ disponivel: boolean; motivo?: string }>('/agenda/disponibilidade', {
                 data: novaData,
                 profissionalId: item.profissional!.id,
@@ -112,7 +159,9 @@ export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'da
                 deslocamentoMinutos: item.deslocamentoMinutos ?? 0,
                 motivo: motivo?.trim() || null,
             })
-        })
+        }, true)
+        if (!sucesso) setAgendamentos(anteriores)
+        return sucesso
     }
     async function criarProfissional(dados: Omit<ProfissionalOperacional, 'id'>) {
         return executarAcao(() => httpPost('/profissionais', { ...dados, avaliacao: 5, quantidadeAvaliacoes: 0 }))
@@ -151,4 +200,13 @@ export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'da
         recarregar: carregar, alterarStatus, reagendar, criarProfissional, salvarMembro, criarPerfilParaMembro, removerMembro,
         buscarEscalas, salvarEscalas, criarRecurso, buscarIndisponibilidades, indisponibilizarRecurso, removerIndisponibilidade,
     }
+}
+
+function deslocarAgendamento(item: AgendamentoOperacional, data: string, diferenca: number): AgendamentoOperacional {
+    const deslocar = (valor?: string | null) => valor ? new Date(new Date(valor).getTime() + diferenca).toISOString() : valor
+    const periodos = item.periodos ? Object.fromEntries(Object.entries(item.periodos).map(([chave, periodo]) => [
+        chave,
+        periodo ? { inicio: deslocar(periodo.inicio)!, fim: deslocar(periodo.fim)! } : null,
+    ])) as AgendamentoOperacional['periodos'] : item.periodos
+    return { ...item, data, dataFim: deslocar(item.dataFim), inicioOcupacao: deslocar(item.inicioOcupacao), fimOcupacao: deslocar(item.fimOcupacao), periodos }
 }

@@ -1,9 +1,10 @@
 'use client'
 
 import useAPI from '@/data/hooks/useAPI'
+import useSessao from '@/data/hooks/useSessao'
 import { Profissional, Servico } from '@uniflowabs/core'
 import { IconPencil, IconPlus, IconTrash } from '@tabler/icons-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 type Aba =
     | 'dashboard'
@@ -58,9 +59,12 @@ const lembreteVazio = {
 }
 
 const statusAgenda = ['AGENDADO', 'CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW']
+const cacheAgenda = new Map<string, { dados: any; salvoEm: number }>()
+const cacheAgendaMs = 5 * 60_000
 
 export default function PainelGestaoOperacional() {
     const { httpGet, httpPost, httpPut, httpDelete } = useAPI()
+    const { usuario } = useSessao()
     const [aba, setAba] = useState<Aba>('dashboard')
     const [dataOperacao, setDataOperacao] = useState(hoje())
     const [inicioRelatorio, setInicioRelatorio] = useState(hoje())
@@ -80,6 +84,19 @@ export default function PainelGestaoOperacional() {
     const [lancamento, setLancamento] = useState<any>(lancamentoVazio)
     const [lembrete, setLembrete] = useState<any>(lembreteVazio)
     const [mensagem, setMensagem] = useState('')
+    const revisaoAgenda = useRef<number | null>(null)
+
+    const consultarAgenda = useCallback(async (forcar = false) => {
+        const inicio = new Date(`${dataOperacao}T00:00:00`)
+        const fim = new Date(inicio)
+        fim.setDate(fim.getDate() + 1)
+        const chave = `${usuario?.estabelecimentoId ?? 'sem-estabelecimento'}:${inicio.toISOString()}:${fim.toISOString()}`
+        const existente = cacheAgenda.get(chave)
+        if (!forcar && existente && Date.now() - existente.salvoEm < cacheAgendaMs) return existente.dados
+        const dados = await httpGet(`/gestao/agenda?inicio=${encodeURIComponent(inicio.toISOString())}&fim=${encodeURIComponent(fim.toISOString())}&limite=200`)
+        if (!dados?.statusCode) cacheAgenda.set(chave, { dados, salvoEm: Date.now() })
+        return dados
+    }, [dataOperacao, httpGet, usuario?.estabelecimentoId])
 
     const carregar = useCallback(async () => {
         const [
@@ -93,7 +110,7 @@ export default function PainelGestaoOperacional() {
             dadosRelacionamento,
         ] = await Promise.all([
             httpGet('/gestao/dashboard'),
-            httpGet(`/gestao/agendamentos?data=${dataOperacao}`),
+            consultarAgenda(),
             httpGet('/gestao/clientes'),
             httpGet(`/gestao/financeiro?inicio=${inicioRelatorio}&fim=${fimRelatorio}`),
             httpGet(`/gestao/relatorios?inicio=${inicioRelatorio}&fim=${fimRelatorio}`),
@@ -103,18 +120,33 @@ export default function PainelGestaoOperacional() {
         ])
 
         setDashboard(dadosDashboard?.statusCode ? null : dadosDashboard)
-        setAgendamentos(Array.isArray(dadosAgenda) ? dadosAgenda : [])
+        setAgendamentos(Array.isArray(dadosAgenda?.itens) ? dadosAgenda.itens : [])
         setClientes(Array.isArray(dadosClientes) ? dadosClientes : [])
         setLancamentos(Array.isArray(dadosFinanceiro) ? dadosFinanceiro : [])
         setRelatorio(dadosRelatorio?.statusCode ? null : dadosRelatorio)
         setServicos(Array.isArray(dadosServicos) ? dadosServicos : [])
         setProfissionais(Array.isArray(dadosProfissionais) ? dadosProfissionais : [])
         setRelacionamento(dadosRelacionamento?.statusCode ? null : dadosRelacionamento)
-    }, [dataOperacao, fimRelatorio, httpGet, inicioRelatorio])
+    }, [consultarAgenda, fimRelatorio, httpGet, inicioRelatorio])
 
     useEffect(() => {
         carregar()
     }, [carregar])
+
+    useEffect(() => {
+        const sincronizar = async () => {
+            const atual = await httpGet('/gestao/agenda/revisao')
+            if (atual?.statusCode || typeof atual?.revisao !== 'number') return
+            if (revisaoAgenda.current === null) revisaoAgenda.current = atual.revisao
+            else if (atual.revisao !== revisaoAgenda.current) {
+                revisaoAgenda.current = atual.revisao
+                const agenda = await consultarAgenda(true)
+                if (Array.isArray(agenda?.itens)) setAgendamentos(agenda.itens)
+            }
+        }
+        const intervalo = window.setInterval(() => { void sincronizar() }, 5_000)
+        return () => window.clearInterval(intervalo)
+    }, [consultarAgenda, httpGet])
 
     async function salvarServico() {
         setMensagem('')
@@ -174,9 +206,15 @@ export default function PainelGestaoOperacional() {
 
     async function alterarStatus(id: number, status: string) {
         setMensagem('')
+        const anteriores = agendamentos
+        setAgendamentos((atuais) => atuais.map((item) => item.id === id ? { ...item, status } : item))
         const resposta = await httpPut(`/gestao/agendamentos/${id}/status`, { status })
-        if (resposta?.statusCode) return setMensagem(resposta.message)
-        await carregar()
+        if (resposta?.statusCode) {
+            setAgendamentos(anteriores)
+            return setMensagem(resposta.message)
+        }
+        const agenda = await consultarAgenda(true)
+        if (Array.isArray(agenda?.itens)) setAgendamentos(agenda.itens)
         setMensagem('Status atualizado.')
     }
 

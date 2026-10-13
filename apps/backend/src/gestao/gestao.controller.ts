@@ -38,6 +38,7 @@ import { FinanceiroService } from 'src/financeiro/financeiro.service';
 import { MotorAgendaService } from 'src/motor-agenda/motor-agenda.service';
 import { ConflitoAgendaError } from 'src/motor-agenda/conflito-agenda.error';
 import { AgendaOperacionalService } from './agenda-operacional.service';
+import { AgendaAtualizacaoService } from 'src/motor-agenda/agenda-atualizacao.service';
 import { randomUUID } from 'crypto';
 
 const STATUS_AGENDAMENTO = ['AGENDADO', 'CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW'];
@@ -56,6 +57,7 @@ export class GestaoController {
     private readonly financeiro: FinanceiroService,
     private readonly motorAgenda: MotorAgendaService,
     private readonly agendaOperacional: AgendaOperacionalService,
+    private readonly atualizacoesAgenda: AgendaAtualizacaoService,
   ) {}
 
   @Get('dashboard')
@@ -138,6 +140,12 @@ export class GestaoController {
     return this.agendaOperacional.consultar(usuario.estabelecimentoId!, consulta);
   }
 
+  @Get('agenda/revisao')
+  async consultarRevisaoAgenda(@UsuarioLogado() usuario: Usuario) {
+    await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
+    return { revisao: this.atualizacoesAgenda.obter(usuario.estabelecimentoId!) };
+  }
+
   @Get('agendamentos/futuros')
   async listarAgendamentosFuturos(@UsuarioLogado() usuario: Usuario) {
     await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
@@ -205,6 +213,7 @@ export class GestaoController {
     if (dados.status === 'CONCLUIDO') {
       await this.financeiro.registrarReceitaAgendamento(usuario.estabelecimentoId!, usuario.id!, agendamento);
     }
+    this.atualizacoesAgenda.publicar(usuario.estabelecimentoId!);
     return agendamento;
   }
 

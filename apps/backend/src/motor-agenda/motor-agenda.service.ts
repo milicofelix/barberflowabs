@@ -10,6 +10,7 @@ import {
   ReagendarAgendamentoDto,
 } from './motor-agenda.dto';
 import { MotorAgendaPolicy } from './motor-agenda.policy';
+import { AgendaAtualizacaoService } from './agenda-atualizacao.service';
 
 @Injectable()
 export class MotorAgendaService {
@@ -19,6 +20,7 @@ export class MotorAgendaService {
     private readonly disponibilidade: MotorAgendaDisponibilidadePrisma,
     private readonly calculador: MotorAgendaCalculador,
     private readonly policy: MotorAgendaPolicy,
+    private readonly atualizacoes: AgendaAtualizacaoService,
   ) {}
 
   async criar(
@@ -43,13 +45,15 @@ export class MotorAgendaService {
       periodo.inicioOcupacao,
       periodo.fimOcupacao,
     );
-    return this.comando.criar({
+    const agendamento = await this.comando.criar({
       contexto,
       periodo,
       usuarioId: usuario.id,
       enderecoAtendimento: dados.enderecoAtendimento,
       auditoria: auditoria ?? { criadoPorId: usuario.id, origem: 'APP_CLIENTE' },
     });
+    this.atualizacoes.publicar(estabelecimentoId);
+    return agendamento;
   }
 
   async consultarDisponibilidade(estabelecimentoId: number, dados: ConsultarDisponibilidadeDto) {
@@ -114,7 +118,7 @@ export class MotorAgendaService {
       periodo.inicioOcupacao,
       periodo.fimOcupacao,
     );
-    return this.comando.reagendar({
+    const atualizado = await this.comando.reagendar({
       agendamento,
       contexto,
       periodo,
@@ -122,6 +126,8 @@ export class MotorAgendaService {
       enderecoAtendimento: endereco,
       motivo: dados.motivo,
     });
+    this.atualizacoes.publicar(estabelecimentoId);
+    return atualizado;
   }
 
   private carregarContexto(estabelecimentoId: number, dados: CriarAgendamentoUniversalDto) {

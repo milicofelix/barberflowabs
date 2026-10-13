@@ -33,6 +33,7 @@ import {
   ReagendarAgendamentoDto,
 } from 'src/motor-agenda/motor-agenda.dto';
 import { ConflitoAgendaError } from 'src/motor-agenda/conflito-agenda.error';
+import { AgendaAtualizacaoService } from 'src/motor-agenda/agenda-atualizacao.service';
 
 @Controller('agendamentos')
 export class AgendamentoController {
@@ -41,6 +42,7 @@ export class AgendamentoController {
     private readonly limites: PlanoLimitesService,
     private readonly tenant: TenantService,
     private readonly motor: MotorAgendaService,
+    private readonly atualizacoesAgenda: AgendaAtualizacaoService,
   ) {}
 
   @Post()
@@ -208,6 +210,8 @@ export class AgendamentoController {
       throw new NotFoundException('Agendamento não encontrado para cancelamento');
     }
 
+    this.atualizacoesAgenda.publicar(estabelecimentoId);
+
     return agendamento;
   }
 
@@ -222,6 +226,9 @@ export class AgendamentoController {
       const agendamento = await this.repo.cancelar(Number(id), usuario.id!, undefined, false);
       if (!agendamento) {
         throw new NotFoundException('Agendamento não encontrado para cancelamento');
+      }
+      if ((agendamento as any).estabelecimentoId) {
+        this.atualizacoesAgenda.publicar((agendamento as any).estabelecimentoId);
       }
       return agendamento;
     } catch (error: any) {

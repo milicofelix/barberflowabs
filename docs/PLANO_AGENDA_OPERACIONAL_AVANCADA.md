@@ -1,6 +1,6 @@
 # Plano — Agenda Operacional Avancada
 
-Status: Fases 1 a 4 implementadas; tempo real, desempenho e paridade pendentes.
+Status: Fases 1 a 5 implementadas.
 
 ## Objetivo
 
@@ -100,11 +100,29 @@ Substituir progressivamente a lista diaria da Gestao Diaria por uma agenda opera
 
 ## Fase 5 — Tempo Real, Desempenho E Paridade
 
-- [ ] Atualizar inclusoes e alteracoes sem recarregar o calendario inteiro.
-- [ ] Aplicar atualizacao otimista com reversao em caso de conflito.
-- [ ] Cachear janelas ja consultadas e invalidar apenas periodos afetados.
-- [ ] Tratar concorrencia entre recepcionistas e reservas publicas.
-- [ ] Entregar os mesmos contratos e regras na web e no mobile.
+- [x] Atualizar inclusoes e alteracoes sem recarregar o calendario inteiro.
+- [x] Aplicar atualizacao otimista com reversao em caso de conflito.
+- [x] Cachear janelas ja consultadas e invalidar apenas periodos afetados.
+- [x] Tratar concorrencia entre recepcionistas e reservas publicas.
+- [x] Entregar os mesmos contratos e regras na web e no mobile.
+
+### Sincronizacao e desempenho entregues
+
+- Cada estabelecimento possui uma revisao leve da agenda, atualizada depois de criacao, reagendamento, cancelamento e mudanca de status.
+- Web e mobile consultam essa revisao a cada cinco segundos e recarregam somente a janela visivel quando detectam uma alteracao externa.
+- Janelas consultadas ficam em cache por cinco minutos; mudancas confirmadas invalidam o cache antes da reconciliacao com o servidor.
+- Mudanca de status e reagendamento no mobile, e mudanca de status na web, atualizam a interface imediatamente e revertem o estado local quando o servidor recusa a operacao.
+- A web passou a consumir `GET /gestao/agenda` com intervalo ISO 8601, limite e a mesma estrutura utilizada pelo mobile.
+- A concorrencia continua decidida pelo motor universal dentro das transacoes do banco; a sincronizacao apenas reflete o resultado, sem substituir a validacao autoritativa.
+
+### Aceite manual da Fase 5
+
+1. Abra a mesma agenda operacional na web e no mobile com duas contas autorizadas do mesmo estabelecimento.
+2. Crie uma reserva pelo fluxo publico ou assistido e confirme que ela aparece nas duas agendas em ate cinco segundos, sem trocar de tela.
+3. Altere o status em um dispositivo e confirme a atualizacao automatica no outro.
+4. Tente reagendar dois atendimentos para o mesmo profissional e periodo; confirme que apenas a primeira operacao valida permanece e a outra interface reverte a alteracao.
+5. Navegue entre dia, tres dias e semana, retorne a uma janela ja vista e confirme que ela aparece imediatamente pelo cache.
+6. Cancele uma reserva pelo cliente e confirme que a agenda operacional e atualizada automaticamente.
 
 ## Criterios De Aceite
 

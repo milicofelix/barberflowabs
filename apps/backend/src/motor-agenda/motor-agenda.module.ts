@@ -6,6 +6,7 @@ import { MotorAgendaConsultaPrisma } from './motor-agenda.consulta.prisma';
 import { MotorAgendaDisponibilidadePrisma } from './motor-agenda.disponibilidade.prisma';
 import { MotorAgendaPolicy } from './motor-agenda.policy';
 import { MotorAgendaService } from './motor-agenda.service';
+import { AgendaAtualizacaoService } from './agenda-atualizacao.service';
 
 @Module({
   imports: [DbModule],
@@ -16,7 +17,8 @@ import { MotorAgendaService } from './motor-agenda.service';
     MotorAgendaDisponibilidadePrisma,
     MotorAgendaPolicy,
     MotorAgendaService,
+    AgendaAtualizacaoService,
   ],
-  exports: [MotorAgendaService],
+  exports: [MotorAgendaService, AgendaAtualizacaoService],
 })
 export class MotorAgendaModule {}
