@@ -67,7 +67,8 @@ Substituir progressivamente a lista diaria da Gestao Diaria por uma agenda opera
 - O detalhe no calendario apresenta cliente, profissional, servicos, unidade, modalidade e acoes validas para o status atual.
 - Mudancas de status exigem confirmacao e respeitam a sequencia operacional: agendado, confirmado, check-in e concluido.
 - O reagendamento informa data, horario e motivo, consulta disponibilidade ignorando apenas a propria reserva e somente depois chama o comando transacional.
-- A inclusao de novos agendamentos continua disponivel pelo fluxo operacional de agendamento assistido; sua ampliacao pertence a Fase 4.
+- Um toque em qualquer espaço livre da grade abre o agendamento assistido com data e horário previamente selecionados. A inclusão continua exigindo cliente, profissional e serviços e passa pela validação integral de disponibilidade antes da gravação.
+- A célula horária é protegida por intervalo: áreas vazias ao redor do cartão de um atendimento ou bloqueio abrem seus detalhes, sem iniciar outro agendamento sobreposto.
 
 ## Fase 4 — Agendamento Assistido Completo
 
@@ -133,3 +134,7 @@ Substituir progressivamente a lista diaria da Gestao Diaria por uma agenda opera
 - operacoes criticas exigem confirmacao e produzem auditoria;
 - acessibilidade, tema claro/escuro e telas pequenas permanecem suportados;
 - biblioteca escolhida deve possuir licenca compativel com o produto.
+
+## Proxima Evolucao — Importacao De Clientes Do Celular
+
+A substituicao da importacao manual por VCF/seeder foi planejada em `docs/PLANO_IMPORTACAO_CONTATOS_MOBILE.md`. O fluxo pedira permissao somente por acao explicita, selecionara os contatos localmente, enviara apenas os escolhidos e mantera consentimentos de comunicacao desativados por padrao.

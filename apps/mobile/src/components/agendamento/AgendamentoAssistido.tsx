@@ -18,11 +18,13 @@ interface ContextoAssistido {
 type Origem = 'RECEPCAO' | 'TELEFONE' | 'WHATSAPP' | 'PRESENCIAL' | 'OUTRO'
 type Modalidade = 'PRESENCIAL' | 'DOMICILIAR'
 
-export default function AgendamentoAssistido() {
+interface Props { dataInicial?: string; chaveInicial?: number }
+
+export default function AgendamentoAssistido({ dataInicial, chaveInicial }: Props) {
     const { cores } = useTema()
     const { httpGet, httpPost } = useAPI()
     const {
-        agendarPara, profissional, servicos, dataValida, unidadeId, selecionarUnidade,
+        agendarPara, profissional, servicos, data, dataValida, unidadeId, selecionarUnidade, selecionarData,
         precoTotal, duracaoTotal,
     } = useAgendamento()
     const [clientes, setClientes] = useState<ClienteAgenda[]>([])
@@ -61,6 +63,11 @@ export default function AgendamentoAssistido() {
     }, [httpGet, selecionarUnidade])
 
     useEffect(() => { carregarContexto() }, [carregarContexto])
+    useEffect(() => {
+        if (!dataInicial) return
+        const selecionada = new Date(dataInicial)
+        if (!Number.isNaN(selecionada.getTime()) && selecionada.getTime() > Date.now()) selecionarData(selecionada)
+    }, [dataInicial, chaveInicial, selecionarData])
     useEffect(() => {
         const atraso = setTimeout(() => carregarClientes(busca), 300)
         return () => clearTimeout(atraso)
@@ -127,6 +134,11 @@ export default function AgendamentoAssistido() {
     </View>
 
     return <View style={styles.container}>
+        {dataInicial ? <View style={[styles.origemAgenda, { backgroundColor: cores.superficieElevada, borderColor: cores.destaque }]}>
+            <Text style={[styles.origemAgendaTitulo, { color: cores.destaque }]}>Horário escolhido na agenda</Text>
+            <Text style={[styles.origemAgendaData, { color: cores.texto }]}>{data.toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'short' })}</Text>
+            <Text style={[styles.ajuda, { color: cores.textoSecundario }]}>Complete os dados abaixo. O sistema confirmará todos os blocos necessários antes de agendar.</Text>
+        </View> : null}
         <View style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
             <View style={styles.cabecalho}><View style={styles.cabecalhoTexto}><Text style={[styles.titulo, { color: cores.texto }]}>1. Cliente</Text>
                 <Text style={[styles.ajuda, { color: cores.textoSecundario }]}>Busque por nome, telefone ou e-mail, ou crie um cadastro para quem não usa o aplicativo.</Text></View>
@@ -186,6 +198,7 @@ function minutosPreparacao(servicos: Array<{ preparoAntesMinutos?: number; prepa
 
 const styles = StyleSheet.create({
     container: { gap: 18 }, cartao: { borderWidth: 1, borderRadius: 14, padding: 15, gap: 10 },
+    origemAgenda: { borderWidth: 1, borderRadius: 14, padding: 14, gap: 4 }, origemAgendaTitulo: { fontSize: 12, fontWeight: '900', textTransform: 'uppercase' }, origemAgendaData: { fontSize: 16, fontWeight: '900' },
     cabecalho: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 }, cabecalhoTexto: { flex: 1 },
     titulo: { fontSize: 19, fontWeight: '900' }, ajuda: { lineHeight: 19, fontSize: 12 }, rotulo: { fontSize: 12, fontWeight: '900', marginTop: 3 },
     campo: { minHeight: 46, borderWidth: 1, borderRadius: 11, paddingHorizontal: 12 }, formNovo: { gap: 9 },

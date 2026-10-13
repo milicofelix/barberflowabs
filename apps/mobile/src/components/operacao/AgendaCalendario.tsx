@@ -39,6 +39,7 @@ interface Props {
     visualizacao: VisualizacaoAgenda
     alterarVisualizacao: (visualizacao: VisualizacaoAgenda) => void
     alterarData: (data: string) => void
+    aoPressionarCelula: (data: Date) => void
     alterarStatus: (id: number, status: string) => Promise<boolean>
     reagendar: (item: AgendamentoOperacional, data: string, motivo?: string) => Promise<boolean>
     fusoHorario: string
@@ -103,6 +104,23 @@ export default function AgendaCalendario(props: Props) {
             } },
         ])
     }
+    const pressionarCelula = (data: Date) => {
+        // A biblioteca devolve o início da célula horária. Verificamos toda a
+        // célula para que pequenas áreas visuais ao redor de um evento não
+        // iniciem, por engano, outro agendamento no mesmo período.
+        const inicioCelula = data.getTime()
+        const fimCelula = inicioCelula + 60 * 60 * 1000
+        const eventoSobreposto = eventos.find((evento) => evento.start.getTime() < fimCelula && evento.end.getTime() > inicioCelula)
+        if (eventoSobreposto?.agendamento) {
+            setSelecionado(eventoSobreposto.agendamento)
+            return
+        }
+        if (eventoSobreposto?.restricao) {
+            Alert.alert('Período indisponível', eventoSobreposto.restricao.motivo)
+            return
+        }
+        props.aoPressionarCelula(new Date(data))
+    }
 
     return <View style={styles.raiz}>
         <View style={styles.barra}>
@@ -127,6 +145,7 @@ export default function AgendaCalendario(props: Props) {
                 date={new Date(`${props.data}T12:00:00`)} mode={props.visualizacao} locale="pt-br" weekStartsOn={1} ampm={false}
                 hourRowHeight={alturaHora} minHour={6} maxHour={23} scrollOffsetMinutes={7 * 60} swipeEnabled showTime eventsAreSorted
                 theme={tema} eventCellStyle={(evento) => estiloEvento(evento, cores)} eventCellAccessibilityProps={{ accessibilityRole: 'button' }}
+                onPressCell={pressionarCelula}
                 onPressEvent={(evento) => evento.agendamento ? setSelecionado(evento.agendamento) : evento.restricao && Alert.alert('Período indisponível', evento.restricao.motivo)}
                 onSwipeEnd={(data) => props.alterarData(formatarData(data))} moreLabel="{moreCount} mais"
                 calendarContainerStyle={{ backgroundColor: cores.superficie }} bodyContainerStyle={{ backgroundColor: cores.superficie }} />
@@ -167,7 +186,7 @@ export default function AgendaCalendario(props: Props) {
                     <Pressable disabled={salvando} onPress={confirmarReagendamento} style={[styles.botaoRodape, { backgroundColor: cores.destaque, borderColor: cores.destaque }]}><Text style={{ color: cores.destaqueTexto, fontWeight: '900' }}>{salvando ? 'Validando...' : 'Validar e reagendar'}</Text></Pressable></View>
             </View></View>
         </Modal>
-        <Text style={[styles.ajuda, { color: cores.textoSecundario }]}>Deslize lateralmente para mudar o período. Movimentos por arraste ficam bloqueados até poderem ser validados com segurança.</Text>
+        <Text style={[styles.ajuda, { color: cores.textoSecundario }]}>Toque em um espaço livre para iniciar um agendamento. Deslize lateralmente para mudar o período.</Text>
     </View>
 }
 

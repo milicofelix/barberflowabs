@@ -5,7 +5,7 @@ import { AtalhoCentralFinanceira, EquipeOperacao, ResumoOperacao } from '@/src/c
 import useOperacao from '@/src/data/hooks/useOperacao'
 import type { SecaoOperacao, VisualizacaoAgenda } from '@/src/data/operacao/tipos'
 import { useState } from 'react'
-import { Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Alert, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
 import { EscalasEquipe, MembrosEquipe } from '@/src/components/operacao/GestaoEquipe'
@@ -26,6 +26,19 @@ export default function Operacao({ navigation }: Props) {
     const [agendaTelaCheia, setAgendaTelaCheia] = useState(false)
     const dados = useOperacao(visualizacaoAgenda)
     const gestaoServicos = useGestaoServicos(secao === 'SERVICOS')
+    const iniciarAgendamento = (dataSelecionada: Date) => {
+        const data = new Date(dataSelecionada)
+        // Preserva o dia e a hora da célula tocada. O arredondamento só atua
+        // caso uma visualização futura forneça minutos fora da grade de 15 min.
+        data.setSeconds(0, 0)
+        data.setMinutes(Math.ceil(data.getMinutes() / 15) * 15)
+        if (data.getTime() <= Date.now()) {
+            Alert.alert('Horário indisponível', 'Selecione um horário futuro para criar o agendamento.')
+            return
+        }
+        setAgendaTelaCheia(false)
+        navigation.navigate('Agendamento', { dataInicial: data.toISOString(), origemAgenda: true, chave: Date.now() })
+    }
     const cabecalho = <>
         <Text style={styles.sobretitulo}>OPERAÇÃO DO ESTABELECIMENTO</Text><Text style={[styles.titulo, { color: cores.texto }]}>Gestão diária</Text>
         <SeletorOperacao atual={secao} selecionar={setSecao} permissoes={dados.permissoes} />
@@ -44,6 +57,7 @@ export default function Operacao({ navigation }: Props) {
                 </Pressable><AgendaCalendario itens={dados.agendamentos} restricoes={dados.restricoesAgenda}
                     profissionais={dados.profissionais} recursos={dados.recursos} filtros={dados.filtrosAgenda} alterarFiltros={dados.setFiltrosAgenda} data={dados.data}
                     visualizacao={visualizacaoAgenda} alterarVisualizacao={setVisualizacaoAgenda} alterarData={dados.setData}
+                    aoPressionarCelula={iniciarAgendamento}
                     alterarStatus={dados.alterarStatus} reagendar={dados.reagendar} fusoHorario={dados.fusoHorario} /></> : null}
             </View>
             <Modal visible={agendaTelaCheia} animationType="slide" presentationStyle="fullScreen" statusBarTranslucent onRequestClose={() => setAgendaTelaCheia(false)}>
@@ -57,6 +71,7 @@ export default function Operacao({ navigation }: Props) {
                     <AgendaCalendario telaCheia itens={dados.agendamentos} restricoes={dados.restricoesAgenda}
                         profissionais={dados.profissionais} recursos={dados.recursos} filtros={dados.filtrosAgenda} alterarFiltros={dados.setFiltrosAgenda} data={dados.data}
                         visualizacao={visualizacaoAgenda} alterarVisualizacao={setVisualizacaoAgenda} alterarData={dados.setData}
+                        aoPressionarCelula={iniciarAgendamento}
                         alterarStatus={dados.alterarStatus} reagendar={dados.reagendar} fusoHorario={dados.fusoHorario} />
                 </SafeAreaView>
             </Modal>

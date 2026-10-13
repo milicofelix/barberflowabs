@@ -14,7 +14,7 @@ import AgendamentoAssistido from '@/src/components/agendamento/AgendamentoAssist
 
 type Props = BottomTabScreenProps<AbasParamList, 'Agendamento'>
 
-export default function Agendamento({ navigation }: Props) {
+export default function Agendamento({ navigation, route }: Props) {
     const { cores } = useTema()
     const { usuario } = useSessao()
     const { estabelecimento, carregando } = useEstabelecimento()
@@ -26,7 +26,7 @@ export default function Agendamento({ navigation }: Props) {
             <Text style={[styles.tenantNome, { color: cores.texto }]}>Agendamento assistido</Text>
             <Text style={[styles.tenantCidade, { color: cores.textoSecundario }]}>Registre horários solicitados presencialmente, por telefone ou mensagem.</Text>
         </View>
-        <AgendamentoAssistido />
+        <AgendamentoAssistido dataInicial={route.params?.dataInicial} chaveInicial={route.params?.chave} />
     </ScrollView></SafeAreaView>
 
     if (carregando) return <Carregando mensagem="Carregando seu estabelecimento..." />

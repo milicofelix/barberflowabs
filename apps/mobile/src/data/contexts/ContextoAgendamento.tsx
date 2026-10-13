@@ -191,7 +191,10 @@ export function ProvedorAgendamento(props: any) {
             hour: '2-digit',
             minute: '2-digit',
         })
-        if (horarioSelecionado === '00:00' || horarioEstaDisponivel(data)) return
+        // Mantém o horário vindo da agenda operacional enquanto profissional e
+        // serviços ainda estão sendo escolhidos. Com o contexto completo, a
+        // disponibilidade volta a ser validada normalmente.
+        if (horarioSelecionado === '00:00' || !profissional || !servicos.length || horarioEstaDisponivel(data)) return
 
         setData(DateUtils.aplicarHorario(data, '00:00'))
     }, [horariosOcupados, horariosDisponiveis, servicos])
