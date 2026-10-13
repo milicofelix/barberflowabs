@@ -1,6 +1,6 @@
 # Plano — Importacao Assistida De Contatos No Mobile
 
-Status: Fases 1, 2 e 3 implementadas; migration, geracao do Prisma Client, novo build nativo, reinicio e aceite manual pendentes.
+Status: Fases 1, 2, 3 e 4 implementadas; migration, geracao do Prisma Client, novo build nativo, reinicio e aceite manual pendentes.
 
 ## Objetivo
 
@@ -88,14 +88,25 @@ O importador VCF existente permanece como ferramenta administrativa excepcional 
 
 ## Fase 4 — Importacao Idempotente No Backend
 
-- [ ] Proteger as rotas com uma permissao especifica de clientes ou, durante a transicao, `AGENDA_GERENCIAR`.
-- [ ] Validar que o operador pertence ao estabelecimento ativo.
-- [ ] Repetir normalizacao e deduplicacao no servidor; nunca confiar apenas no aparelho.
-- [ ] Gravar em transacoes curtas e lotes limitados, permitindo retomar uma importacao interrompida.
-- [ ] Criar ou vincular `ClienteEstabelecimento` sem transformar o contato em membro da equipe.
-- [ ] Manter preferencia de comunicacao desativada e origem do consentimento vazia.
-- [ ] Retornar o resultado individual de cada item sem revelar informacoes de clientes de outros estabelecimentos.
-- [ ] Produzir auditoria com operador, estabelecimento, lote, contagens e erros, evitando armazenar o conteudo integral da agenda.
+- [x] Proteger as rotas com uma permissao especifica de clientes ou, durante a transicao, `AGENDA_GERENCIAR`.
+- [x] Validar que o operador pertence ao estabelecimento ativo.
+- [x] Repetir normalizacao e deduplicacao no servidor; nunca confiar apenas no aparelho.
+- [x] Gravar em transacoes curtas e lotes limitados, permitindo retomar uma importacao interrompida.
+- [x] Criar ou vincular `ClienteEstabelecimento` sem transformar o contato em membro da equipe.
+- [x] Manter preferencia de comunicacao desativada e sem data de consentimento.
+- [x] Retornar o resultado individual de cada item sem revelar informacoes de clientes de outros estabelecimentos.
+- [x] Produzir auditoria com operador, estabelecimento, lote, contagens e erros, evitando armazenar o conteudo integral da agenda.
+
+### Backend idempotente entregue
+
+- As rotas permanecem temporariamente sob `AGENDA_GERENCIAR`; a policy valida a permissao e o servico confirma novamente que operador e estabelecimento pertencem ao mesmo tenant.
+- Reutilizar uma chave idempotente com os mesmos contatos devolve o lote existente; reutiliza-la com conteudo diferente retorna conflito.
+- Criacoes concorrentes da mesma simulacao convergem para um unico lote pela chave unica do estabelecimento.
+- A confirmacao processa cada contato em uma transacao curta e reserva o item antes de criar usuario ou vinculo, evitando processamento concorrente do mesmo registro.
+- Uma confirmacao interrompida pode ser repetida: itens ja importados nao sao refeitos e a contagem final e recalculada pela auditoria persistida.
+- Clientes importados recebem vinculo `ClienteEstabelecimento` com origem `IMPORTACAO_CONTATOS`, sem papel de equipe ou permissao operacional.
+- Push, e-mail e WhatsApp nascem explicitamente sem consentimento; preferencias positivas preexistentes nunca sao sobrescritas.
+- O historico armazena referencia local, fingerprint, classificacao, operador e totais, sem persistir nome, telefone ou e-mail integral no lote.
 
 ## Fase 5 — Resultado, Correcao E Uso Na Agenda
 
