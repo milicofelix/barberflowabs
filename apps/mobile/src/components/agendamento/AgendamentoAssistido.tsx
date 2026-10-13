@@ -6,6 +6,7 @@ import useTema from '@/src/data/contexts/ContextoTema'
 import { useCallback, useEffect, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import FormularioAgendamento from './FormularioAgendamento'
+import ImportadorContatos from '@/src/components/clientes/ImportadorContatos'
 
 interface ClienteAgenda { id: number; nome: string; telefone?: string | null; email?: string | null }
 interface UnidadeAgenda { id: number; nome: string; endereco?: string | null }
@@ -143,6 +144,7 @@ export default function AgendamentoAssistido({ dataInicial, chaveInicial }: Prop
             <View style={styles.cabecalho}><View style={styles.cabecalhoTexto}><Text style={[styles.titulo, { color: cores.texto }]}>1. Cliente</Text>
                 <Text style={[styles.ajuda, { color: cores.textoSecundario }]}>Busque por nome, telefone ou e-mail, ou crie um cadastro para quem não usa o aplicativo.</Text></View>
                 <Pressable onPress={() => setNovoCliente((atual) => !atual)} style={[styles.botaoSecundario, { borderColor: cores.destaque }]}><Text style={{ color: cores.destaque, fontWeight: '900' }}>{novoCliente ? 'Fechar' : '+ Novo'}</Text></Pressable></View>
+            <ImportadorContatos compacto aoConcluir={() => carregarClientes(busca)} />
             {novoCliente ? <View style={styles.formNovo}><Campo value={nome} onChangeText={setNome} placeholder="Nome completo" /><Campo value={email} onChangeText={setEmail} placeholder="E-mail" keyboardType="email-address" autoCapitalize="none" />
                 <Campo value={telefone} onChangeText={(valor) => setTelefone(mascaraTelefone(valor))} placeholder="Telefone" keyboardType="phone-pad" />
                 <Pressable disabled={salvando} onPress={cadastrarCliente} style={[styles.botaoPrincipal, { backgroundColor: cores.destaque }]}><Text style={{ color: cores.destaqueTexto, fontWeight: '900' }}>{salvando ? 'Salvando...' : 'Cadastrar e selecionar'}</Text></Pressable></View>

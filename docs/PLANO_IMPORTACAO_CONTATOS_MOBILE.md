@@ -1,6 +1,6 @@
 # Plano — Importacao Assistida De Contatos No Mobile
 
-Status: Fases 1 e 2 implementadas; migration, geracao do Prisma Client, novo build nativo, reinicio e aceite manual pendentes.
+Status: Fases 1, 2 e 3 implementadas; migration, geracao do Prisma Client, novo build nativo, reinicio e aceite manual pendentes.
 
 ## Objetivo
 
@@ -68,14 +68,23 @@ O importador VCF existente permanece como ferramenta administrativa excepcional 
 
 ## Fase 3 — Selecao E Revisao No Dispositivo
 
-- [ ] Criar a acao **Importar do celular** na central de clientes e no agendamento assistido.
-- [ ] Exibir busca local, selecao individual e selecao dos resultados visiveis.
-- [ ] Ignorar contatos sem nome e contatos sem telefone nem e-mail validos.
-- [ ] Quando houver varios telefones ou e-mails, permitir escolher quais dados serao usados.
-- [ ] Normalizar e remover duplicidades locais antes da simulacao.
-- [ ] Limitar o tamanho de cada lote e processar listas grandes de forma paginada, sem travar a interface.
-- [ ] Mostrar uma revisao com quantidades de novos, existentes, duplicados, invalidos e conflitos.
-- [ ] Exigir confirmacao final antes do envio definitivo.
+- [x] Criar a acao **Importar do celular** na central de clientes e no agendamento assistido.
+- [x] Exibir busca local, selecao individual e selecao dos resultados visiveis.
+- [x] Ignorar contatos sem nome e contatos sem telefone nem e-mail validos.
+- [x] Quando houver varios telefones ou e-mails, permitir escolher quais dados serao usados.
+- [x] Normalizar e remover duplicidades locais antes da simulacao.
+- [x] Limitar o tamanho de cada lote e processar listas grandes de forma paginada, sem travar a interface.
+- [x] Mostrar uma revisao com quantidades de novos, existentes, duplicados, invalidos e conflitos.
+- [x] Exigir confirmacao final antes do envio definitivo.
+
+### Interface mobile entregue
+
+- A entrada de importacao aparece em **Gestao diaria > Resumo**, que atualmente concentra a operacao de clientes, e tambem na etapa **Cliente** do agendamento assistido.
+- A permissao nativa continua sendo solicitada somente depois da explicacao e da confirmacao do operador.
+- A lista permanece local durante busca e selecao; somente o lote revisado, limitado a 200 contatos, segue para a simulacao do backend.
+- Contatos sem nome ou sem telefone/e-mail sao excluidos, e duplicidades locais pelo dado escolhido nao entram no lote.
+- A revisao identifica cada contato e apresenta os totais retornados pelo servidor antes da confirmacao definitiva.
+- Ao concluir dentro do agendamento assistido, a busca de clientes e atualizada sem exigir troca de tela.
 
 ## Fase 4 — Importacao Idempotente No Backend
 

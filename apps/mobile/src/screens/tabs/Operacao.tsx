@@ -16,6 +16,7 @@ import type { AbasParamList, StackParamList } from '@/src/navigation/types'
 import GestaoServicos from '@/src/components/operacao/GestaoServicos'
 import useGestaoServicos from '@/src/data/hooks/useGestaoServicos'
 import AgendaCalendario from '@/src/components/operacao/AgendaCalendario'
+import ImportadorContatos from '@/src/components/clientes/ImportadorContatos'
 
 type Props = BottomTabScreenProps<AbasParamList, 'Operacao'>
 
@@ -83,7 +84,12 @@ export default function Operacao({ navigation }: Props) {
         {cabecalho}
         {dados.erro ? <EstadoErro mensagem={dados.erro} tentarNovamente={dados.recarregar} /> : null}
         {dados.carregando && !dados.dashboard ? <Carregando mensagem="Carregando operação..." /> : null}
-        {!dados.carregando && secao === 'RESUMO' ? <ResumoOperacao dados={dados.dashboard} /> : null}
+        {!dados.carregando && secao === 'RESUMO' ? <><ResumoOperacao dados={dados.dashboard} />
+            <View style={[styles.clientesCartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
+                <Text style={[styles.clientesTitulo, { color: cores.texto }]}>Clientes</Text>
+                <Text style={[styles.clientesAjuda, { color: cores.textoSecundario }]}>Selecione contatos do aparelho, revise os dados e importe somente os clientes desejados.</Text>
+                <ImportadorContatos aoConcluir={dados.recarregar} />
+            </View></> : null}
         {secao === 'SERVICOS' ? <GestaoServicos itens={gestaoServicos.servicos} profissionais={dados.profissionais} carregando={gestaoServicos.carregando}
             erro={gestaoServicos.erro} recarregar={gestaoServicos.carregar} salvar={gestaoServicos.salvar} excluir={gestaoServicos.excluir} /> : null}
         {!dados.carregando && secao === 'EQUIPE' ? <><EquipeOperacao itens={dados.profissionais} criar={dados.criarProfissional} /><EscalasEquipe profissionais={dados.profissionais} buscar={dados.buscarEscalas} salvar={dados.salvarEscalas} /><MembrosEquipe membros={dados.membros} usuarios={dados.usuariosDisponiveis} profissionais={dados.profissionais} salvar={dados.salvarMembro} criarPerfil={dados.criarPerfilParaMembro} remover={dados.removerMembro} /></> : null}
@@ -127,4 +133,5 @@ const styles = StyleSheet.create({
     telaCheiaBotao: { minHeight: 42, borderWidth: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 9 }, telaCheiaTexto: { fontSize: 12, fontWeight: '900' },
     telaCheia: { flex: 1, paddingHorizontal: 12, paddingTop: 8 }, telaCheiaCabecalho: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
     telaCheiaTitulo: { fontSize: 22, fontWeight: '900', marginTop: 2 }, fecharTelaCheia: { width: 44, height: 44, borderWidth: 1, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+    clientesCartao: { borderWidth: 1, borderRadius: 14, padding: 15, gap: 8, marginTop: 14 }, clientesTitulo: { fontSize: 19, fontWeight: '900' }, clientesAjuda: { fontSize: 12, lineHeight: 18 },
 })
