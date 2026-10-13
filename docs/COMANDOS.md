@@ -509,6 +509,14 @@ git c "tipo: mensagem"
 
 Cria um commit usando o alias local solicitado para o projeto. Exemplos de tipo: `feat`, `fix`, `chore`, `docs` e `refactor`.
 
+### Instalar acesso nativo aos contatos no mobile
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/mobile && npx expo install expo-contacts'
+```
+
+Instala a versao de `expo-contacts` compativel com o SDK Expo do aplicativo. Como o pacote altera configuracoes nativas de permissao, e necessario gerar um novo development build para validar fora do Expo Go.
+
 ## Limpezas Destrutivas
 
 Comandos de remocao de `node_modules`, lockfiles, volumes ou dados nao ficam prontos para copiar nesta secao. A necessidade e o alvo devem ser diagnosticados primeiro para evitar apagar dependencias ou dados de outros projetos que compartilham a infraestrutura.

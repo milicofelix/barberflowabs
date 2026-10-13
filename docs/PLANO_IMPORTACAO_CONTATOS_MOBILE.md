@@ -1,6 +1,6 @@
 # Plano — Importacao Assistida De Contatos No Mobile
 
-Status: Fase 1 implementada; migration, geracao do Prisma Client, reinicio e aceite manual pendentes.
+Status: Fases 1 e 2 implementadas; migration, geracao do Prisma Client, novo build nativo, reinicio e aceite manual pendentes.
 
 ## Objetivo
 
@@ -48,13 +48,23 @@ O importador VCF existente permanece como ferramenta administrativa excepcional 
 
 ## Fase 2 — Permissao Nativa E Leitura Local
 
-- [ ] Adicionar `expo-contacts` na versao compativel com o Expo utilizado pelo projeto.
-- [ ] Configurar as mensagens de permissao de contatos no iOS e Android.
-- [ ] Implementar estados `NAO_SOLICITADA`, `CONCEDIDA`, `LIMITADA`, `NEGADA` e `BLOQUEADA`.
-- [ ] Explicar a finalidade antes de abrir o dialogo nativo.
-- [ ] Em acesso limitado, respeitar somente os contatos autorizados pelo sistema operacional.
-- [ ] Em acesso negado ou bloqueado, oferecer cadastro manual e atalho para as configuracoes do aparelho.
-- [ ] Ler somente os campos necessarios: nome, telefones e e-mails. Fotos, enderecos, notas e demais dados nao serao solicitados.
+- [x] Adicionar `expo-contacts` 57.0.7, compativel com o Expo 57 utilizado pelo projeto.
+- [x] Configurar a mensagem de permissao de contatos no iOS e manter somente leitura no Android.
+- [x] Implementar estados `NAO_SOLICITADA`, `CONCEDIDA`, `LIMITADA`, `NEGADA`, `BLOQUEADA` e `INDISPONIVEL`.
+- [x] Preparar a finalidade para ser apresentada antes do dialogo nativo; nenhuma leitura ou solicitacao ocorre automaticamente.
+- [x] Em acesso limitado, respeitar somente os contatos autorizados pelo sistema operacional.
+- [x] Expor fallback para cadastro manual e abertura das configuracoes quando a futura interface detectar acesso negado ou bloqueado.
+- [x] Ler somente os campos necessarios: nome, telefones e e-mails. Fotos, enderecos, notas e demais dados nao sao solicitados.
+
+### Fundacao mobile entregue
+
+- `contatosDispositivo.ts` encapsula permissao, traducao dos estados, leitura paginada e abertura das configuracoes do aplicativo.
+- `useContatosDispositivo.ts` oferece o estado reativo para a interface da Fase 3 sem disparar o pedido de permissao na inicializacao.
+- A leitura usa a API moderna `Contact.getAllDetails`, limitada a nome completo, telefones e e-mails e paginada em ate 200 contatos por chamada.
+- O acesso limitado do iOS 18 e preservado como `LIMITADA`; o aplicativo nao tenta contornar a selecao feita pelo usuario.
+- Na web, o recurso retorna `INDISPONIVEL`, mantendo cadastro manual e futuras alternativas por arquivo.
+- O Android bloqueia `WRITE_CONTACTS`, adicionado pelo pacote, porque o UniFlow ABS precisa apenas ler contatos.
+- Alteracoes no plugin nativo exigem novo development build ou novo binario; recarregar apenas o JavaScript nao aplica a permissao.
 
 ## Fase 3 — Selecao E Revisao No Dispositivo
 

@@ -13028,3 +13028,7 @@ zod@^3.25.76:
   version "3.25.76"
   resolved "https://registry.yarnpkg.com/zod/-/zod-3.25.76.tgz#26841c3f6fd22a6a2760e7ccb719179768471e34"
   integrity sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==
+expo-contacts@~57.0.7:
+  version "57.0.7"
+  resolved "https://registry.npmjs.org/expo-contacts/-/expo-contacts-57.0.7.tgz#ac960f86233312c1c8fe1903fdf818e4a0daacfa"
+  integrity sha512-4KILlQEKooRn5RuLF+h0rcvFn8J7VJFPsoUKtTkeweKBXtOHDDpJMx+/T3w/yaA/78VPatb/j3Z6Oh0lrP/3jA==

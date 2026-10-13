@@ -23,6 +23,9 @@
     },
     "android": {
       "package": "com.barberflowabs.app",
+      "blockedPermissions": [
+        "android.permission.WRITE_CONTACTS"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/brand/android-foreground.png",
         "monochromeImage": "./assets/images/brand/monochrome-icon.png",
@@ -54,6 +57,12 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "Permita que a UniFlow ABS use sua localização para encontrar estabelecimentos próximos."
+        }
+      ],
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Permita que a UniFlow ABS acesse os contatos escolhidos para cadastrá-los como clientes do seu estabelecimento."
         }
       ],
       "expo-status-bar",
