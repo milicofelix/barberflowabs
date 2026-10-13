@@ -24,6 +24,7 @@ import {
 } from 'src/shared/validacao';
 import {
   AtualizarStatusAgendamentoDto,
+  ConsultarAgendaPeriodoDto,
   CriarAgendamentoAssistidoDto,
   AtualizarStatusLembreteDto,
   CriarLembreteRelacionamentoDto,
@@ -36,6 +37,7 @@ import { PermissaoEquipe } from 'src/equipe/equipe.constants';
 import { FinanceiroService } from 'src/financeiro/financeiro.service';
 import { MotorAgendaService } from 'src/motor-agenda/motor-agenda.service';
 import { ConflitoAgendaError } from 'src/motor-agenda/conflito-agenda.error';
+import { AgendaOperacionalService } from './agenda-operacional.service';
 
 const STATUS_AGENDAMENTO = ['AGENDADO', 'CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW'];
 const TIPOS_LANCAMENTO = ['RECEITA', 'DESPESA'];
@@ -51,6 +53,7 @@ export class GestaoController {
     private readonly equipePolicy: EquipePolicy,
     private readonly financeiro: FinanceiroService,
     private readonly motorAgenda: MotorAgendaService,
+    private readonly agendaOperacional: AgendaOperacionalService,
   ) {}
 
   @Get('dashboard')
@@ -122,6 +125,15 @@ export class GestaoController {
     await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
     validarData(data);
     return this.repo.listarAgendamentos(usuario.estabelecimentoId, data);
+  }
+
+  @Get('agenda')
+  async consultarAgenda(
+    @Query() consulta: ConsultarAgendaPeriodoDto,
+    @UsuarioLogado() usuario: Usuario,
+  ) {
+    await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
+    return this.agendaOperacional.consultar(usuario.estabelecimentoId!, consulta);
   }
 
   @Get('agendamentos/futuros')

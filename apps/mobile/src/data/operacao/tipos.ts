@@ -16,6 +16,30 @@ export interface AgendamentoOperacional {
     usuario?: { nome: string }
     profissional?: { id: number; nome: string }
     servicos?: Array<{ nome: string }>
+    periodos?: PeriodosAgendamentoOperacional
+}
+
+export interface PeriodoOperacional { inicio: string; fim: string }
+export interface PeriodosAgendamentoOperacional {
+    ocupacao: PeriodoOperacional
+    deslocamentoAntes: PeriodoOperacional | null
+    preparacaoAntes: PeriodoOperacional | null
+    atendimento: PeriodoOperacional
+    preparacaoDepois: PeriodoOperacional | null
+    deslocamentoDepois: PeriodoOperacional | null
+}
+
+export interface RespostaAgendaOperacional {
+    periodo: { inicio: string; fim: string; fusoHorario: string; convencao: '[inicio,fim)' }
+    filtros: {
+        unidadeId: number | null
+        profissionalId: number | null
+        recursoId: number | null
+        servicoId: number | null
+        status: string[]
+    }
+    pagina: { limite: number; temMais: boolean; proximoCursor: string | null }
+    itens: AgendamentoOperacional[]
 }
 
 export interface ProfissionalOperacional {

@@ -95,6 +95,11 @@ export class AgendaController {
 
   private validarConfiguracao(dados: ConfiguracaoAgendaDto) {
     validarNumeroInteiroNaoNegativo(dados?.antecedenciaMinutos, 'Antecedência');
+    try {
+      new Intl.DateTimeFormat('pt-BR', { timeZone: dados?.fusoHorario }).format();
+    } catch {
+      throw new BadRequestException('Fuso horário inválido');
+    }
 
     if (!Array.isArray(dados?.horarios)) {
       throw new BadRequestException('Horários de funcionamento são obrigatórios');

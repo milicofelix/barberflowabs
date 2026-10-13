@@ -133,6 +133,8 @@ model Agendamento {
   @@index([profissionalId, data])
   @@index([profissionalId, inicioOcupacao, fimOcupacao])
   @@index([unidadeId, inicioOcupacao, fimOcupacao])
+  @@index([estabelecimentoId, inicioOcupacao, fimOcupacao])
+  @@index([estabelecimentoId, status, data])
   @@map("agendamentos")
 }
 
@@ -168,6 +170,7 @@ model Estabelecimento {
   antecedenciaMinutos Int      @default(30)
   tipoEstabelecimento String   @default("BARBEARIA")
   modeloAtendimento   String   @default("PRESENCIAL")
+  fusoHorario         String   @default("America/Sao_Paulo")
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   unidades      Unidade[]

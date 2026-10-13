@@ -1,11 +1,25 @@
 import type {
     AgendamentoOperacional, DashboardOperacional, EscalaProfissional, IndisponibilidadeRecurso, MembroEquipe,
     PermissaoEquipe, ProfissionalOperacional, RecursoOperacional, UsuarioEquipe,
+    RespostaAgendaOperacional,
 } from '../operacao/tipos'
 import useAPI, { mensagemDoErro } from './useAPI'
 import { useCallback, useEffect, useState } from 'react'
 
-const hoje = () => new Date().toISOString().slice(0, 10)
+const dataLocal = (data: Date) => {
+    const ano = data.getFullYear()
+    const mes = String(data.getMonth() + 1).padStart(2, '0')
+    const dia = String(data.getDate()).padStart(2, '0')
+    return `${ano}-${mes}-${dia}`
+}
+const hoje = () => dataLocal(new Date())
+
+const intervaloDoDia = (data: string) => {
+    const inicio = new Date(`${data}T00:00:00`)
+    const fim = new Date(inicio)
+    fim.setDate(fim.getDate() + 1)
+    return { inicio: inicio.toISOString(), fim: fim.toISOString() }
+}
 
 export default function useOperacao() {
     const { httpDelete, httpGet, httpPost, httpPut } = useAPI()
@@ -17,6 +31,7 @@ export default function useOperacao() {
     const [recursos, setRecursos] = useState<RecursoOperacional[]>([])
     const [permissoes, setPermissoes] = useState<PermissaoEquipe[]>([])
     const [data, setData] = useState(hoje())
+    const [fusoHorario, setFusoHorario] = useState('America/Sao_Paulo')
     const [carregando, setCarregando] = useState(true)
     const [erro, setErro] = useState<string | null>(null)
 
@@ -26,15 +41,18 @@ export default function useOperacao() {
             const acessos = await httpGet<PermissaoEquipe[]>('/equipe/minhas-permissoes')
             setPermissoes(acessos)
             const pode = (permissao: PermissaoEquipe) => acessos.includes(permissao)
+            const periodo = intervaloDoDia(data)
             const [resumo, agenda, equipe, membrosEquipe, usuarios, recursosEquipe] = await Promise.all([
                 pode('AGENDA_GERENCIAR') ? httpGet<DashboardOperacional>('/gestao/dashboard') : Promise.resolve(null),
-                pode('AGENDA_GERENCIAR') ? httpGet<AgendamentoOperacional[]>(`/gestao/agendamentos?data=${data}`) : Promise.resolve([]),
+                pode('AGENDA_GERENCIAR')
+                    ? httpGet<RespostaAgendaOperacional>(`/gestao/agenda?inicio=${encodeURIComponent(periodo.inicio)}&fim=${encodeURIComponent(periodo.fim)}`)
+                    : Promise.resolve(null),
                 httpGet<ProfissionalOperacional[]>('/profissionais'),
                 pode('EQUIPE_GERENCIAR') ? httpGet<MembroEquipe[]>('/equipe') : Promise.resolve([]),
                 pode('EQUIPE_GERENCIAR') ? httpGet<UsuarioEquipe[]>('/equipe/usuarios-disponiveis') : Promise.resolve([]),
                 pode('RECURSOS_GERENCIAR') ? httpGet<RecursoOperacional[]>('/recursos') : Promise.resolve([]),
             ])
-            setDashboard(resumo); setAgendamentos(agenda); setProfissionais(equipe)
+            setDashboard(resumo); setAgendamentos(agenda?.itens ?? []); setFusoHorario(agenda?.periodo.fusoHorario ?? 'America/Sao_Paulo'); setProfissionais(equipe)
             setMembros(membrosEquipe); setUsuariosDisponiveis(usuarios); setRecursos(recursosEquipe)
         } catch (e) { setErro(mensagemDoErro(e)) } finally { setCarregando(false) }
     }, [data, httpGet])
@@ -89,7 +107,7 @@ export default function useOperacao() {
     const removerIndisponibilidade = (recursoId: number, id: number) => executarAcao(() => httpDelete(`/recursos/${recursoId}/indisponibilidades/${id}`))
 
     return {
-        dashboard, agendamentos, profissionais, membros, usuariosDisponiveis, recursos, permissoes, data, setData, carregando, erro,
+        dashboard, agendamentos, profissionais, membros, usuariosDisponiveis, recursos, permissoes, data, setData, fusoHorario, carregando, erro,
         recarregar: carregar, alterarStatus, criarProfissional, salvarMembro, criarPerfilParaMembro, removerMembro,
         buscarEscalas, salvarEscalas, criarRecurso, buscarIndisponibilidades, indisponibilizarRecurso, removerIndisponibilidade,
     }

@@ -1,6 +1,6 @@
 # Plano — Agenda Operacional Avancada
 
-Status: navegacao diaria inicial implementada; calendario avancado planejado e pendente.
+Status: Fase 1 implementada; fundacao visual e calendario avancado pendentes.
 
 ## Objetivo
 
@@ -16,11 +16,21 @@ Substituir progressivamente a lista diaria da Gestao Diaria por uma agenda opera
 
 ## Fase 1 — Contratos E Consulta Por Periodo
 
-- [ ] Evoluir a consulta de um unico dia para intervalo com inicio e fim.
-- [ ] Adicionar filtros por unidade, profissional, recurso, servico e status.
-- [ ] Retornar periodos de ocupacao, preparacao e deslocamento separadamente.
-- [ ] Criar paginacao ou janela temporal para estabelecimentos com grande volume.
-- [ ] Padronizar fuso horario do estabelecimento nos contratos.
+- [x] Evoluir a consulta de um unico dia para intervalo com inicio e fim.
+- [x] Adicionar filtros por unidade, profissional, recurso, servico e status.
+- [x] Retornar periodos de ocupacao, preparacao e deslocamento separadamente.
+- [x] Criar paginacao por cursor e limitar a janela temporal a 31 dias.
+- [x] Padronizar fuso horario do estabelecimento nos contratos.
+
+### Contrato entregue
+
+- `GET /gestao/agenda` recebe `inicio` e `fim` em ISO 8601 com fuso horario.
+- O intervalo segue a convencao `[inicio,fim)`: inclui o inicio e exclui o fim.
+- Filtros opcionais: `unidadeId`, `profissionalId`, `recursoId`, `servicoId` e `status` (um ou mais separados por virgula).
+- Paginacao opcional: `limite` entre 1 e 200 e `cursor` devolvido em `pagina.proximoCursor`.
+- A resposta informa `periodo.fusoHorario` e separa ocupacao, deslocamento, preparacao e atendimento.
+- O fuso IANA do estabelecimento fica persistido na configuracao da agenda; o padrao inicial e `America/Sao_Paulo`.
+- A consulta antiga por um unico dia foi preservada temporariamente para compatibilidade.
 
 ## Fase 2 — Fundacao Visual E Biblioteca
 

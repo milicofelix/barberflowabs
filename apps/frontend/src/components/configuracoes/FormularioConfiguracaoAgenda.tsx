@@ -14,6 +14,7 @@ interface HorarioFuncionamento {
 
 interface ConfiguracaoAgenda {
     antecedenciaMinutos: number
+    fusoHorario: string
     horarios: HorarioFuncionamento[]
 }
 
@@ -33,6 +34,7 @@ export default function FormularioConfiguracaoAgenda() {
     const { httpGet, httpPut } = useAPI()
     const [configuracao, setConfiguracao] = useState<ConfiguracaoAgenda>({
         antecedenciaMinutos: 30,
+        fusoHorario: 'America/Sao_Paulo',
         horarios: [],
     })
     const [carregando, setCarregando] = useState(true)
@@ -44,6 +46,7 @@ export default function FormularioConfiguracaoAgenda() {
         const dados = await httpGet('/agenda/configuracao/horarios')
         setConfiguracao({
             antecedenciaMinutos: Number(dados?.antecedenciaMinutos ?? 30),
+            fusoHorario: dados?.fusoHorario ?? 'America/Sao_Paulo',
             horarios: normalizarHorarios(dados?.horarios ?? []),
         })
         setCarregando(false)
@@ -88,6 +91,7 @@ export default function FormularioConfiguracaoAgenda() {
 
         setConfiguracao({
             antecedenciaMinutos: Number(resposta?.antecedenciaMinutos ?? configuracao.antecedenciaMinutos),
+            fusoHorario: resposta?.fusoHorario ?? configuracao.fusoHorario,
             horarios: normalizarHorarios(resposta?.horarios ?? configuracao.horarios),
         })
         setMensagem('Configurações salvas com sucesso.')

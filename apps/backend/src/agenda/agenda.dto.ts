@@ -15,5 +15,6 @@ export interface HorarioFuncionamentoDto {
 
 export interface ConfiguracaoAgendaDto {
   antecedenciaMinutos: number;
+  fusoHorario: string;
   horarios: HorarioFuncionamentoDto[];
 }

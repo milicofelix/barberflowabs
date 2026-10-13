@@ -101,9 +101,9 @@ export class AgendaPrisma {
 
   async buscarConfiguracao(estabelecimentoId: number): Promise<ConfiguracaoAgendaDto> {
     const [estabelecimento, horarios] = await Promise.all([
-      this.prisma.estabelecimento.findUnique({
+      (this.prisma as any).estabelecimento.findUnique({
         where: { id: estabelecimentoId },
-        select: { antecedenciaMinutos: true },
+        select: { antecedenciaMinutos: true, fusoHorario: true },
       }),
       this.prisma.horarioFuncionamento.findMany({
         where: { estabelecimentoId, unidadeId: null },
@@ -113,15 +113,19 @@ export class AgendaPrisma {
 
     return {
       antecedenciaMinutos: estabelecimento?.antecedenciaMinutos ?? 30,
+      fusoHorario: estabelecimento?.fusoHorario ?? process.env.APP_TIME_ZONE ?? 'America/Sao_Paulo',
       horarios,
     };
   }
 
   async salvarConfiguracao(estabelecimentoId: number, configuracao: ConfiguracaoAgendaDto) {
     await this.prisma.$transaction([
-      this.prisma.estabelecimento.update({
+      (this.prisma as any).estabelecimento.update({
         where: { id: estabelecimentoId },
-        data: { antecedenciaMinutos: configuracao.antecedenciaMinutos },
+        data: {
+          antecedenciaMinutos: configuracao.antecedenciaMinutos,
+          fusoHorario: configuracao.fusoHorario,
+        },
       }),
       this.prisma.horarioFuncionamento.deleteMany({
         where: { estabelecimentoId, unidadeId: null },

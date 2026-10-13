@@ -2,6 +2,18 @@ export interface AtualizarStatusAgendamentoDto {
   status: string;
 }
 
+export interface ConsultarAgendaPeriodoDto {
+  inicio: string;
+  fim: string;
+  unidadeId?: string;
+  profissionalId?: string;
+  recursoId?: string;
+  servicoId?: string;
+  status?: string;
+  cursor?: string;
+  limite?: string;
+}
+
 export interface CriarAgendamentoAssistidoDto {
   clienteId: number;
   data: string;
