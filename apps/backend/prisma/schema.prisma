@@ -180,6 +180,10 @@ model Estabelecimento {
   proximoContatoEm DateTime?
   trialEndsAt   DateTime?
   antecedenciaMinutos Int      @default(30)
+  lembreteAgendamentoAtivo Boolean @default(true)
+  lembreteAntecedenciaMinutos Int @default(1440)
+  janelaSilenciosaInicio String @default("22:00") @db.VarChar(5)
+  janelaSilenciosaFim String @default("08:00") @db.VarChar(5)
   tipoEstabelecimento String   @default("BARBEARIA")
   modeloAtendimento   String   @default("PRESENCIAL")
   fusoHorario         String   @default("America/Sao_Paulo")

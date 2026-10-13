@@ -15,6 +15,10 @@ interface HorarioFuncionamento {
 interface ConfiguracaoAgenda {
     antecedenciaMinutos: number
     fusoHorario: string
+    lembreteAgendamentoAtivo: boolean
+    lembreteAntecedenciaMinutos: number
+    janelaSilenciosaInicio: string
+    janelaSilenciosaFim: string
     horarios: HorarioFuncionamento[]
 }
 
@@ -35,6 +39,10 @@ export default function FormularioConfiguracaoAgenda() {
     const [configuracao, setConfiguracao] = useState<ConfiguracaoAgenda>({
         antecedenciaMinutos: 30,
         fusoHorario: 'America/Sao_Paulo',
+        lembreteAgendamentoAtivo: true,
+        lembreteAntecedenciaMinutos: 1440,
+        janelaSilenciosaInicio: '22:00',
+        janelaSilenciosaFim: '08:00',
         horarios: [],
     })
     const [carregando, setCarregando] = useState(true)
@@ -47,6 +55,10 @@ export default function FormularioConfiguracaoAgenda() {
         setConfiguracao({
             antecedenciaMinutos: Number(dados?.antecedenciaMinutos ?? 30),
             fusoHorario: dados?.fusoHorario ?? 'America/Sao_Paulo',
+            lembreteAgendamentoAtivo: dados?.lembreteAgendamentoAtivo ?? true,
+            lembreteAntecedenciaMinutos: Number(dados?.lembreteAntecedenciaMinutos ?? 1440),
+            janelaSilenciosaInicio: dados?.janelaSilenciosaInicio ?? '22:00',
+            janelaSilenciosaFim: dados?.janelaSilenciosaFim ?? '08:00',
             horarios: normalizarHorarios(dados?.horarios ?? []),
         })
         setCarregando(false)
@@ -92,6 +104,10 @@ export default function FormularioConfiguracaoAgenda() {
         setConfiguracao({
             antecedenciaMinutos: Number(resposta?.antecedenciaMinutos ?? configuracao.antecedenciaMinutos),
             fusoHorario: resposta?.fusoHorario ?? configuracao.fusoHorario,
+            lembreteAgendamentoAtivo: resposta?.lembreteAgendamentoAtivo ?? configuracao.lembreteAgendamentoAtivo,
+            lembreteAntecedenciaMinutos: Number(resposta?.lembreteAntecedenciaMinutos ?? configuracao.lembreteAntecedenciaMinutos),
+            janelaSilenciosaInicio: resposta?.janelaSilenciosaInicio ?? configuracao.janelaSilenciosaInicio,
+            janelaSilenciosaFim: resposta?.janelaSilenciosaFim ?? configuracao.janelaSilenciosaFim,
             horarios: normalizarHorarios(resposta?.horarios ?? configuracao.horarios),
         })
         setMensagem('Configurações salvas com sucesso.')
@@ -118,6 +134,22 @@ export default function FormularioConfiguracaoAgenda() {
                     }
                     className="input max-w-xs"
                 />
+            </div>
+
+            <div className="grid gap-4 rounded border border-zinc-800 p-4 md:grid-cols-3">
+                <label className="flex items-center gap-3 text-sm font-semibold md:col-span-3">
+                    <input type="checkbox" checked={configuracao.lembreteAgendamentoAtivo} onChange={(e) => setConfiguracao((atual) => ({ ...atual, lembreteAgendamentoAtivo: e.target.checked }))} className="h-5 w-5 accent-yellow-400" />
+                    Enviar lembretes automáticos de agendamento
+                </label>
+                <label className="grid gap-2 text-sm text-zinc-400">Antecedência do lembrete (minutos)
+                    <input type="number" min={0} step={15} value={configuracao.lembreteAntecedenciaMinutos} onChange={(e) => setConfiguracao((atual) => ({ ...atual, lembreteAntecedenciaMinutos: Number(e.target.value) }))} className="input" />
+                </label>
+                <label className="grid gap-2 text-sm text-zinc-400">Silêncio a partir de
+                    <input type="time" value={configuracao.janelaSilenciosaInicio} onChange={(e) => setConfiguracao((atual) => ({ ...atual, janelaSilenciosaInicio: e.target.value }))} className="input" />
+                </label>
+                <label className="grid gap-2 text-sm text-zinc-400">Retomar envios às
+                    <input type="time" value={configuracao.janelaSilenciosaFim} onChange={(e) => setConfiguracao((atual) => ({ ...atual, janelaSilenciosaFim: e.target.value }))} className="input" />
+                </label>
             </div>
 
             <div className="overflow-x-auto rounded border border-zinc-800">

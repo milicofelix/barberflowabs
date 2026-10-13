@@ -38,6 +38,11 @@ export default function Configuracoes() {
             <View style={styles.linha}><Text style={[styles.label, { color: cores.texto }]}>Aceitar agendamento online</Text><Switch value={dados.perfil.aceitaAgendamentoOnline} onValueChange={(v) => atualizarPerfil('aceitaAgendamentoOnline', v)} /></View>
             <CampoTexto label="Antecedência mínima em minutos" value={String(dados.agenda.antecedenciaMinutos)} keyboardType="number-pad"
                 onChangeText={(v) => dados.setAgenda((atual) => atual ? { ...atual, antecedenciaMinutos: Number(v.replace(/\D/g, '')) || 0 } : atual)} />
+            <View style={styles.linha}><Text style={[styles.label, { color: cores.texto }]}>Lembretes automáticos</Text><Switch value={dados.agenda.lembreteAgendamentoAtivo} onValueChange={(v) => dados.setAgenda((atual) => atual ? { ...atual, lembreteAgendamentoAtivo: v } : atual)} /></View>
+            <CampoTexto label="Antecedência do lembrete em minutos" value={String(dados.agenda.lembreteAntecedenciaMinutos)} keyboardType="number-pad"
+                onChangeText={(v) => dados.setAgenda((atual) => atual ? { ...atual, lembreteAntecedenciaMinutos: Number(v.replace(/\D/g, '')) || 0 } : atual)} />
+            <CampoTexto label="Não enviar a partir de (HH:MM)" value={dados.agenda.janelaSilenciosaInicio} onChangeText={(v) => dados.setAgenda((atual) => atual ? { ...atual, janelaSilenciosaInicio: v } : atual)} />
+            <CampoTexto label="Retomar envios às (HH:MM)" value={dados.agenda.janelaSilenciosaFim} onChangeText={(v) => dados.setAgenda((atual) => atual ? { ...atual, janelaSilenciosaFim: v } : atual)} />
             <HorariosAgenda horarios={dados.agenda.horarios} alterar={(horarios) => dados.setAgenda((atual) => atual ? { ...atual, horarios } : atual)} />
         </Secao>
         <Secao titulo="Classificação">

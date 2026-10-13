@@ -7,9 +7,10 @@ import { MotorAgendaDisponibilidadePrisma } from './motor-agenda.disponibilidade
 import { MotorAgendaPolicy } from './motor-agenda.policy';
 import { MotorAgendaService } from './motor-agenda.service';
 import { AgendaAtualizacaoService } from './agenda-atualizacao.service';
+import { RelacionamentoModule } from 'src/relacionamento/relacionamento.module';
 
 @Module({
-  imports: [DbModule],
+  imports: [DbModule, RelacionamentoModule],
   providers: [
     MotorAgendaCalculador,
     MotorAgendaComandoPrisma,

@@ -174,11 +174,32 @@ Criterios de aceite manual:
 
 ## Fase 3 — Jornada Do Agendamento
 
-- [ ] Enfileirar confirmacao ao criar ou confirmar um agendamento.
-- [ ] Agendar lembretes configuraveis por estabelecimento.
-- [ ] Cancelar lembretes obsoletos em cancelamento ou reagendamento.
-- [ ] Incluir links seguros para confirmar, reagendar ou cancelar.
-- [ ] Respeitar fuso horario do estabelecimento e janela silenciosa.
+- [x] Enfileirar confirmacao ao criar ou confirmar um agendamento.
+- [x] Agendar lembretes configuraveis por estabelecimento.
+- [x] Cancelar lembretes obsoletos em cancelamento ou reagendamento.
+- [x] Incluir links seguros para confirmar, reagendar ou cancelar.
+- [x] Respeitar fuso horario do estabelecimento e janela silenciosa.
+
+Implementado em 13/10/2026:
+
+- criação e reagendamento sincronizam a fila persistente sem fazer uma falha de provedor desfazer o agendamento;
+- chaves idempotentes impedem confirmação ou lembrete duplicado para o mesmo evento, canal e revisão;
+- preferências e consentimentos da Fase 1 continuam obrigatórios para cada canal;
+- templates-padrão de confirmação e lembrete são criados somente quando o estabelecimento ainda não possui um template para o canal;
+- lembretes usam a antecedência configurada, o fuso IANA do estabelecimento e são deslocados para o fim da janela silenciosa;
+- reagendamento cancela lembretes pendentes e gera a nova programação; cancelamento e `NO_SHOW` encerram todas as mensagens pendentes;
+- links assinados e com expiração permitem consultar, confirmar e cancelar sem expor dados pessoais; reagendamento direciona para autenticação;
+- web e mobile permitem configurar ativação, antecedência e janela silenciosa.
+
+### Aceite Manual Da Fase 3
+
+1. Aplique a migration e gere novamente o Prisma Client com os comandos documentados em `docs/COMANDOS.md`.
+2. Em Configurações da agenda, habilite os lembretes, escolha a antecedência e salve a janela silenciosa.
+3. Em Relacionamento, registre consentimento explícito em ao menos um canal para o cliente usado no teste.
+4. Crie um agendamento futuro e confirme que a fila contém uma confirmação e um lembrete por canal consentido.
+5. Reagende e confira que o lembrete anterior está `CANCELADO` e que há um novo lembrete com a nova data.
+6. Abra os links de confirmação e cancelamento em janela anônima; a consulta deve ser pública, mas cada ação deve aceitar apenas seu token específico.
+7. Cancele o agendamento e confirme que nenhuma mensagem pendente permanece ativa.
 
 ## Fase 4 — Campanhas Segmentadas
 

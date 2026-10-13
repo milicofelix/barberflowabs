@@ -12,6 +12,8 @@ services:
       NODE_ENV: development
       DATABASE_URL: ${DATABASE_URL:-mysql://barberflow:barberflow@infra-mysql-1:3306/uniflow_abs}
       JWT_SECRET: ${JWT_SECRET:-barberflow_abs_dev_secret}
+      AGENDAMENTO_ACAO_SECRET: ${AGENDAMENTO_ACAO_SECRET:-uniflow_abs_booking_action_dev_secret}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://localhost:3000}
       SUPER_ADMIN_EMAILS: ${SUPER_ADMIN_EMAILS:-milicofelix@gmail.com}
       NOTIFICACOES_WORKER_ATIVO: ${NOTIFICACOES_WORKER_ATIVO:-true}
       NOTIFICACOES_WORKER_INTERVALO_MS: ${NOTIFICACOES_WORKER_INTERVALO_MS:-5000}

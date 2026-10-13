@@ -9,9 +9,10 @@ import { FinanceiroModule } from 'src/financeiro/financeiro.module';
 import { MotorAgendaModule } from 'src/motor-agenda/motor-agenda.module';
 import { AgendaOperacionalService } from './agenda-operacional.service';
 import { ImportacaoContatosService } from './importacao-contatos.service';
+import { RelacionamentoModule } from 'src/relacionamento/relacionamento.module';
 
 @Module({
-  imports: [AuthModule, DbModule, EquipeModule, FinanceiroModule, MotorAgendaModule],
+  imports: [AuthModule, DbModule, EquipeModule, FinanceiroModule, MotorAgendaModule, RelacionamentoModule],
   controllers: [GestaoController],
   providers: [GestaoPrisma, AgendaOperacionalService, ImportacaoContatosService],
 })

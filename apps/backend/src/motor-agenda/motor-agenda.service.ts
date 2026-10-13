@@ -11,6 +11,7 @@ import {
 } from './motor-agenda.dto';
 import { MotorAgendaPolicy } from './motor-agenda.policy';
 import { AgendaAtualizacaoService } from './agenda-atualizacao.service';
+import { JornadaAgendamentoService } from 'src/relacionamento/jornada-agendamento.service';
 
 @Injectable()
 export class MotorAgendaService {
@@ -21,6 +22,7 @@ export class MotorAgendaService {
     private readonly calculador: MotorAgendaCalculador,
     private readonly policy: MotorAgendaPolicy,
     private readonly atualizacoes: AgendaAtualizacaoService,
+    private readonly jornada: JornadaAgendamentoService,
   ) {}
 
   async criar(
@@ -53,6 +55,7 @@ export class MotorAgendaService {
       auditoria: auditoria ?? { criadoPorId: usuario.id, origem: 'APP_CLIENTE' },
     });
     this.atualizacoes.publicar(estabelecimentoId);
+    await this.jornada.registrarCriacao(agendamento.id);
     return agendamento;
   }
 
@@ -127,6 +130,7 @@ export class MotorAgendaService {
       motivo: dados.motivo,
     });
     this.atualizacoes.publicar(estabelecimentoId);
+    await this.jornada.registrarReagendamento(atualizado.id);
     return atualizado;
   }
 

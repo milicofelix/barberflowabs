@@ -34,6 +34,7 @@ import {
 } from 'src/motor-agenda/motor-agenda.dto';
 import { ConflitoAgendaError } from 'src/motor-agenda/conflito-agenda.error';
 import { AgendaAtualizacaoService } from 'src/motor-agenda/agenda-atualizacao.service';
+import { JornadaAgendamentoService } from 'src/relacionamento/jornada-agendamento.service';
 
 @Controller('agendamentos')
 export class AgendamentoController {
@@ -43,6 +44,7 @@ export class AgendamentoController {
     private readonly tenant: TenantService,
     private readonly motor: MotorAgendaService,
     private readonly atualizacoesAgenda: AgendaAtualizacaoService,
+    private readonly jornada: JornadaAgendamentoService,
   ) {}
 
   @Post()
@@ -211,6 +213,7 @@ export class AgendamentoController {
     }
 
     this.atualizacoesAgenda.publicar(estabelecimentoId);
+    await this.jornada.registrarCancelamento(agendamento.id!);
 
     return agendamento;
   }
@@ -230,6 +233,7 @@ export class AgendamentoController {
       if ((agendamento as any).estabelecimentoId) {
         this.atualizacoesAgenda.publicar((agendamento as any).estabelecimentoId);
       }
+      await this.jornada.registrarCancelamento(agendamento.id!);
       return agendamento;
     } catch (error: any) {
       if (error instanceof NotFoundException) throw error;

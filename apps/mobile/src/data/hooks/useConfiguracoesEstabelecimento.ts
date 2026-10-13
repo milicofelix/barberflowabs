@@ -10,7 +10,11 @@ export interface HorarioFuncionamento {
     id?: number; diaSemana: number; inicio: string; fim: string
     intervaloInicio?: string | null; intervaloFim?: string | null; ativo?: boolean
 }
-interface AgendaConfiguracao { antecedenciaMinutos: number; fusoHorario: string; horarios: HorarioFuncionamento[] }
+interface AgendaConfiguracao {
+    antecedenciaMinutos: number; fusoHorario: string; horarios: HorarioFuncionamento[]
+    lembreteAgendamentoAtivo: boolean; lembreteAntecedenciaMinutos: number
+    janelaSilenciosaInicio: string; janelaSilenciosaFim: string
+}
 export interface ProntidaoPublicacao {
     prontoParaLista: boolean; prontoParaMapa: boolean; aceitaAgendamentoOnline: boolean; progresso: number
     itens: Array<{ codigo: string; titulo: string; concluido: boolean; orientacao?: string | null; destino: string }>

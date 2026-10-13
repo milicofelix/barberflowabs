@@ -103,7 +103,14 @@ export class AgendaPrisma {
     const [estabelecimento, horarios] = await Promise.all([
       (this.prisma as any).estabelecimento.findUnique({
         where: { id: estabelecimentoId },
-        select: { antecedenciaMinutos: true, fusoHorario: true },
+        select: {
+          antecedenciaMinutos: true,
+          fusoHorario: true,
+          lembreteAgendamentoAtivo: true,
+          lembreteAntecedenciaMinutos: true,
+          janelaSilenciosaInicio: true,
+          janelaSilenciosaFim: true,
+        },
       }),
       this.prisma.horarioFuncionamento.findMany({
         where: { estabelecimentoId, unidadeId: null },
@@ -114,6 +121,10 @@ export class AgendaPrisma {
     return {
       antecedenciaMinutos: estabelecimento?.antecedenciaMinutos ?? 30,
       fusoHorario: estabelecimento?.fusoHorario ?? process.env.APP_TIME_ZONE ?? 'America/Sao_Paulo',
+      lembreteAgendamentoAtivo: estabelecimento?.lembreteAgendamentoAtivo ?? true,
+      lembreteAntecedenciaMinutos: estabelecimento?.lembreteAntecedenciaMinutos ?? 1440,
+      janelaSilenciosaInicio: estabelecimento?.janelaSilenciosaInicio ?? '22:00',
+      janelaSilenciosaFim: estabelecimento?.janelaSilenciosaFim ?? '08:00',
       horarios,
     };
   }
@@ -125,6 +136,10 @@ export class AgendaPrisma {
         data: {
           antecedenciaMinutos: configuracao.antecedenciaMinutos,
           fusoHorario: configuracao.fusoHorario,
+          lembreteAgendamentoAtivo: configuracao.lembreteAgendamentoAtivo,
+          lembreteAntecedenciaMinutos: configuracao.lembreteAntecedenciaMinutos,
+          janelaSilenciosaInicio: configuracao.janelaSilenciosaInicio,
+          janelaSilenciosaFim: configuracao.janelaSilenciosaFim,
         },
       }),
       this.prisma.horarioFuncionamento.deleteMany({

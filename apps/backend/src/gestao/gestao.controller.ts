@@ -43,6 +43,7 @@ import { AgendaOperacionalService } from './agenda-operacional.service';
 import { AgendaAtualizacaoService } from 'src/motor-agenda/agenda-atualizacao.service';
 import { randomUUID } from 'crypto';
 import { ImportacaoContatosService } from './importacao-contatos.service';
+import { JornadaAgendamentoService } from 'src/relacionamento/jornada-agendamento.service';
 
 const STATUS_AGENDAMENTO = ['AGENDADO', 'CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW'];
 const ORIGENS_AGENDAMENTO_ASSISTIDO = ['RECEPCAO', 'TELEFONE', 'WHATSAPP', 'PRESENCIAL', 'OUTRO'];
@@ -62,6 +63,7 @@ export class GestaoController {
     private readonly agendaOperacional: AgendaOperacionalService,
     private readonly atualizacoesAgenda: AgendaAtualizacaoService,
     private readonly importacaoContatos: ImportacaoContatosService,
+    private readonly jornadaAgendamento: JornadaAgendamentoService,
   ) {}
 
   @Get('dashboard')
@@ -232,6 +234,12 @@ export class GestaoController {
     if (!agendamento) throw new NotFoundException('Agendamento não encontrado');
     if (dados.status === 'CONCLUIDO') {
       await this.financeiro.registrarReceitaAgendamento(usuario.estabelecimentoId!, usuario.id!, agendamento);
+    }
+    if (dados.status === 'CONFIRMADO') {
+      await this.jornadaAgendamento.registrarConfirmacao(agendamento.id);
+    }
+    if (['CANCELADO', 'NO_SHOW'].includes(dados.status)) {
+      await this.jornadaAgendamento.registrarCancelamento(agendamento.id);
     }
     this.atualizacoesAgenda.publicar(usuario.estabelecimentoId!);
     return agendamento;

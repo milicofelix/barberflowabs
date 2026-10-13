@@ -16,5 +16,9 @@ export interface HorarioFuncionamentoDto {
 export interface ConfiguracaoAgendaDto {
   antecedenciaMinutos: number;
   fusoHorario: string;
+  lembreteAgendamentoAtivo: boolean;
+  lembreteAntecedenciaMinutos: number;
+  janelaSilenciosaInicio: string;
+  janelaSilenciosaFim: string;
   horarios: HorarioFuncionamentoDto[];
 }

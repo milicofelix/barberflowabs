@@ -9,6 +9,7 @@ import { RelacionamentoService } from './relacionamento.service';
 import { ComunicacaoCallbackController } from './comunicacao-callback.controller';
 import { ComunicacaoWorker } from './comunicacao.worker';
 import { ComunicacaoProviderRegistry, EmailSimuladoProvider, PushSimuladoProvider, WhatsappSimuladoProvider } from './comunicacao.provider';
+import { JornadaAgendamentoService } from './jornada-agendamento.service';
 
 @Module({
   imports: [AuthModule, DbModule, EquipeModule],
@@ -16,8 +17,9 @@ import { ComunicacaoProviderRegistry, EmailSimuladoProvider, PushSimuladoProvide
   providers: [
     RelacionamentoRepository, RelacionamentoService, ComunicacaoWorker,
     ComunicacaoProviderRegistry, PushSimuladoProvider, EmailSimuladoProvider, WhatsappSimuladoProvider,
+    JornadaAgendamentoService,
   ],
-  exports: [RelacionamentoService],
+  exports: [RelacionamentoService, JornadaAgendamentoService],
 })
 export class RelacionamentoModule {
   configure(consumer: MiddlewareConsumer) {

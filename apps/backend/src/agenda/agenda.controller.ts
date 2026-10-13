@@ -95,6 +95,12 @@ export class AgendaController {
 
   private validarConfiguracao(dados: ConfiguracaoAgendaDto) {
     validarNumeroInteiroNaoNegativo(dados?.antecedenciaMinutos, 'Antecedência');
+    validarNumeroInteiroNaoNegativo(dados?.lembreteAntecedenciaMinutos, 'Antecedência do lembrete');
+    if (typeof dados?.lembreteAgendamentoAtivo !== 'boolean') {
+      throw new BadRequestException('Configuração do lembrete é obrigatória');
+    }
+    validarHorario(dados?.janelaSilenciosaInicio, 'Início da janela silenciosa');
+    validarHorario(dados?.janelaSilenciosaFim, 'Fim da janela silenciosa');
     try {
       new Intl.DateTimeFormat('pt-BR', { timeZone: dados?.fusoHorario }).format();
     } catch {
