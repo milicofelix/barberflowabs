@@ -1,7 +1,7 @@
 import useTema from '@/src/data/contexts/ContextoTema'
 import type { AgendamentoOperacional, VisualizacaoAgenda } from '@/src/data/operacao/tipos'
 import { useMemo, useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Modal, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native'
 import { Calendar, type ICalendarEventBase } from 'react-native-big-calendar'
 import 'dayjs/locale/pt-br'
 
@@ -34,6 +34,7 @@ export default function AgendaCalendario({
     fusoHorario: string
 }) {
     const { cores } = useTema()
+    const { height: alturaTela } = useWindowDimensions()
     const [alturaHora, setAlturaHora] = useState(64)
     const [selecionado, setSelecionado] = useState<AgendamentoOperacional | null>(null)
     const eventos = useMemo<EventoAgenda[]>(() => itens.map((item) => ({
@@ -77,7 +78,7 @@ export default function AgendaCalendario({
         <View style={[styles.calendario, { borderColor: cores.borda, backgroundColor: cores.superficie }]}>
             <Calendar<EventoAgenda>
                 events={eventos}
-                height={visualizacao === 'schedule' ? 520 : 650}
+                height={Math.max(300, Math.min(650, alturaTela - 390))}
                 date={new Date(`${data}T12:00:00`)}
                 mode={visualizacao}
                 locale="pt-br"
@@ -107,19 +108,25 @@ export default function AgendaCalendario({
             <Legenda cor={cores.textoSecundario} texto="Finalizado" />
             <Legenda cor={cores.perigo} texto="Cancelado/ausente" />
         </View>
-        {selecionado ? <View style={[styles.detalhes, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
-            <View style={styles.detalhesCabecalho}>
-                <View style={styles.detalhesTexto}><Text style={[styles.detalhesTitulo, { color: cores.texto }]}>{selecionado.usuario?.nome ?? 'Cliente'}</Text>
-                    <Text style={[styles.detalhesMeta, { color: cores.textoSecundario }]}>{selecionado.profissional?.nome ?? 'Profissional'} · {new Date(selecionado.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Text>
-                    <Text style={[styles.detalhesMeta, { color: cores.textoSecundario }]}>{selecionado.servicos?.map((servico) => servico.nome).join(' · ')}</Text></View>
-                <Pressable accessibilityRole="button" accessibilityLabel="Fechar detalhes" onPress={() => setSelecionado(null)} style={[styles.fechar, { borderColor: cores.borda }]}><Text style={{ color: cores.texto }}>×</Text></Pressable>
-            </View>
-            <View style={styles.acoes}>{['CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW'].map((status) =>
-                <Pressable key={status} onPress={async () => { if (await alterarStatus(selecionado.id, status)) setSelecionado((atual) => atual ? { ...atual, status } : atual) }}
-                    style={[styles.acao, { borderColor: cores.borda }, selecionado.status === status && { backgroundColor: cores.destaque, borderColor: cores.destaque }]}>
-                    <Text style={[styles.acaoTexto, { color: selecionado.status === status ? cores.destaqueTexto : cores.texto }]}>{status.replace('_', ' ')}</Text>
-                </Pressable>)}</View>
-        </View> : null}
+        <Modal visible={Boolean(selecionado)} transparent animationType="fade" onRequestClose={() => setSelecionado(null)}>
+            <Pressable style={styles.modalFundo} onPress={() => setSelecionado(null)}>
+                {selecionado ? <Pressable onPress={() => undefined} style={[styles.detalhes, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
+                    <View style={styles.detalhesCabecalho}>
+                        <View style={styles.detalhesTexto}>
+                            <Text style={[styles.detalhesTitulo, { color: cores.texto }]}>{selecionado.usuario?.nome ?? 'Cliente'}</Text>
+                            <Text style={[styles.detalhesMeta, { color: cores.textoSecundario }]}>{selecionado.profissional?.nome ?? 'Profissional'} · {new Date(selecionado.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Text>
+                            <Text style={[styles.detalhesMeta, { color: cores.textoSecundario }]}>{selecionado.servicos?.map((servico) => servico.nome).join(' · ')}</Text>
+                        </View>
+                        <Pressable accessibilityRole="button" accessibilityLabel="Fechar detalhes" onPress={() => setSelecionado(null)} style={[styles.fechar, { borderColor: cores.borda }]}><Text style={{ color: cores.texto }}>×</Text></Pressable>
+                    </View>
+                    <View style={styles.acoes}>{['CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW'].map((status) =>
+                        <Pressable key={status} onPress={async () => { if (await alterarStatus(selecionado.id, status)) setSelecionado((atual) => atual ? { ...atual, status } : atual) }}
+                            style={[styles.acao, { borderColor: cores.borda }, selecionado.status === status && { backgroundColor: cores.destaque, borderColor: cores.destaque }]}>
+                            <Text style={[styles.acaoTexto, { color: selecionado.status === status ? cores.destaqueTexto : cores.texto }]}>{status.replace('_', ' ')}</Text>
+                        </Pressable>)}</View>
+                </Pressable> : null}
+            </Pressable>
+        </Modal>
         <Text style={[styles.ajuda, { color: cores.textoSecundario }]}>Deslize lateralmente para mudar o período. A linha vermelha indica o horário atual.</Text>
     </View>
 }
@@ -149,6 +156,7 @@ const styles = StyleSheet.create({
     legendaItem: { flexDirection: 'row', alignItems: 'center', gap: 5 }, legendaCor: { width: 9, height: 9, borderRadius: 5 },
     legendaTexto: { color: '#64748B', fontSize: 11, fontWeight: '700' }, ajuda: { fontSize: 12, lineHeight: 17 },
     detalhes: { borderWidth: 1, borderRadius: 13, padding: 13, gap: 11 }, detalhesCabecalho: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+    modalFundo: { flex: 1, justifyContent: 'center', padding: 22, backgroundColor: 'rgba(0,0,0,0.62)' },
     detalhesTexto: { flex: 1 }, detalhesTitulo: { fontSize: 16, fontWeight: '900' }, detalhesMeta: { marginTop: 4, lineHeight: 18 },
     fechar: { width: 34, height: 34, borderWidth: 1, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
     acoes: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 }, acao: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 7 },

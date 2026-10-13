@@ -25,17 +25,31 @@ export default function Operacao({ navigation }: Props) {
     const [visualizacaoAgenda, setVisualizacaoAgenda] = useState<VisualizacaoAgenda>('day')
     const dados = useOperacao(visualizacaoAgenda)
     const gestaoServicos = useGestaoServicos(secao === 'SERVICOS')
-    return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}><ScrollView contentContainerStyle={styles.conteudo}
-        refreshControl={<RefreshControl refreshing={dados.carregando} onRefresh={dados.recarregar} tintColor="#E7B84B" />}>
+    const cabecalho = <>
         <Text style={styles.sobretitulo}>OPERAÇÃO DO ESTABELECIMENTO</Text><Text style={[styles.titulo, { color: cores.texto }]}>Gestão diária</Text>
         <SeletorOperacao atual={secao} selecionar={setSecao} permissoes={dados.permissoes} />
-        {secao === 'AGENDA' ? <NavegacaoData data={dados.data} alterar={dados.setData} visualizacao={visualizacaoAgenda} /> : null}
+    </>
+
+    if (secao === 'AGENDA') {
+        return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}>
+            <View style={styles.conteudoAgenda}>
+                {cabecalho}
+                <NavegacaoData data={dados.data} alterar={dados.setData} visualizacao={visualizacaoAgenda} />
+                {dados.erro ? <EstadoErro mensagem={dados.erro} tentarNovamente={dados.recarregar} /> : null}
+                {dados.carregando && !dados.dashboard ? <Carregando mensagem="Carregando operação..." /> : null}
+                {!dados.carregando ? <AgendaCalendario itens={dados.agendamentos} data={dados.data}
+                    visualizacao={visualizacaoAgenda} alterarVisualizacao={setVisualizacaoAgenda} alterarData={dados.setData}
+                    alterarStatus={dados.alterarStatus} fusoHorario={dados.fusoHorario} /> : null}
+            </View>
+        </SafeAreaView>
+    }
+
+    return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}><ScrollView contentContainerStyle={styles.conteudo}
+        refreshControl={<RefreshControl refreshing={dados.carregando} onRefresh={dados.recarregar} tintColor="#E7B84B" />}>
+        {cabecalho}
         {dados.erro ? <EstadoErro mensagem={dados.erro} tentarNovamente={dados.recarregar} /> : null}
         {dados.carregando && !dados.dashboard ? <Carregando mensagem="Carregando operação..." /> : null}
         {!dados.carregando && secao === 'RESUMO' ? <ResumoOperacao dados={dados.dashboard} /> : null}
-        {!dados.carregando && secao === 'AGENDA' ? <AgendaCalendario itens={dados.agendamentos} data={dados.data}
-            visualizacao={visualizacaoAgenda} alterarVisualizacao={setVisualizacaoAgenda} alterarData={dados.setData}
-            alterarStatus={dados.alterarStatus} fusoHorario={dados.fusoHorario} /> : null}
         {secao === 'SERVICOS' ? <GestaoServicos itens={gestaoServicos.servicos} profissionais={dados.profissionais} carregando={gestaoServicos.carregando}
             erro={gestaoServicos.erro} recarregar={gestaoServicos.carregar} salvar={gestaoServicos.salvar} excluir={gestaoServicos.excluir} /> : null}
         {!dados.carregando && secao === 'EQUIPE' ? <><EquipeOperacao itens={dados.profissionais} criar={dados.criarProfissional} /><EscalasEquipe profissionais={dados.profissionais} buscar={dados.buscarEscalas} salvar={dados.salvarEscalas} /><MembrosEquipe membros={dados.membros} usuarios={dados.usuariosDisponiveis} profissionais={dados.profissionais} salvar={dados.salvarMembro} criarPerfil={dados.criarPerfilParaMembro} remover={dados.removerMembro} /></> : null}
@@ -71,7 +85,7 @@ function passoVisualizacao(visualizacao: VisualizacaoAgenda) {
 }
 
 const styles = StyleSheet.create({
-    safeArea: { flex: 1, backgroundColor: '#081426' }, conteudo: { padding: 18, paddingBottom: 40 },
+    safeArea: { flex: 1, backgroundColor: '#081426' }, conteudo: { padding: 18, paddingBottom: 40 }, conteudoAgenda: { flex: 1, paddingHorizontal: 18, paddingTop: 18 },
     sobretitulo: { color: '#E7B84B', fontSize: 12, fontWeight: '800', letterSpacing: 1.2 }, titulo: { color: '#FFF', fontSize: 29, fontWeight: '900', marginTop: 6 },
     data: { backgroundColor: '#101E33', color: '#FFF', borderRadius: 11, padding: 13, borderWidth: 1, borderColor: '#31415A', marginBottom: 12 },
     navegacaoData: { gap: 9, marginBottom: 2 }, acoesData: { flexDirection: 'row', gap: 8 },

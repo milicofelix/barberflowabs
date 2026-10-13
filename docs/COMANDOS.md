@@ -264,11 +264,21 @@ Instala a versao recomendada para o SDK Expo atual. Esse comando altera dependen
 
 ```bash
 docker compose stop app
-docker compose run --rm --no-deps app yarn install --ignore-scripts --network-timeout 600000 --network-concurrency 1
+docker compose run --rm --no-deps app yarn install --force --network-timeout 600000 --network-concurrency 1
 docker compose up --force-recreate app
 ```
 
-Atualiza o volume de dependencias depois da inclusao da linha estavel e MIT do calendario usado pelo adaptador mobile. O container e interrompido antes para evitar concorrencia ao relincar `node_modules`. `--ignore-scripts` evita os `postinstall` dos demais workspaces; nao executa build nem testes.
+Atualiza o volume de dependencias depois da inclusao da linha estavel e MIT do calendario usado pelo adaptador mobile. O container e interrompido antes para evitar concorrencia ao relincar `node_modules`. Os scripts de instalacao precisam permanecer habilitados porque o backend utiliza o modulo nativo `bcrypt`.
+
+### Recuperar o binario nativo do bcrypt
+
+```bash
+docker compose stop app
+docker compose run --rm --no-deps app npm rebuild bcrypt
+docker compose up --force-recreate app
+```
+
+Reinstala somente o binario Linux do `bcrypt` no volume `node_modules`. Use quando aparecer `Cannot find module .../bcrypt_lib.node`, normalmente depois de uma instalacao feita incorretamente com `--ignore-scripts`. Nao apaga dados nem executa testes ou build da aplicacao.
 
 ## Prisma E Banco De Dados
 
