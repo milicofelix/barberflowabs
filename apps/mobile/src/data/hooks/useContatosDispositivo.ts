@@ -4,6 +4,8 @@ import {
 } from '@/src/data/contatos/contatosDispositivo'
 import { useCallback, useEffect, useState } from 'react'
 
+const LIMITE_CONTATOS_EM_MEMORIA = 2_000
+
 export default function useContatosDispositivo() {
     const [estado, setEstado] = useState<EstadoPermissaoContatos>('NAO_SOLICITADA')
     const [podeSolicitarNovamente, setPodeSolicitarNovamente] = useState(true)
@@ -12,6 +14,7 @@ export default function useContatosDispositivo() {
     const [proximoOffset, setProximoOffset] = useState<number | null>(0)
     const [carregando, setCarregando] = useState(false)
     const [erro, setErro] = useState<string | null>(null)
+    const [limiteLocalAtingido, setLimiteLocalAtingido] = useState(false)
 
     const atualizarPermissao = useCallback(async () => {
         const permissao = await consultarPermissaoContatos()
@@ -41,18 +44,22 @@ export default function useContatosDispositivo() {
         setCarregando(true); setErro(null)
         try {
             const pagina = await lerContatosPermitidos(offset)
-            setContatos((atuais) => reiniciar ? pagina.contatos : [...atuais, ...pagina.contatos])
+            const acumulados = reiniciar ? pagina.contatos : [...contatos, ...pagina.contatos]
+            const limitados = acumulados.slice(0, LIMITE_CONTATOS_EM_MEMORIA)
+            setContatos(limitados)
             setTotalDisponivel(pagina.totalDisponivel)
-            setProximoOffset(pagina.proximoOffset)
+            const atingiuLimite = limitados.length >= LIMITE_CONTATOS_EM_MEMORIA && pagina.proximoOffset !== null
+            setLimiteLocalAtingido(atingiuLimite)
+            setProximoOffset(atingiuLimite ? null : pagina.proximoOffset)
         } catch (error: any) {
             setErro(error?.message ?? 'Não foi possível ler os contatos autorizados.')
             await atualizarPermissao().catch(() => undefined)
         } finally { setCarregando(false) }
-    }, [atualizarPermissao, carregando, proximoOffset])
+    }, [atualizarPermissao, carregando, contatos, proximoOffset])
 
     return {
         estado, podeSolicitarNovamente, contatos, totalDisponivel, proximoOffset,
-        carregando, erro, solicitar, carregar, atualizarPermissao,
+        carregando, erro, limiteLocalAtingido, solicitar, carregar, atualizarPermissao,
         mensagemPermissao: MENSAGEM_PERMISSAO_CONTATOS,
         abrirConfiguracoes: abrirConfiguracoesDoAplicativo,
     }

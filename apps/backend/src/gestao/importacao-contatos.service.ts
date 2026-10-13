@@ -1,10 +1,12 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash, randomUUID } from 'crypto';
 import { BcryptProvider } from 'src/auth/bcrypt.provider';
 import { PrismaService } from 'src/db/prisma.service';
 import { ConfirmarImportacaoContatosDto, ContatoImportacaoDto, SimularImportacaoContatosDto } from './gestao.dto';
 
 const LIMITE_LOTE = 200;
+const JANELA_LIMITE_MS = 60_000;
+const MAXIMO_REQUISICOES_POR_JANELA = 20;
 type Resultado = 'NOVO' | 'JA_VINCULADO' | 'POSSIVEL_DUPLICADO' | 'INVALIDO' | 'CONFLITO';
 
 interface ContatoNormalizado {
@@ -18,9 +20,12 @@ interface ContatoNormalizado {
 
 @Injectable()
 export class ImportacaoContatosService {
+  private readonly requisicoes = new Map<string, { total: number; resetEm: number }>();
+
   constructor(private readonly prisma: PrismaService, private readonly cripto: BcryptProvider) {}
 
   async simular(estabelecimentoId: number, operadorId: number, dados: SimularImportacaoContatosDto) {
+    this.validarFrequencia(estabelecimentoId, operadorId, 'simular');
     this.validarLote(dados?.chaveIdempotencia, dados?.contatos);
     await this.validarOperador(estabelecimentoId, operadorId);
     const chaveIdempotencia = String(dados.chaveIdempotencia).trim();
@@ -62,6 +67,7 @@ export class ImportacaoContatosService {
   }
 
   async confirmar(estabelecimentoId: number, operadorId: number, loteId: string, dados: ConfirmarImportacaoContatosDto) {
+    this.validarFrequencia(estabelecimentoId, operadorId, 'confirmar');
     await this.validarOperador(estabelecimentoId, operadorId);
     const lote = await (this.prisma as any).importacaoContatoLote.findFirst({
       where: { id: loteId, estabelecimentoId }, include: { itens: true },
@@ -232,6 +238,23 @@ export class ImportacaoContatosService {
       where: { id: operadorId, estabelecimentoId }, select: { id: true },
     });
     if (!operador) throw new ForbiddenException('Operador não pertence ao estabelecimento ativo');
+  }
+
+  private validarFrequencia(estabelecimentoId: number, operadorId: number, operacao: string) {
+    const agora = Date.now();
+    const chave = `${estabelecimentoId}:${operadorId}:${operacao}`;
+    const atual = this.requisicoes.get(chave);
+    if (!atual || atual.resetEm <= agora) {
+      this.requisicoes.set(chave, { total: 1, resetEm: agora + JANELA_LIMITE_MS });
+      return;
+    }
+    if (atual.total >= MAXIMO_REQUISICOES_POR_JANELA) {
+      throw new HttpException('Muitas tentativas de importação. Aguarde um minuto e tente novamente.', 429);
+    }
+    atual.total += 1;
+    if (this.requisicoes.size > 10_000) {
+      for (const [itemChave, item] of this.requisicoes) if (item.resetEm <= agora) this.requisicoes.delete(itemChave);
+    }
   }
 
   private totalizar(itens: Array<{ resultado: Resultado }>) {

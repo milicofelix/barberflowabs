@@ -1,6 +1,6 @@
 # Plano — Importacao Assistida De Contatos No Mobile
 
-Status: Fases 1 a 5 implementadas; novo build nativo e aceite manual pendentes.
+Status: Fases 1 a 6 implementadas; novo build nativo e aceite manual em iOS/Android pendentes.
 
 ## Objetivo
 
@@ -127,12 +127,22 @@ O importador VCF existente permanece como ferramenta administrativa excepcional 
 
 ## Fase 6 — Privacidade, Seguranca E Aceite
 
-- [ ] Documentar finalidade, base legal e prazo de retencao conforme a politica de privacidade e a LGPD.
-- [ ] Garantir exclusao e desvinculacao pela central de clientes conforme as regras de historico e auditoria.
-- [ ] Nao registrar nomes, telefones ou e-mails completos em logs tecnicos.
-- [ ] Validar limites de lote, abuso, concorrencia, retomada, isolamento multitenant e dispositivos com pouca memoria.
+- [x] Documentar finalidade, base legal e prazo de retencao conforme a politica de privacidade e a LGPD.
+- [x] Garantir exclusao e desvinculacao pela central de clientes conforme as regras de historico e auditoria.
+- [x] Nao registrar nomes, telefones ou e-mails completos em logs tecnicos.
+- [x] Implementar protecoes para limites de lote, abuso, concorrencia, retomada, isolamento multitenant e dispositivos com pouca memoria.
 - [ ] Validar iOS e Android com permissao total, limitada, negada e posteriormente revogada.
 - [ ] Validar acessibilidade, temas claro/escuro e listas grandes.
+
+### Privacidade e endurecimento entregues
+
+- A finalidade, papeis de controlador e operador, bases legais possiveis, minimizacao, retencao recomendada e direitos do titular estao consolidados em `PRIVACIDADE_IMPORTACAO_CONTATOS.md`; a aprovacao juridica permanece obrigatoria antes da producao.
+- Remover um cliente pela central agora executa uma transacao que elimina o vinculo e as preferencias da unidade e retira o identificador direto dos itens de importacao. Agendamentos e registros sujeitos a retencao continuam preservados.
+- O filtro global de erros deixou de imprimir objetos completos e payloads do ORM nos logs; registra somente metadados tecnicos.
+- Simulacao e confirmacao aceitam no maximo 20 requisicoes por minuto para cada operador, unidade e operacao. O limite atual e local por processo e devera usar armazenamento compartilhado quando houver multiplas instancias.
+- A leitura continua paginada e passa a manter no maximo 2.000 contatos autorizados em memoria, informando o operador quando o limite local for atingido.
+- Busca, fechamento, permissao, selecao, alternativas de contato e campos de correcao receberam papeis, rotulos e estados para tecnologias assistivas.
+- A matriz de aceite fisico foi documentada sem marcar cenarios como executados antes da validacao em aparelhos reais.
 
 ## Aceite Manual
 
@@ -150,4 +160,4 @@ O importador VCF existente permanece como ferramenta administrativa excepcional 
 
 ## Ordem Recomendada
 
-As Fases 1 a 5 estao implementadas. Concluir agora a Fase 6 e o aceite manual em dispositivos iOS e Android antes de remover a importacao VCF/seeder usada como contingencia administrativa.
+As Fases 1 a 6 estao implementadas. Concluir o novo build nativo e o aceite manual em dispositivos iOS e Android antes de remover a importacao VCF/seeder usada como contingencia administrativa.

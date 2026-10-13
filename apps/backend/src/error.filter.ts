@@ -11,13 +11,22 @@ export default class ErrorFilter implements ExceptionFilter {
       ? (exception as any).getStatus()
       : 500;
 
-    console.error(exception);
+    // Não grave payloads ou a representação integral de erros do ORM: eles podem
+    // conter nome, telefone, e-mail ou outros dados pessoais recebidos na API.
+    console.error({
+      tipo: exception?.name ?? 'Error',
+      status,
+      rota: request.url,
+      codigo: (exception as any)?.code,
+    });
 
     response.status(status).json({
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
-      message: exception instanceof Error ? exception.message : exception,
+      message: status >= 500
+        ? 'Erro interno. Tente novamente em instantes.'
+        : exception instanceof Error ? exception.message : exception,
     });
   }
 }

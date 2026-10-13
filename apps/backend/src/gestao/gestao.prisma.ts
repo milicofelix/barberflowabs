@@ -219,9 +219,16 @@ export class GestaoPrisma {
     });
 
     if (!cliente) return null;
-    return (this.prisma as any).clienteEstabelecimento.delete({
-      where: { estabelecimentoId_usuarioId: { estabelecimentoId, usuarioId: id } },
-      select: { id: true },
+    return (this.prisma as any).$transaction(async (tx: any) => {
+      await tx.preferenciaComunicacao.deleteMany({ where: { estabelecimentoId, usuarioId: id } });
+      await tx.importacaoContatoItem.updateMany({
+        where: { usuarioId: id, lote: { estabelecimentoId } },
+        data: { usuarioId: null },
+      });
+      return tx.clienteEstabelecimento.delete({
+        where: { estabelecimentoId_usuarioId: { estabelecimentoId, usuarioId: id } },
+        select: { id: true },
+      });
     });
   }
 
