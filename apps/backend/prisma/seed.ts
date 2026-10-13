@@ -1,12 +1,13 @@
 import { profissionais, servicos, Usuario } from '@uniflowabs/core';
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 import { seedMarketplaceTatuape } from './seeds/marketplace-tatuape.seed';
 import { seedHistoricoClientesOutubro } from './seeds/historico-clientes-outubro.seed';
 import { seedCatalogoMultissegmento } from './seeds/catalogo-multissegmento.seed';
 
 const prisma = new PrismaClient();
 const ESTABELECIMENTO_PADRAO_ID = 1;
-const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS ?? 'marcao@barberflowabs.app')
+const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS ?? 'milicofelix@gmail.com')
   .split(',')
   .map((email) => email.trim().toLowerCase())
   .filter(Boolean);
@@ -182,6 +183,26 @@ const planosAssinatura = [
 async function seed() {
   await seedPlanosAssinatura();
 
+  const senhaSuperAdmin = await bcrypt.hash('password', 10);
+  await prisma.usuario.upsert({
+    where: { email: 'milicofelix@gmail.com' },
+    update: {
+      nome: 'Adriano Freitas',
+      senha: senhaSuperAdmin,
+      estabelecimentoId: null,
+      membroEstabelecimento: false,
+      papel: 'SUPER_ADMIN',
+    },
+    create: {
+      nome: 'Adriano Freitas',
+      email: 'milicofelix@gmail.com',
+      senha: senhaSuperAdmin,
+      estabelecimentoId: null,
+      membroEstabelecimento: false,
+      papel: 'SUPER_ADMIN',
+    },
+  });
+
   await prisma.estabelecimento.upsert({
     where: { id: ESTABELECIMENTO_PADRAO_ID },
     update: {
@@ -276,15 +297,6 @@ async function seed() {
   const senha = senhaPadrao;
 
   const usuarios: Array<Usuario & { estabelecimentoId?: number | null }> = [
-    {
-      nome: 'Administrador Barber Flow ABS',
-      estabelecimentoId: null,
-      email: 'marcao@barberflowabs.app',
-      senha,
-      telefone: '(11) 99999-9999',
-      membroEstabelecimento: false,
-      papel: 'SUPER_ADMIN',
-    },
     {
       nome: 'Leonardo Leitão',
       estabelecimentoId: ESTABELECIMENTO_PADRAO_ID,

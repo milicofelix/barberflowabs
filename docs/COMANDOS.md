@@ -526,6 +526,18 @@ docker compose exec -T app sh -lc 'cd apps/mobile && npx expo install expo-conta
 
 Instala a versao de `expo-contacts` compativel com o SDK Expo do aplicativo. Como o pacote altera configuracoes nativas de permissao, e necessario gerar um novo development build para validar fora do Expo Go.
 
+## Banco UniFlow ABS
+
+### Criar o database e conceder acesso ao usuario da aplicacao
+
+```bash
+docker exec infra-mysql-1 sh -lc 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" -e "CREATE DATABASE IF NOT EXISTS uniflow_abs CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; GRANT ALL PRIVILEGES ON uniflow_abs.* TO '\''barberflow'\''@'\''%'\''; FLUSH PRIVILEGES;"'
+```
+
+Cria o database `uniflow_abs` no MySQL compartilhado e permite que o usuario ja utilizado pelo backend acesse somente esse database. A senha administrativa e lida de dentro do container e nao e exibida no comando.
+
+Depois de alterar `DATABASE_URL`, recrie o servico `app`, aplique as migrations e execute o seed usando os comandos ja documentados nas secoes Docker, Prisma e Seed.
+
 ## Limpezas Destrutivas
 
 Comandos de remocao de `node_modules`, lockfiles, volumes ou dados nao ficam prontos para copiar nesta secao. A necessidade e o alvo devem ser diagnosticados primeiro para evitar apagar dependencias ou dados de outros projetos que compartilham a infraestrutura.

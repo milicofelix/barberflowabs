@@ -30,10 +30,15 @@ export function ProvedorSessao(props: any) {
     const [sessao, setSessao] = useState<Sessao>({ token: null, usuario: null })
 
     const carregarSessao = useCallback(async function () {
+        const sessaoLocal = obterSessao()
         try {
             setCarregando(true)
-            const sessao = obterSessao()
-            const tokenAtualizado = sessao.token ? await renovarToken(sessao.token) : null
+            if (!sessaoLocal.token) {
+                setSessao({ token: null, usuario: null })
+                return
+            }
+
+            const tokenAtualizado = await renovarToken(sessaoLocal.token)
 
             if (tokenAtualizado) {
                 cookie.set(nomeCookie, tokenAtualizado, { expires: 1 })
@@ -41,7 +46,10 @@ export function ProvedorSessao(props: any) {
                 return
             }
 
-            setSessao(sessao)
+            encerrarSessao()
+        } catch {
+            // Uma falha de rede não invalida uma sessão local ainda não expirada.
+            setSessao(sessaoLocal)
         } finally {
             setCarregando(false)
         }
@@ -107,18 +115,13 @@ export function ProvedorSessao(props: any) {
 
     async function renovarToken(token: string) {
         if (!URL_BASE) return null
-
-        try {
-            const resposta = await fetch(`${URL_BASE}/auth/refresh`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token }),
-            })
-            const texto = await resposta.text()
-            return resposta.ok && texto ? texto : null
-        } catch (e) {
-            return null
-        }
+        const resposta = await fetch(`${URL_BASE}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token }),
+        })
+        const texto = await resposta.text()
+        return resposta.ok && texto ? texto : null
     }
 
     return (

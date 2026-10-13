@@ -10,9 +10,9 @@ services:
     stdin_open: true
     environment:
       NODE_ENV: development
-      DATABASE_URL: ${DATABASE_URL:-mysql://barberflow:barberflow@infra-mysql-1:3306/barberflow_abs}
+      DATABASE_URL: ${DATABASE_URL:-mysql://barberflow:barberflow@infra-mysql-1:3306/uniflow_abs}
       JWT_SECRET: ${JWT_SECRET:-barberflow_abs_dev_secret}
-      SUPER_ADMIN_EMAILS: ${SUPER_ADMIN_EMAILS:-marcao@barberflowabs.app}
+      SUPER_ADMIN_EMAILS: ${SUPER_ADMIN_EMAILS:-milicofelix@gmail.com}
       NOTIFICACOES_WORKER_ATIVO: ${NOTIFICACOES_WORKER_ATIVO:-true}
       NOTIFICACOES_WORKER_INTERVALO_MS: ${NOTIFICACOES_WORKER_INTERVALO_MS:-5000}
       NOTIFICACOES_CALLBACK_SECRET: ${NOTIFICACOES_CALLBACK_SECRET:-uniflow-simulado-local}

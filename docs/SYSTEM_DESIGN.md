@@ -45,7 +45,7 @@ Banco alvo: MySQL.
 `DATABASE_URL` padrao:
 
 ```text
-mysql://barberflow:barberflow@infra-mysql-1:3306/barberflow_abs
+mysql://barberflow:barberflow@infra-mysql-1:3306/uniflow_abs
 ```
 
 Como o MySQL e compartilhado e o usuario pode nao ter permissao de criar databases, usar:
