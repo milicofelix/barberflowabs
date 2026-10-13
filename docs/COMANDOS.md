@@ -465,6 +465,16 @@ git diff --check
 
 Detecta espacos no fim das linhas e marcadores de conflito nas alteracoes locais sem executar testes ou build.
 
+## Recuperacao De Acesso Do Responsavel Principal
+
+### Restaurar o proprietario do estabelecimento Jay Black
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && node -e "const {PrismaClient}=require(\"@prisma/client\"); const p=new PrismaClient(); const permissoes=[\"EQUIPE_GERENCIAR\",\"ESCALAS_GERENCIAR\",\"RECURSOS_GERENCIAR\",\"AGENDA_GERENCIAR\",\"FINANCEIRO_VISUALIZAR\",\"FINANCEIRO_GERENCIAR\",\"FINANCEIRO_AUDITAR\",\"RELACIONAMENTO_VISUALIZAR\",\"RELACIONAMENTO_GERENCIAR\",\"CONFIGURACOES_GERENCIAR\"]; p.\$transaction([p.usuario.update({where:{email: \"jay.black@gmail.com\"},data:{papel:\"ESTABLISHMENT_OWNER\",membroEstabelecimento:true,estabelecimentoId:2}}),p.membroEquipe.update({where:{id:4},data:{papel:\"GESTOR\",ativo:true,permissoes}})]).then(()=>console.log(\"Acesso restaurado\")).finally(()=>p.\$disconnect());"'
+```
+
+Recupera especificamente a conta principal do estabelecimento `Jay Black` (ID 2), restaurando o papel de proprietario, o vinculo de gestor ativo e todas as permissoes. Use apenas para reparar esse mesmo cadastro; os IDs nao sao genericos.
+
 ### Criar commit pelo alias do projeto
 
 ```bash

@@ -43,12 +43,15 @@ export function MembrosEquipe({ membros, usuarios, profissionais, salvar, criarP
             <Pressable onPress={() => setPermissoes([])}><Text style={styles.atalhoRemover}>Remover todas</Text></Pressable>
         </View></View><View style={styles.chips}>{PERMISSOES.map((item) => <Chip key={item.id} nome={item.nome} ativo={permissoes.includes(item.id)} acao={() => alternar(item.id)} />)}</View>
         <Botao texto="Adicionar membro" acao={submeter} desabilitado={!usuarioId} />
-    </View>{membros.map((item) => <View key={item.id} style={[styles.bloco, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
+    </View>{membros.map((item) => {
+        const responsavelPrincipal = item.usuario.papel === 'ESTABLISHMENT_OWNER'
+        return <View key={item.id} style={[styles.bloco, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
         <Text style={[styles.nome, { color: cores.texto }]}>{item.usuario.nome}</Text><Text style={[styles.texto, { color: cores.textoSecundario }]}>{item.papel} · {item.profissional?.nome ?? 'Sem perfil profissional'}</Text>
+        {responsavelPrincipal ? <Text style={styles.protegido}>Responsável principal · acesso total protegido</Text> : null}
         <Text style={[styles.texto, { color: cores.textoSecundario }]}>{item.permissoes.map((id) => PERMISSOES.find((p) => p.id === id)?.nome ?? id).join(' · ') || 'Sem permissões operacionais'}</Text>
         {!item.profissional ? <VincularPerfil membro={item} profissionais={profissionais.filter((profissional) => !membros.some((membro) => membro.profissionalId === profissional.id))} salvar={salvar} criarPerfil={criarPerfil} /> : null}
-        <Pressable onPress={() => removerMembro(item)} style={styles.botaoRemover}><Text style={styles.botaoRemoverTexto}>Remover membro</Text></Pressable>
-    </View>)}</View>
+        {!responsavelPrincipal ? <Pressable onPress={() => removerMembro(item)} style={styles.botaoRemover}><Text style={styles.botaoRemoverTexto}>Remover membro</Text></Pressable> : null}
+    </View>})}</View>
 }
 
 function VincularPerfil({ membro, profissionais, salvar, criarPerfil }: {
@@ -95,6 +98,6 @@ function Chip({ nome, ativo, acao }: { nome: string; ativo: boolean; acao: () =>
 function Botao({ texto, acao, desabilitado }: { texto: string; acao: () => void; desabilitado?: boolean }) { return <Pressable disabled={desabilitado} onPress={acao} style={[styles.botao, desabilitado && styles.desabilitado]}><Text style={styles.botaoTexto}>{texto}</Text></Pressable> }
 
 const styles = StyleSheet.create({
-    lista: { gap: 10 }, bloco: { borderWidth: 1, borderRadius: 14, padding: 14, gap: 9 }, subtitulo: { fontSize: 17, fontWeight: '900' }, nome: { fontSize: 15, fontWeight: '800' }, texto: { lineHeight: 19 }, aviso: { fontSize: 12, lineHeight: 17 }, vinculo: { gap: 7, marginTop: 4 }, rotulo: { fontSize: 12, fontWeight: '700', marginTop: 3 }, cabecalhoPermissoes: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8 }, atalhosPermissoes: { flexDirection: 'row', gap: 12 }, atalhoPermissao: { color: '#2563EB', fontSize: 12, fontWeight: '800' }, atalhoRemover: { color: '#B42318', fontSize: 12, fontWeight: '800' }, chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 }, chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7 }, campos: { gap: 6 }, botao: { minHeight: 44, borderRadius: 10, backgroundColor: '#E7B84B', alignItems: 'center', justifyContent: 'center', marginTop: 4 }, botaoTexto: { color: '#081426', fontWeight: '900' }, botaoRemover: { minHeight: 42, borderWidth: 1, borderColor: '#B42318', borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 5 }, botaoRemoverTexto: { color: '#B42318', fontWeight: '900' }, desabilitado: { opacity: .45 },
+    lista: { gap: 10 }, bloco: { borderWidth: 1, borderRadius: 14, padding: 14, gap: 9 }, subtitulo: { fontSize: 17, fontWeight: '900' }, nome: { fontSize: 15, fontWeight: '800' }, texto: { lineHeight: 19 }, protegido: { color: '#2563EB', fontSize: 12, fontWeight: '900' }, aviso: { fontSize: 12, lineHeight: 17 }, vinculo: { gap: 7, marginTop: 4 }, rotulo: { fontSize: 12, fontWeight: '700', marginTop: 3 }, cabecalhoPermissoes: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 8 }, atalhosPermissoes: { flexDirection: 'row', gap: 12 }, atalhoPermissao: { color: '#2563EB', fontSize: 12, fontWeight: '800' }, atalhoRemover: { color: '#B42318', fontSize: 12, fontWeight: '800' }, chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 }, chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 7 }, campos: { gap: 6 }, botao: { minHeight: 44, borderRadius: 10, backgroundColor: '#E7B84B', alignItems: 'center', justifyContent: 'center', marginTop: 4 }, botaoTexto: { color: '#081426', fontWeight: '900' }, botaoRemover: { minHeight: 42, borderWidth: 1, borderColor: '#B42318', borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 5 }, botaoRemoverTexto: { color: '#B42318', fontWeight: '900' }, desabilitado: { opacity: .45 },
 })
 

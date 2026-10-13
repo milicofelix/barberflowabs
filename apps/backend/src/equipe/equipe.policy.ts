@@ -38,6 +38,46 @@ export class EquipePolicy {
     }
   }
 
+  async validarAtualizacaoMembroProtegido(
+    membroId: number,
+    estabelecimentoId: number,
+    dados: SalvarMembroEquipeDto,
+  ) {
+    const membro = await this.obterMembroProtegido(membroId, estabelecimentoId);
+    if (!membro) return;
+
+    const manteveTodasPermissoes = PERMISSOES_EQUIPE.every((permissao) =>
+      dados.permissoes.includes(permissao),
+    );
+    const preservouResponsavel = Number(dados.usuarioId) === membro.usuarioId
+      && dados.papel === 'GESTOR'
+      && dados.ativo !== false
+      && manteveTodasPermissoes;
+
+    if (!preservouResponsavel) {
+      throw new ForbiddenException(
+        'O responsável principal deve permanecer como gestor ativo e com todas as permissões',
+      );
+    }
+  }
+
+  async validarRemocaoMembroProtegido(membroId: number, estabelecimentoId: number) {
+    if (await this.obterMembroProtegido(membroId, estabelecimentoId)) {
+      throw new ForbiddenException('O responsável principal não pode ser removido da equipe');
+    }
+  }
+
+  private async obterMembroProtegido(membroId: number, estabelecimentoId: number) {
+    return (this.prisma as any).membroEquipe.findFirst({
+      where: {
+        id: membroId,
+        estabelecimentoId,
+        usuario: { papel: 'ESTABLISHMENT_OWNER' },
+      },
+      select: { usuarioId: true },
+    });
+  }
+
   validarEscalas(escalas: SalvarEscalaDto[]) {
     if (!Array.isArray(escalas)) throw new BadRequestException('Escalas são obrigatórias');
     escalas.forEach((escala) => {

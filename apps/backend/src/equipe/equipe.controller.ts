@@ -38,6 +38,7 @@ export class EquipeController {
     validarNumeroInteiroPositivo(id, 'Membro');
     await this.policy.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
     this.policy.validarMembro(dados);
+    await this.policy.validarAtualizacaoMembroProtegido(Number(id), usuario.estabelecimentoId, dados);
     return this.repo.atualizar(Number(id), usuario.estabelecimentoId, dados);
   }
 
@@ -45,6 +46,7 @@ export class EquipeController {
   async remover(@Param('id') id: string, @UsuarioLogado() usuario: any) {
     validarNumeroInteiroPositivo(id, 'Membro');
     await this.policy.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
+    await this.policy.validarRemocaoMembroProtegido(Number(id), usuario.estabelecimentoId);
     return this.repo.remover(Number(id), usuario.estabelecimentoId);
   }
 

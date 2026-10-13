@@ -10,7 +10,7 @@ export class EquipePrisma {
     return (this.prisma as any).membroEquipe.findMany({
       where: { estabelecimentoId },
       include: {
-        usuario: { select: { id: true, nome: true, email: true, telefone: true } },
+        usuario: { select: { id: true, nome: true, email: true, telefone: true, papel: true } },
         profissional: { select: { id: true, nome: true, imagemURL: true } },
       },
       orderBy: [{ ativo: 'desc' }, { papel: 'asc' }],
