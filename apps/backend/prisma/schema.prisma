@@ -654,7 +654,7 @@ model ImportacaoContatoLote {
   operador           Usuario @relation("ImportacaoContatoOperador", fields: [operadorId], references: [id])
   itens              ImportacaoContatoItem[]
 
-  @@unique([estabelecimentoId, chaveIdempotencia])
+  @@unique([estabelecimentoId, chaveIdempotencia], map: "import_contatos_lote_tenant_chave_uq")
   @@index([estabelecimentoId, createdAt])
   @@index([operadorId])
   @@map("importacoes_contatos_lotes")

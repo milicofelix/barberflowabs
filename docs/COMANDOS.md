@@ -318,6 +318,15 @@ Aplica, em ordem, somente as migrations versionadas que ainda estao pendentes. A
 
 Na canonicalizacao da Etapa 7, esse comando aplica primeiro a capacidade operacional da Etapa 6 e depois renomeia tabelas, colunas e papeis para o vocabulario de `estabelecimento`. Faça backup antes: essa mudanca remove os aliases tecnicos antigos e exige que backend, web e mobile sejam atualizados juntos.
 
+### Recuperar especificamente a migration de importacao de contatos
+
+```bash
+awk '/^CREATE TABLE `importacoes_contatos_lotes`/{emit=1} emit' apps/backend/prisma/migrations/20261013020000_add_contact_import_domain/migration.sql | docker compose exec -T -w /workspace/barberFlowABS/apps/backend app npx prisma db execute --stdin --schema prisma/schema.prisma
+docker compose exec -T app sh -lc 'cd apps/backend && npx prisma migrate resolve --applied 20261013020000_add_contact_import_domain'
+```
+
+Procedimento excepcional usado para recuperar a falha `P3009/P2021` causada pelo nome de indice maior que o limite de 64 caracteres do MySQL. O primeiro comando aplica somente as tabelas e chaves que ficaram pendentes; o segundo registra a migration como aplicada. Nao execute em outro banco sem confirmar antes que as colunas `emailContato`, `emailTecnico`, `telefoneNormalizado` e o indice de telefone ja existem, enquanto as tabelas de importacao ainda nao existem.
+
 ### Gerar o Prisma Client
 
 ```bash

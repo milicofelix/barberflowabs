@@ -4,7 +4,8 @@ import useAPI, { mensagemDoErro } from '@/src/data/hooks/useAPI'
 import useContatosDispositivo from '@/src/data/hooks/useContatosDispositivo'
 import type { ContatoDispositivo } from '@/src/data/contatos/contatosDispositivo'
 import { useMemo, useState } from 'react'
-import { FlatList, Modal, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 type Resultado = 'NOVO' | 'JA_VINCULADO' | 'POSSIVEL_DUPLICADO' | 'INVALIDO' | 'CONFLITO' | 'IMPORTADO'
 interface ItemPrevia { referencia: string; resultado: Resultado; motivo?: string | null }

@@ -20,7 +20,7 @@ CREATE TABLE `importacoes_contatos_lotes` (
     `confirmadoEm` DATETIME(3) NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
-    UNIQUE INDEX `importacoes_contatos_lotes_estabelecimentoId_chaveIdempotencia_key`(`estabelecimentoId`, `chaveIdempotencia`),
+    UNIQUE INDEX `import_contatos_lote_tenant_chave_uq`(`estabelecimentoId`, `chaveIdempotencia`),
     INDEX `importacoes_contatos_lotes_estabelecimentoId_createdAt_idx`(`estabelecimentoId`, `createdAt`),
     INDEX `importacoes_contatos_lotes_operadorId_idx`(`operadorId`),
     PRIMARY KEY (`id`)
