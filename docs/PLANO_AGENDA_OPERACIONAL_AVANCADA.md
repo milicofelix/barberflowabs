@@ -1,6 +1,6 @@
 # Plano — Agenda Operacional Avancada
 
-Status: Fases 1 e 2 implementadas; operacao avancada da agenda pendente.
+Status: Fases 1, 2 e 3 implementadas; agendamento assistido completo pendente.
 
 ## Objetivo
 
@@ -47,17 +47,26 @@ Substituir progressivamente a lista diaria da Gestao Diaria por uma agenda opera
 - Recursos utilizados: modos `day`, `3days`, `week` e `schedule`, indicador do horario atual, gesto lateral, temas e eventos customizaveis.
 - A biblioteca fica isolada em `AgendaCalendario`; telas e contratos nao importam sua API diretamente.
 - A agenda limita cada consulta a sua janela visivel e usa os contratos paginados da Fase 1.
-- Arrastar e soltar nao integra esta fase: a linha v4 estavel nao oferece o recurso nativamente. A operacao sera avaliada separadamente na Fase 3, sem adotar a linha v5 experimental descontinuada.
-- Colunas por profissional/recurso pertencem a Fase 3 e serao compostas fora da biblioteca caso a prova operacional confirme essa necessidade.
+- Arrastar e soltar nao integra a fundacao: a linha v4 estavel nao oferece o recurso nativamente e a Fase 3 confirmou a manutencao do fluxo assistido seguro.
+- Colunas/focos por profissional e recurso sao compostos fora da biblioteca, mantendo a dependencia encapsulada.
 
 ## Fase 3 — Operacao De Agenda
 
-- [ ] Exibir profissionais ou recursos em colunas configuraveis.
-- [ ] Abrir detalhes do agendamento sem sair do calendario.
-- [ ] Criar, confirmar, realizar check-in, concluir, cancelar e marcar ausencia.
-- [ ] Reagendar por fluxo assistido e, quando seguro, por arrastar e soltar.
-- [ ] Destacar conflitos, bloqueios, intervalos, preparacao e atendimento domiciliar.
-- [ ] Impedir visualmente qualquer movimento invalido antes de enviar ao backend.
+- [x] Exibir profissionais ou recursos em colunas/focos configuraveis.
+- [x] Abrir detalhes do agendamento sem sair do calendario.
+- [x] Criar pelo fluxo operacional existente, confirmar, realizar check-in, concluir, cancelar e marcar ausencia.
+- [x] Reagendar por fluxo assistido; arrastar e soltar permanece desabilitado enquanto a biblioteca estavel nao permitir validacao segura.
+- [x] Destacar conflitos, bloqueios, intervalos, preparacao e atendimento domiciliar.
+- [x] Impedir movimentos invalidos com pre-validacao no motor universal antes do reagendamento.
+
+### Operacao entregue
+
+- Filtros por profissional, recurso e status consultam novamente somente a janela visivel.
+- Preparacao, deslocamento, atendimento, bloqueios gerais e indisponibilidades de recursos possuem faixas e legenda proprias.
+- O detalhe no calendario apresenta cliente, profissional, servicos, unidade, modalidade e acoes validas para o status atual.
+- Mudancas de status exigem confirmacao e respeitam a sequencia operacional: agendado, confirmado, check-in e concluido.
+- O reagendamento informa data, horario e motivo, consulta disponibilidade ignorando apenas a propria reserva e somente depois chama o comando transacional.
+- A inclusao de novos agendamentos continua disponivel pelo fluxo operacional de agendamento assistido; sua ampliacao pertence a Fase 4.
 
 ## Fase 4 — Agendamento Assistido Completo
 

@@ -27,6 +27,7 @@ export interface ConsultarDisponibilidadeDto {
   modeloAtendimento?: ModeloAtendimento;
   enderecoAtendimento?: string | null;
   deslocamentoMinutos?: number;
+  agendamentoIgnoradoId?: number;
 }
 
 export interface ServicoAgenda {

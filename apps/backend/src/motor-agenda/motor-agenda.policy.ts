@@ -20,6 +20,9 @@ export class MotorAgendaPolicy {
     this.validarId(dados?.profissionalId, 'Profissional');
     this.validarIds(dados?.servicoIds, 'Serviços');
     this.validarDeslocamento(dados?.deslocamentoMinutos);
+    if (dados?.agendamentoIgnoradoId !== undefined) {
+      this.validarId(dados.agendamentoIgnoradoId, 'Agendamento ignorado');
+    }
   }
 
   validarModelo(

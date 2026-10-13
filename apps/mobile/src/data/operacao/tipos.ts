@@ -13,10 +13,32 @@ export interface AgendamentoOperacional {
     data: string
     status: string
     valorTotal: number
-    usuario?: { nome: string }
+    usuario?: { id?: number; nome: string; email?: string; telefone?: string }
     profissional?: { id: number; nome: string }
-    servicos?: Array<{ nome: string }>
+    unidade?: { id: number; nome: string } | null
+    servicos?: Array<{ id: number; nome: string }>
+    recursos?: Array<{ recursoId?: number; recurso?: { id: number; nome: string; tipo: string } }>
+    modeloAtendimento?: ModeloAtendimentoServico
+    enderecoAtendimento?: string | null
+    deslocamentoMinutos?: number
     periodos?: PeriodosAgendamentoOperacional
+}
+
+export interface RestricaoAgendaOperacional {
+    id: string
+    tipo: 'BLOQUEIO' | 'RECURSO_INDISPONIVEL'
+    inicio: string
+    fim: string
+    motivo: string
+    profissional?: { id: number; nome: string } | null
+    unidade?: { id: number; nome: string } | null
+    recurso?: { id: number; nome: string; tipo: string } | null
+}
+
+export interface FiltrosAgendaOperacional {
+    profissionalId: number | null
+    recursoId: number | null
+    status: string | null
 }
 
 export interface PeriodoOperacional { inicio: string; fim: string }
@@ -40,6 +62,7 @@ export interface RespostaAgendaOperacional {
     }
     pagina: { limite: number; temMais: boolean; proximoCursor: string | null }
     itens: AgendamentoOperacional[]
+    restricoes: RestricaoAgendaOperacional[]
 }
 
 export interface ProfissionalOperacional {

@@ -1,10 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
 
 const STATUS_ATENDIDOS = ['CONCLUIDO'];
 const PERCENTUAL_COMISSAO_PADRAO = 40;
 const DIAS_RETORNO_RISCO = 45;
 const DIAS_ANIVERSARIO = 30;
+const TRANSICOES_AGENDAMENTO: Record<string, string[]> = {
+  AGENDADO: ['CONFIRMADO', 'CANCELADO', 'NO_SHOW'],
+  CONFIRMADO: ['CHECKIN', 'CANCELADO', 'NO_SHOW'],
+  CHECKIN: ['CONCLUIDO', 'CANCELADO', 'NO_SHOW'],
+  CONCLUIDO: [], CANCELADO: [], NO_SHOW: [],
+};
 
 @Injectable()
 export class GestaoPrisma {
@@ -254,10 +260,24 @@ export class GestaoPrisma {
   async atualizarStatusAgendamento(id: number, estabelecimentoId: number, status: string) {
     const agendamento = await this.prisma.agendamento.findFirst({
       where: { id, estabelecimentoId },
-      select: { id: true },
+      select: { id: true, status: true, data: true },
     });
 
     if (!agendamento) return null;
+    if (agendamento.status === status) return this.prisma.agendamento.findUnique({
+      where: { id },
+      include: {
+        usuario: { select: { id: true, nome: true, email: true, telefone: true } },
+        profissional: { select: { id: true, nome: true } },
+        servicos: { select: { id: true, nome: true, preco: true, qtdeSlots: true } },
+      },
+    });
+    if (!(TRANSICOES_AGENDAMENTO[agendamento.status] ?? []).includes(status)) {
+      throw new BadRequestException(`Não é possível alterar de ${agendamento.status} para ${status}`);
+    }
+    if (status === 'NO_SHOW' && agendamento.data.getTime() > Date.now()) {
+      throw new BadRequestException('Ausência só pode ser registrada após o início do atendimento');
+    }
 
     return this.prisma.agendamento.update({
       where: { id },

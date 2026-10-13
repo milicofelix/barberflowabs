@@ -40,7 +40,8 @@ export class AgendaOperacionalService {
     });
     const fusoHorario = estabelecimento?.fusoHorario ?? process.env.APP_TIME_ZONE ?? 'America/Sao_Paulo';
 
-    const agendamentos = await (this.prisma as any).agendamento.findMany({
+    const [agendamentos, bloqueios, indisponibilidadesRecursos] = await Promise.all([
+      (this.prisma as any).agendamento.findMany({
       where: {
         estabelecimentoId,
         AND: [
@@ -68,7 +69,33 @@ export class AgendaOperacionalService {
       },
       orderBy: [{ data: 'asc' }, { id: 'asc' }],
       take: limite + 1,
-    });
+      }),
+      (this.prisma as any).bloqueioAgenda.findMany({
+        where: {
+          estabelecimentoId,
+          inicio: { lt: fim },
+          fim: { gt: inicio },
+          ...(filtros.unidadeId ? { OR: [{ unidadeId: null }, { unidadeId: filtros.unidadeId }] } : {}),
+          ...(filtros.profissionalId ? { OR: [{ profissionalId: null }, { profissionalId: filtros.profissionalId }] } : {}),
+        },
+        include: {
+          profissional: { select: { id: true, nome: true } },
+          unidade: { select: { id: true, nome: true } },
+        },
+        orderBy: { inicio: 'asc' },
+      }),
+      (this.prisma as any).indisponibilidadeRecurso.findMany({
+        where: {
+          estabelecimentoId,
+          ativo: true,
+          inicio: { lt: fim },
+          fim: { gt: inicio },
+          ...(filtros.recursoId ? { recursoId: filtros.recursoId } : {}),
+        },
+        include: { recurso: { select: { id: true, nome: true, tipo: true } } },
+        orderBy: { inicio: 'asc' },
+      }),
+    ]);
 
     const temMais = agendamentos.length > limite;
     const itens = agendamentos.slice(0, limite).map((agendamento: any) => this.normalizar(agendamento));
@@ -83,6 +110,28 @@ export class AgendaOperacionalService {
         proximoCursor: ultimo ? this.codificarCursor({ data: ultimo.data, id: ultimo.id }) : null,
       },
       itens,
+      restricoes: [
+        ...bloqueios.map((item: any) => ({
+          id: `bloqueio:${item.id}`,
+          tipo: 'BLOQUEIO',
+          inicio: item.inicio.toISOString(),
+          fim: item.fim.toISOString(),
+          motivo: item.motivo ?? 'Agenda bloqueada',
+          profissional: item.profissional,
+          unidade: item.unidade,
+          recurso: null,
+        })),
+        ...indisponibilidadesRecursos.map((item: any) => ({
+          id: `recurso:${item.id}`,
+          tipo: 'RECURSO_INDISPONIVEL',
+          inicio: item.inicio.toISOString(),
+          fim: item.fim.toISOString(),
+          motivo: item.motivo ?? 'Recurso indisponível',
+          profissional: null,
+          unidade: null,
+          recurso: item.recurso,
+        })),
+      ],
     };
   }
 

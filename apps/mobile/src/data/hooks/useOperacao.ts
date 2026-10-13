@@ -2,6 +2,7 @@ import type {
     AgendamentoOperacional, DashboardOperacional, EscalaProfissional, IndisponibilidadeRecurso, MembroEquipe,
     PermissaoEquipe, ProfissionalOperacional, RecursoOperacional, UsuarioEquipe,
     RespostaAgendaOperacional, VisualizacaoAgenda,
+    FiltrosAgendaOperacional, RestricaoAgendaOperacional,
 } from '../operacao/tipos'
 import useAPI, { mensagemDoErro } from './useAPI'
 import { useCallback, useEffect, useState } from 'react'
@@ -26,10 +27,14 @@ const intervaloDaAgenda = (data: string, visualizacao: VisualizacaoAgenda) => {
     return { inicio: inicio.toISOString(), fim: fim.toISOString() }
 }
 
+const filtrosIniciais: FiltrosAgendaOperacional = { profissionalId: null, recursoId: null, status: null }
+
 export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'day') {
     const { httpDelete, httpGet, httpPost, httpPut } = useAPI()
     const [dashboard, setDashboard] = useState<DashboardOperacional | null>(null)
     const [agendamentos, setAgendamentos] = useState<AgendamentoOperacional[]>([])
+    const [restricoesAgenda, setRestricoesAgenda] = useState<RestricaoAgendaOperacional[]>([])
+    const [filtrosAgenda, setFiltrosAgenda] = useState<FiltrosAgendaOperacional>(filtrosIniciais)
     const [profissionais, setProfissionais] = useState<ProfissionalOperacional[]>([])
     const [membros, setMembros] = useState<MembroEquipe[]>([])
     const [usuariosDisponiveis, setUsuariosDisponiveis] = useState<UsuarioEquipe[]>([])
@@ -47,20 +52,24 @@ export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'da
             setPermissoes(acessos)
             const pode = (permissao: PermissaoEquipe) => acessos.includes(permissao)
             const periodo = intervaloDaAgenda(data, visualizacaoAgenda)
+            const parametrosAgenda = new URLSearchParams({ inicio: periodo.inicio, fim: periodo.fim })
+            if (filtrosAgenda.profissionalId) parametrosAgenda.set('profissionalId', String(filtrosAgenda.profissionalId))
+            if (filtrosAgenda.recursoId) parametrosAgenda.set('recursoId', String(filtrosAgenda.recursoId))
+            if (filtrosAgenda.status) parametrosAgenda.set('status', filtrosAgenda.status)
             const [resumo, agenda, equipe, membrosEquipe, usuarios, recursosEquipe] = await Promise.all([
                 pode('AGENDA_GERENCIAR') ? httpGet<DashboardOperacional>('/gestao/dashboard') : Promise.resolve(null),
                 pode('AGENDA_GERENCIAR')
-                    ? httpGet<RespostaAgendaOperacional>(`/gestao/agenda?inicio=${encodeURIComponent(periodo.inicio)}&fim=${encodeURIComponent(periodo.fim)}`)
+                    ? httpGet<RespostaAgendaOperacional>(`/gestao/agenda?${parametrosAgenda.toString()}`)
                     : Promise.resolve(null),
                 httpGet<ProfissionalOperacional[]>('/profissionais'),
                 pode('EQUIPE_GERENCIAR') ? httpGet<MembroEquipe[]>('/equipe') : Promise.resolve([]),
                 pode('EQUIPE_GERENCIAR') ? httpGet<UsuarioEquipe[]>('/equipe/usuarios-disponiveis') : Promise.resolve([]),
                 pode('RECURSOS_GERENCIAR') ? httpGet<RecursoOperacional[]>('/recursos') : Promise.resolve([]),
             ])
-            setDashboard(resumo); setAgendamentos(agenda?.itens ?? []); setFusoHorario(agenda?.periodo.fusoHorario ?? 'America/Sao_Paulo'); setProfissionais(equipe)
+            setDashboard(resumo); setAgendamentos(agenda?.itens ?? []); setRestricoesAgenda(agenda?.restricoes ?? []); setFusoHorario(agenda?.periodo.fusoHorario ?? 'America/Sao_Paulo'); setProfissionais(equipe)
             setMembros(membrosEquipe); setUsuariosDisponiveis(usuarios); setRecursos(recursosEquipe)
         } catch (e) { setErro(mensagemDoErro(e)) } finally { setCarregando(false) }
-    }, [data, httpGet, visualizacaoAgenda])
+    }, [data, filtrosAgenda.profissionalId, filtrosAgenda.recursoId, filtrosAgenda.status, httpGet, visualizacaoAgenda])
 
     useEffect(() => { carregar() }, [carregar])
 
@@ -78,6 +87,32 @@ export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'da
 
     async function alterarStatus(id: number, status: string) {
         return executarAcao(() => httpPut(`/gestao/agendamentos/${id}/status`, { status }))
+    }
+    async function reagendar(item: AgendamentoOperacional, novaData: string, motivo?: string) {
+        if (!item.profissional?.id || !item.servicos?.length) {
+            setErro('O agendamento não possui profissional e serviços suficientes para reagendar.')
+            return false
+        }
+        return executarAcao(async () => {
+            const disponibilidade = await httpPost<{ disponivel: boolean; motivo?: string }>('/agenda/disponibilidade', {
+                data: novaData,
+                profissionalId: item.profissional!.id,
+                servicoIds: item.servicos!.map((servico) => servico.id),
+                unidadeId: item.unidade?.id ?? null,
+                modeloAtendimento: item.modeloAtendimento ?? 'PRESENCIAL',
+                enderecoAtendimento: item.enderecoAtendimento,
+                deslocamentoMinutos: item.deslocamentoMinutos ?? 0,
+                agendamentoIgnoradoId: item.id,
+            })
+            if (!disponibilidade.disponivel) throw new Error(disponibilidade.motivo ?? 'Horário indisponível')
+            await httpPut(`/agendamentos/${item.id}/reagendar`, {
+                data: novaData,
+                unidadeId: item.unidade?.id ?? null,
+                enderecoAtendimento: item.enderecoAtendimento,
+                deslocamentoMinutos: item.deslocamentoMinutos ?? 0,
+                motivo: motivo?.trim() || null,
+            })
+        })
     }
     async function criarProfissional(dados: Omit<ProfissionalOperacional, 'id'>) {
         return executarAcao(() => httpPost('/profissionais', { ...dados, avaliacao: 5, quantidadeAvaliacoes: 0 }))
@@ -112,8 +147,8 @@ export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'da
     const removerIndisponibilidade = (recursoId: number, id: number) => executarAcao(() => httpDelete(`/recursos/${recursoId}/indisponibilidades/${id}`))
 
     return {
-        dashboard, agendamentos, profissionais, membros, usuariosDisponiveis, recursos, permissoes, data, setData, fusoHorario, carregando, erro,
-        recarregar: carregar, alterarStatus, criarProfissional, salvarMembro, criarPerfilParaMembro, removerMembro,
+        dashboard, agendamentos, restricoesAgenda, filtrosAgenda, setFiltrosAgenda, profissionais, membros, usuariosDisponiveis, recursos, permissoes, data, setData, fusoHorario, carregando, erro,
+        recarregar: carregar, alterarStatus, reagendar, criarProfissional, salvarMembro, criarPerfilParaMembro, removerMembro,
         buscarEscalas, salvarEscalas, criarRecurso, buscarIndisponibilidades, indisponibilizarRecurso, removerIndisponibilidade,
     }
 }

@@ -71,7 +71,11 @@ export class MotorAgendaService {
       periodo.inicioOcupacao,
       periodo.fimOcupacao,
     );
-    const recursos = await this.disponibilidade.consultar(contexto, periodo);
+    const recursos = await this.disponibilidade.consultar(
+      contexto,
+      periodo,
+      dados.agendamentoIgnoradoId ? Number(dados.agendamentoIgnoradoId) : undefined,
+    );
     return { disponivel: true, periodo, recursos };
   }
 

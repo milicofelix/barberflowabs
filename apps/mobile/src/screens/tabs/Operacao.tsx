@@ -37,9 +37,10 @@ export default function Operacao({ navigation }: Props) {
                 <NavegacaoData data={dados.data} alterar={dados.setData} visualizacao={visualizacaoAgenda} />
                 {dados.erro ? <EstadoErro mensagem={dados.erro} tentarNovamente={dados.recarregar} /> : null}
                 {dados.carregando && !dados.dashboard ? <Carregando mensagem="Carregando operação..." /> : null}
-                {!dados.carregando ? <AgendaCalendario itens={dados.agendamentos} data={dados.data}
+                {!dados.carregando ? <AgendaCalendario itens={dados.agendamentos} restricoes={dados.restricoesAgenda}
+                    profissionais={dados.profissionais} recursos={dados.recursos} filtros={dados.filtrosAgenda} alterarFiltros={dados.setFiltrosAgenda} data={dados.data}
                     visualizacao={visualizacaoAgenda} alterarVisualizacao={setVisualizacaoAgenda} alterarData={dados.setData}
-                    alterarStatus={dados.alterarStatus} fusoHorario={dados.fusoHorario} /> : null}
+                    alterarStatus={dados.alterarStatus} reagendar={dados.reagendar} fusoHorario={dados.fusoHorario} /> : null}
             </View>
         </SafeAreaView>
     }
