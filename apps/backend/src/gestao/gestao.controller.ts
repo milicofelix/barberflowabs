@@ -38,8 +38,10 @@ import { FinanceiroService } from 'src/financeiro/financeiro.service';
 import { MotorAgendaService } from 'src/motor-agenda/motor-agenda.service';
 import { ConflitoAgendaError } from 'src/motor-agenda/conflito-agenda.error';
 import { AgendaOperacionalService } from './agenda-operacional.service';
+import { randomUUID } from 'crypto';
 
 const STATUS_AGENDAMENTO = ['AGENDADO', 'CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW'];
+const ORIGENS_AGENDAMENTO_ASSISTIDO = ['RECEPCAO', 'TELEFONE', 'WHATSAPP', 'PRESENCIAL', 'OUTRO'];
 const TIPOS_LANCAMENTO = ['RECEITA', 'DESPESA'];
 const TIPOS_LEMBRETE = ['CONFIRMACAO', 'ANIVERSARIO', 'RETORNO', 'FIDELIDADE', 'CAMPANHA'];
 const CANAIS_LEMBRETE = ['WHATSAPP', 'EMAIL', 'TELEFONE'];
@@ -70,11 +72,11 @@ export class GestaoController {
 
   @Post('clientes')
   async criarCliente(@Body() dados: SalvarClienteDto, @UsuarioLogado() usuario: Usuario) {
-    await this.validarPermissao(usuario, 'EQUIPE_GERENCIAR');
-    this.validarCliente(dados, true);
+    await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
+    this.validarCliente(dados, false);
     return this.repo.criarCliente(usuario.estabelecimentoId, {
       ...dados,
-      senha: await this.cripto.criptografar(dados.senha!),
+      senha: await this.cripto.criptografar(dados.senha || randomUUID()),
     });
   }
 
@@ -143,9 +145,15 @@ export class GestaoController {
   }
 
   @Get('agendamentos/clientes')
-  async listarClientesParaAgendamento(@UsuarioLogado() usuario: Usuario) {
+  async listarClientesParaAgendamento(@Query('busca') busca: string | undefined, @UsuarioLogado() usuario: Usuario) {
     await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
-    return this.repo.listarClientesParaAgendamento(usuario.estabelecimentoId!);
+    return this.repo.listarClientesParaAgendamento(usuario.estabelecimentoId!, busca);
+  }
+
+  @Get('agendamentos/contexto')
+  async contextoAgendamentoAssistido(@UsuarioLogado() usuario: Usuario) {
+    await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
+    return this.repo.contextoAgendamentoAssistido(usuario.estabelecimentoId!);
   }
 
   @Post('agendamentos')
@@ -155,13 +163,20 @@ export class GestaoController {
   ) {
     await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
     validarNumeroInteiroPositivo(dados?.clienteId, 'Cliente');
+    if (dados.origem && !ORIGENS_AGENDAMENTO_ASSISTIDO.includes(dados.origem)) {
+      throw new BadRequestException('Origem do agendamento inválida');
+    }
     const cliente = await this.repo.obterClienteParaAgendamento(usuario.estabelecimentoId!, Number(dados.clienteId));
     if (!cliente) throw new NotFoundException('Cliente não está vinculado a este estabelecimento');
     try {
       return await this.motorAgenda.criar(usuario.estabelecimentoId!, {
         ...dados,
         usuario: { id: cliente.id },
-      }, cliente);
+      }, cliente, {
+        criadoPorId: usuario.id!,
+        origem: dados.origem ?? 'RECEPCAO',
+        observacoes: dados.observacoes,
+      });
     } catch (error: any) {
       if (error instanceof ConflictException) throw error;
       if (error instanceof ConflitoAgendaError) throw new ConflictException(error.message);

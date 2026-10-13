@@ -23,6 +23,8 @@ export interface CriarAgendamentoAssistidoDto {
   modeloAtendimento?: 'PRESENCIAL' | 'DOMICILIAR' | 'HIBRIDO';
   enderecoAtendimento?: string | null;
   deslocamentoMinutos?: number;
+  origem?: 'RECEPCAO' | 'TELEFONE' | 'WHATSAPP' | 'PRESENCIAL' | 'OUTRO';
+  observacoes?: string | null;
 }
 
 export interface CriarLancamentoFinanceiroDto {

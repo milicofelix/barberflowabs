@@ -11,6 +11,7 @@ export interface FormularioAgendamentoProps {
     finalizar: () => void
     titulo?: string
     labelAcao?: string
+    resumo?: React.ReactNode
 }
 
 export default function FormularioAgendamento(props: FormularioAgendamentoProps) {
@@ -36,6 +37,7 @@ export default function FormularioAgendamento(props: FormularioAgendamentoProps)
                 permiteProximoPasso={[!!profissional, servicos.length > 0, podeAgendar()]}
                 labelAcao={props.labelAcao ?? 'Confirmar'}
                 acao={props.finalizar}
+                rodapeUltimoPasso={props.resumo}
             >
                 <CampoProfissional value={profissional} onChange={selecionarProfissional} />
                 <CampoServicos value={servicos} onChange={selecionarServicos} />

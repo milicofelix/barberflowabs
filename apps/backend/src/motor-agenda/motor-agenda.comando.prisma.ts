@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
-import { ContextoAgenda } from './motor-agenda.dto';
+import { AuditoriaCriacaoAgendamento, ContextoAgenda } from './motor-agenda.dto';
 import { PeriodoAgenda } from './motor-agenda.calculador';
 import {
   AlocacaoRecurso,
@@ -22,6 +22,7 @@ export class MotorAgendaComandoPrisma {
     periodo: PeriodoAgenda;
     usuarioId: number;
     enderecoAtendimento?: string | null;
+    auditoria: AuditoriaCriacaoAgendamento;
   }) {
     return this.prisma.$transaction(async (transacao) => {
       const tx = transacao as any;
@@ -133,6 +134,9 @@ export class MotorAgendaComandoPrisma {
       modeloAtendimento: contexto.modeloAtendimento,
       enderecoAtendimento: params.enderecoAtendimento?.trim() || null,
       deslocamentoMinutos: periodo.deslocamentoMinutos,
+      criadoPorId: params.auditoria.criadoPorId,
+      origem: params.auditoria.origem,
+      observacoes: params.auditoria.observacoes?.trim() || null,
       status: 'AGENDADO',
       valorTotal: periodo.valorTotal,
       servicos: { connect: contexto.servicos.map((servico) => ({ id: servico.id })) },

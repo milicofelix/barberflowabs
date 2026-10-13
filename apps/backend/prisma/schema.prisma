@@ -22,6 +22,7 @@ model Usuario {
   papel        String        @default("CUSTOMER")
   estabelecimento    Estabelecimento?    @relation(fields: [estabelecimentoId], references: [id])
   agendamentos Agendamento[]
+  agendamentosCriados Agendamento[] @relation("AgendamentoCriadoPor")
   lancamentosFinanceiros LancamentoFinanceiro[]
   logsAuditoria LogAuditoria[]
   caixasAbertos FechamentoCaixa[] @relation("CaixaAbertoPor")
@@ -111,12 +112,16 @@ model Agendamento {
   enderecoAtendimento String? @db.Text
   deslocamentoMinutos Int @default(0)
   reagendadoEm DateTime?
+  criadoPorId Int?
+  origem      String   @default("APP_CLIENTE")
+  observacoes String?  @db.Text
 
   estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
   unidade   Unidade?  @relation(fields: [unidadeId], references: [id])
 
   usuario   Usuario @relation(fields: [usuarioId], references: [id])
   usuarioId Int
+  criadoPor Usuario? @relation("AgendamentoCriadoPor", fields: [criadoPorId], references: [id])
 
   profissional   Profissional @relation(fields: [profissionalId], references: [id])
   profissionalId Int
@@ -135,6 +140,7 @@ model Agendamento {
   @@index([unidadeId, inicioOcupacao, fimOcupacao])
   @@index([estabelecimentoId, inicioOcupacao, fimOcupacao])
   @@index([estabelecimentoId, status, data])
+  @@index([criadoPorId])
   @@map("agendamentos")
 }
 

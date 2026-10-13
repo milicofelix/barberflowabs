@@ -242,12 +242,42 @@ export class GestaoPrisma {
     return agendamentos.map((agendamento) => this.normalizarAgendamento(agendamento));
   }
 
-  listarClientesParaAgendamento(estabelecimentoId: number) {
+  listarClientesParaAgendamento(estabelecimentoId: number, busca?: string) {
+    const termo = busca?.trim();
     return (this.prisma as any).clienteEstabelecimento.findMany({
-      where: { estabelecimentoId, status: 'ATIVO' },
+      where: {
+        estabelecimentoId,
+        status: 'ATIVO',
+        ...(termo ? { usuario: { OR: [
+          { nome: { contains: termo } },
+          { email: { contains: termo } },
+          { telefone: { contains: termo } },
+        ] } } : {}),
+      },
       select: { usuario: { select: { id: true, nome: true, telefone: true, email: true } } },
       orderBy: { usuario: { nome: 'asc' } },
+      take: 30,
     }).then((itens: any[]) => itens.map((item) => item.usuario));
+  }
+
+  contextoAgendamentoAssistido(estabelecimentoId: number) {
+    return (this.prisma as any).estabelecimento.findUnique({
+      where: { id: estabelecimentoId },
+      select: {
+        id: true,
+        modeloAtendimento: true,
+        unidades: {
+          where: { ativa: true },
+          select: { id: true, nome: true, endereco: true },
+          orderBy: { nome: 'asc' },
+        },
+        recursos: {
+          where: { ativo: true },
+          select: { id: true, nome: true, tipo: true, capacidade: true, unidadeId: true },
+          orderBy: [{ tipo: 'asc' }, { nome: 'asc' }],
+        },
+      },
+    });
   }
 
   obterClienteParaAgendamento(estabelecimentoId: number, usuarioId: number) {

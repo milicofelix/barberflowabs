@@ -6,6 +6,7 @@ import { MotorAgendaDisponibilidadePrisma } from './motor-agenda.disponibilidade
 import {
   ConsultarDisponibilidadeDto,
   CriarAgendamentoUniversalDto,
+  AuditoriaCriacaoAgendamento,
   ReagendarAgendamentoDto,
 } from './motor-agenda.dto';
 import { MotorAgendaPolicy } from './motor-agenda.policy';
@@ -24,6 +25,7 @@ export class MotorAgendaService {
     estabelecimentoId: number,
     dados: CriarAgendamentoUniversalDto,
     usuario: any,
+    auditoria?: AuditoriaCriacaoAgendamento,
   ) {
     this.policy.validarCriacao(dados, usuario);
     const data = this.policy.validarData(dados.data);
@@ -46,6 +48,7 @@ export class MotorAgendaService {
       periodo,
       usuarioId: usuario.id,
       enderecoAtendimento: dados.enderecoAtendimento,
+      auditoria: auditoria ?? { criadoPorId: usuario.id, origem: 'APP_CLIENTE' },
     });
   }
 

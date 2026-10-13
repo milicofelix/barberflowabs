@@ -11,6 +11,12 @@ export interface CriarAgendamentoUniversalDto {
   deslocamentoMinutos?: number;
 }
 
+export interface AuditoriaCriacaoAgendamento {
+  criadoPorId: number;
+  origem: 'APP_CLIENTE' | 'RECEPCAO' | 'TELEFONE' | 'WHATSAPP' | 'PRESENCIAL' | 'OUTRO';
+  observacoes?: string | null;
+}
+
 export interface ReagendarAgendamentoDto {
   data: string;
   unidadeId?: number | null;

@@ -9,18 +9,29 @@ interface HorariosDisponiveis {
     tardeNoite: string[]
 }
 
+export interface OpcoesAgendamentoAssistido {
+    unidadeId?: number | null
+    modeloAtendimento?: 'PRESENCIAL' | 'DOMICILIAR' | 'HIBRIDO'
+    enderecoAtendimento?: string | null
+    deslocamentoMinutos?: number
+    origem?: 'RECEPCAO' | 'TELEFONE' | 'WHATSAPP' | 'PRESENCIAL' | 'OUTRO'
+    observacoes?: string | null
+}
+
 export interface ContextoAgendamentoProps {
     profissional: Profissional | null
     servicos: Servico[]
     data: Date | null
     dataValida: Date | null
+    unidadeId: number | null
     horariosOcupados: string[]
     horariosDisponiveis: HorariosDisponiveis
     selecionarProfissional: (profissional: Profissional | null) => void
     selecionarServicos: (servicos: Servico[]) => void
     selecionarData: (data: Date) => void
     agendar: () => Promise<void>
-    agendarPara: (clienteId: number) => Promise<void>
+    selecionarUnidade: (unidadeId: number | null) => void
+    agendarPara: (clienteId: number, opcoes?: OpcoesAgendamentoAssistido) => Promise<void>
     podeAgendar: () => boolean
     duracaoTotal: () => string
     precoTotal: () => number
@@ -40,6 +51,8 @@ export function ProvedorAgendamento(props: any) {
     const { httpPost, httpGet } = useAPI()
     const { usuario } = useSessao()
     const { estabelecimento } = useEstabelecimento()
+    const papel = String(usuario?.role ?? usuario?.papel ?? '').toUpperCase()
+    const contextoOperacional = papel === 'ESTABLISHMENT_MEMBER' || papel === 'ESTABLISHMENT_OWNER' || Boolean(usuario?.membroEstabelecimento)
 
     const [horariosOcupados, setHorariosOcupados] = useState<string[]>([])
     const [horariosDisponiveis, setHorariosDisponiveis] = useState<HorariosDisponiveis>(
@@ -48,6 +61,7 @@ export function ProvedorAgendamento(props: any) {
     const [profissional, setProfissional] = useState<Profissional | null>(null)
     const [servicos, setServicos] = useState<Servico[]>([])
     const [data, setData] = useState<Date>(DateUtils.hojeComHoraZerada())
+    const [unidadeId, setUnidadeId] = useState<number | null>(null)
 
     const dia = formatarDia(data)
     const todosHorariosDisponiveis = [...horariosDisponiveis.manha, ...horariosDisponiveis.tardeNoite]
@@ -80,13 +94,15 @@ export function ProvedorAgendamento(props: any) {
         limpar()
     }
 
-    async function agendarPara(clienteId: number) {
+    async function agendarPara(clienteId: number, opcoes: OpcoesAgendamentoAssistido = {}) {
         if (!Number.isInteger(clienteId) || clienteId <= 0) throw new Error('Selecione um cliente.')
         await httpPost('/gestao/agendamentos', {
             clienteId,
             data,
             profissional,
             servicos,
+            ...opcoes,
+            unidadeId: opcoes.unidadeId ?? unidadeId,
         })
         limpar()
     }
@@ -135,36 +151,40 @@ export function ProvedorAgendamento(props: any) {
         ): Promise<HorariosDisponiveis> {
             if (!dia) return AgendaUtils.horariosDoDia()
 
-            const profissionalQuery = profissional ? `?profissionalId=${profissional.id}` : ''
+            const parametros = new URLSearchParams()
+            if (profissional) parametros.set('profissionalId', String(profissional.id))
+            if (unidadeId) parametros.set('unidadeId', String(unidadeId))
+            const profissionalQuery = parametros.size ? `?${parametros.toString()}` : ''
             const horarios = await httpGet<HorariosDisponiveis>(`agenda/horarios/${dia}${profissionalQuery}`)
             return horarios?.manha && horarios?.tardeNoite ? horarios : AgendaUtils.horariosDoDia()
         },
-        [httpGet]
+        [httpGet, unidadeId]
     )
 
     useEffect(() => {
         setProfissional(null)
         setServicos([])
         setData(DateUtils.hojeComHoraZerada())
-    }, [estabelecimento?.id])
+        setUnidadeId(null)
+    }, [estabelecimento?.id, usuario?.estabelecimentoId])
 
     useEffect(() => {
-        if (!estabelecimento || !dia || !profissional) {
+        if ((!estabelecimento && !contextoOperacional) || !dia || !profissional) {
             setHorariosOcupados([])
             return
         }
         obterHorariosOcupados(dia, profissional).then(setHorariosOcupados).catch(() => setHorariosOcupados([]))
-    }, [estabelecimento, dia, profissional, obterHorariosOcupados])
+    }, [estabelecimento, contextoOperacional, dia, profissional, obterHorariosOcupados])
 
     useEffect(() => {
-        if (!estabelecimento) {
+        if (!estabelecimento && !contextoOperacional) {
             setHorariosDisponiveis(AgendaUtils.horariosDoDia())
             return
         }
         obterHorariosDisponiveis(dia, profissional)
             .then(setHorariosDisponiveis)
             .catch(() => setHorariosDisponiveis(AgendaUtils.horariosDoDia()))
-    }, [estabelecimento, dia, profissional, obterHorariosDisponiveis])
+    }, [estabelecimento, contextoOperacional, dia, profissional, obterHorariosDisponiveis])
 
     useEffect(() => {
         const horarioSelecionado = data.toLocaleTimeString('pt-BR', {
@@ -182,6 +202,7 @@ export function ProvedorAgendamento(props: any) {
                 profissional,
                 servicos,
                 data,
+                unidadeId,
                 get dataValida() {
                     if (!data) return null
                     if (!horarioEstaDisponivel(data)) return null
@@ -192,6 +213,7 @@ export function ProvedorAgendamento(props: any) {
                 selecionarProfissional: setProfissional,
                 selecionarServicos: setServicos,
                 selecionarData: setData,
+                selecionarUnidade: setUnidadeId,
                 agendar,
                 agendarPara,
                 podeAgendar,

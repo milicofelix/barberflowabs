@@ -1,6 +1,6 @@
 # Plano — Agenda Operacional Avancada
 
-Status: Fases 1, 2 e 3 implementadas; agendamento assistido completo pendente.
+Status: Fases 1 a 4 implementadas; tempo real, desempenho e paridade pendentes.
 
 ## Objetivo
 
@@ -70,11 +70,33 @@ Substituir progressivamente a lista diaria da Gestao Diaria por uma agenda opera
 
 ## Fase 4 — Agendamento Assistido Completo
 
-- [ ] Buscar cliente por nome, telefone ou e-mail.
-- [ ] Criar ou vincular cliente atendido fora do aplicativo sem exigir que ele use tecnologia.
-- [ ] Escolher unidade, modalidade, profissional, servicos e recursos.
-- [ ] Mostrar preco, duracao, preparacao e disponibilidade antes da confirmacao.
-- [ ] Registrar autor, origem e observacao do agendamento para auditoria.
+- [x] Buscar cliente por nome, telefone ou e-mail.
+- [x] Criar ou vincular cliente atendido fora do aplicativo sem exigir que ele use tecnologia.
+- [x] Escolher unidade, modalidade, profissional e servicos; recursos sao alocados pelo motor universal.
+- [x] Mostrar preco, duracao e disponibilidade antes da confirmacao; preparacao integra o periodo validado.
+- [x] Registrar autor, origem e observacao do agendamento para auditoria.
+
+### Fluxo entregue
+
+- A busca de clientes e feita no servidor, limitada ao estabelecimento e aos primeiros 30 resultados.
+- Um cliente presencial pode ser criado com nome, e-mail e telefone; uma credencial interna aleatoria e gerada sem exigir cadastro no aplicativo.
+- Unidade e modalidade alteram a consulta de horarios; atendimento domiciliar exige endereco e aceita tempo de deslocamento.
+- O resumo final apresenta cliente, profissional, servicos, duracao, valor e observacao antes da confirmacao.
+- Antes de criar, o aplicativo consulta o motor universal para validar escala, bloqueios, profissional, recursos, preparacao e deslocamento.
+- Recursos sao escolhidos automaticamente conforme tipo, capacidade, unidade e disponibilidade, evitando escolhas tecnicas incorretas pela recepcao.
+- Origem e autoria ficam persistidas no agendamento para consulta operacional e auditoria.
+
+### Aceite manual da Fase 4
+
+1. Entre com uma conta que possua `AGENDA_GERENCIAR` e abra a aba **Agendar cliente**.
+2. Pesquise um cliente por parte do nome, telefone e e-mail; confirme que os três critérios retornam somente clientes do estabelecimento.
+3. Use **+ Novo**, cadastre nome, e-mail e telefone e confirme que o cliente fica selecionado sem criação manual de senha.
+4. Selecione unidade e modalidade. Para domiciliar, confirme que endereço é obrigatório e informe o deslocamento.
+5. Escolha profissional, múltiplos serviços, data e horário. Confira duração, preparação e preço no resumo final.
+6. Escolha a origem, preencha uma observação e toque em **Validar e agendar**.
+7. Tente repetir o mesmo horário ou usar um período bloqueado; o motor deve recusar antes da criação.
+8. Em **Operação > Agenda**, abra o evento e confira origem, responsável pelo registro e observação.
+9. Confirme no banco que `criadoPorId`, `origem` e `observacoes` foram persistidos no registro de `agendamentos`.
 
 ## Fase 5 — Tempo Real, Desempenho E Paridade
 

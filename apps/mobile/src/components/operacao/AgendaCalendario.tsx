@@ -140,6 +140,8 @@ export default function AgendaCalendario(props: Props) {
                         <Text style={[styles.detalhesMeta, { color: cores.textoSecundario }]}>{selecionado.profissional?.nome ?? 'Profissional'} · {dataHora(selecionado.data)}</Text>
                         <Text style={[styles.detalhesMeta, { color: cores.textoSecundario }]}>{selecionado.servicos?.map((servico) => servico.nome).join(' · ')}</Text>
                         {selecionado.unidade?.nome ? <Text style={[styles.detalhesMeta, { color: cores.textoSecundario }]}>Unidade: {selecionado.unidade.nome}</Text> : null}
+                        {selecionado.origem ? <Text style={[styles.detalhesMeta, { color: cores.textoSecundario }]}>Origem: {selecionado.origem.replace('_', ' ')}{selecionado.criadoPor?.nome ? ` · registrado por ${selecionado.criadoPor.nome}` : ''}</Text> : null}
+                        {selecionado.observacoes ? <Text style={[styles.detalhesMeta, { color: cores.texto }]}>Observação: {selecionado.observacoes}</Text> : null}
                         {selecionado.modeloAtendimento === 'DOMICILIAR' ? <Text style={[styles.alerta, { color: '#F97316' }]}>⌂ Atendimento domiciliar · deslocamento {selecionado.deslocamentoMinutos ?? 0} min</Text> : null}
                     </View><Pressable accessibilityRole="button" accessibilityLabel="Fechar detalhes" onPress={() => setSelecionado(null)} style={[styles.fechar, { borderColor: cores.borda }]}><Text style={{ color: cores.texto }}>×</Text></Pressable></View>
                     <Text style={[styles.statusAtual, { color: cores.destaque }]}>Status: {rotuloStatus(selecionado.status)}</Text>

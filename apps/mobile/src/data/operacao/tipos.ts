@@ -14,6 +14,10 @@ export interface AgendamentoOperacional {
     status: string
     valorTotal: number
     usuario?: { id?: number; nome: string; email?: string; telefone?: string }
+    criadoPor?: { id: number; nome: string } | null
+    criadoPorId?: number | null
+    origem?: string
+    observacoes?: string | null
     profissional?: { id: number; nome: string }
     unidade?: { id: number; nome: string } | null
     servicos?: Array<{ id: number; nome: string }>

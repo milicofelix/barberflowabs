@@ -8,6 +8,7 @@ export interface PassosProps {
     permiteProximoPasso?: boolean[]
     labelAcao?: string
     acao?: () => void
+    rodapeUltimoPasso?: React.ReactNode
 }
 
 export default function Passos(props: PassosProps) {
@@ -97,6 +98,7 @@ export default function Passos(props: PassosProps) {
         <View>
             {renderizarLabels()}
             <View>{props.children?.[passoAtual]}</View>
+            {semProximoPasso() ? props.rodapeUltimoPasso : null}
             <View style={{ display: 'flex', flexDirection: 'row', justifyContent: 'center' }}>
                 {renderizarBotao('Anterior', semPassoAnterior(), passoAnterior)}
                 {props.acao && semProximoPasso()

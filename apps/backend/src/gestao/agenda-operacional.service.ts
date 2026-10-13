@@ -61,6 +61,7 @@ export class AgendaOperacionalService {
       },
       include: {
         usuario: { select: { id: true, nome: true, email: true, telefone: true } },
+        criadoPor: { select: { id: true, nome: true } },
         profissional: { select: { id: true, nome: true } },
         unidade: { select: { id: true, nome: true } },
         servicos: { select: { id: true, nome: true, preco: true, qtdeSlots: true } },
