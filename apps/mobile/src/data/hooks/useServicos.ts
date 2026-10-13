@@ -16,7 +16,7 @@ export default function useServicos() {
         try {
             setCarregandoServicos(true)
             setErro(null)
-            const dados = await httpGet<Servico[]>('/servicos', { escopoTenant: 'publico' })
+            const dados = await httpGet<Servico[]>('/servicos')
             setServicos(Array.isArray(dados) ? dados : [])
         } catch (erro) {
             setServicos([])

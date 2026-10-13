@@ -30,6 +30,7 @@ export default function Abas() {
     const perfil = resolverPerfil(usuario)
     const operacional = perfilOperacional(perfil)
     const admin = perfilAdmin(perfil)
+    const cliente = perfil === 'CUSTOMER'
 
     return (
         <Tab.Navigator
@@ -42,13 +43,13 @@ export default function Abas() {
             }}
         >
             <Tab.Screen name="Descobrir" component={Descoberta} options={opcoesAba('Descobrir', 'search-outline', cores.destaque, cores.textoSecundario)} />
-            {usuario ? (
+            {cliente || operacional ? (
                 <>
                     <Tab.Screen name="Inicio" component={Inicio} options={opcoesAba('Início', 'home-outline', cores.destaque, cores.textoSecundario)} />
                     <Tab.Screen
                         name="Agendamento"
                         component={Agendamento}
-                        options={opcoesAba('Agendar', 'calendar-outline', cores.destaque, cores.textoSecundario)}
+                        options={opcoesAba(operacional ? 'Agendar cliente' : 'Agendar', 'calendar-outline', cores.destaque, cores.textoSecundario)}
                     />
                 </>
             ) : null}

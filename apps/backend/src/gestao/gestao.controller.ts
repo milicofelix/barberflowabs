@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Body,
+  ConflictException,
   Controller,
   Delete,
   ForbiddenException,
@@ -23,6 +24,7 @@ import {
 } from 'src/shared/validacao';
 import {
   AtualizarStatusAgendamentoDto,
+  CriarAgendamentoAssistidoDto,
   AtualizarStatusLembreteDto,
   CriarLembreteRelacionamentoDto,
   CriarLancamentoFinanceiroDto,
@@ -32,6 +34,8 @@ import { GestaoPrisma } from './gestao.prisma';
 import { EquipePolicy } from 'src/equipe/equipe.policy';
 import { PermissaoEquipe } from 'src/equipe/equipe.constants';
 import { FinanceiroService } from 'src/financeiro/financeiro.service';
+import { MotorAgendaService } from 'src/motor-agenda/motor-agenda.service';
+import { ConflitoAgendaError } from 'src/motor-agenda/conflito-agenda.error';
 
 const STATUS_AGENDAMENTO = ['AGENDADO', 'CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW'];
 const TIPOS_LANCAMENTO = ['RECEITA', 'DESPESA'];
@@ -46,6 +50,7 @@ export class GestaoController {
     private readonly cripto: BcryptProvider,
     private readonly equipePolicy: EquipePolicy,
     private readonly financeiro: FinanceiroService,
+    private readonly motorAgenda: MotorAgendaService,
   ) {}
 
   @Get('dashboard')
@@ -117,6 +122,39 @@ export class GestaoController {
     await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
     validarData(data);
     return this.repo.listarAgendamentos(usuario.estabelecimentoId, data);
+  }
+
+  @Get('agendamentos/futuros')
+  async listarAgendamentosFuturos(@UsuarioLogado() usuario: Usuario) {
+    await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
+    return this.repo.listarAgendamentosFuturos(usuario.estabelecimentoId!);
+  }
+
+  @Get('agendamentos/clientes')
+  async listarClientesParaAgendamento(@UsuarioLogado() usuario: Usuario) {
+    await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
+    return this.repo.listarClientesParaAgendamento(usuario.estabelecimentoId!);
+  }
+
+  @Post('agendamentos')
+  async criarAgendamentoAssistido(
+    @Body() dados: CriarAgendamentoAssistidoDto,
+    @UsuarioLogado() usuario: Usuario,
+  ) {
+    await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
+    validarNumeroInteiroPositivo(dados?.clienteId, 'Cliente');
+    const cliente = await this.repo.obterClienteParaAgendamento(usuario.estabelecimentoId!, Number(dados.clienteId));
+    if (!cliente) throw new NotFoundException('Cliente não está vinculado a este estabelecimento');
+    try {
+      return await this.motorAgenda.criar(usuario.estabelecimentoId!, {
+        ...dados,
+        usuario: { id: cliente.id },
+      }, cliente);
+    } catch (error: any) {
+      if (error instanceof ConflictException) throw error;
+      if (error instanceof ConflitoAgendaError) throw new ConflictException(error.message);
+      throw new BadRequestException(error?.message ?? 'Não foi possível criar o agendamento assistido');
+    }
   }
 
   @Put('agendamentos/:id/status')

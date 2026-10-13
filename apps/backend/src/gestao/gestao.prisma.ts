@@ -218,6 +218,39 @@ export class GestaoPrisma {
     return agendamentos.map((agendamento) => this.normalizarAgendamento(agendamento));
   }
 
+  async listarAgendamentosFuturos(estabelecimentoId: number) {
+    const agendamentos = await this.prisma.agendamento.findMany({
+      where: {
+        estabelecimentoId,
+        status: { in: ['AGENDADO', 'CONFIRMADO', 'CHECKIN'] },
+        OR: [{ fimOcupacao: { gt: new Date() } }, { fimOcupacao: null, data: { gt: new Date() } }],
+      },
+      include: {
+        usuario: { select: { id: true, nome: true, telefone: true } },
+        profissional: { select: { id: true, nome: true } },
+        servicos: { select: { id: true, nome: true, preco: true, qtdeSlots: true } },
+      },
+      orderBy: { data: 'asc' },
+      take: 30,
+    });
+    return agendamentos.map((agendamento) => this.normalizarAgendamento(agendamento));
+  }
+
+  listarClientesParaAgendamento(estabelecimentoId: number) {
+    return (this.prisma as any).clienteEstabelecimento.findMany({
+      where: { estabelecimentoId, status: 'ATIVO' },
+      select: { usuario: { select: { id: true, nome: true, telefone: true, email: true } } },
+      orderBy: { usuario: { nome: 'asc' } },
+    }).then((itens: any[]) => itens.map((item) => item.usuario));
+  }
+
+  obterClienteParaAgendamento(estabelecimentoId: number, usuarioId: number) {
+    return (this.prisma as any).clienteEstabelecimento.findFirst({
+      where: { estabelecimentoId, usuarioId, status: 'ATIVO' },
+      select: { usuario: { select: { id: true, nome: true, email: true, telefone: true } } },
+    }).then((item: any) => item?.usuario ?? null);
+  }
+
   async atualizarStatusAgendamento(id: number, estabelecimentoId: number, status: string) {
     const agendamento = await this.prisma.agendamento.findFirst({
       where: { id, estabelecimentoId },

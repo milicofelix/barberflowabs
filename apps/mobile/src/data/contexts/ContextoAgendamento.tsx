@@ -20,6 +20,7 @@ export interface ContextoAgendamentoProps {
     selecionarServicos: (servicos: Servico[]) => void
     selecionarData: (data: Date) => void
     agendar: () => Promise<void>
+    agendarPara: (clienteId: number) => Promise<void>
     podeAgendar: () => boolean
     duracaoTotal: () => string
     precoTotal: () => number
@@ -79,6 +80,17 @@ export function ProvedorAgendamento(props: any) {
         limpar()
     }
 
+    async function agendarPara(clienteId: number) {
+        if (!Number.isInteger(clienteId) || clienteId <= 0) throw new Error('Selecione um cliente.')
+        await httpPost('/gestao/agendamentos', {
+            clienteId,
+            data,
+            profissional,
+            servicos,
+        })
+        limpar()
+    }
+
     function limpar() {
         setProfissional(null)
         setServicos([])
@@ -110,9 +122,7 @@ export function ProvedorAgendamento(props: any) {
     const obterHorariosOcupados = useCallback(
         async function (dia: string, profissional: Profissional): Promise<string[]> {
             if (!dia || !profissional) return []
-            const ocupacao = await httpGet<string[]>(`agendamentos/ocupacao/${profissional!.id}/${dia}`, {
-                escopoTenant: 'publico',
-            })
+            const ocupacao = await httpGet<string[]>(`agendamentos/ocupacao/${profissional!.id}/${dia}`)
             return ocupacao ?? []
         },
         [httpGet]
@@ -126,9 +136,7 @@ export function ProvedorAgendamento(props: any) {
             if (!dia) return AgendaUtils.horariosDoDia()
 
             const profissionalQuery = profissional ? `?profissionalId=${profissional.id}` : ''
-            const horarios = await httpGet<HorariosDisponiveis>(`agenda/horarios/${dia}${profissionalQuery}`, {
-                escopoTenant: 'publico',
-            })
+            const horarios = await httpGet<HorariosDisponiveis>(`agenda/horarios/${dia}${profissionalQuery}`)
             return horarios?.manha && horarios?.tardeNoite ? horarios : AgendaUtils.horariosDoDia()
         },
         [httpGet]
@@ -185,6 +193,7 @@ export function ProvedorAgendamento(props: any) {
                 selecionarServicos: setServicos,
                 selecionarData: setData,
                 agendar,
+                agendarPara,
                 podeAgendar,
                 duracaoTotal,
                 precoTotal,

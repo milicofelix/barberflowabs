@@ -9,6 +9,8 @@ import useTema from '@/src/data/contexts/ContextoTema'
 
 export interface FormularioAgendamentoProps {
     finalizar: () => void
+    titulo?: string
+    labelAcao?: string
 }
 
 export default function FormularioAgendamento(props: FormularioAgendamentoProps) {
@@ -28,11 +30,11 @@ export default function FormularioAgendamento(props: FormularioAgendamentoProps)
 
     return (
         <View style={styles.container}>
-            <Text style={[styles.titulo, { color: cores.texto }]}>Agende seu horário</Text>
+            <Text style={[styles.titulo, { color: cores.texto }]}>{props.titulo ?? 'Agende seu horário'}</Text>
             <Passos
                 labels={['Profissional', 'Serviços', 'Horário']}
                 permiteProximoPasso={[!!profissional, servicos.length > 0, podeAgendar()]}
-                labelAcao="Confirmar"
+                labelAcao={props.labelAcao ?? 'Confirmar'}
                 acao={props.finalizar}
             >
                 <CampoProfissional value={profissional} onChange={selecionarProfissional} />

@@ -8,12 +8,26 @@ import useEstabelecimento from '@/src/data/hooks/useEstabelecimento'
 import Carregando from '@/src/components/shared/Carregando'
 import EstadoVazio from '@/src/components/shared/EstadoVazio'
 import useTema from '@/src/data/contexts/ContextoTema'
+import useSessao from '@/src/data/hooks/useSessao'
+import { perfilOperacional, resolverPerfil } from '@/src/data/auth/perfis'
+import AgendamentoAssistido from '@/src/components/agendamento/AgendamentoAssistido'
 
 type Props = BottomTabScreenProps<AbasParamList, 'Agendamento'>
 
 export default function Agendamento({ navigation }: Props) {
     const { cores } = useTema()
+    const { usuario } = useSessao()
     const { estabelecimento, carregando } = useEstabelecimento()
+    const operacional = perfilOperacional(resolverPerfil(usuario))
+
+    if (operacional) return <SafeAreaView style={[styles.container, { backgroundColor: cores.fundo }]}><ScrollView contentContainerStyle={styles.scroll}>
+        <View style={[styles.tenant, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
+            <Text style={styles.tenantLabel}>AGENDA DO ESTABELECIMENTO</Text>
+            <Text style={[styles.tenantNome, { color: cores.texto }]}>Agendamento assistido</Text>
+            <Text style={[styles.tenantCidade, { color: cores.textoSecundario }]}>Registre horários solicitados presencialmente, por telefone ou mensagem.</Text>
+        </View>
+        <AgendamentoAssistido />
+    </ScrollView></SafeAreaView>
 
     if (carregando) return <Carregando mensagem="Carregando seu estabelecimento..." />
 

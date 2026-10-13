@@ -24,7 +24,7 @@ Status: implementada; ativacao no banco pendente.
 - [x] Adicionar permissoes `RELACIONAMENTO_VISUALIZAR` e `RELACIONAMENTO_GERENCIAR`.
 - [x] Disponibilizar contratos iniciais em `/relacionamento`.
 - [x] Preparar massa idempotente com 48 clientes, consentimentos e 240 atendimentos multissegmento entre 1 e 10 de outubro de 2026.
-- [ ] Aplicar migration, gerar Prisma Client, reiniciar e validar manualmente.
+- [x] Aplicar migration, gerar Prisma Client, reiniciar e validar manualmente.
 
 Contratos iniciais:
 
@@ -44,7 +44,7 @@ Status: implementada em 2026-10-12; ativacao no banco e validacao manual pendent
 - [x] Processar callbacks dos provedores com chave idempotente por provedor e evento.
 - [x] Expor consulta paginada de envios, historico completo, falhas e reprocessamento.
 - [x] Isolar criacao, consulta e reprocessamento por estabelecimento e permissoes de relacionamento.
-- [ ] Aplicar migration, gerar Prisma Client, reiniciar e validar manualmente.
+- [x] Aplicar migration, gerar Prisma Client, reiniciar e validar manualmente.
 
 Contratos da orquestracao:
 
@@ -61,6 +61,116 @@ Operacao inicial simulada:
 - `NOTIFICACOES_CALLBACK_SECRET` protege os callbacks; o valor padrao local e apenas para desenvolvimento;
 - destinos contendo `falha-temporaria` simulam retentativas e destinos contendo `falha-permanente` simulam descarte imediato;
 - a substituicao futura por provedores reais fica restrita aos adaptadores, sem alterar fila, API ou dominio.
+
+### Validacao Manual Da Fase 2
+
+Pre-requisitos:
+
+- aplicar a migration `20261012020000_add_communication_orchestration`;
+- gerar novamente o Prisma Client e reiniciar o backend;
+- manter `NOTIFICACOES_WORKER_ATIVO=true`;
+- usar uma conta vinculada a um estabelecimento com `RELACIONAMENTO_VISUALIZAR` e `RELACIONAMENTO_GERENCIAR`;
+- possuir ao menos um cliente ativo vinculado ao mesmo estabelecimento.
+
+Defina o endereco do backend e autentique-se. O endpoint de login retorna o JWT como uma string JSON, por isso o exemplo remove as aspas:
+
+```bash
+export API_BASE='http://localhost:4000'
+export TOKEN="$(curl -sS -X POST "$API_BASE/auth/login" \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"EMAIL_DO_GESTOR","senha":"SENHA_DO_GESTOR"}' | tr -d '"')"
+```
+
+Liste os clientes e anote o `id` do registro de relacionamento, nao o `usuario.id`:
+
+```bash
+curl -sS "$API_BASE/relacionamento/clientes" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Autorize o canal de e-mail para o cliente escolhido, substituindo `CLIENTE_ID`:
+
+```bash
+curl -sS -X PUT "$API_BASE/relacionamento/clientes/CLIENTE_ID/preferencias" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"preferencias":[{"canal":"EMAIL","consentido":true,"origem":"USUARIO","versaoTermos":"2026-10"}]}'
+```
+
+Crie um template e anote seu `id`:
+
+```bash
+curl -sS -X POST "$API_BASE/relacionamento/templates" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"nome":"Validacao manual Fase 2","evento":"CAMPANHA","canal":"EMAIL","assunto":"Ola, {{nome}}","conteudo":"Mensagem simulada para {{nome}}.","ativo":true}'
+```
+
+Enfileire a mensagem usando uma chave exclusiva e substituindo `CLIENTE_ID` e `TEMPLATE_ID`:
+
+```bash
+curl -sS -X POST "$API_BASE/relacionamento/envios" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"clienteId":CLIENTE_ID,"templateId":TEMPLATE_ID,"chaveIdempotencia":"validacao-fase2-001","maximoTentativas":3,"variaveis":{"nome":"Cliente Teste"}}'
+```
+
+O retorno inicial deve conter `status: "AGENDADO"`. Em ate um ciclo do worker, normalmente cinco segundos, consulte a fila:
+
+```bash
+curl -sS "$API_BASE/relacionamento/envios?canal=EMAIL&pagina=1&limite=25" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+O envio deve passar para `ENVIADO`, conter `provedor: "email-simulado"`, `referenciaExterna` e uma tentativa com status `ACEITO`. Consulte o historico completo substituindo `ENVIO_ID`:
+
+```bash
+curl -sS "$API_BASE/relacionamento/envios/ENVIO_ID" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Para validar a idempotencia da fila, repita o `POST /relacionamento/envios` com a mesma `chaveIdempotencia`. O resultado esperado e `409 Conflict`, sem criar uma segunda mensagem.
+
+Para validar callbacks, use o mesmo provedor e a `referenciaExterna` retornada pelo envio. O segredo precisa ser o mesmo configurado em `NOTIFICACOES_CALLBACK_SECRET`:
+
+```bash
+curl -sS -X POST "$API_BASE/relacionamento/callbacks/email-simulado" \
+  -H 'x-uniflow-callback-secret: SEU_SEGREDO_DE_CALLBACK' \
+  -H 'Content-Type: application/json' \
+  -d '{"eventoId":"callback-manual-001","referenciaExterna":"REFERENCIA_EXTERNA","tipo":"ENTREGUE","payload":{"simulado":true}}'
+```
+
+Repita exatamente o mesmo callback. A segunda resposta deve conter `duplicado: true`, e o detalhe do envio deve continuar com apenas um callback para esse evento.
+
+Para validar retentativas e fila morta, use um cliente de teste cujo e-mail contenha `falha-temporaria`, por exemplo `falha-temporaria@example.com`, autorize e-mail e enfileire com `maximoTentativas: 3`. Os estados esperados sao:
+
+1. `PROCESSANDO` durante a tentativa;
+2. `RETENTATIVA`, com `proximaTentativaEm` preenchida;
+3. novos processamentos apos aproximadamente um e dois minutos;
+4. `FILA_MORTA` depois da terceira falha, preservando as tres tentativas no historico.
+
+Um destino contendo `falha-permanente` deve ir diretamente para `FALHA_PERMANENTE`. Para devolver qualquer um desses dois estados a fila:
+
+```bash
+curl -sS -X POST "$API_BASE/relacionamento/envios/ENVIO_ID/reprocessar" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"tentativasAdicionais":3}'
+```
+
+O envio deve voltar para `AGENDADO`, sem apagar as tentativas anteriores. Se a causa simulada continuar presente, ele falhara novamente; altere o destino do cliente de teste antes de reprocessar para validar a recuperacao com sucesso.
+
+Criterios de aceite manual:
+
+- nenhuma mensagem duplicada para a mesma chave dentro do estabelecimento;
+- consentimento ausente ou revogado impede o enfileiramento;
+- worker processa mensagens sem intervencao manual;
+- falhas temporarias respeitam retentativa exponencial e terminam na fila morta;
+- falhas permanentes nao consomem retentativas desnecessarias;
+- historico conserva todas as tentativas e callbacks;
+- callback repetido nao gera segundo evento;
+- reprocessamento conserva a auditoria anterior;
+- outro estabelecimento nao consegue consultar ou reprocessar o envio.
 
 ## Fase 3 — Jornada Do Agendamento
 

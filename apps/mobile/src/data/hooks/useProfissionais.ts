@@ -16,7 +16,7 @@ export default function useProfissionais() {
         try {
             setCarregandoProfissionais(true)
             setErro(null)
-            const dados = await httpGet<Profissional[]>('/profissionais', { escopoTenant: 'publico' })
+            const dados = await httpGet<Profissional[]>('/profissionais')
             setProfissionais(Array.isArray(dados) ? dados : [])
         } catch (erro) {
             setProfissionais([])

@@ -10,7 +10,7 @@ import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-nat
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
 import { useFocusEffect } from '@react-navigation/native'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 
 export default function Configuracoes() {
     const { cores } = useTema()
@@ -52,17 +52,21 @@ export default function Configuracoes() {
 
 function Prontidao({ dados }: { dados: ProntidaoPublicacao }) {
     const { cores } = useTema()
+    const [detalhes, setDetalhes] = useState(false)
     return <View style={[styles.secao, { backgroundColor: cores.superficie, borderColor: dados.prontoParaMapa ? '#16A34A' : cores.borda }]}>
         <View style={styles.prontidaoCabecalho}><View style={styles.prontidaoTexto}><Text style={[styles.secaoTitulo, { color: cores.texto }]}>Preparação para publicação</Text>
             <Text style={[styles.ajuda, { color: cores.textoSecundario }]}>{dados.prontoParaMapa ? 'Seu estabelecimento está pronto para a lista e o mapa.' : 'Conclua as pendências para aparecer publicamente.'}</Text></View>
             <Text style={[styles.percentual, { color: dados.prontoParaMapa ? '#16A34A' : cores.destaque }]}>{dados.progresso}%</Text></View>
-        <View style={styles.estados}><Text style={[styles.estado, dados.prontoParaLista ? styles.estadoOk : styles.estadoPendente]}>{dados.prontoParaLista ? '✓ Lista pública' : '○ Lista pública'}</Text>
+        <Pressable accessibilityRole="button" onPress={() => setDetalhes((valor) => !valor)} style={[styles.detalhesBotao, { borderColor: cores.borda }]}>
+            <Text style={[styles.detalhesTexto, { color: cores.destaque }]}>{detalhes ? 'Ocultar detalhes' : 'Detalhes'}</Text>
+        </Pressable>
+        {detalhes ? <><View style={styles.estados}><Text style={[styles.estado, dados.prontoParaLista ? styles.estadoOk : styles.estadoPendente]}>{dados.prontoParaLista ? '✓ Lista pública' : '○ Lista pública'}</Text>
             <Text style={[styles.estado, dados.prontoParaMapa ? styles.estadoOk : styles.estadoPendente]}>{dados.prontoParaMapa ? '✓ Mapa' : '○ Mapa'}</Text></View>
         {dados.itens.map((item) => <View key={item.codigo} style={[styles.itemProntidao, { borderTopColor: cores.borda }]}>
             <Text style={[styles.marcador, { color: item.concluido ? '#16A34A' : '#D97706' }]}>{item.concluido ? '✓' : '!'}</Text>
             <View style={styles.prontidaoTexto}><Text style={[styles.label, { color: cores.texto }]}>{item.titulo}</Text>
                 {!item.concluido ? <Text style={[styles.ajuda, { color: cores.textoSecundario }]}>{item.orientacao}</Text> : null}</View>
-        </View>)}
+        </View>)}</> : null}
     </View>
 }
 
@@ -78,4 +82,6 @@ const styles = StyleSheet.create({
     prontidaoCabecalho: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 }, prontidaoTexto: { flex: 1 }, percentual: { fontSize: 23, fontWeight: '900' },
     estados: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 6 }, estado: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, overflow: 'hidden', fontSize: 12, fontWeight: '800' }, estadoOk: { color: '#166534', backgroundColor: '#DCFCE7' }, estadoPendente: { color: '#92400E', backgroundColor: '#FEF3C7' },
     itemProntidao: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 9 }, marcador: { width: 18, fontSize: 16, fontWeight: '900' },
+    detalhesBotao: { alignSelf: 'flex-start', minHeight: 38, borderWidth: 1, borderRadius: 10, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center' },
+    detalhesTexto: { fontWeight: '900' },
 })

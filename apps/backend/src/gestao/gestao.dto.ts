@@ -2,6 +2,17 @@ export interface AtualizarStatusAgendamentoDto {
   status: string;
 }
 
+export interface CriarAgendamentoAssistidoDto {
+  clienteId: number;
+  data: string;
+  profissional: { id: number };
+  servicos: Array<{ id: number }>;
+  unidadeId?: number | null;
+  modeloAtendimento?: 'PRESENCIAL' | 'DOMICILIAR' | 'HIBRIDO';
+  enderecoAtendimento?: string | null;
+  deslocamentoMinutos?: number;
+}
+
 export interface CriarLancamentoFinanceiroDto {
   tipo: string;
   descricao: string;

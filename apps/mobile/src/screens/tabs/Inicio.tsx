@@ -2,14 +2,19 @@ import AgendamentosUsuario from '@/src/components/agendamento/AgendamentosUsuari
 import useTema from '@/src/data/contexts/ContextoTema'
 import { View, ImageBackground, ScrollView, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import useSessao from '@/src/data/hooks/useSessao'
+import { perfilOperacional, resolverPerfil } from '@/src/data/auth/perfis'
+import ProximosAgendamentos from '@/src/components/operacao/ProximosAgendamentos'
 
 export default function Inicio() {
     const { modo } = useTema()
+    const { usuario } = useSessao()
+    const operacional = perfilOperacional(resolverPerfil(usuario))
     const conteudo = <SafeAreaView style={[styles.container, modo === 'light' && styles.containerClaro]}>
         {modo === 'light' ? <DecoracaoClara /> : null}
         <ScrollView contentContainerStyle={styles.scroll}>
             <View style={styles.conteudo}>
-                <AgendamentosUsuario />
+                {operacional ? <ProximosAgendamentos /> : <AgendamentosUsuario />}
             </View>
         </ScrollView>
     </SafeAreaView>
