@@ -49,6 +49,7 @@ Substituir progressivamente a lista diaria da Gestao Diaria por uma agenda opera
 - A agenda limita cada consulta a sua janela visivel e usa os contratos paginados da Fase 1.
 - Arrastar e soltar nao integra a fundacao: a linha v4 estavel nao oferece o recurso nativamente e a Fase 3 confirmou a manutencao do fluxo assistido seguro.
 - Colunas/focos por profissional e recurso sao compostos fora da biblioteca, mantendo a dependencia encapsulada.
+- A agenda mobile possui modo de tela cheia, sobrepondo a navegacao inferior e preservando data, visualizacao, filtros, zoom e operacoes.
 
 ## Fase 3 — Operacao De Agenda
 

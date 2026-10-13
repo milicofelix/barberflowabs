@@ -28,6 +28,7 @@ const transicoes: Record<string, string[]> = {
 }
 
 interface Props {
+    telaCheia?: boolean
     itens: AgendamentoOperacional[]
     restricoes: RestricaoAgendaOperacional[]
     profissionais: ProfissionalOperacional[]
@@ -55,6 +56,9 @@ export default function AgendaCalendario(props: Props) {
     const [motivo, setMotivo] = useState('')
     const [salvando, setSalvando] = useState(false)
     const eventos = useMemo(() => criarEventos(props.itens, props.restricoes), [props.itens, props.restricoes])
+    const alturaCalendario = props.telaCheia
+        ? Math.max(320, alturaTela - (filtrosVisiveis ? 440 : 300))
+        : Math.max(220, Math.min(600, alturaTela - (filtrosVisiveis ? 610 : 485)))
 
     const tema = useMemo(() => ({
         palette: {
@@ -119,7 +123,7 @@ export default function AgendaCalendario(props: Props) {
         </View>
 
         <View style={[styles.calendario, { borderColor: cores.borda, backgroundColor: cores.superficie }]}>
-            <Calendar<EventoAgenda> events={eventos} height={Math.max(220, Math.min(600, alturaTela - (filtrosVisiveis ? 610 : 485)))}
+            <Calendar<EventoAgenda> events={eventos} height={alturaCalendario}
                 date={new Date(`${props.data}T12:00:00`)} mode={props.visualizacao} locale="pt-br" weekStartsOn={1} ampm={false}
                 hourRowHeight={alturaHora} minHour={6} maxHour={23} scrollOffsetMinutes={7 * 60} swipeEnabled showTime eventsAreSorted
                 theme={tema} eventCellStyle={(evento) => estiloEvento(evento, cores)} eventCellAccessibilityProps={{ accessibilityRole: 'button' }}

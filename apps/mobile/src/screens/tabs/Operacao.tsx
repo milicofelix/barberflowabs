@@ -5,7 +5,7 @@ import { AtalhoCentralFinanceira, EquipeOperacao, ResumoOperacao } from '@/src/c
 import useOperacao from '@/src/data/hooks/useOperacao'
 import type { SecaoOperacao, VisualizacaoAgenda } from '@/src/data/operacao/tipos'
 import { useState } from 'react'
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
 import { EscalasEquipe, MembrosEquipe } from '@/src/components/operacao/GestaoEquipe'
@@ -23,6 +23,7 @@ export default function Operacao({ navigation }: Props) {
     const { cores } = useTema()
     const [secao, setSecao] = useState<SecaoOperacao>('RESUMO')
     const [visualizacaoAgenda, setVisualizacaoAgenda] = useState<VisualizacaoAgenda>('day')
+    const [agendaTelaCheia, setAgendaTelaCheia] = useState(false)
     const dados = useOperacao(visualizacaoAgenda)
     const gestaoServicos = useGestaoServicos(secao === 'SERVICOS')
     const cabecalho = <>
@@ -37,11 +38,28 @@ export default function Operacao({ navigation }: Props) {
                 <NavegacaoData data={dados.data} alterar={dados.setData} visualizacao={visualizacaoAgenda} />
                 {dados.erro ? <EstadoErro mensagem={dados.erro} tentarNovamente={dados.recarregar} /> : null}
                 {dados.carregando && !dados.dashboard ? <Carregando mensagem="Carregando operação..." /> : null}
-                {!dados.carregando ? <AgendaCalendario itens={dados.agendamentos} restricoes={dados.restricoesAgenda}
+                {!dados.carregando ? <><Pressable accessibilityRole="button" accessibilityLabel="Abrir agenda em tela cheia" onPress={() => setAgendaTelaCheia(true)}
+                    style={[styles.telaCheiaBotao, { borderColor: cores.borda, backgroundColor: cores.superficie }]}>
+                    <Text style={[styles.telaCheiaTexto, { color: cores.texto }]}>⛶ Tela cheia</Text>
+                </Pressable><AgendaCalendario itens={dados.agendamentos} restricoes={dados.restricoesAgenda}
                     profissionais={dados.profissionais} recursos={dados.recursos} filtros={dados.filtrosAgenda} alterarFiltros={dados.setFiltrosAgenda} data={dados.data}
                     visualizacao={visualizacaoAgenda} alterarVisualizacao={setVisualizacaoAgenda} alterarData={dados.setData}
-                    alterarStatus={dados.alterarStatus} reagendar={dados.reagendar} fusoHorario={dados.fusoHorario} /> : null}
+                    alterarStatus={dados.alterarStatus} reagendar={dados.reagendar} fusoHorario={dados.fusoHorario} /></> : null}
             </View>
+            <Modal visible={agendaTelaCheia} animationType="slide" presentationStyle="fullScreen" statusBarTranslucent onRequestClose={() => setAgendaTelaCheia(false)}>
+                <SafeAreaView style={[styles.telaCheia, { backgroundColor: cores.fundo }]} edges={['top', 'bottom']}>
+                    <View style={styles.telaCheiaCabecalho}>
+                        <View><Text style={styles.sobretitulo}>AGENDA OPERACIONAL</Text><Text style={[styles.telaCheiaTitulo, { color: cores.texto }]}>Visão ampliada</Text></View>
+                        <Pressable accessibilityRole="button" accessibilityLabel="Sair da tela cheia" onPress={() => setAgendaTelaCheia(false)}
+                            style={[styles.fecharTelaCheia, { borderColor: cores.borda, backgroundColor: cores.superficie }]}><Text style={{ color: cores.texto, fontSize: 22 }}>×</Text></Pressable>
+                    </View>
+                    <NavegacaoData data={dados.data} alterar={dados.setData} visualizacao={visualizacaoAgenda} />
+                    <AgendaCalendario telaCheia itens={dados.agendamentos} restricoes={dados.restricoesAgenda}
+                        profissionais={dados.profissionais} recursos={dados.recursos} filtros={dados.filtrosAgenda} alterarFiltros={dados.setFiltrosAgenda} data={dados.data}
+                        visualizacao={visualizacaoAgenda} alterarVisualizacao={setVisualizacaoAgenda} alterarData={dados.setData}
+                        alterarStatus={dados.alterarStatus} reagendar={dados.reagendar} fusoHorario={dados.fusoHorario} />
+                </SafeAreaView>
+            </Modal>
         </SafeAreaView>
     }
 
@@ -91,4 +109,7 @@ const styles = StyleSheet.create({
     data: { backgroundColor: '#101E33', color: '#FFF', borderRadius: 11, padding: 13, borderWidth: 1, borderColor: '#31415A', marginBottom: 12 },
     navegacaoData: { gap: 9, marginBottom: 2 }, acoesData: { flexDirection: 'row', gap: 8 },
     botaoData: { flex: 1, minHeight: 42, borderWidth: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center' }, botaoDataTexto: { fontSize: 12, fontWeight: '800' },
+    telaCheiaBotao: { minHeight: 42, borderWidth: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 9 }, telaCheiaTexto: { fontSize: 12, fontWeight: '900' },
+    telaCheia: { flex: 1, paddingHorizontal: 12, paddingTop: 8 }, telaCheiaCabecalho: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+    telaCheiaTitulo: { fontSize: 22, fontWeight: '900', marginTop: 2 }, fecharTelaCheia: { width: 44, height: 44, borderWidth: 1, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
 })
