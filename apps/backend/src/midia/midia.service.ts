@@ -14,7 +14,38 @@ export class MidiaService {
     return valor as FinalidadeMidia;
   }
 
+  private superadmin(usuario: any) {
+    if (!['SUPER_ADMIN', 'APP_OWNER'].includes(String(usuario?.papel ?? usuario?.role).toUpperCase())) throw new ForbiddenException('Apenas superadmin pode manter a galeria global');
+  }
+
+  async listarGlobal(usuario: any) {
+    this.superadmin(usuario);
+    const p = this.prisma as any;
+    return {
+      itens: await p.midia.findMany({ where: { escopo: 'GLOBAL', status: 'DISPONIVEL' }, orderBy: { titulo: 'asc' }, take: 200 }),
+      segmentos: await p.segmento.findMany({ where: { ativo: true }, select: { slug: true, nome: true }, orderBy: { nome: 'asc' } }),
+      auditoria: await p.logAuditoria.findMany({ where: { entidade: 'MIDIA', acao: { in: ['UPLOAD_GLOBAL', 'CURADORIA'] } }, select: { id: true, usuarioId: true, acao: true, entidadeId: true, createdAt: true }, orderBy: { id: 'desc' }, take: 30 }),
+    };
+  }
+
+  async atualizarGlobal(usuario: any, id: string, dados: any) {
+    this.superadmin(usuario);
+    if (!dados || typeof dados.titulo !== 'string' || !dados.titulo.trim() || dados.titulo.length > 120 || typeof dados.ativo !== 'boolean' || (dados.segmentoSlug !== null && typeof dados.segmentoSlug !== 'string')) throw new BadRequestException('Informe título, segmento e ativação válidos');
+    return this.prisma.$transaction(async (transacao) => {
+      const tx = transacao as any;
+      await tx.$queryRawUnsafe('SELECT id FROM midias WHERE id = ? FOR UPDATE', id);
+      const atual = await tx.midia.findFirst({ where: { id, escopo: 'GLOBAL', status: 'DISPONIVEL' } });
+      if (!atual) throw new NotFoundException('Imagem global não encontrada');
+      if (dados.segmentoSlug && !await tx.segmento.findFirst({ where: { slug: dados.segmentoSlug, ativo: true } })) throw new BadRequestException('Segmento inválido');
+      const novo = { titulo: dados.titulo.trim(), ativo: dados.ativo, segmentoSlug: dados.segmentoSlug || null };
+      const resultado = await tx.midia.update({ where: { id }, data: novo });
+      await tx.logAuditoria.create({ data: { usuarioId: usuario.id, acao: 'CURADORIA', entidade: 'MIDIA', entidadeId: id, detalhes: { ativoAnterior: atual.ativo, ativo: novo.ativo, finalidade: atual.finalidade, camposAlterados: Object.keys(novo).filter((campo) => atual[campo] !== novo[campo]) } } });
+      return resultado;
+    });
+  }
+
   async listar(usuario: any, finalidade: string, segmentoSlug?: string) {
+    if (!Number.isInteger(usuario?.id) || usuario.id <= 0) throw new ForbiddenException('Autenticação necessária');
     this.finalidade(finalidade);
     return (this.prisma as any).midia.findMany({
       where: { status: 'DISPONIVEL', ativo: true, finalidade, ...(segmentoSlug ? { OR: [{ segmentoSlug }, { segmentoSlug: null }] } : {}),
@@ -23,17 +54,18 @@ export class MidiaService {
     });
   }
 
-  async upload(usuario: any, finalidade: string, arquivo: { buffer: Buffer }) {
+  async upload(usuario: any, finalidade: string, arquivo: { buffer: Buffer }, global = false) {
     const uso = this.finalidade(finalidade);
-    if (uso !== 'AVATAR') await this.equipe.validarPermissao(usuario, 'CONFIGURACOES_GERENCIAR');
+    if (global) this.superadmin(usuario);
+    else if (uso !== 'AVATAR') await this.equipe.validarPermissao(usuario, 'CONFIGURACOES_GERENCIAR');
     if (!arquivo?.buffer) throw new BadRequestException('Selecione uma imagem');
     const id = randomUUID();
     const versoes = await this.storage.processar(id, arquivo.buffer, uso);
     try {
       return await this.prisma.$transaction(async (transacao) => {
         const tx = transacao as any;
-        const midia = await tx.midia.create({ data: { id, titulo: 'Foto enviada', finalidade: uso, escopo: uso === 'AVATAR' ? 'USUARIO' : 'ESTABELECIMENTO', usuarioId: usuario.id, estabelecimentoId: uso === 'AVATAR' ? null : usuario.estabelecimentoId, versoes } });
-        await tx.logAuditoria.create({ data: { usuarioId: usuario.id, estabelecimentoId: midia.estabelecimentoId, acao: 'UPLOAD', entidade: 'MIDIA', entidadeId: id, detalhes: { finalidade: uso } } });
+        const midia = await tx.midia.create({ data: { id, titulo: global ? 'Nova imagem global' : 'Foto enviada', finalidade: uso, escopo: global ? 'GLOBAL' : uso === 'AVATAR' ? 'USUARIO' : 'ESTABELECIMENTO', usuarioId: usuario.id, estabelecimentoId: global || uso === 'AVATAR' ? null : usuario.estabelecimentoId, versoes } });
+        await tx.logAuditoria.create({ data: { usuarioId: usuario.id, estabelecimentoId: midia.estabelecimentoId, acao: global ? 'UPLOAD_GLOBAL' : 'UPLOAD', entidade: 'MIDIA', entidadeId: id, detalhes: { finalidade: uso } } });
         return { id, titulo: midia.titulo, finalidade: uso, segmentoSlug: null, versoes };
       });
     } catch (erro) { await this.storage.remover(id); throw erro; }
@@ -93,7 +125,7 @@ export class MidiaService {
         if (!midia) return false;
         // Também preserva URLs gravadas por formulários legados, sem vínculo explícito.
         const url = midia.versoes?.principal?.url;
-        if (await tx.usuario.count({ where: { fotoURL: url } }) || await tx.servico.count({ where: { imagemURL: url } }) || await tx.profissional.count({ where: { imagemURL: url } }) || await tx.estabelecimento.count({ where: { imagemCapaURL: url } })) return false;
+        if (await tx.usuario.count({ where: { fotoURL: url } }) || await tx.servico.count({ where: { imagemURL: url } }) || await tx.profissional.count({ where: { imagemURL: url } }) || await tx.estabelecimento.count({ where: { imagemCapaURL: url } }) || await tx.servicoSugerido.count({ where: { imagemURL: url } })) return false;
         await tx.midia.update({ where: { id: item.id }, data: { status: 'EXCLUIDA' } });
         await tx.logAuditoria.create({ data: { usuarioId: usuario.id, acao: 'LIMPAR_ORFA', entidade: 'MIDIA', entidadeId: item.id } });
         return true;

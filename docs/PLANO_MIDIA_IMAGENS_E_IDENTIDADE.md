@@ -205,12 +205,18 @@ Verificação técnica: build do core, checagem TypeScript web/backend e 15 test
 
 ## Fase 5 — Curadoria E Operação Da Galeria
 
-- [ ] Permitir ao superadmin manter imagens globais, títulos, segmentos, finalidade e ativação.
-- [ ] Registrar autoria e auditoria de uploads e associações, sem registrar arquivos ou metadados sensíveis nos logs.
-- [ ] Desativar imagens globais para novas seleções sem quebrar referências existentes.
-- [ ] Padronizar as referências internas do catálogo de serviços sugeridos com a galeria.
-- [ ] Documentar armazenamento persistente, backup, recuperação, cache e tratamento de mídias órfãs.
-- [ ] Validar isolamento de arquivos e associações entre estabelecimentos.
+- [x] Permitir ao superadmin manter imagens globais, títulos, segmentos, finalidade e ativação.
+- [x] Registrar autoria e auditoria de uploads e associações, sem registrar arquivos ou metadados sensíveis nos logs.
+- [x] Desativar imagens globais para novas seleções sem quebrar referências existentes.
+- [x] Padronizar as referências internas do catálogo de serviços sugeridos com a galeria.
+- [x] Documentar armazenamento persistente, backup, recuperação, cache e tratamento de mídias órfãs.
+- [x] Validar isolamento de arquivos e associações entre estabelecimentos.
+
+Detalhes da Fase 5 e roteiro manual em `docs/OPERACAO_GALERIA_MIDIAS.md`. Curadoria web em Admin SaaS → Galeria global; mobile em Administração → Curadoria da galeria global. Permite upload global por finalidade, título, segmento e ativação; finalidade/escopo/arquivo não são mutáveis. Desativação preserva referências existentes. Catálogo de sugestões web seleciona mídia global por ID, com vínculo e validação no backend; imagens antigas podem ser padronizadas por seeder específico, que simula por padrão. Seeder e limpeza não foram executados na base, nem backup/restauração reais.
+
+Não há migration ou nova dependência nativa nesta fase. A galeria da Fase 1 deve estar preparada. O aceite visual/admin em Android/iOS/navegador e a validação operacional de backup/restauração permanecem pendentes; implementação não implica homologação de produção.
+
+Verificação: 28 testes em 5 suites passaram, incluindo autorização, isolamento, continuidade de imagens desativadas, associação ao catálogo e simulação do seed. TypeScript da web/backend e `git diff --check` passaram. Mobile mantém os dois erros anteriores em `AgendamentoAssistido` e no mapa de períodos de `useOperacao`, sem novos erros na curadoria.
 
 ## Fase 6 — Aceite Web/Mobile
 
@@ -220,9 +226,21 @@ Verificação técnica: build do core, checagem TypeScript web/backend e 15 test
 - [ ] Verificar que um cliente só altera sua foto e um membro só altera mídias da unidade com a permissão necessária.
 - [ ] Validar imagens de cada segmento nos temas claro/escuro e fallback quando a imagem estiver indisponível.
 - [ ] Testar seleção cancelada, arquivos inválidos, limite de tamanho, upload interrompido e nova tentativa.
-- [ ] Reiniciar/recriar o container e confirmar que as fotos persistem.
+- [x] Reiniciar/recriar o container e confirmar que as fotos persistem.
 - [ ] Confirmar que trocar uma imagem não quebra agendamentos, mapa, catálogo ou fotos já existentes.
-- [ ] Registrar testes automatizados, resultados manuais e pendências reais antes de declarar aceite final.
+- [x] Registrar testes automatizados, resultados manuais e pendências reais antes de declarar aceite final.
+
+### Execução Do Aceite Em 14/10/2026
+
+A etapa automatizada foi concluída sem alterações na base de negócio. O build do core e do backend passou; o build de produção da web passou com `NODE_ENV=production`; e a checagem TypeScript do mobile passou sem erros. Os dois erros anteriores do mobile foram corrigidos: a data inicial do agendamento assistido agora só é renderizada quando válida, e os períodos da agenda são deslocados mantendo explicitamente o contrato tipado.
+
+Foram aprovadas 8 suites e 38 testes, cobrindo processamento e proporção de arquivos, rejeição de arquivo inválido e acima de 5 MB, isolamento por usuário/unidade, autorização, associação, imagem global desativada ainda referenciada, identidade e fallback multissegmento, catálogo, curadoria, seed e deduplicação dos contatos mobile. A compilação web mantém apenas avisos de otimização de elementos `<img>`, sem erro de tipo ou build.
+
+O serviço `app` foi recriado com `--force-recreate`. Antes e depois da recriação, o volume `barberflowabs_uniflow_midias` continha 46 arquivos e o mesmo checksum agregado `b009a2207636b48e9d930fe43799fd9d95e9ec6b131b05675dd997d008fe90e7`. Após a subida, web e API pública responderam HTTP 200. Isso aprova a persistência do armazenamento sem apagar ou recriar o volume.
+
+Ainda não foram marcados como aprovados os itens que dependem de interação real: upload/edição autenticada na web, Android e iOS; câmera, seletor limitado, cancelamento e conexão interrompida; conferência visual dos seis segmentos nos dois temas; e regressão navegacional em mapa, agenda e catálogo após trocar uma imagem. Esses testes devem ser feitos com as contas e aparelhos de aceite. A implementação não será declarada homologada enquanto permanecerem pendentes.
+
+O build web de produção deve receber `NODE_ENV=production`. O container normal continua corretamente em `development`; executar `next build` herdando esse valor gera inconsistência entre os runtimes do React/Next e não representa a configuração de produção.
 
 ## Sequência E Estado
 
@@ -230,7 +248,7 @@ A seção “Clientes Que Agendam Online” da Home web está temporariamente se
 
 Executar as fases na ordem 1 → 2 → 3 → 4 → 5 → 6. A fundação de upload e entrega persistente precede os seletores. A galeria inicial reutiliza os arquivos pertinentes já disponíveis; novas artes poderão ser criadas durante a curadoria, quando necessárias.
 
-Status: Fases 1–4 implementadas; aceite visual e de dispositivo pendente. O backend passou nos 10 testes de mídia e na checagem de tipos; a web também passou na checagem completa de tipos. A preparação do ambiente da Fase 1 continua necessária. Próximo desenvolvimento: Fase 5 — Curadoria e operação da galeria.
+Status: Fases 1–5 implementadas. A parte automatizada e o teste de persistência da Fase 6 foram aprovados: 38 testes, builds core/backend/web e checagem TypeScript mobile passaram. O aceite visual e operacional autenticado em navegador, Android e iOS permanece pendente; por isso a Fase 6 ainda não representa homologação final. A preparação do ambiente da Fase 1 continua necessária.
 
 Referências de implementação: [upload multipart no NestJS](https://docs.nestjs.com/techniques/file-upload) e [processamento e remoção de metadados no Sharp](https://sharp.pixelplumbing.com/api-output/).
 

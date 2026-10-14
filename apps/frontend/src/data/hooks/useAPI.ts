@@ -135,9 +135,9 @@ export default function useAPI() {
         }
     }
 
-    const httpUpload = useCallback((arquivo: File, finalidade: string, progresso: (valor: number) => void) => new Promise<any>((resolve, reject) => {
+    const httpUpload = useCallback((arquivo: File, finalidade: string, progresso: (valor: number) => void, global = false) => new Promise<any>((resolve, reject) => {
         const xhr = new XMLHttpRequest()
-        xhr.open('POST', `${URL_BASE}/midias/upload`)
+        xhr.open('POST', `${URL_BASE}/midias/${global ? 'admin/upload' : 'upload'}`)
         Object.entries(headersTenant()).forEach(([chave, valor]) => xhr.setRequestHeader(chave, String(valor)))
         xhr.upload.onprogress = (evento) => { if (evento.lengthComputable) progresso(Math.round(evento.loaded * 100 / evento.total)) }
         xhr.onerror = () => reject(new Error('Não foi possível enviar a imagem. Tente novamente.'))

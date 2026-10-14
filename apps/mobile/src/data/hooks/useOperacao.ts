@@ -214,9 +214,16 @@ export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'da
 
 function deslocarAgendamento(item: AgendamentoOperacional, data: string, diferenca: number): AgendamentoOperacional {
     const deslocar = (valor?: string | null) => valor ? new Date(new Date(valor).getTime() + diferenca).toISOString() : valor
-    const periodos = item.periodos ? Object.fromEntries(Object.entries(item.periodos).map(([chave, periodo]) => [
-        chave,
-        periodo ? { inicio: deslocar(periodo.inicio)!, fim: deslocar(periodo.fim)! } : null,
-    ])) as AgendamentoOperacional['periodos'] : item.periodos
+    const deslocarPeriodo = (periodo?: { inicio: string; fim: string } | null) => periodo
+        ? { inicio: deslocar(periodo.inicio)!, fim: deslocar(periodo.fim)! }
+        : null
+    const periodos = item.periodos ? {
+        ocupacao: deslocarPeriodo(item.periodos.ocupacao)!,
+        deslocamentoAntes: deslocarPeriodo(item.periodos.deslocamentoAntes),
+        preparacaoAntes: deslocarPeriodo(item.periodos.preparacaoAntes),
+        atendimento: deslocarPeriodo(item.periodos.atendimento)!,
+        preparacaoDepois: deslocarPeriodo(item.periodos.preparacaoDepois),
+        deslocamentoDepois: deslocarPeriodo(item.periodos.deslocamentoDepois),
+    } : undefined
     return { ...item, data, dataFim: deslocar(item.dataFim), inicioOcupacao: deslocar(item.inicioOcupacao), fimOcupacao: deslocar(item.fimOcupacao), periodos }
 }

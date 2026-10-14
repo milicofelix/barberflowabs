@@ -8,9 +8,9 @@ export function urlImagemWeb(url?: string | null) {
     return resolverURLMidia(url ?? '', process.env.NEXT_PUBLIC_API_URL ?? '')
 }
 
-export default function SeletorImagem({ valor, finalidade, alterar, titulo = 'Imagem', padrao = '', disabled = false }: {
+export default function SeletorImagem({ valor, finalidade, alterar, titulo = 'Imagem', padrao = '', disabled = false, global = false }: {
     valor?: string | null; finalidade: FinalidadeMidia; alterar: (url: string, midiaId: string | null) => void
-    titulo?: string; padrao?: string; disabled?: boolean
+    titulo?: string; padrao?: string; disabled?: boolean; global?: boolean
 }) {
     const { httpGet, httpUpload } = useAPI()
     const dialog = useRef<HTMLDialogElement>(null)
@@ -34,13 +34,14 @@ export default function SeletorImagem({ valor, finalidade, alterar, titulo = 'Im
         if (!aberto) return
         let vigente = true
         setCarregando(true); setErro(''); setGaleria([])
-        httpGet(`/midias/galeria?finalidade=${finalidade}`).then((dados) => {
+        httpGet(global ? '/midias/admin' : `/midias/galeria?finalidade=${finalidade}`).then((resposta) => {
+            const dados = global && Array.isArray(resposta?.itens) ? resposta.itens.filter((item: any) => item.ativo && item.finalidade === finalidade) : resposta
             if (!vigente) return
             if (!Array.isArray(dados)) setErro(dados?.message ?? 'Galeria indisponível')
             else setGaleria(dados)
         }).finally(() => { if (vigente) setCarregando(false) })
         return () => { vigente = false }
-    }, [aberto, finalidade, httpGet, tentativa])
+    }, [aberto, finalidade, httpGet, tentativa, global])
     function abrir() { setAberto(true); setFoto(null); setErro(''); dialog.current?.showModal() }
     function fechar() { if (enviando) return; dialog.current?.close(); setAberto(false); setFoto(null) }
     function escolherArquivo(arquivo?: File) {
@@ -61,7 +62,7 @@ export default function SeletorImagem({ valor, finalidade, alterar, titulo = 'Im
             const ctx = canvas.getContext('2d'); if (!ctx) throw new Error('Não foi possível preparar a foto')
             ctx.drawImage(imagem, (imagem.naturalWidth - largura) * posicao.x / 100, (imagem.naturalHeight - altura) * posicao.y / 100, largura, altura, 0, 0, canvas.width, canvas.height)
             const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((b) => b ? resolve(b) : reject(new Error('Não foi possível preparar a foto')), 'image/webp', 0.85))
-            const midia = await httpUpload(new File([blob], 'foto.webp', { type: 'image/webp' }), finalidade, setProgresso)
+            const midia = await httpUpload(new File([blob], 'foto.webp', { type: 'image/webp' }), finalidade, setProgresso, global)
             alterar(midia.versoes.principal.url, midia.id)
             dialog.current?.close(); setAberto(false); setFoto(null)
         } catch (e: any) { setErro(e.message ?? 'Não foi possível enviar a foto') } finally { setEnviando(false) }

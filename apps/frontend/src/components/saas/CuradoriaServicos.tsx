@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import useAPI from '@/data/hooks/useAPI'
+import SeletorImagem from '@/components/midia/SeletorImagem'
 
 const inicial = { nome: '', slug: '', descricao: '', imagemURL: '/servicos/combo.jpg', segmentoId: 0, especialidadeIds: [] as number[], ativo: false, ordem: 0, modeloAtendimento: 'PRESENCIAL', duracaoMinutos: 30, preparoAntesMinutos: 0, preparoDepoisMinutos: 0, deslocamentoMinutos: 0, requisitosOperacionais: [] as Array<{ requisitoId: number; obrigatorio: boolean }>, recursosNecessarios: [] as Array<{ tipoRecurso: string; quantidade: number }> }
 
@@ -43,7 +44,7 @@ export default function CuradoriaServicos() {
                 <div className="flex flex-wrap gap-3"><input aria-label="Buscar sugestão" placeholder="Buscar serviço" className="input" value={busca} onChange={(e) => setBusca(e.target.value)} /><button disabled={ocupado} onClick={() => setForm({ ...inicial, segmentoId: dados.segmentos[0]?.id ?? 0 })} className="rounded bg-violet-600 px-4 py-2 text-white">Nova sugestão</button></div>
                 {!form ? <div className="grid gap-2 md:grid-cols-2">{dados.itens.filter((item: any) => item.nome.toLowerCase().includes(busca.toLowerCase())).map((item: any) => <button disabled={ocupado} key={item.id} onClick={() => editar(item)} className="rounded border border-border p-3 text-left"><strong>{item.nome}</strong><p className="text-sm">{item.ativo ? 'Ativo' : 'Desativado'} · Ordem {item.ordem} · {item.adocoes} adoção(ões)</p><p className="text-sm">{dados.segmentos.find((s: any) => s.id === item.segmentoId)?.nome}</p></button>)}</div> : <div className="grid gap-4">
                     <h3 className="font-bold">{form.id ? 'Editar sugestão' : 'Nova sugestão'}</h3>
-                    <div className="grid gap-3 md:grid-cols-2">{campo('nome', 'Nome')}{campo('slug', 'Identificador (ex.: corte-social)')}{campo('descricao', 'Descrição')}{campo('imagemURL', 'Imagem (caminho ou URL HTTPS)')}
+                    <div className="grid gap-3 md:grid-cols-2">{campo('nome', 'Nome')}{campo('slug', 'Identificador (ex.: corte-social)')}{campo('descricao', 'Descrição')}<SeletorImagem global finalidade="SERVICO" valor={form.imagemURL} padrao="/servicos/combo.jpg" disabled={ocupado} alterar={(imagemURL, midiaId) => setForm({ ...form, imagemURL, midiaId })} />
                         <label className="grid gap-1">Segmento<select className="input" value={form.segmentoId} onChange={(e) => setForm({ ...form, segmentoId: Number(e.target.value), especialidadeIds: [] })}>{dados.segmentos.map((s: any) => <option key={s.id} value={s.id}>{s.nome}</option>)}</select></label>
                         <label className="grid gap-1">Modalidade<select className="input" value={form.modeloAtendimento} onChange={(e) => setForm({ ...form, modeloAtendimento: e.target.value })}>{['PRESENCIAL', 'DOMICILIAR', 'HIBRIDO'].map((m) => <option key={m}>{m}</option>)}</select></label>
                         {campo('ordem', 'Ordem de exibição', true)}{campo('duracaoMinutos', 'Duração (min)', true)}{campo('deslocamentoMinutos', 'Deslocamento (min)', true)}

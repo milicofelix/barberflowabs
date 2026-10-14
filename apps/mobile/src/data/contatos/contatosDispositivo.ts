@@ -1,5 +1,6 @@
 import { Contact, ContactField, getPermissionsAsync, requestPermissionsAsync } from 'expo-contacts'
 import { Linking, Platform } from 'react-native'
+import { opcoesUnicas, chaveTelefone } from './opcoesContato'
 
 export type EstadoPermissaoContatos = 'NAO_SOLICITADA' | 'CONCEDIDA' | 'LIMITADA' | 'NEGADA' | 'BLOQUEADA' | 'INDISPONIVEL'
 
@@ -48,10 +49,10 @@ export async function lerContatosPermitidos(offset = 0, limite = 200): Promise<P
     const contatos = detalhes.map((item: any) => ({
         referencia: String(item.id),
         nome: String(item.fullName ?? '').trim(),
-        telefones: (item.phones ?? []).flatMap((telefone: any) => telefone?.number
-            ? [{ rotulo: telefone.label || undefined, numero: String(telefone.number) }] : []),
-        emails: (item.emails ?? []).flatMap((email: any) => email?.address
-            ? [{ rotulo: email.label || undefined, email: String(email.address).trim().toLowerCase() }] : []),
+        telefones: opcoesUnicas<{ rotulo?: string; numero: string }>((item.phones ?? []).flatMap((telefone: any) => telefone?.number
+            ? [{ rotulo: telefone.label || undefined, numero: String(telefone.number) }] : []), (t) => chaveTelefone(t.numero)),
+        emails: opcoesUnicas<{ rotulo?: string; email: string }>((item.emails ?? []).flatMap((email: any) => email?.address
+            ? [{ rotulo: email.label || undefined, email: String(email.address).trim().toLowerCase() }] : []), (e) => e.email),
     }))
     const proximoOffset = offset + detalhes.length < totalDisponivel ? offset + detalhes.length : null
     return { contatos, totalDisponivel, proximoOffset }

@@ -113,9 +113,9 @@ export default function useAPI() {
     const httpPut = useCallback(<T,>(caminho: string, body?: unknown, opcoes?: OpcoesRequisicao) => executar<T>('PUT', caminho, body, opcoes), [executar])
     const httpDelete = useCallback(<T,>(caminho: string, body?: unknown, opcoes?: OpcoesRequisicao) => executar<T>('DELETE', caminho, body, opcoes), [executar])
 
-    const httpUpload = useCallback((uri: string, finalidade: FinalidadeMidia, progresso: (valor: number) => void) => new Promise<ImagemGaleria>((resolve, reject) => {
+    const httpUpload = useCallback((uri: string, finalidade: FinalidadeMidia, progresso: (valor: number) => void, global = false) => new Promise<ImagemGaleria>((resolve, reject) => {
         if (!URL_BASE) { reject(new Error('API não configurada')); return }
-        const xhr = new XMLHttpRequest(); xhr.open('POST', `${URL_BASE}/midias/upload`)
+        const xhr = new XMLHttpRequest(); xhr.open('POST', `${URL_BASE}/midias/${global ? 'admin/upload' : 'upload'}`)
         if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`)
         xhr.upload.onprogress = (e) => { if (e.lengthComputable) progresso(Math.round(e.loaded * 100 / e.total)) }
         xhr.onerror = () => reject(new Error('Falha de conexão ao enviar a foto. Tente novamente.'))

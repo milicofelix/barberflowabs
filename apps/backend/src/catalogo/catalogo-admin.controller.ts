@@ -64,10 +64,20 @@ export class CatalogoAdminController {
       if (await tx.requisito.count({ where: { id: { in: requisitos.map((r: any) => r.requisitoId) }, ativo: true } }) !== requisitos.length) throw new BadRequestException('Requisitos indisponíveis');
       const anterior = id ? await tx.servicoSugerido.findUnique({ where: { id }, include: { especialidades: true } }) : null;
       if (id && !anterior) throw new NotFoundException('Sugestão não encontrada');
+      let midia: any = null;
+      const referenciaNaURL = dados.imagemURL.match(/^\/midias\/arquivos\/([a-f0-9-]{36})\/principal$/)?.[1];
+      const referencia = dados.midiaId ?? (anterior?.imagemURL !== dados.imagemURL ? referenciaNaURL : undefined);
+      if (dados.imagemURL.startsWith('/midias/') && !referenciaNaURL) throw new BadRequestException('URL de mídia inválida');
+      if (referencia) {
+        if (typeof referencia !== 'string') throw new BadRequestException('Imagem inválida');
+        await tx.$queryRawUnsafe('SELECT id FROM midias WHERE id = ? FOR UPDATE', referencia);
+        midia = await tx.midia.findFirst({ where: { id: referencia, escopo: 'GLOBAL', finalidade: 'SERVICO', ativo: true, status: 'DISPONIVEL' } });
+        if (!midia) throw new BadRequestException('Selecione uma imagem global ativa de serviço');
+      }
       const duplicado = await tx.servicoSugerido.findFirst({ where: { segmentoId: dados.segmentoId, slug: dados.slug, ...(id ? { id: { not: id } } : {}) } });
       if (duplicado) throw new BadRequestException('Já existe uma sugestão com esse identificador no segmento');
       const data = {
-        nome: dados.nome.trim(), slug: dados.slug, descricao: dados.descricao.trim(), imagemURL: dados.imagemURL.trim(),
+        nome: dados.nome.trim(), slug: dados.slug, descricao: dados.descricao.trim(), imagemURL: midia ? midia.versoes.principal.url : dados.imagemURL.trim(),
         segmentoId: dados.segmentoId, ativo: dados.ativo, ordem: dados.ordem, modeloAtendimento: dados.modeloAtendimento,
         duracaoMinutos: dados.duracaoMinutos, preparoAntesMinutos: dados.preparoAntesMinutos,
         preparoDepoisMinutos: dados.preparoDepoisMinutos, deslocamentoMinutos: dados.deslocamentoMinutos,
@@ -78,6 +88,10 @@ export class CatalogoAdminController {
       const relacoes = { create: especialidadeIds.map((especialidadeId) => ({ especialidadeId })) };
       const item = id ? await tx.servicoSugerido.update({ where: { id }, data: { ...data, especialidades: relacoes } })
         : await tx.servicoSugerido.create({ data: { ...data, especialidades: relacoes } });
+      if (midia || dados.midiaId !== undefined || (id && anterior?.imagemURL?.startsWith('/midias/') && anterior.imagemURL !== item.imagemURL)) {
+        await tx.midiaVinculo.deleteMany({ where: { entidade: 'SERVICO_SUGERIDO', entidadeId: item.id } });
+        if (midia) await tx.midiaVinculo.create({ data: { midiaId: midia.id, entidade: 'SERVICO_SUGERIDO', entidadeId: item.id } });
+      }
       await tx.logAuditoria.create({ data: { usuarioId: usuario.id, acao: id ? 'ATUALIZAR' : 'CRIAR', entidade: 'SERVICO_SUGERIDO', entidadeId: String(item.id), detalhes: { anterior: anterior ? JSON.parse(JSON.stringify(anterior)) : null, novo: { ...data, especialidadeIds } } } });
       return item;
     });

@@ -146,9 +146,9 @@ export default function AgendamentoAssistido({ dataInicial, chaveInicial }: Prop
     </View>
 
     return <View style={styles.container}>
-        {dataInicial ? <View style={[styles.origemAgenda, { backgroundColor: cores.superficieElevada, borderColor: cores.destaque }]}>
+        {dataInicial && dataValida ? <View style={[styles.origemAgenda, { backgroundColor: cores.superficieElevada, borderColor: cores.destaque }]}>
             <Text style={[styles.origemAgendaTitulo, { color: cores.destaque }]}>Horário escolhido na agenda</Text>
-            <Text style={[styles.origemAgendaData, { color: cores.texto }]}>{data.toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'short' })}</Text>
+            <Text style={[styles.origemAgendaData, { color: cores.texto }]}>{dataValida.toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'short' })}</Text>
             <Text style={[styles.ajuda, { color: cores.textoSecundario }]}>Complete os dados abaixo. O sistema confirmará todos os blocos necessários antes de agendar.</Text>
         </View> : null}
         <View style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>

@@ -11,6 +11,7 @@ import { useState, type ReactNode } from 'react'
 import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
+import CuradoriaMidias from '@/src/components/midia/CuradoriaMidias'
 
 export default function Administracao() {
     const { cores } = useTema()
@@ -20,6 +21,7 @@ export default function Administracao() {
     return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}><ScrollView contentContainerStyle={styles.conteudo}
         refreshControl={<RefreshControl refreshing={dados.carregando} onRefresh={dados.carregar} tintColor="#E7B84B" />}>
         <Text style={styles.sobretitulo}>ADMINISTRAÇÃO UNIFLOW ABS</Text><Text style={[styles.titulo, { color: cores.texto }]}>Plataforma</Text>
+        <CuradoriaMidias />
         <View style={styles.metricas}><Metrica titulo="Estabelecimentos" valor={dados.estabelecimentos.length} />
             <Metrica titulo="Aguardando revisão" valor={dados.pendentes.length} /></View>
         {dados.erro ? <EstadoErro mensagem={dados.erro} tentarNovamente={dados.carregar} /> : null}

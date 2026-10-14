@@ -150,6 +150,7 @@ O importador VCF existente permanece como ferramenta administrativa excepcional 
 2. Negue a permissao e confirme que o aplicativo continua utilizavel e oferece cadastro manual.
 3. Conceda acesso limitado, quando suportado, e confirme que apenas os contatos autorizados aparecem.
 4. Pesquise, selecione alguns contatos e confirme que contatos sem nome sao ignorados.
+   Inclua um celular local sem DDD, como `98049-7003`: confira o DDD detectado, ajuste-o se necessário e confirme que o contato chega à revisão como `+55 + DDD + número`.
 5. Execute a simulacao e confira novos, existentes, duplicados, invalidos e conflitos antes de gravar.
 6. Confirme a importacao e verifique que os clientes aparecem somente no estabelecimento ativo.
 7. Corrija um item invalido, ignore outro e confirme que o resumo e o novo lote refletem essas escolhas.
@@ -159,5 +160,19 @@ O importador VCF existente permanece como ferramenta administrativa excepcional 
 11. Revogue a permissao no aparelho e confirme que dados ja importados permanecem no estabelecimento, mas nenhuma nova leitura local ocorre.
 
 ## Ordem Recomendada
+
+### Correção De Opções Repetidas E Renderização Da Lista
+
+Telefones/e-mails repetidos dentro de um contato são deduplicados localmente antes da exibição. Telefones usam identidade normalizada (sem máscara, com código do país quando brasileiro) e e-mails ignoram caixa/espaços. A primeira apresentação é preservada; contatos distintos com o mesmo telefone continuam distintos e não são fundidos. A proteção também se aplica a contatos já carregados na memória.
+
+As linhas da seleção usam `memo`, callbacks estáveis e preservação das referências de contatos sem alterações. A FlatList renderiza inicialmente 16 itens, em lotes de 12 e janela de 7, mantendo paginação e seleção por ID do contato. Nenhum contato do aparelho/banco foi editado ou importado durante esse ajuste.
+
+### Números Locais Sem DDD
+
+Números brasileiros com apenas 8 ou 9 dígitos não são mais descartados silenciosamente. O importador infere o DDD mais recorrente entre os contatos completos autorizados no aparelho e mostra o campo **DDD para números locais** antes da revisão. O operador pode confirmar ou corrigir os dois dígitos. Assim, `98049-7003` com DDD `11` é enviado como `+5511980497003`.
+
+Quando não houver nenhum número completo confiável para inferência, a revisão é interrompida com uma orientação para informar o DDD. O sistema não inventa localização e não envia o contato incompleto ao backend. A regra também é aplicada ao reenviar correções.
+
+Verificação: cinco testes de opções locais passaram, incluindo inferência de DDD e normalização de número local; a checagem TypeScript mobile e `git diff --check` passaram. Recarregar o bundle (não há dependência nativa nova) e repetir a seleção de contatos com números duplicados, busca, paginação e escolha de telefone/e-mail. Confirmar ausência de chaves repetidas; medir a rolagem no aparelho antes de afirmar que o aviso de lentidão foi completamente eliminado.
 
 As Fases 1 a 6 estao implementadas. Concluir o novo build nativo e o aceite manual em dispositivos iOS e Android antes de remover a importacao VCF/seeder usada como contingencia administrativa.

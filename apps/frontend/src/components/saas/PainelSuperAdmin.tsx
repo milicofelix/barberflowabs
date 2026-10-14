@@ -3,6 +3,7 @@
 import useAPI from '@/data/hooks/useAPI'
 import useSessao from '@/data/hooks/useSessao'
 import CuradoriaServicos from './CuradoriaServicos'
+import CuradoriaMidias from './CuradoriaMidias'
 import { useCallback, useEffect, useState } from 'react'
 
 const status = ['TRIAL', 'ACTIVE', 'PAST_DUE', 'SUSPENDED', 'CANCELED']
@@ -197,6 +198,7 @@ export default function PainelSuperAdmin() {
     return (
         <div className="grid gap-6">
             <CuradoriaServicos />
+            <CuradoriaMidias />
             <section className="rounded border border-zinc-800 bg-zinc-950 p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>

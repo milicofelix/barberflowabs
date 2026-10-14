@@ -7,6 +7,13 @@ import { AssociarMidiaDto, LIMITE_UPLOAD } from './midia.dto';
 @Controller('midias')
 export class MidiaController {
   constructor(private readonly midias: MidiaService) {}
+  @Get('admin')
+  global(@UsuarioLogado() usuario: any) { return this.midias.listarGlobal(usuario); }
+  @Put('admin/:id')
+  atualizarGlobal(@UsuarioLogado() usuario: any, @Param('id') id: string, @Body() dados: any) { return this.midias.atualizarGlobal(usuario, id, dados); }
+  @Post('admin/upload')
+  @UseInterceptors(FileInterceptor('arquivo', { limits: { fileSize: LIMITE_UPLOAD, files: 1, fields: 2 }, storage: undefined }))
+  uploadGlobal(@UsuarioLogado() usuario: any, @Body('finalidade') finalidade: string, @UploadedFile() arquivo: any) { return this.midias.upload(usuario, finalidade, arquivo, true); }
   @Get('galeria')
   listar(@UsuarioLogado() usuario: any, @Query('finalidade') finalidade: string, @Query('segmentoSlug') segmento?: string) { return this.midias.listar(usuario, finalidade, segmento); }
   @Post('upload')

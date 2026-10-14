@@ -10,9 +10,9 @@ import { resolverURLMidia } from '@uniflowabs/core'
 
 export const urlMidia = (url: string) => url.startsWith('/midias/') ? resolverURLMidia(url, process.env.API_URL ?? '') : url.startsWith('/') ? `${process.env.API_URL?.replace(/\/$/, '')}${url}` : url
 
-export default function SeletorImagem({ valor, finalidade, alterar, titulo = 'Imagem', padrao = '', disabled = false }: {
+export default function SeletorImagem({ valor, finalidade, alterar, titulo = 'Imagem', padrao = '', disabled = false, global = false }: {
     valor?: string | null; finalidade: FinalidadeMidia; alterar: (url: string, id: string | null) => void
-    titulo?: string; padrao?: string; disabled?: boolean
+    titulo?: string; padrao?: string; disabled?: boolean; global?: boolean
 }) {
     const { cores } = useTema(); const { httpGet, httpUpload } = useAPI()
     const [aberto, setAberto] = useState(false); const [galeria, setGaleria] = useState<ImagemGaleria[]>([])
@@ -25,10 +25,10 @@ export default function SeletorImagem({ valor, finalidade, alterar, titulo = 'Im
     useEffect(() => {
         if (!aberto) return
         let vigente = true; setCarregando(true); setGaleria([]); setErro('')
-        httpGet<ImagemGaleria[]>(`/midias/galeria?finalidade=${finalidade}`).then((itens) => { if (vigente) setGaleria(itens) })
+        httpGet<any>(global ? '/midias/admin' : `/midias/galeria?finalidade=${finalidade}`).then((resposta) => { const itens = global ? resposta.itens.filter((item: any) => item.ativo && item.finalidade === finalidade) : resposta; if (vigente) setGaleria(itens) })
             .catch((e) => { if (vigente) setErro(mensagemDoErro(e)) }).finally(() => { if (vigente) setCarregando(false) })
         return () => { vigente = false }
-    }, [aberto, finalidade, httpGet, tentativa])
+    }, [aberto, finalidade, httpGet, tentativa, global])
     async function escolher(camera: boolean) {
         if (ocupado.current) return
         ocupado.current = true; setEnviando(true); setErro(''); setNegado(false)
@@ -67,7 +67,7 @@ export default function SeletorImagem({ valor, finalidade, alterar, titulo = 'Im
     async function enviar() {
         if (!foto || ocupado.current) return
         ocupado.current = true; setEnviando(true); setErro(''); setProgresso(0)
-        try { const midia = await httpUpload(foto, finalidade, setProgresso); alterar(midia.versoes.principal.url, midia.id); setAberto(false); setFoto(null) }
+        try { const midia = await httpUpload(foto, finalidade, setProgresso, global); alterar(midia.versoes.principal.url, midia.id); setAberto(false); setFoto(null) }
         catch (e) { setErro(mensagemDoErro(e)) }
         finally { ocupado.current = false; setEnviando(false) }
     }

@@ -699,6 +699,66 @@ docker compose exec -T app sh -lc 'cd apps/backend && npx jest intervalo-opciona
 
 Confere a inclusão do meio-dia na grade padrão, travessia entre manhã/tarde e respeito ao intervalo cadastrado. Não grava horários nem reservas na base.
 
+### Galeria — Fase 5: testes e padronização do catálogo
+
+Testes executados nesta fase, sem gravar na base:
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && npx jest "midia|catalogo-admin" --runInBand'
+```
+
+Comandos preparados para o operador executar após o seed da galeria; não foram executados na base nesta fase:
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && npx ts-node prisma/seeds/vincular-catalogo-midias.seed.ts'
+```
+
+O comando acima somente simula e conta candidatos. Após conferir o ambiente, fazer backup e revisar o resultado, aplicar as referências às sugestões globais:
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && npx ts-node prisma/seeds/vincular-catalogo-midias.seed.ts --aplicar'
+```
+
+Não altera serviços adotados pelas unidades nem imagens personalizadas. Backup, restauração, cache, limites e órfãs: `docs/OPERACAO_GALERIA_MIDIAS.md`. Não usar reset do banco ou apagar o volume de mídias.
+
+### Testar opções repetidas na seleção de contatos mobile
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && npx jest contatos-opcoes-mobile --runInBand'
+```
+
+Executa testes puros do normalizador local do mobile, sem acessar contatos reais ou alterar o banco.
+
+## Aceite De Mídia Web/Mobile — Fase 6
+
+### Executar validações automatizadas
+
+```bash
+docker compose exec -T app sh -lc 'cd /workspace/barberFlowABS && yarn workspace @uniflowabs/core build'
+docker compose exec -T app sh -lc 'cd /workspace/barberFlowABS && yarn workspace backend build'
+docker compose exec -T app sh -lc 'cd /workspace/barberFlowABS && NODE_ENV=production yarn workspace frontend build'
+docker compose exec -T app sh -lc 'cd /workspace/barberFlowABS && npx tsc --noEmit --pretty false -p apps/mobile/tsconfig.json'
+docker compose exec -T app sh -lc 'cd /workspace/barberFlowABS/apps/backend && npx jest src/midia/midia.spec.ts src/midia/identidade.spec.ts src/midia/midia-curadoria.spec.ts src/midia/catalogo-midias-seed.spec.ts src/catalogo/catalogo-admin.controller.spec.ts src/catalogo/catalogo.policy.spec.ts src/catalogo/catalogo.prisma.spec.ts src/gestao/contatos-opcoes-mobile.spec.ts --runInBand'
+```
+
+O prefixo `NODE_ENV=production` vale somente para o build web. O serviço de desenvolvimento continua usando `NODE_ENV=development`. Os testes não gravam dados de negócio: arquivos temporários são removidos ao final e repositórios são simulados.
+
+### Confirmar persistência do volume após recriar o serviço
+
+Antes da recriação, anote a quantidade e o checksum:
+
+```bash
+docker compose exec -T app sh -lc 'find /var/lib/uniflow/midias -type f | sort | wc -l; find /var/lib/uniflow/midias -type f | sort | xargs sha256sum | sha256sum'
+```
+
+Recrie somente o serviço da aplicação, sem remover volumes:
+
+```bash
+docker compose up -d --force-recreate app
+```
+
+Quando web e backend voltarem, repita o primeiro comando. Quantidade e checksum devem permanecer idênticos. Nunca use `down -v`, `docker volume rm` ou reset do banco neste teste.
+
 ## Limpezas Destrutivas
 
 
