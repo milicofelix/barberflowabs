@@ -42,7 +42,9 @@ export default function Abas() {
                 tabBarStyle: { backgroundColor: cores.tabBar, borderTopColor: cores.borda, height: 64, paddingTop: 7, paddingBottom: 7 },
             }}
         >
-            <Tab.Screen name="Descobrir" component={Descoberta} options={opcoesAba('Descobrir', 'search-outline', cores.destaque, cores.textoSecundario)} />
+            {!operacional ? (
+                <Tab.Screen name="Descobrir" component={Descoberta} options={opcoesAba('Descobrir', 'search-outline', cores.destaque, cores.textoSecundario)} />
+            ) : null}
             {cliente || operacional ? (
                 <>
                     <Tab.Screen name="Inicio" component={Inicio} options={opcoesAba('Início', 'home-outline', cores.destaque, cores.textoSecundario)} />

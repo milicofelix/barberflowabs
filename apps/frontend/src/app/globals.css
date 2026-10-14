@@ -120,6 +120,7 @@
     }
 
     .home-identidade .home-sobre-imagem { background: rgb(4 10 26 / 24%); }
+    .home-identidade.home-operacional .home-sobre-imagem { background: transparent; }
     .home-identidade .slogan-titulo span,
     .home-identidade .slogan-descricao { color: #fff !important; }
 

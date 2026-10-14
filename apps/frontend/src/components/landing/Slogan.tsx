@@ -8,10 +8,12 @@ import { capaDoEstabelecimento } from '@/data/estabelecimentos/capas'
 import type { IdentidadeEstabelecimento } from '@uniflowabs/core'
 
 export default function Slogan() {
-    const { usuario } = useSessao()
+    const { carregando, usuario } = useSessao()
     const { httpGet } = useAPI()
-    const admin = ['SUPER_ADMIN', 'APP_OWNER'].includes(String(usuario?.role ?? usuario?.papel))
-    const operacional = !admin && !!usuario?.estabelecimentoId && (usuario?.membroEstabelecimento || ['ESTABLISHMENT_OWNER', 'ESTABLISHMENT_MEMBER'].includes(String(usuario?.role ?? usuario?.papel)))
+    const papel = String(usuario?.role ?? usuario?.papel ?? '').toUpperCase()
+    const admin = ['SUPER_ADMIN', 'APP_OWNER'].includes(papel)
+    const operacional = !admin && Boolean(usuario?.estabelecimentoId)
+        && (Boolean(usuario?.membroEstabelecimento) || ['ESTABLISHMENT_OWNER', 'ESTABLISHMENT_MEMBER'].includes(papel))
     const [unidade, setUnidade] = useState<(IdentidadeEstabelecimento & { id: number }) | null>(null)
     const [falhou, setFalhou] = useState(false)
     useEffect(() => {
@@ -27,7 +29,7 @@ export default function Slogan() {
     useEffect(() => { setFalhou(false) }, [contexto.imagemCapaURL, contexto.tipoEstabelecimento])
     useEffect(() => { const previa = new window.Image(); previa.src = imagem }, [imagem])
     return (
-        <div className="home-identidade relative h-[450px] bg-white sm:h-[700px] dark:bg-slate-950">
+        <div className={`home-identidade relative bg-white dark:bg-slate-950 ${operacional ? 'home-operacional h-[100dvh] min-h-[560px]' : 'h-[450px] sm:h-[700px]'}`}>
             <img src={imagem} alt="" decoding="async" onError={() => setFalhou(true)} className="home-imagem absolute inset-0 h-full w-full object-cover" />
             <div
                 className="
@@ -36,7 +38,7 @@ export default function Slogan() {
                 "
             >
                 <Cabecalho semFundo />
-                <div className="slogan-conteudo flex flex-col justify-center items-center gap-5">
+                {!carregando && !operacional ? <div className="slogan-conteudo flex flex-col justify-center items-center gap-5">
                     <h1 className="slogan-titulo flex flex-col items-center gap-1">
                         <span className="text-2xl text-white sm:text-3xl md:text-4xl lg:text-5xl font-thin tracking-wider">
                             Encontre seu
@@ -58,7 +60,7 @@ export default function Slogan() {
                     >
                         Ver Estabelecimentos
                     </Link>
-                </div>
+                </div> : null}
             </div>
         </div>
     )
