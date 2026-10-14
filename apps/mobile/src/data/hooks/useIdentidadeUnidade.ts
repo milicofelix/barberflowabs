@@ -2,7 +2,7 @@ import type { IdentidadeEstabelecimento } from '@uniflowabs/core'
 import { useFocusEffect } from '@react-navigation/native'
 import { useCallback, useState } from 'react'
 import { perfilOperacional, resolverPerfil } from '../auth/perfis'
-import useAPI from './useAPI'
+import useAPI, { mensagemDoErro } from './useAPI'
 import useSessao from './useSessao'
 
 export type IdentidadeDaUnidade = IdentidadeEstabelecimento & {
@@ -20,15 +20,18 @@ export default function useIdentidadeUnidade() {
     const operacional = perfilOperacional(resolverPerfil(usuario))
     const estabelecimentoId = operacional ? usuario?.estabelecimentoId ?? null : null
     const [unidade, setUnidade] = useState<IdentidadeDaUnidade | null>(() => estabelecimentoId ? cache.get(estabelecimentoId) ?? null : null)
+    const [erro, setErro] = useState<string | null>(null)
 
     const carregar = useCallback(async (forcar = false) => {
         if (!estabelecimentoId) {
             setUnidade(null)
+            setErro(null)
             return null
         }
         if (!forcar && cache.has(estabelecimentoId)) {
             const armazenada = cache.get(estabelecimentoId)!
             setUnidade(armazenada)
+            setErro(null)
             return armazenada
         }
         let requisicao = requisicoes.get(estabelecimentoId)
@@ -42,12 +45,18 @@ export default function useIdentidadeUnidade() {
                 cache.set(estabelecimentoId, dados)
                 setUnidade(dados)
             }
+            setErro(null)
             return dados
+        } catch (e) {
+            const armazenada = cache.get(estabelecimentoId) ?? null
+            if (armazenada) setUnidade(armazenada)
+            setErro(mensagemDoErro(e))
+            return armazenada
         } finally {
             if (requisicoes.get(estabelecimentoId) === requisicao) requisicoes.delete(estabelecimentoId)
         }
     }, [estabelecimentoId, httpGet])
 
     useFocusEffect(useCallback(() => { void carregar(true) }, [carregar]))
-    return { unidade, operacional, carregar }
+    return { unidade, operacional, erro, carregar }
 }

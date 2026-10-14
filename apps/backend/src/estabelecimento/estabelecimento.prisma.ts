@@ -159,18 +159,37 @@ export class EstabelecimentoPrisma {
     });
 
     if (exigeRevisao) {
-      await this.prisma.logAuditoria.create({
-        data: {
-          estabelecimentoId,
-          usuarioId,
-          acao: 'ESTABLISHMENT_PUBLIC_PROFILE_REVIEW_REQUESTED',
-          entidade: 'Estabelecimento',
-          entidadeId: String(estabelecimentoId),
-          detalhes: {
-            observacao: dados.observacaoRevisao ?? null,
-          },
-        } as any,
+      const administradores = await this.prisma.usuario.findMany({
+        where: { papel: 'SUPER_ADMIN' },
+        select: { id: true },
       });
+      await this.prisma.$transaction([
+        this.prisma.logAuditoria.create({
+          data: {
+            estabelecimentoId,
+            usuarioId,
+            acao: 'ESTABLISHMENT_PUBLIC_PROFILE_REVIEW_REQUESTED',
+            entidade: 'Estabelecimento',
+            entidadeId: String(estabelecimentoId),
+            detalhes: {
+              observacao: dados.observacaoRevisao ?? null,
+            },
+          } as any,
+        }),
+        ...(administradores.length
+          ? [this.prisma.notificacaoUsuario.createMany({
+              data: administradores.map((administrador) => ({
+                usuarioId: administrador.id,
+                estabelecimentoId,
+                tipo: 'PERFIL_ESTABELECIMENTO_REVIEW_REQUESTED',
+                titulo: 'Perfil de estabelecimento aguardando revisão',
+                mensagem: `${atual.nomePublico || atual.nome} alterou dados cadastrais que exigem nova análise.`,
+                prioridade: 'ALTA',
+                acaoUrl: '/admin',
+              })),
+            })]
+          : []),
+      ]);
     }
 
     return this.normalizarPerfilPublico(atualizado);
@@ -273,8 +292,6 @@ export class EstabelecimentoPrisma {
   private alterouCamposCriticos(atual: any, novo: any) {
     const campos = [
       'nomePublico',
-      'descricaoPublica',
-      'imagemCapaURL',
       'endereco',
       'bairro',
       'cidade',

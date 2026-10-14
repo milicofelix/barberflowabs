@@ -6,6 +6,7 @@ import type { FinalidadeMidia, ImagemGaleria } from '@uniflowabs/core'
 const URL_BASE = process.env.API_URL
 
 type EscopoTenant = 'automatico' | 'publico' | 'nenhum'
+const ATRASO_NOVA_TENTATIVA_GET_MS = 500
 
 interface OpcoesRequisicao {
     escopoTenant?: EscopoTenant
@@ -75,16 +76,24 @@ export default function useAPI() {
             if (token) headers.Authorization = `Bearer ${token}`
             if (body !== undefined) headers['Content-Type'] = 'application/json'
 
-            let resposta: Response
-            try {
-                resposta = await fetch(`${URL_BASE}${uri}`, {
-                    method: metodo,
-                    headers,
-                    body: body === undefined ? undefined : JSON.stringify(body),
-                })
-            } catch {
-                throw new ErroAPI('Não foi possível conectar ao servidor.', 0)
+            let resposta: Response | null = null
+            const totalTentativas = metodo === 'GET' ? 2 : 1
+            for (let tentativa = 1; tentativa <= totalTentativas; tentativa += 1) {
+                try {
+                    resposta = await fetch(`${URL_BASE}${uri}`, {
+                        method: metodo,
+                        headers,
+                        body: body === undefined ? undefined : JSON.stringify(body),
+                    })
+                    break
+                } catch {
+                    if (tentativa === totalTentativas) {
+                        throw new ErroAPI('Não foi possível conectar ao servidor.', 0)
+                    }
+                    await new Promise((resolver) => setTimeout(resolver, ATRASO_NOVA_TENTATIVA_GET_MS))
+                }
             }
+            if (!resposta) throw new ErroAPI('Não foi possível conectar ao servidor.', 0)
 
             const texto = await resposta.text()
             let dados: unknown = texto

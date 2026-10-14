@@ -1,7 +1,7 @@
 import { EstabelecimentoPrisma } from './estabelecimento.prisma';
 
 describe('Perfil público do estabelecimento', () => {
-  it('registra a revisão da capa com entidadeId compatível com o Prisma', async () => {
+  it('mantém a aprovação administrativa ao trocar somente a imagem de capa', async () => {
     const atual = {
       id: 9,
       nome: 'Clínica',
@@ -35,14 +35,7 @@ describe('Perfil público do estabelecimento', () => {
       aceitaAgendamentoOnline: true,
     });
 
-    expect(resultado.reviewStatus).toBe('PENDING_REVIEW');
-    expect(prisma.logAuditoria.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        estabelecimentoId: 9,
-        usuarioId: 7,
-        entidade: 'Estabelecimento',
-        entidadeId: '9',
-      }),
-    });
+    expect(resultado.reviewStatus).toBe('APPROVED');
+    expect(prisma.logAuditoria.create).not.toHaveBeenCalled();
   });
 });

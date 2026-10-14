@@ -6,6 +6,7 @@ const INTERVALO_ATUALIZACAO_MS = 15_000
 
 export interface EstabelecimentoAdmin {
     id: number; nome: string; slug: string; status: string; reviewStatus: string; tipoEstabelecimento?: string
+    reviewReason?: string | null
     latitude?: number | null; longitude?: number | null
     endereco?: string; cep?: string; logradouro?: string; numero?: string; complemento?: string; bairro?: string; cidade?: string; estado?: string
     _count?: { usuarios: number; profissionais: number; servicos: number; agendamentos: number }
@@ -21,6 +22,7 @@ export default function useAdministracao() {
     const { httpGet, httpPost, httpPut } = useAPI()
     const [estabelecimentos, setEstabelecimentos] = useState<EstabelecimentoAdmin[]>([])
     const [pendentes, setPendentes] = useState<SolicitacaoAdmin[]>([])
+    const [revisoesPerfil, setRevisoesPerfil] = useState<EstabelecimentoAdmin[]>([])
     const [carregando, setCarregando] = useState(true)
     const [erro, setErro] = useState<string | null>(null)
     const [sucesso, setSucesso] = useState<string | null>(null)
@@ -28,11 +30,12 @@ export default function useAdministracao() {
     const carregar = useCallback(async () => {
         try {
             setCarregando(true); setErro(null)
-            const [todos, revisao] = await Promise.all([
+            const [todos, revisao, perfis] = await Promise.all([
                 httpGet<EstabelecimentoAdmin[]>('/saas/admin/estabelecimentos'),
                 httpGet<SolicitacaoAdmin[]>('/admin/solicitacoes-estabelecimento', { escopoTenant: 'nenhum' }),
+                httpGet<EstabelecimentoAdmin[]>('/saas/admin/estabelecimentos/pendentes'),
             ])
-            setEstabelecimentos(todos); setPendentes(revisao)
+            setEstabelecimentos(todos); setPendentes(revisao); setRevisoesPerfil(perfis)
         } catch (e) { setErro(mensagemDoErro(e)) } finally { setCarregando(false) }
     }, [httpGet])
     useEffect(() => {
@@ -46,6 +49,18 @@ export default function useAdministracao() {
             setErro(null)
             const motivo = decisao === 'aprovar' ? undefined : decisao === 'reprovar' ? 'Cadastro não aprovado pela administração.' : 'Revise os dados cadastrais indicados pela administração.'
             await httpPut(`/admin/solicitacoes-estabelecimento/${id}/${decisao}`, { motivo, ...coordenadas }, { escopoTenant: 'nenhum' })
+            await carregar()
+        } catch (e) { setErro(mensagemDoErro(e)) }
+    }
+    async function revisarPerfil(id: number, decisao: 'aprovar' | 'reprovar') {
+        try {
+            setErro(null); setSucesso(null)
+            await httpPut(`/saas/admin/estabelecimentos/${id}/${decisao}`, {
+                motivo: decisao === 'aprovar'
+                    ? 'Alterações cadastrais aprovadas pelo superadmin.'
+                    : 'Alterações cadastrais não aprovadas. Revise o perfil público.',
+            })
+            setSucesso(decisao === 'aprovar' ? 'Perfil do estabelecimento aprovado.' : 'Perfil do estabelecimento reprovado.')
             await carregar()
         } catch (e) { setErro(mensagemDoErro(e)) }
     }
@@ -74,5 +89,5 @@ export default function useAdministracao() {
             await carregar(); return resposta
         } catch (e) { setErro(mensagemDoErro(e)); throw e }
     }
-    return { estabelecimentos, pendentes, carregando, executando, erro, sucesso, carregar, revisar, resolverCoordenadasSolicitacao, resolverCoordenadasEstabelecimento, processarInadimplencia }
+    return { estabelecimentos, pendentes, revisoesPerfil, carregando, executando, erro, sucesso, carregar, revisar, revisarPerfil, resolverCoordenadasSolicitacao, resolverCoordenadasEstabelecimento, processarInadimplencia }
 }

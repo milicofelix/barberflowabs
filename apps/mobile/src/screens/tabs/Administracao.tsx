@@ -23,7 +23,7 @@ export default function Administracao() {
         <Text style={styles.sobretitulo}>ADMINISTRAÇÃO UNIFLOW ABS</Text><Text style={[styles.titulo, { color: cores.texto }]}>Plataforma</Text>
         <CuradoriaMidias />
         <View style={styles.metricas}><Metrica titulo="Estabelecimentos" valor={dados.estabelecimentos.length} />
-            <Metrica titulo="Aguardando revisão" valor={dados.pendentes.length} /></View>
+            <Metrica titulo="Aguardando revisão" valor={dados.pendentes.length + dados.revisoesPerfil.length} /></View>
         {dados.erro ? <EstadoErro mensagem={dados.erro} tentarNovamente={dados.carregar} /> : null}
         {dados.sucesso ? <FeedbackSucesso mensagem={dados.sucesso} /> : null}
         {dados.carregando && !dados.estabelecimentos.length ? <Carregando mensagem="Carregando plataforma..." /> : null}
@@ -32,13 +32,27 @@ export default function Administracao() {
             <Pressable disabled={dados.executando} onPress={() => setConfirmandoInadimplencia(true)} style={[styles.processar, dados.executando && styles.desabilitado]}><Text style={styles.botaoTexto}>{dados.executando ? 'Processando...' : 'Processar'}</Text></Pressable>
         </View>
         <Text style={[styles.secao, { color: cores.texto }]}>Pendências</Text>
-        {!dados.carregando && !dados.pendentes.length ? <EstadoVazio titulo="Nenhuma revisão pendente" /> : null}
+        {!dados.carregando && !dados.pendentes.length && !dados.revisoesPerfil.length ? <EstadoVazio titulo="Nenhuma revisão pendente" /> : null}
         {dados.pendentes.map((item) => <CartaoSolicitacao key={item.id} item={item} revisar={dados.revisar} resolver={dados.resolverCoordenadasSolicitacao} />)}
+        {dados.revisoesPerfil.map((item) => <CartaoRevisaoPerfil key={`perfil-${item.id}`} item={item} revisar={dados.revisarPerfil} />)}
         <Text style={[styles.secao, { color: cores.texto }]}>Todos os estabelecimentos</Text>
         {dados.estabelecimentos.map((item) => <Cartao key={item.id} item={item} resolver={dados.resolverCoordenadasEstabelecimento} />)}
         <Confirmacao visivel={confirmandoInadimplencia} titulo="Processar inadimplência" mensagem="Cobranças pendentes vencidas serão marcadas como atrasadas e os estabelecimentos correspondentes poderão ser bloqueados. Deseja continuar?"
             confirmarLabel={dados.executando ? 'Processando...' : 'Processar'} onConfirmar={processarInadimplencia} onCancelar={() => setConfirmandoInadimplencia(false)} />
     </ScrollView></SafeAreaView>
+}
+
+function CartaoRevisaoPerfil({ item, revisar }: { item: EstabelecimentoAdmin; revisar: (id: number, decisao: 'aprovar' | 'reprovar') => Promise<void> }) {
+    const { cores } = useTema()
+    return <View style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
+        <Text style={[styles.nome, { color: cores.texto }]}>{item.nome}</Text>
+        <Text style={[styles.meta, { color: cores.textoSecundario }]}>ALTERAÇÃO DE PERFIL · {item.reviewStatus}</Text>
+        {item.reviewReason ? <Text style={[styles.detalhe, { color: cores.texto }]}>{item.reviewReason}</Text> : null}
+        <View style={styles.acoes}>
+            <Botao texto="Aprovar alterações" acao={() => revisar(item.id, 'aprovar')} />
+            <Botao texto="Reprovar" perigo acao={() => revisar(item.id, 'reprovar')} />
+        </View>
+    </View>
 }
 
 function Cartao({ item, acoes, resolver }: { item: EstabelecimentoAdmin; acoes?: ReactNode; resolver?: (id: number, url?: string) => Promise<CoordenadasResolvidas> }) {
