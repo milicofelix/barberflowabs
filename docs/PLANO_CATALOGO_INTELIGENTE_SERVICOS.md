@@ -57,13 +57,42 @@ O seeder contém 36 sugestões distribuídas entre:
 
 ## Fase 2 — Seleção E Criação Em Lote Na Web
 
-- [ ] Adicionar a opção “Serviços sugeridos” ao gerenciamento de serviços.
-- [ ] Pré-filtrar pelas classificações do estabelecimento.
-- [ ] Permitir busca, seleção múltipla e revisão antes da criação.
-- [ ] Solicitar preço e permitir ajustar duração, modalidade e preparação.
-- [ ] Vincular especialidades e profissionais durante a criação.
-- [ ] Impedir duplicidade e respeitar limites do plano de forma transacional.
-- [ ] Manter a opção de cadastro personalizado.
+- [x] Adicionar a opção “Serviços sugeridos” ao gerenciamento de serviços.
+- [x] Pré-filtrar pelas classificações do estabelecimento.
+- [x] Permitir busca, seleção múltipla e revisão antes da criação.
+- [x] Solicitar preço e permitir ajustar duração, modalidade e preparação.
+- [x] Vincular especialidades e profissionais durante a criação.
+- [x] Impedir duplicidade e respeitar limites do plano de forma transacional.
+- [x] Manter a opção de cadastro personalizado.
+
+Implementado em 13/10/2026:
+
+- o painel web de Serviços mantém o formulário manual e ganhou uma área expansível de sugestões;
+- sugestões são filtradas pelos segmentos configurados na unidade e por busca textual;
+- cada item selecionado exige preço e permite revisar duração, modalidade, preparação, deslocamento e profissionais;
+- a criação em lote copia os dados para serviços independentes e associa somente especialidades válidas para o estabelecimento;
+- a referência de origem impede reimportação da mesma sugestão, inclusive após alteração do serviço criado;
+- serviços manuais com o mesmo nome são preservados e a sugestão correspondente é ignorada;
+- o backend valida tenant, profissionais, modalidade, limite do plano e duplicidade dentro da transação.
+
+### Contrato De Importação
+
+```http
+POST /servicos/sugeridos/importar
+```
+
+O corpo contém `itens`, com `servicoSugeridoId`, `preco` e os ajustes operacionais opcionais. A resposta separa `criados` e `ignorados`, permitindo repetição segura da requisição.
+
+### Aceite Manual Da Fase 2
+
+1. Aplicar as migrations e gerar novamente o Prisma Client.
+2. Entrar como gestor e abrir Gestão → Serviços → Serviços sugeridos.
+3. Confirmar que aparecem somente sugestões dos segmentos do estabelecimento.
+4. Buscar um serviço, selecionar dois itens, informar preços e escolher profissionais.
+5. Adicionar e confirmar que os serviços aparecem na lista normal e continuam editáveis.
+6. Repetir a mesma importação e confirmar que nenhum serviço é duplicado.
+7. Validar uma conta próxima ao limite do plano e confirmar que o lote inteiro é recusado sem criação parcial.
+8. Confirmar que “Novo serviço” continua criando um serviço personalizado normalmente.
 
 ## Fase 3 — Paridade Mobile
 
@@ -91,4 +120,4 @@ O seeder contém 36 sugestões distribuídas entre:
 
 ## Estado Atual
 
-A Fase 1 foi implementada em 13/10/2026. Migration, geração do Prisma Client, seed, testes e builds não foram executados automaticamente.
+As Fases 1 e 2 foram implementadas em 13/10/2026. Migrations, geração do Prisma Client, seed, testes e builds não foram executados automaticamente.

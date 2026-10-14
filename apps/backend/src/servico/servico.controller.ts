@@ -4,7 +4,7 @@ import { TenantService } from 'src/shared/tenant.service';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import { Usuario } from '@uniflowabs/core';
 import { validarNumeroInteiroNaoNegativo, validarNumeroInteiroPositivo, validarTextoObrigatorio } from 'src/shared/validacao';
-import { CriarServicoDto } from './servico.dto';
+import { CriarServicoDto, ImportarServicosSugeridosDto } from './servico.dto';
 import { PlanoLimitesService } from 'src/saas/plano-limites.service';
 import { EquipePolicy } from 'src/equipe/equipe.policy';
 
@@ -30,6 +30,17 @@ export class ServicoController {
     await this.limites.validarEstabelecimentoOperacional(usuario.estabelecimentoId);
     await this.limites.validarNovoServico(usuario.estabelecimentoId);
     return this.repo.criar(usuario.estabelecimentoId, dados);
+  }
+
+  @Post('sugeridos/importar')
+  async importarSugeridos(@Body() dados: ImportarServicosSugeridosDto, @UsuarioLogado() usuario: Usuario) {
+    await this.validarPermissao(usuario);
+    this.validarImportacaoSugeridos(dados);
+    await this.limites.validarEstabelecimentoOperacional(usuario.estabelecimentoId);
+    const ids = [...new Set(dados.itens.map((item) => Number(item.servicoSugeridoId)))];
+    const quantidade = await this.repo.contarSugeridosNovos(usuario.estabelecimentoId, ids);
+    await this.limites.validarNovosServicos(usuario.estabelecimentoId, quantidade);
+    return this.repo.importarSugeridos(usuario.estabelecimentoId, dados);
   }
 
   @Put(':id')
@@ -83,5 +94,27 @@ export class ServicoController {
     if (!Number.isFinite(Number(dados?.preco)) || Number(dados.preco) <= 0) {
       throw new BadRequestException('Preço inválido');
     }
+  }
+
+  private validarImportacaoSugeridos(dados: ImportarServicosSugeridosDto) {
+    if (!Array.isArray(dados?.itens) || dados.itens.length === 0 || dados.itens.length > 50) {
+      throw new BadRequestException('Selecione entre 1 e 50 serviços sugeridos');
+    }
+    const ids = dados.itens.map((item) => Number(item.servicoSugeridoId));
+    if (ids.some((id) => !Number.isInteger(id) || id <= 0) || new Set(ids).size !== ids.length) {
+      throw new BadRequestException('A seleção contém serviços sugeridos inválidos ou repetidos');
+    }
+    dados.itens.forEach((item) => {
+      if (!Number.isFinite(Number(item.preco)) || Number(item.preco) <= 0) throw new BadRequestException('Informe um preço válido para todos os serviços');
+      if (item.duracaoMinutos !== undefined) validarNumeroInteiroPositivo(item.duracaoMinutos, 'Duração');
+      if (item.modeloAtendimento && !['PRESENCIAL', 'DOMICILIAR', 'HIBRIDO'].includes(item.modeloAtendimento)) throw new BadRequestException('Modelo de atendimento inválido');
+      validarNumeroInteiroNaoNegativo(item.preparoAntesMinutos ?? 0, 'Preparo anterior');
+      validarNumeroInteiroNaoNegativo(item.preparoDepoisMinutos ?? 0, 'Preparo posterior');
+      validarNumeroInteiroNaoNegativo(item.deslocamentoMinutos ?? 0, 'Deslocamento');
+      if (item.profissionalIds !== undefined && (!Array.isArray(item.profissionalIds)
+        || item.profissionalIds.some((id) => !Number.isInteger(Number(id)) || Number(id) <= 0))) {
+        throw new BadRequestException('Profissionais inválidos');
+      }
+    });
   }
 }

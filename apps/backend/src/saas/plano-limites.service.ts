@@ -19,11 +19,15 @@ export class PlanoLimitesService {
   }
 
   async validarNovoServico(estabelecimentoId: number) {
+    return this.validarNovosServicos(estabelecimentoId, 1);
+  }
+
+  async validarNovosServicos(estabelecimentoId: number, quantidade: number) {
     const uso = await this.obterUso(estabelecimentoId);
     if (!uso?.limites?.servicos) return;
 
-    if (uso.uso.servicos >= uso.limites.servicos) {
-      throw new ForbiddenException('Limite de serviços do plano atingido');
+    if (uso.uso.servicos + quantidade > uso.limites.servicos) {
+      throw new ForbiddenException(`O plano permite adicionar somente mais ${Math.max(0, uso.limites.servicos - uso.uso.servicos)} serviço(s)`);
     }
   }
 

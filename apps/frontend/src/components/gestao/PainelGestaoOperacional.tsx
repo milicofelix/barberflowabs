@@ -3,7 +3,7 @@
 import useAPI from '@/data/hooks/useAPI'
 import useSessao from '@/data/hooks/useSessao'
 import { Profissional, Servico } from '@uniflowabs/core'
-import { IconPencil, IconPlus, IconTrash } from '@tabler/icons-react'
+import { IconPencil, IconPlus, IconSparkles, IconTrash, IconX } from '@tabler/icons-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 type Aba =
@@ -77,6 +77,9 @@ export default function PainelGestaoOperacional() {
     const [relatorio, setRelatorio] = useState<any>(null)
     const [relacionamento, setRelacionamento] = useState<any>(null)
     const [servicos, setServicos] = useState<Servico[]>([])
+    const [servicosSugeridos, setServicosSugeridos] = useState<any[]>([])
+    const [catalogoEstabelecimento, setCatalogoEstabelecimento] = useState<any>(null)
+    const [mostrarSugeridos, setMostrarSugeridos] = useState(false)
     const [profissionais, setProfissionais] = useState<Profissional[]>([])
     const [cliente, setCliente] = useState<any>(clienteVazio)
     const [servico, setServico] = useState<any>(servicoVazio)
@@ -108,6 +111,8 @@ export default function PainelGestaoOperacional() {
             dadosServicos,
             dadosProfissionais,
             dadosRelacionamento,
+            dadosSugeridos,
+            dadosCatalogoEstabelecimento,
         ] = await Promise.all([
             httpGet('/gestao/dashboard'),
             consultarAgenda(),
@@ -117,6 +122,8 @@ export default function PainelGestaoOperacional() {
             httpGet('/servicos'),
             httpGet('/profissionais'),
             httpGet('/gestao/relacionamento'),
+            httpGet('/catalogo/servicos-sugeridos'),
+            httpGet('/catalogo/estabelecimento'),
         ])
 
         setDashboard(dadosDashboard?.statusCode ? null : dadosDashboard)
@@ -127,6 +134,8 @@ export default function PainelGestaoOperacional() {
         setServicos(Array.isArray(dadosServicos) ? dadosServicos : [])
         setProfissionais(Array.isArray(dadosProfissionais) ? dadosProfissionais : [])
         setRelacionamento(dadosRelacionamento?.statusCode ? null : dadosRelacionamento)
+        setServicosSugeridos(Array.isArray(dadosSugeridos) ? dadosSugeridos : [])
+        setCatalogoEstabelecimento(dadosCatalogoEstabelecimento?.statusCode ? null : dadosCatalogoEstabelecimento)
     }, [consultarAgenda, fimRelatorio, httpGet, inicioRelatorio])
 
     useEffect(() => {
@@ -174,6 +183,18 @@ export default function PainelGestaoOperacional() {
         if (resposta?.statusCode) return setMensagem(resposta.message)
         await carregar()
         setMensagem('Serviço excluído.')
+    }
+
+    async function importarServicosSugeridos(itens: any[]) {
+        setMensagem('')
+        const resposta = await httpPost('/servicos/sugeridos/importar', { itens })
+        if (resposta?.statusCode) { setMensagem(resposta.message); return false }
+        await carregar()
+        const criados = resposta?.criados?.length ?? 0
+        const ignorados = resposta?.ignorados?.length ?? 0
+        setMensagem(`${criados} serviço(s) adicionado(s)${ignorados ? ` e ${ignorados} ignorado(s)` : ''}.`)
+        if (criados) setMostrarSugeridos(false)
+        return true
     }
 
     async function salvarProfissional() {
@@ -374,14 +395,23 @@ export default function PainelGestaoOperacional() {
             )}
 
             {aba === 'servicos' && (
-                <section className="grid gap-6 lg:grid-cols-[360px_1fr]">
-                    <FormularioServico
-                        servico={servico}
-                        onChange={setServico}
-                        onSubmit={salvarServico}
-                        onNovo={() => setServico(servicoVazio)}
-                    />
-                    <ListaServicos servicos={servicos} onEditar={setServico} onExcluir={excluirServico} />
+                <section className="flex flex-col gap-6">
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded border border-violet-500/30 bg-violet-500/10 p-4">
+                        <div><h2 className="font-bold text-zinc-100">Monte seu catálogo com mais rapidez</h2><p className="text-sm text-zinc-400">Escolha serviços comuns do seu segmento e ajuste os dados antes de adicionar.</p></div>
+                        <button type="button" onClick={() => setMostrarSugeridos((valor) => !valor)} className="flex items-center gap-2 rounded bg-violet-600 px-4 py-3 font-semibold text-white">
+                            {mostrarSugeridos ? <IconX size={18} /> : <IconSparkles size={18} />}{mostrarSugeridos ? 'Fechar sugestões' : 'Serviços sugeridos'}
+                        </button>
+                    </div>
+                    {mostrarSugeridos && <SeletorServicosSugeridos sugestoes={servicosSugeridos} catalogo={catalogoEstabelecimento} profissionais={profissionais} servicosAtuais={servicos} onImportar={importarServicosSugeridos} />}
+                    <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
+                        <FormularioServico
+                            servico={servico}
+                            onChange={setServico}
+                            onSubmit={salvarServico}
+                            onNovo={() => setServico(servicoVazio)}
+                        />
+                        <ListaServicos servicos={servicos} onEditar={setServico} onExcluir={excluirServico} />
+                    </div>
                 </section>
             )}
 
@@ -780,6 +810,102 @@ function FiltroPeriodo(props: any) {
             <Campo label="Fim" type="date" value={props.fim} onChange={props.onFim} />
         </div>
     )
+}
+
+function SeletorServicosSugeridos(props: {
+    sugestoes: any[]
+    catalogo: any
+    profissionais: Profissional[]
+    servicosAtuais: Servico[]
+    onImportar: (itens: any[]) => Promise<boolean>
+}) {
+    const [busca, setBusca] = useState('')
+    const [selecionados, setSelecionados] = useState<Record<number, any>>({})
+    const [salvando, setSalvando] = useState(false)
+    const segmentoIds = new Set((props.catalogo?.segmentos ?? []).map((item: any) => item.segmentoId ?? item.segmento?.id))
+    const nomesAtuais = new Set(props.servicosAtuais.map((item: any) => item.nome.toLocaleLowerCase('pt-BR')))
+    const origensAtuais = new Set(props.servicosAtuais.map((item: any) => item.servicoSugeridoId).filter(Boolean))
+    const termo = busca.trim().toLocaleLowerCase('pt-BR')
+    const sugestoes = props.sugestoes.filter((item) =>
+        segmentoIds.has(item.segmentoId)
+        && !origensAtuais.has(item.id)
+        && !nomesAtuais.has(item.nome.toLocaleLowerCase('pt-BR'))
+        && (!termo || `${item.nome} ${item.descricao} ${item.especialidades?.map((e: any) => e.nome).join(' ')}`.toLocaleLowerCase('pt-BR').includes(termo))
+    )
+
+    function alternar(item: any) {
+        setSelecionados((atuais) => {
+            const copia = { ...atuais }
+            if (copia[item.id]) delete copia[item.id]
+            else copia[item.id] = {
+                servicoSugeridoId: item.id, preco: '', duracaoMinutos: item.duracaoMinutos,
+                modeloAtendimento: props.catalogo?.modeloAtendimento === 'HIBRIDO' ? item.modeloAtendimento : (props.catalogo?.modeloAtendimento ?? item.modeloAtendimento), preparoAntesMinutos: item.preparoAntesMinutos,
+                preparoDepoisMinutos: item.preparoDepoisMinutos, deslocamentoMinutos: item.deslocamentoMinutos,
+                profissionalIds: [],
+            }
+            return copia
+        })
+    }
+
+    function alterar(id: number, campo: string, valor: any) {
+        setSelecionados((atuais) => ({ ...atuais, [id]: { ...atuais[id], [campo]: valor } }))
+    }
+
+    async function importar() {
+        const itens = Object.values(selecionados).map((item: any) => ({
+            ...item, preco: Number(item.preco), duracaoMinutos: Number(item.duracaoMinutos),
+        }))
+        if (!itens.length || itens.some((item: any) => !Number.isFinite(item.preco) || item.preco <= 0)) return
+        setSalvando(true)
+        const sucesso = await props.onImportar(itens)
+        setSalvando(false)
+        if (sucesso) setSelecionados({})
+    }
+
+    const totalSelecionados = Object.keys(selecionados).length
+    const precosValidos = totalSelecionados > 0 && Object.values(selecionados).every((item: any) => Number(item.preco) > 0)
+
+    return <div className="flex flex-col gap-4 rounded border border-violet-500/30 bg-zinc-950 p-5">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+            <div><h2 className="text-xl font-bold text-zinc-100">Serviços sugeridos para sua unidade</h2><p className="text-sm text-zinc-400">Selecione os serviços e informe o preço praticado pelo seu negócio.</p></div>
+            <label className="flex min-w-[260px] flex-col gap-2 text-sm text-zinc-400">Buscar serviço
+                <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nome ou especialidade" className="input" />
+            </label>
+        </div>
+        {!segmentoIds.size && <p className="rounded bg-amber-500/10 p-3 text-sm text-amber-300">Defina primeiro os segmentos do estabelecimento em Configurações.</p>}
+        <div className="grid gap-3 lg:grid-cols-2">
+            {sugestoes.map((item) => {
+                const configuracao = selecionados[item.id]
+                return <article key={item.id} className={`rounded-xl border p-4 ${configuracao ? 'border-violet-400 bg-violet-500/10' : 'border-zinc-800 bg-zinc-900'}`}>
+                    <label className="flex cursor-pointer items-start gap-3">
+                        <input type="checkbox" checked={!!configuracao} onChange={() => alternar(item)} className="mt-1 h-5 w-5 accent-violet-500" />
+                        <span className="flex-1"><strong className="text-zinc-100">{item.nome}</strong><span className="mt-1 block text-sm text-zinc-400">{item.descricao}</span><span className="mt-2 block text-xs font-semibold uppercase text-violet-300">{item.segmento?.nome} · {item.especialidades?.map((e: any) => e.nome).join(', ')}</span></span>
+                    </label>
+                    {configuracao && <div className="mt-4 grid gap-3 border-t border-zinc-800 pt-4 sm:grid-cols-2">
+                        <Campo label="Preço (R$)" type="number" value={configuracao.preco} onChange={(valor) => alterar(item.id, 'preco', valor)} />
+                        <Campo label="Duração (minutos)" type="number" value={configuracao.duracaoMinutos} onChange={(valor) => alterar(item.id, 'duracaoMinutos', valor)} />
+                        <label className="flex flex-col gap-2 text-sm text-zinc-400">Modalidade
+                            <select value={configuracao.modeloAtendimento} onChange={(e) => alterar(item.id, 'modeloAtendimento', e.target.value)} className="input">
+                                {(props.catalogo?.modeloAtendimento === 'HIBRIDO' ? ['PRESENCIAL', 'DOMICILIAR', 'HIBRIDO'] : [props.catalogo?.modeloAtendimento ?? 'PRESENCIAL']).map((modalidade: string) => <option key={modalidade} value={modalidade}>{modalidade === 'PRESENCIAL' ? 'Presencial' : modalidade === 'DOMICILIAR' ? 'Domiciliar' : 'Híbrido'}</option>)}
+                            </select>
+                        </label>
+                        <Campo label="Preparação anterior (min)" type="number" value={configuracao.preparoAntesMinutos} onChange={(valor) => alterar(item.id, 'preparoAntesMinutos', Number(valor))} />
+                        <Campo label="Preparação posterior (min)" type="number" value={configuracao.preparoDepoisMinutos} onChange={(valor) => alterar(item.id, 'preparoDepoisMinutos', Number(valor))} />
+                        {configuracao.modeloAtendimento !== 'PRESENCIAL' && <Campo label="Deslocamento (min)" type="number" value={configuracao.deslocamentoMinutos} onChange={(valor) => alterar(item.id, 'deslocamentoMinutos', Number(valor))} />}
+                        <div className="flex flex-col gap-2 text-sm text-zinc-400"><span>Profissionais habilitados</span><div className="flex flex-wrap gap-2">
+                            {props.profissionais.map((profissional) => <label key={profissional.id} className="flex items-center gap-2 rounded border border-zinc-700 px-2 py-1 text-xs text-zinc-200"><input type="checkbox" checked={configuracao.profissionalIds.includes(profissional.id)} onChange={(e) => alterar(item.id, 'profissionalIds', e.target.checked ? [...configuracao.profissionalIds, profissional.id] : configuracao.profissionalIds.filter((id: number) => id !== profissional.id))} />{profissional.nome}</label>)}
+                            {!props.profissionais.length && <span className="text-xs">Você poderá vincular profissionais depois.</span>}
+                        </div></div>
+                    </div>}
+                </article>
+            })}
+        </div>
+        {!sugestoes.length && segmentoIds.size > 0 && <Vazio texto={busca ? 'Nenhuma sugestão encontrada.' : 'Todas as sugestões disponíveis já foram adicionadas.'} />}
+        <div className="sticky bottom-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-700 bg-zinc-900/95 p-4 shadow-xl backdrop-blur">
+            <span className="text-sm font-semibold text-zinc-200">{totalSelecionados} serviço(s) selecionado(s)</span>
+            <button type="button" disabled={!precosValidos || salvando} onClick={importar} className="rounded bg-violet-600 px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">{salvando ? 'Adicionando...' : 'Adicionar selecionados'}</button>
+        </div>
+    </div>
 }
 
 function FormularioServico(props: any) {

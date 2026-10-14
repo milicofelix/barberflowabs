@@ -12,3 +12,16 @@ export type CriarServicoDto = {
   deslocamentoMinutos?: number;
   profissionalIds?: number[];
 };
+
+export type ImportarServicosSugeridosDto = {
+  itens: Array<{
+    servicoSugeridoId: number;
+    preco: number;
+    duracaoMinutos?: number;
+    modeloAtendimento?: 'PRESENCIAL' | 'DOMICILIAR' | 'HIBRIDO';
+    preparoAntesMinutos?: number;
+    preparoDepoisMinutos?: number;
+    deslocamentoMinutos?: number;
+    profissionalIds?: number[];
+  }>;
+};

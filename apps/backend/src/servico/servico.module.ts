@@ -17,6 +17,7 @@ export class ServicoModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(AuthMiddleware).forRoutes(
       { path: 'servicos', method: RequestMethod.POST },
+      { path: 'servicos/sugeridos/importar', method: RequestMethod.POST },
       { path: 'servicos/:id', method: RequestMethod.PUT },
       { path: 'servicos/:id', method: RequestMethod.DELETE },
     );
