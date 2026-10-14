@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
 import { useFocusEffect } from '@react-navigation/native'
 import { useCallback, useState } from 'react'
+import CabecalhoIdentidadeUnidade from '@/src/components/shared/CabecalhoIdentidadeUnidade'
 
 export default function Configuracoes() {
     const { usuario, renovarSessao } = useSessao()
@@ -23,6 +24,7 @@ export default function Configuracoes() {
     if (!dados.perfil || !dados.agenda) return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]}><EstadoErro mensagem={dados.erro ?? 'Configuração indisponível'} tentarNovamente={dados.carregar} /></SafeAreaView>
     const atualizarPerfil = (campo: string, valor: any) => dados.setPerfil((atual) => atual ? { ...atual, [campo]: valor } : atual)
     return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}><ScrollView contentContainerStyle={styles.conteudo} keyboardShouldPersistTaps="handled">
+        <CabecalhoIdentidadeUnidade />
         <Text style={styles.sobretitulo}>CONFIGURAÇÕES</Text><Text style={[styles.titulo, { color: cores.texto }]}>Seu estabelecimento</Text>
         {dados.prontidao ? <Prontidao dados={dados.prontidao} /> : null}
         <Secao titulo="Identidade pública">

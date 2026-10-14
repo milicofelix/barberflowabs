@@ -7,12 +7,15 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { AbasParamList, StackParamList } from '@/src/navigation/types'
 import MarcaUniFlow from '@/src/components/shared/MarcaUniFlow'
+import { perfilOperacional, resolverPerfil } from '@/src/data/auth/perfis'
+import CabecalhoIdentidadeUnidade from '@/src/components/shared/CabecalhoIdentidadeUnidade'
 
 type Props = BottomTabScreenProps<AbasParamList, 'Usuario'>
 
 export default function Usuario({ navigation }: Props) {
     const { cores } = useTema()
     const { usuario, encerrarSessao } = useSessao()
+    const operacional = perfilOperacional(resolverPerfil(usuario))
 
     async function logout() {
         await encerrarSessao()
@@ -35,7 +38,8 @@ export default function Usuario({ navigation }: Props) {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: cores.fundo }]}>
-            <ScrollView contentContainerStyle={{ paddingTop: 15 }} keyboardShouldPersistTaps="handled">
+            <ScrollView contentContainerStyle={operacional ? styles.conteudoOperacional : styles.conteudoUsuario} keyboardShouldPersistTaps="handled">
+                {operacional ? <CabecalhoIdentidadeUnidade /> : null}
                 <PerfilUsuario usuario={usuario!} logout={logout} cadastrarEstabelecimento={abrirCadastroEstabelecimento} />
             </ScrollView>
         </SafeAreaView>
@@ -52,4 +56,6 @@ const styles = StyleSheet.create({
     descricao: { maxWidth: 340, marginTop: 10, fontSize: 15, lineHeight: 22, textAlign: 'center' },
     entrar: { minHeight: 50, marginTop: 24, paddingHorizontal: 24, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
     entrarTexto: { fontSize: 15, fontWeight: '900' },
+    conteudoUsuario: { paddingTop: 15 },
+    conteudoOperacional: { padding: 18, paddingBottom: 36 },
 })

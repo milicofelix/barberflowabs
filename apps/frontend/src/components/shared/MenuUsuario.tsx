@@ -46,7 +46,7 @@ export default function MenuUsuario() {
                         </Link>
                     </DropdownMenuItem>
                 )}
-                {!superAdmin && (
+                {cliente && (
                     <DropdownMenuItem>
                         <Link href="/estabelecimentos" className="flex gap-2">
                             <IconMapPin size={18} />

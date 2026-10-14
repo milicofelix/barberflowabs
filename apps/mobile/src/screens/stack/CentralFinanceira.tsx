@@ -16,6 +16,7 @@ import useTema from '@/src/data/contexts/ContextoTema'
 import useFinanceiro from '@/src/data/hooks/useFinanceiro'
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import CabecalhoIdentidadeUnidade from '@/src/components/shared/CabecalhoIdentidadeUnidade'
 
 export default function CentralFinanceira() {
     const { cores } = useTema()
@@ -29,6 +30,7 @@ export default function CentralFinanceira() {
                 contentContainerStyle={styles.conteudo}
                 refreshControl={<RefreshControl refreshing={financeiro.carregando} onRefresh={financeiro.recarregar} tintColor={cores.destaque} />}
             >
+                <CabecalhoIdentidadeUnidade />
                 <Text style={[styles.sobretitulo, { color: cores.destaque }]}>GESTÃO FINANCEIRA</Text>
                 <Text style={[styles.titulo, { color: cores.texto }]}>Central financeira</Text>
                 <Text style={[styles.descricao, { color: cores.textoSecundario }]}>Dados e ações respeitam as permissões da equipe e o estabelecimento atual.</Text>

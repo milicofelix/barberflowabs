@@ -5,6 +5,7 @@ import Slogan from '@/components/landing/Slogan'
 import NossosProfissionais from '@/components/profissional/NossosProfissionais'
 import NossosServicos from '@/components/servico/NossosServicos'
 import Rodape from '@/components/shared/Rodape'
+import { usuarioOperacional } from '@/data/hooks/useIdentidadeUnidade'
 import useSessao from '@/data/hooks/useSessao'
 import type { PropsWithChildren } from 'react'
 
@@ -18,10 +19,7 @@ function SecaoHome({ children }: PropsWithChildren) {
 
 export default function Landing() {
     const { carregando, usuario } = useSessao()
-    const papel = String(usuario?.role ?? usuario?.papel ?? '').toUpperCase()
-    const operacional = !['SUPER_ADMIN', 'APP_OWNER'].includes(papel)
-        && Boolean(usuario?.estabelecimentoId)
-        && (Boolean(usuario?.membroEstabelecimento) || ['ESTABLISHMENT_OWNER', 'ESTABLISHMENT_MEMBER'].includes(papel))
+    const operacional = usuarioOperacional(usuario)
 
     return (
         <div className="flex flex-col">

@@ -1,54 +1,34 @@
 import AgendamentosUsuario from '@/src/components/agendamento/AgendamentosUsuario'
 import useTema from '@/src/data/contexts/ContextoTema'
-import { View, Image, ScrollView, StyleSheet } from 'react-native'
+import { View, ScrollView, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useSessao from '@/src/data/hooks/useSessao'
 import { perfilOperacional, resolverPerfil } from '@/src/data/auth/perfis'
 import ProximosAgendamentos from '@/src/components/operacao/ProximosAgendamentos'
-import useAPI from '@/src/data/hooks/useAPI'
-import { useCallback, useEffect, useState } from 'react'
-import { useFocusEffect } from '@react-navigation/native'
-import { fundoDaHome } from '@/src/data/estabelecimentos/capas'
-import { type IdentidadeEstabelecimento } from '@uniflowabs/core'
-
-const imagensPreparadas = new Set<string>()
+import CabecalhoIdentidadeUnidade from '@/src/components/shared/CabecalhoIdentidadeUnidade'
 
 export default function Inicio() {
     const { modo } = useTema()
     const { usuario } = useSessao()
     const operacional = perfilOperacional(resolverPerfil(usuario))
-    const { httpGet } = useAPI()
-    const [identidade, setIdentidade] = useState<(IdentidadeEstabelecimento & { id: number }) | null>(null)
-    const [falhou, setFalhou] = useState(false)
-    useFocusEffect(useCallback(() => {
-        if (!operacional || !usuario?.estabelecimentoId) return
-        let vigente = true
-        httpGet<IdentidadeEstabelecimento & { id: number }>('/estabelecimentos/minha/perfil-publico')
-            .then((dados) => { if (vigente) setIdentidade(dados) }).catch(() => {})
-        return () => { vigente = false }
-    }, [operacional, usuario?.estabelecimentoId, httpGet]))
-    const unidade = operacional && identidade?.id === usuario?.estabelecimentoId ? identidade : null
-    const fundo = fundoDaHome(unidade, falhou)
-    const chave = JSON.stringify(fundoDaHome(unidade))
-    useEffect(() => setFalhou(false), [chave])
-    useEffect(() => {
-        if (fundo && typeof fundo === 'object' && 'uri' in fundo && fundo.uri && !imagensPreparadas.has(fundo.uri)) {
-            const uri = fundo.uri
-            Image.prefetch(uri).then((ok) => { if (ok) imagensPreparadas.add(uri) }).catch(() => {})
-        }
-    }, [chave])
+    if (operacional) {
+        return <SafeAreaView style={[styles.container, { backgroundColor: modo === 'light' ? '#FFFFFF' : '#081426' }]} edges={['top']}>
+            {modo === 'light' ? <DecoracaoClara /> : null}
+            <ProximosAgendamentos cabecalho={<CabecalhoIdentidadeUnidade destaque />} />
+        </SafeAreaView>
+    }
+
     const conteudo = <SafeAreaView style={[styles.container, modo === 'light' && styles.containerClaro]}>
         {modo === 'light' ? <DecoracaoClara /> : null}
         <ScrollView contentContainerStyle={styles.scroll}>
             <View style={styles.conteudo}>
-                {operacional ? <ProximosAgendamentos /> : <AgendamentosUsuario />}
+                <AgendamentosUsuario />
             </View>
         </ScrollView>
     </SafeAreaView>
 
     return <View style={[styles.fundoClaro, { backgroundColor: modo === 'light' ? '#FFFFFF' : '#081426' }]}>
-        {modo === 'dark' && fundo ? <Image source={fundo} onError={() => setFalhou(true)} resizeMode="cover" style={StyleSheet.absoluteFill} /> : null}
-        {modo === 'dark' ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: fundo ? 'rgba(4,10,26,0.84)' : '#081426' }]} /> : null}
+        {modo === 'dark' ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: '#081426' }]} /> : null}
         {conteudo}
     </View>
 }

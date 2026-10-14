@@ -17,6 +17,7 @@ import GestaoServicos from '@/src/components/operacao/GestaoServicos'
 import useGestaoServicos from '@/src/data/hooks/useGestaoServicos'
 import AgendaCalendario from '@/src/components/operacao/AgendaCalendario'
 import ImportadorContatos from '@/src/components/clientes/ImportadorContatos'
+import CabecalhoIdentidadeUnidade from '@/src/components/shared/CabecalhoIdentidadeUnidade'
 
 type Props = BottomTabScreenProps<AbasParamList, 'Operacao'>
 
@@ -41,6 +42,7 @@ export default function Operacao({ navigation }: Props) {
         navigation.navigate('Agendamento', { dataInicial: data.toISOString(), origemAgenda: true, chave: Date.now() })
     }
     const cabecalho = <>
+        <CabecalhoIdentidadeUnidade />
         <Text style={styles.sobretitulo}>OPERAÇÃO DO ESTABELECIMENTO</Text><Text style={[styles.titulo, { color: cores.texto }]}>Gestão diária</Text>
         <SeletorOperacao atual={secao} selecionar={setSecao} permissoes={dados.permissoes} />
     </>

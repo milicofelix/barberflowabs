@@ -1,5 +1,5 @@
-import Image from 'next/image'
 import Cabecalho from './Cabecalho'
+import ImagemIdentidadeUnidade from './ImagemIdentidadeUnidade'
 
 interface CabecalhoComTituloProps {
     titulo: string
@@ -9,7 +9,7 @@ interface CabecalhoComTituloProps {
 export default function CabecalhoComTitulo(props: CabecalhoComTituloProps) {
     return (
         <div className="relative h-[300px] overflow-hidden sm:h-[320px]">
-            <Image src="/banners/principal.png" fill alt="Estabelecimento" className="object-cover" />
+            <ImagemIdentidadeUnidade alt="Identidade do estabelecimento" className="absolute inset-0 h-full w-full object-cover" />
             <div
                 className="
                     sobre-imagem flex flex-col

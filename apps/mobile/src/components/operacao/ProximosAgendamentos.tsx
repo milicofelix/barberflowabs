@@ -3,10 +3,11 @@ import EstadoVazio from '@/src/components/shared/EstadoVazio'
 import useAPI, { mensagemDoErro } from '@/src/data/hooks/useAPI'
 import useTema from '@/src/data/contexts/ContextoTema'
 import type { AgendamentoOperacional } from '@/src/data/operacao/tipos'
+import type { ReactNode } from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
 
-export default function ProximosAgendamentos() {
+export default function ProximosAgendamentos({ cabecalho }: { cabecalho?: ReactNode }) {
     const { cores } = useTema()
     const { httpGet } = useAPI()
     const [itens, setItens] = useState<AgendamentoOperacional[]>([])
@@ -19,6 +20,7 @@ export default function ProximosAgendamentos() {
     }, [httpGet])
     useEffect(() => { carregar() }, [carregar])
     return <ScrollView contentContainerStyle={styles.conteudo} refreshControl={<RefreshControl refreshing={carregando} onRefresh={carregar} />}>
+        {cabecalho}
         <Text style={styles.sobretitulo}>SEU ESTABELECIMENTO</Text>
         <Text style={[styles.titulo, { color: cores.texto }]}>Próximos agendamentos</Text>
         <Text style={[styles.descricao, { color: cores.textoSecundario }]}>Acompanhe os próximos clientes em ordem de atendimento.</Text>

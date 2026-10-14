@@ -11,6 +11,7 @@ import useTema from '@/src/data/contexts/ContextoTema'
 import useSessao from '@/src/data/hooks/useSessao'
 import { perfilOperacional, resolverPerfil } from '@/src/data/auth/perfis'
 import AgendamentoAssistido from '@/src/components/agendamento/AgendamentoAssistido'
+import CabecalhoIdentidadeUnidade from '@/src/components/shared/CabecalhoIdentidadeUnidade'
 
 type Props = BottomTabScreenProps<AbasParamList, 'Agendamento'>
 
@@ -21,6 +22,7 @@ export default function Agendamento({ navigation, route }: Props) {
     const operacional = perfilOperacional(resolverPerfil(usuario))
 
     if (operacional) return <SafeAreaView style={[styles.container, { backgroundColor: cores.fundo }]}><ScrollView contentContainerStyle={styles.scroll}>
+        <CabecalhoIdentidadeUnidade />
         <View style={[styles.tenant, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
             <Text style={styles.tenantLabel}>AGENDA DO ESTABELECIMENTO</Text>
             <Text style={[styles.tenantNome, { color: cores.texto }]}>Agendamento assistido</Text>
