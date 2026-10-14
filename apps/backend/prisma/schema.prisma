@@ -10,12 +10,52 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Midia {
+  id                String @id @default(uuid())
+  chaveCatalogo     String? @unique
+  titulo            String
+  escopo            String
+  finalidade        String
+  segmentoSlug      String?
+  usuarioId         Int?
+  estabelecimentoId Int?
+  arquivoOrigem     String?
+  versoes           Json
+  ativo             Boolean @default(true)
+  status            String @default("DISPONIVEL")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  usuario           Usuario? @relation(fields: [usuarioId], references: [id])
+  estabelecimento   Estabelecimento? @relation(fields: [estabelecimentoId], references: [id])
+  vinculos          MidiaVinculo[]
+
+  @@index([escopo, finalidade, ativo])
+  @@index([estabelecimentoId])
+  @@index([usuarioId])
+  @@map("midias")
+}
+
+model MidiaVinculo {
+  id         Int @id @default(autoincrement())
+  midiaId    String
+  entidade   String
+  entidadeId Int
+  createdAt  DateTime @default(now())
+  midia      Midia @relation(fields: [midiaId], references: [id])
+
+  @@unique([entidade, entidadeId])
+  @@index([midiaId])
+  @@map("midias_vinculos")
+}
+
 model Usuario {
   id           Int           @id @default(autoincrement())
   estabelecimentoId  Int?
   nome         String
   email        String        @unique
   emailContato String?
+  fotoURL      String?
+  midias       Midia[]
   emailTecnico Boolean       @default(false)
   senha        String
   telefone     String?
@@ -162,6 +202,7 @@ model Estabelecimento {
   nomePublico   String?
   descricaoPublica String?     @db.Text
   imagemCapaURL String?
+  midias       Midia[]
   endereco      String?
   bairro        String?
   cidade        String?

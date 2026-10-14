@@ -6,6 +6,7 @@ interface Usuario {
     email: string;
     senha?: string;
     telefone?: string;
+    fotoURL?: string | null;
     dataNascimento?: string | null;
     membroEstabelecimento?: boolean;
     papel?: PapelUsuario;
@@ -229,4 +230,31 @@ declare class MoedaUtils {
     static formatar(valor: number, locale?: string, moeda?: string): string;
 }
 
-export { AgendaUtils, type Agendamento, BuscarAgendaProfissionalPorDia, BuscarAgendamentosCliente, BuscarProfissionais, BuscarServicos, DateUtils, ExcluirAgendamento, Horarios, LoginUsuario, MoedaUtils, NovoAgendamento, ObterHorariosOcupados, type Profissional, type ProvedorCriptografia, RegistrarUsuario, type RepositorioAgendamento, type RepositorioProfissional, type RepositorioServico, type RepositorioUsuario, type Servico, TEMPO_SLOT, type Usuario, clientes, profissionais, servicos };
+type FinalidadeMidia = 'AVATAR' | 'SERVICO' | 'PROFISSIONAL' | 'CAPA';
+type EntidadeMidia = 'USUARIO' | 'SERVICO' | 'PROFISSIONAL' | 'ESTABELECIMENTO';
+interface VersaoMidia {
+    url: string;
+    largura: number;
+    altura: number;
+    bytes: number;
+}
+interface ImagemGaleria {
+    id: string;
+    titulo: string;
+    finalidade: FinalidadeMidia;
+    segmentoSlug: string | null;
+    versoes: Record<string, VersaoMidia>;
+}
+interface AssociacaoMidia {
+    midiaId: string | null;
+    entidade: EntidadeMidia;
+    entidadeId?: number;
+}
+interface ResultadoAssociacaoMidia {
+    midiaId: string | null;
+    entidade: EntidadeMidia;
+    entidadeId: number;
+    imagemURL: string | null;
+}
+
+export { AgendaUtils, type Agendamento, type AssociacaoMidia, BuscarAgendaProfissionalPorDia, BuscarAgendamentosCliente, BuscarProfissionais, BuscarServicos, DateUtils, type EntidadeMidia, ExcluirAgendamento, type FinalidadeMidia, Horarios, type ImagemGaleria, LoginUsuario, MoedaUtils, NovoAgendamento, ObterHorariosOcupados, type Profissional, type ProvedorCriptografia, RegistrarUsuario, type RepositorioAgendamento, type RepositorioProfissional, type RepositorioServico, type RepositorioUsuario, type ResultadoAssociacaoMidia, type Servico, TEMPO_SLOT, type Usuario, type VersaoMidia, clientes, profissionais, servicos };

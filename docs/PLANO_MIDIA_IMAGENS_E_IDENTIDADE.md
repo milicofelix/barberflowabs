@@ -27,20 +27,66 @@ O padrão pessoal será um avatar neutro com iniciais do nome e cores azul/viole
 
 ## Fase 1 — Domínio, Armazenamento E Contratos
 
-- [ ] Definir mídia própria do usuário, mídia do estabelecimento e imagens globais da galeria, com permissões por finalidade.
-- [ ] Adicionar foto pessoal ao domínio/contratos de usuário e conferir propagação na sessão web/mobile.
-- [ ] Criar catálogo de imagens com identificador, título, segmento, finalidade, dimensões e referência do arquivo.
-- [ ] Criar consulta da galeria, upload autenticado e associação da mídia ao registro escolhido.
-- [ ] Validar tamanho máximo inicial de 5 MB e formatos JPEG, PNG e WebP pelo conteúdo do arquivo.
-- [ ] Normalizar orientação, gerar versões adequadas para avatar, miniatura e capa e remover metadados da foto, incluindo localização.
-- [ ] Definir comportamento para HEIC/HEIF do iPhone: conversão no dispositivo ou backend; não enviar um formato que não possa ser processado.
-- [ ] Gerar nomes de arquivo pelo servidor e validar propriedade da mídia ao associá-la a usuário ou estabelecimento.
-- [ ] Armazenar uploads em volume persistente no Docker, acessível por URL estável; manter abstração para armazenamento de objetos em produção.
-- [ ] Implementar resposta padronizada com identificador da mídia e URLs das versões geradas, sem expor caminho do disco.
-- [ ] Definir cache, versionamento ao substituir fotos e recuperação quando uma imagem não carrega.
-- [ ] Criar migrations e seed idempotente da galeria, preservando imagens já escolhidas pelos usuários.
+- [x] Definir mídia própria do usuário, mídia do estabelecimento e imagens globais da galeria, com permissões por finalidade.
+- [x] Adicionar foto pessoal ao domínio/contratos de usuário e propagação pelo refresh da sessão web/mobile.
+- [x] Criar catálogo de imagens com identificador, título, segmento, finalidade, dimensões e referência do arquivo.
+- [x] Criar consulta da galeria, upload autenticado e associação da mídia ao registro escolhido.
+- [x] Validar tamanho máximo inicial de 5 MB e formatos JPEG, PNG e WebP pelo conteúdo do arquivo.
+- [x] Normalizar orientação, gerar versões adequadas para avatar, miniatura e capa e remover metadados da foto, incluindo localização.
+- [x] Definir comportamento para HEIC/HEIF do iPhone: conversão no dispositivo antes do upload na Fase 3.
+- [x] Gerar nomes de arquivo pelo servidor e validar propriedade da mídia ao associá-la a usuário ou estabelecimento.
+- [x] Configurar volume persistente no Docker e isolar armazenamento em serviço para futura troca por armazenamento de objetos.
+- [x] Implementar resposta padronizada com identificador da mídia e URLs das versões geradas, sem expor caminho do disco.
+- [x] Definir cache e versionamento; arquivo ausente retorna 404 para o componente aplicar fallback nas Fases 2–3.
+- [x] Criar migration e seed idempotente da galeria, preservando imagens já escolhidas pelos usuários.
 
 Uploads concluídos e ainda não associados precisam de limpeza por prazo definido. Arquivos associados ou compartilhados não devem ser apagados ao remover uma referência isolada. Atualizar a foto somente após upload e associação bem-sucedidos.
+
+### Contratos Implementados
+
+| Operação | Rota | Acesso |
+| --- | --- | --- |
+| Galeria e uploads disponíveis | `GET /midias/galeria?finalidade=SERVICO&segmentoSlug=barbearia` | Autenticado; galeria global e imagens da própria conta/unidade |
+| Enviar foto | `POST /midias/upload` | Autenticado; imagens da unidade exigem `CONFIGURACOES_GERENCIAR` |
+| Associar imagem ou voltar ao padrão | `PUT /midias/associacao` | Proprietário da foto pessoal ou gestor autorizado da unidade |
+| Entregar imagem | `GET /midias/arquivos/:id/:versao` | Público, URL opaca e estável; apenas imagem processada |
+| Simular limpeza | `POST /midias/limpar-orfas` | Superadmin; simulação por padrão |
+
+O upload usa `multipart/form-data`: campo `arquivo` e campo `finalidade` (`AVATAR`, `SERVICO`, `PROFISSIONAL` ou `CAPA`). A resposta contém `id`, título, finalidade e `versoes`, com URLs relativas à API, largura, altura e bytes. Os clientes devem resolver as URLs relativas usando a base do backend, inclusive na web. Nenhum caminho de disco ou nome original é exposto.
+
+Exemplo de associação:
+
+```json
+{ "midiaId": "ID_RETORNADO_NO_UPLOAD", "entidade": "SERVICO", "entidadeId": 123 }
+```
+
+Para foto pessoal, usar `entidade: "USUARIO"`; a conta é resolvida pela autenticação e outro usuário não pode ser informado. Para retornar ao padrão, enviar `midiaId: null`. O retorno informa `imagemURL` e a entidade atualizada. Para refletir `fotoURL` na sessão, usar o refresh de autenticação existente; o JWT atualizado já inclui o novo campo. Os contratos compartilhados estão em `packages/core/src/midia`.
+
+### Armazenamento E Processamento
+
+- Arquivos novos são normalizados para WebP estático, com correção automática da orientação e remoção dos metadados.
+- Miniatura: 256 × 256; principal: 800 × 800 para avatar/serviço/profissional e 1600 × 900 para capa, com recorte central.
+- Limites: 5 MB por upload e 20 milhões de pixels na decodificação. O formato é identificado pelo conteúdo, independentemente do nome ou MIME enviado.
+- HEIC/HEIF não é aceito neste contrato inicial. A Fase 3 deve converter para JPEG antes do envio, evitando dependência de decodificador HEIC específico no servidor.
+- Volume Docker `uniflow_midias`, montado em `/var/lib/uniflow/midias`. `MIDIA_STORAGE_DIR` configura o armazenamento; `MIDIA_GALERIA_DIR` aponta para os arquivos iniciais da galeria.
+- Cada substituição usa outro identificador/URL; as URLs retornadas têm cache imutável por um ano. Trocar o vínculo não remove o arquivo anterior.
+- As imagens são públicas para exibição no app, inclusive foto pessoal. Não enviar documentos ou imagens privadas neste fluxo. Listagem, upload e associação permanecem autenticados.
+- Limpeza considera uploads sem vínculo com mais de sete dias, preserva galeria global e referências gravadas nos campos legados. `{ "executar": true }` realiza a limpeza; sem essa opção apenas apresenta a quantidade candidata. A limpeza é limitada a 100 itens por execução e registra auditoria; não há exclusão automática agendada nesta fase.
+- O seeder específico gera 23 imagens iniciais, reutilizando serviços, capas por segmento e profissionais existentes. Ele preserva registros já cadastrados e não altera imagens escolhidas pelas unidades.
+
+### Preparação E Aceite Da Fundação
+
+1. Instalar as dependências atualizadas pelo Yarn.
+2. Aplicar a migration `20261014010000_add_media_domain` e gerar o Prisma Client.
+3. Recriar o serviço `app` para montar o volume novo. Reiniciar apenas o processo não adiciona o volume.
+4. Executar `prisma/seeds/galeria-midias.seed.ts` dentro de `apps/backend`.
+5. Consultar a galeria por finalidade e segmento; conferir miniaturas e versão principal pela URL do backend.
+6. Enviar JPEG/PNG/WebP e confirmar dimensões e leitura sem EXIF. Arquivo inválido ou acima de 5 MB deve ser recusado.
+7. Associar à própria foto ou a um serviço da unidade; testar rejeição de uma mídia de outro usuário/unidade.
+8. Renovar o token e confirmar `fotoURL` na sessão; testar retorno ao padrão com `midiaId: null`.
+9. Recriar o container e confirmar que as imagens persistem. Backup deve abranger banco e volume de mídia conjuntamente.
+
+Os comandos específicos ficam em `docs/COMANDOS.md`. Galeria visual, upload nos formulários e atualização imediata da sessão pela interface pertencem às Fases 2–3.
 
 ## Fase 2 — Galeria Visual E Upload Na Web
 
@@ -108,4 +154,6 @@ As regras devem usar classificação estruturada do estabelecimento, e não pala
 
 Executar as fases na ordem 1 → 2 → 3 → 4 → 5 → 6. A fundação de upload e entrega persistente precede os seletores. A galeria inicial reutiliza os arquivos pertinentes já disponíveis; novas artes poderão ser criadas durante a curadoria, quando necessárias.
 
-Status: plano criado; nenhuma fase deste plano foi implementada nesta execução. Próximo passo: Fase 1 — Domínio, armazenamento e contratos.
+Status: Fase 1 implementada. O Sharp foi instalado, o schema Prisma validado, o client gerado e a checagem TypeScript do backend passou. Os 10 testes de processamento, permissões, associação e limpeza segura passaram. A migration, a carga da galeria e a recriação do container com o volume novo devem ser feitas antes do uso da API. As telas e a validação visual serão tratadas nas Fases 2–3. Próximo passo: Fase 2 — Galeria visual e upload na web.
+
+Referências de implementação: [upload multipart no NestJS](https://docs.nestjs.com/techniques/file-upload) e [processamento e remoção de metadados no Sharp](https://sharp.pixelplumbing.com/api-output/).

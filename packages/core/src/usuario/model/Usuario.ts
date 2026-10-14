@@ -7,6 +7,7 @@ export default interface Usuario {
     email: string
     senha?: string
     telefone?: string
+    fotoURL?: string | null
     dataNascimento?: string | null
     membroEstabelecimento?: boolean
     papel?: PapelUsuario

@@ -474,6 +474,48 @@ docker compose exec -T app sh -lc 'cd apps/backend && VCF_PATH=/tmp/ricosty-cont
 
 Cria somente os usuarios inexistentes e vincula os contatos ao estabelecimento Ricosty. O processo e idempotente: novas execucoes reconhecem telefones e vinculos ja existentes.
 
+## Mídia, Upload E Galeria
+
+### Validar schema e atualizar o client de mídia
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && npx prisma validate && npx prisma generate'
+```
+
+Confere o schema Prisma e gera o client atualizado. Não aplica a migration no banco. Para isso, utilize `prisma migrate deploy` já documentado.
+
+### Conferir os tipos do backend sem gerar build
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && npx tsc --noEmit --incremental false'
+```
+
+Verifica os tipos do backend, scripts e testes sem gerar arquivos compilados. Exige client Prisma e dependências atualizados.
+
+### Instalar o processador de imagens do backend
+
+```bash
+docker compose exec -T app sh -lc 'yarn workspace backend add sharp@^0.34.5'
+```
+
+Adiciona o Sharp ao backend para identificar formatos, corrigir orientação, redimensionar fotos e gerar WebP sem metadados. Atualiza o manifesto e o lockfile do Yarn; nas demais máquinas use a instalação de dependências já documentada.
+
+### Popular a galeria inicial
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && npx ts-node prisma/seeds/galeria-midias.seed.ts'
+```
+
+Depois de aplicar a migration e montar o volume `uniflow_midias`, gera versões processadas das 23 imagens iniciais e cadastra a galeria global. É idempotente e preserva mídias já registradas. Não modifica imagens de serviços, profissionais ou usuários existentes.
+
+### Verificar processamento e permissões de mídia
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && yarn test midia.spec.ts --runInBand'
+```
+
+Testa processamento de fotos reais em diretório temporário e associação/permissões com repositório simulado. Não aplica migration nem popula o banco.
+
 ## Catálogo Inteligente De Serviços
 
 ### Executar os testes de aceite do catálogo

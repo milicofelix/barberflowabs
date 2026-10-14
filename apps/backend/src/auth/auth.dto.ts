@@ -17,6 +17,7 @@ export type RefreshTokenDto = {
 export type UsuarioRole = 'SUPER_ADMIN' | 'APP_OWNER' | 'ESTABLISHMENT_OWNER' | 'ESTABLISHMENT_MEMBER' | 'CUSTOMER';
 
 export type AuthTokenPayload = {
+  fotoURL?: string | null;
   sub: number;
   id: number;
   nome: string;

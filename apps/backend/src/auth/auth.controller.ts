@@ -94,6 +94,7 @@ export class AuthController {
       papel,
       role: papel,
       telefone: usuario.telefone,
+      fotoURL: usuario.fotoURL,
     };
   }
 
