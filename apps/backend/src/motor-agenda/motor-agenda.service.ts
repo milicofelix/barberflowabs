@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { MotorAgendaCalculador } from './motor-agenda.calculador';
 import { MotorAgendaComandoPrisma } from './motor-agenda.comando.prisma';
 import { MotorAgendaConsultaPrisma } from './motor-agenda.consulta.prisma';
@@ -12,9 +12,12 @@ import {
 import { MotorAgendaPolicy } from './motor-agenda.policy';
 import { AgendaAtualizacaoService } from './agenda-atualizacao.service';
 import { JornadaAgendamentoService } from 'src/relacionamento/jornada-agendamento.service';
+import { OrquestradorAtendimentoService } from 'src/atendimento/orquestrador-atendimento.service';
 
 @Injectable()
 export class MotorAgendaService {
+  private readonly logger = new Logger(MotorAgendaService.name);
+
   constructor(
     private readonly consulta: MotorAgendaConsultaPrisma,
     private readonly comando: MotorAgendaComandoPrisma,
@@ -23,6 +26,7 @@ export class MotorAgendaService {
     private readonly policy: MotorAgendaPolicy,
     private readonly atualizacoes: AgendaAtualizacaoService,
     private readonly jornada: JornadaAgendamentoService,
+    private readonly orquestradorAtendimento: OrquestradorAtendimentoService,
   ) {}
 
   async criar(
@@ -56,6 +60,7 @@ export class MotorAgendaService {
     });
     this.atualizacoes.publicar(estabelecimentoId);
     await this.jornada.registrarCriacao(agendamento.id);
+    await this.programarFluxoSeguro(agendamento.id);
     return agendamento;
   }
 
@@ -131,6 +136,7 @@ export class MotorAgendaService {
     });
     this.atualizacoes.publicar(estabelecimentoId);
     await this.jornada.registrarReagendamento(atualizado.id);
+    await this.programarFluxoSeguro(atualizado.id);
     return atualizado;
   }
 
@@ -166,5 +172,16 @@ export class MotorAgendaService {
         preco: item.preco,
       };
     });
+  }
+
+  private async programarFluxoSeguro(agendamentoId: number) {
+    try {
+      await this.orquestradorAtendimento.programar(agendamentoId);
+    } catch (error) {
+      const codigo = typeof error === 'object' && error && 'code' in error
+        ? String((error as any).code)
+        : 'SEM_CODIGO';
+      this.logger.error(`Falha ao programar fluxo: agendamentoId=${agendamentoId} codigo=${codigo}`);
+    }
   }
 }

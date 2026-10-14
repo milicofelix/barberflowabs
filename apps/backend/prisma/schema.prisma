@@ -1234,6 +1234,7 @@ model TransicaoAgendamento {
   dataPrevista          DateTime
   processadoEm          DateTime?
   tentativas            Int       @default(0)
+  proximaTentativaEm    DateTime?
   bloqueadoEm           DateTime?
   bloqueadoPor          String?
   erro                  String?   @db.Text
@@ -1244,6 +1245,7 @@ model TransicaoAgendamento {
   destinatario          Usuario? @relation("DestinatarioTransicaoAgendamento", fields: [destinatarioUsuarioId], references: [id], onDelete: SetNull)
 
   @@index([status, dataPrevista])
+  @@index([status, proximaTentativaEm])
   @@index([estabelecimentoId, status, dataPrevista])
   @@index([agendamentoId, revisaoFluxo])
   @@index([destinatarioUsuarioId])

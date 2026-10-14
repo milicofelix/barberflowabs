@@ -148,12 +148,26 @@ Verificação executada: schema Prisma válido, migration aplicada em `uniflow_a
 
 ## Fase 2 — Orquestração Automática E Notificação
 
-- [ ] Criar transições ao agendar e recriá-las ao reagendar.
-- [ ] Implementar worker persistente com lock expirante, tentativas e recuperação após reinício.
-- [ ] Gerar a notificação interna de dez minutos com chave idempotente.
-- [ ] Resolver profissional, equipe autorizada e fallback do gestor.
-- [ ] Cancelar tarefas em cancelamento, ausência e controle manual.
-- [ ] Expor métricas e logs de falha sem dados do cliente.
+- [x] Criar transições ao agendar e recriá-las ao reagendar.
+- [x] Implementar worker persistente com lock expirante, tentativas e recuperação após reinício.
+- [x] Gerar a notificação interna de dez minutos com chave idempotente.
+- [x] Resolver profissional, equipe autorizada e fallback do gestor.
+- [x] Cancelar tarefas em cancelamento, ausência e controle manual.
+- [x] Expor métricas e logs de falha sem dados do cliente.
+
+### Implementação Da Fase 2
+
+Todo agendamento novo programa tarefas persistentes de aviso, início e finalização conforme as configurações do estabelecimento. O reagendamento cancela as tarefas da revisão anterior e cria uma nova programação. As chaves idempotentes incluem agendamento, revisão, tipo e destinatário, portanto repetições da API ou da reconciliação não duplicam tarefas.
+
+`AtendimentoWorker` reivindica tarefas vencidas com atualização concorrente, identificação da instância e lock expirante. Tarefas abandonadas por uma interrupção voltam a ser reivindicáveis; falhas de infraestrutura usam retentativa com backoff exponencial e são encerradas após o limite configurado. Uma reconciliação periódica recompõe programações eventualmente perdidas sem invalidar um agendamento já confirmado.
+
+O aviso no sino é criado na mesma transação que conclui a tarefa de aviso. O destinatário segue a ordem definida neste plano: conta vinculada ao profissional, membros ativos com `AGENDA_GERENCIAR`, proprietário do estabelecimento e gestor como último fallback técnico. Agendamentos criados dentro da janela recebem aviso imediato; após o início, um aviso atrasado é cancelado.
+
+Início e conclusão automáticos passam exclusivamente pelo `FluxoAtendimentoService`, preservando máquina de estados, auditoria, atualização em tempo real e geração financeira idempotente. Cancelamento, ausência, revisão obsoleta, automação desativada ou controle manual cancelam o trabalho pendente. Logs operacionais expõem somente identificadores, tipos, contadores e códigos técnicos, sem nome, telefone ou e-mail do cliente.
+
+A migration `20261014030000_add_appointment_flow_retry` adiciona a data da próxima tentativa e seu índice. O worker pode ser controlado por `ATENDIMENTOS_WORKER_ATIVO`, `ATENDIMENTOS_WORKER_INTERVALO_MS`, `ATENDIMENTOS_WORKER_LOCK_MS` e `ATENDIMENTOS_WORKER_MAX_TENTATIVAS`; no Docker, os padrões são respectivamente `true`, `5000`, `60000` e `5`.
+
+Verificação executada: migration aplicada em `uniflow_abs`, Prisma Client regenerado, 77 testes em 17 suites aprovados e builds do backend/core concluídos.
 
 ## Fase 3 — Operação Web
 
