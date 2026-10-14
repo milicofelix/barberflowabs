@@ -95,7 +95,7 @@ export default function ServicosSugeridos({ servicos, profissionais, aoConcluir 
         const invalido = itens.find((item) => !Number.isFinite(item.preco) || item.preco <= 0
             || !Number.isInteger(item.duracaoMinutos) || item.duracaoMinutos <= 0
             || [item.preparoAntesMinutos, item.preparoDepoisMinutos, item.deslocamentoMinutos].some((valor) => !Number.isInteger(valor) || valor < 0))
-        if (invalido) { setErro(`Revise preço, duração e preparação de ${sugestoes.find((s) => s.id === invalido.servicoSugeridoId)?.nome ?? 'todos os serviços'}.`); return }
+        if (invalido) { setErro(`Revise preço, duração e deslocamento de ${sugestoes.find((s) => s.id === invalido.servicoSugeridoId)?.nome ?? 'todos os serviços'}.`); return }
         bloqueado.current = true; setSalvando(true); setErro('')
         try {
             const resposta = await httpPost<Resultado>('/servicos/sugeridos/importar', { itens })
@@ -160,7 +160,7 @@ export default function ServicosSugeridos({ servicos, profissionais, aoConcluir 
                                     <Text style={[styles.nome, { color: cores.texto }]}>{item.nome}</Text>
                                     <SeletorImagem valor={form.imagemURL} finalidade="SERVICO" padrao="/servicos/combo.jpg" disabled={salvando} alterar={(imagemURL, midiaId) => setSelecionados((atuais) => ({ ...atuais, [item.id]: { ...atuais[item.id]!, imagemURL, midiaId } }))} />
                                     <CampoTexto label="Preço (R$)" value={form.preco} keyboardType="decimal-pad" onChangeText={(v) => alterar(item.id, 'preco', v.replace(/[^0-9,.]/g, ''))} />
-                                    {(['duracaoMinutos', 'preparoAntesMinutos', 'preparoDepoisMinutos'] as const).map((campo, indice) => <CampoTexto key={campo} label={['Duração (min)', 'Preparação antes (min)', 'Preparação depois (min)'][indice]!} value={form[campo]} keyboardType="number-pad" onChangeText={(v) => alterar(item.id, campo, v.replace(/\D/g, ''))} />)}
+                                    {(['duracaoMinutos'] as const).map((campo, indice) => <CampoTexto key={campo} label={['Duração (min)'][indice]!} value={form[campo]} keyboardType="number-pad" onChangeText={(v) => alterar(item.id, campo, v.replace(/\D/g, ''))} />)}
                                     <Text style={{ color: cores.texto }}>Modalidade</Text><View style={styles.chips}>{modelos.map((modelo) => <View key={modelo}>{chip(modelo === 'PRESENCIAL' ? 'No local' : modelo === 'DOMICILIAR' ? 'Domiciliar' : 'Híbrido', form.modeloAtendimento === modelo, () => alterar(item.id, 'modeloAtendimento', modelo))}</View>)}</View>
                                     {form.modeloAtendimento !== 'PRESENCIAL' ? <CampoTexto label="Deslocamento (min)" value={form.deslocamentoMinutos} keyboardType="number-pad" onChangeText={(v) => alterar(item.id, 'deslocamentoMinutos', v.replace(/\D/g, ''))} /> : null}
                                     <Text style={{ color: cores.texto }}>Profissionais habilitados</Text><View style={styles.chips}>{profissionais.map((p) => <View key={p.id}>{chip(p.nome, form.profissionalIds.includes(p.id), () => alterar(item.id, 'profissionalIds', form.profissionalIds.includes(p.id) ? form.profissionalIds.filter((id) => id !== p.id) : [...form.profissionalIds, p.id]))}</View>)}</View>

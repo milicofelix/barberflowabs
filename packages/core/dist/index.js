@@ -230,7 +230,7 @@ var AgendaUtils = class {
   static horariosDoDia() {
     return {
       manha: this.gerarHorarios([8, 9, 10, 11]),
-      tardeNoite: this.gerarHorarios([13, 14, 15, 16, 17, 18, 19, 20])
+      tardeNoite: this.gerarHorarios([12, 13, 14, 15, 16, 17, 18, 19, 20])
     };
   }
   static duracaoTotal(servicos2) {
@@ -330,7 +330,7 @@ var Horarios = class {
       return this.horariosConsecutivos(this.horariosDisponiveis);
     }
     const { manha, tardeNoite } = AgendaUtils.horariosDoDia();
-    const horarios = manha.includes(this.inicio) ? manha : tardeNoite;
+    const horarios = [...manha, ...tardeNoite];
     return this.horariosConsecutivos(horarios);
   }
   get completo() {

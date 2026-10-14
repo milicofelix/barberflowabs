@@ -26,7 +26,7 @@ export default function HorariosAgenda({ horarios, alterar }: Props) {
     const diasDisponiveis = [1, 2, 3, 4, 5, 6, 0].filter((dia) => !horarios.some((horario) => horario.diaSemana === dia))
 
     return <View style={styles.conteudo}>
-        {horarios.map((horario, indice) => <View key={horario.id ?? horario.diaSemana} style={styles.linha}>
+        {horarios.map((horario, indice) => <View key={horario.id ?? horario.diaSemana} style={{ gap: 8 }}><View style={styles.linha}>
             <Pressable onPress={() => atualizar(indice, 'ativo', horario.ativo === false)} style={[styles.dia, horario.ativo !== false && styles.diaAtivo]}>
                 <Text style={styles.diaTexto}>{DIAS[horario.diaSemana]}</Text>
             </Pressable>
@@ -36,6 +36,14 @@ export default function HorariosAgenda({ horarios, alterar }: Props) {
             <Pressable accessibilityRole="button" accessibilityLabel={`Remover ${DIAS[horario.diaSemana]}`} onPress={() => remover(horario.diaSemana)} style={[styles.remover, { borderColor: cores.borda }]}>
                 <Text style={styles.removerTexto}>×</Text>
             </Pressable>
+        </View>
+            <Text style={{ color: cores.textoSecundario }}>Intervalo opcional — vazio significa sem pausa fixa</Text>
+            <View style={styles.linha}>
+                <TextInput accessibilityLabel={`Início do intervalo de ${DIAS[horario.diaSemana]}`} placeholder="HH:MM" placeholderTextColor={cores.textoSecundario} value={horario.intervaloInicio ?? ''} onChangeText={(valor) => atualizar(indice, 'intervaloInicio', valor)} style={[styles.horario, { color: cores.campoTexto, backgroundColor: cores.campo, borderColor: cores.borda }]} maxLength={5} keyboardType="numbers-and-punctuation" />
+                <Text style={{ color: cores.textoSecundario }}>até</Text>
+                <TextInput accessibilityLabel={`Fim do intervalo de ${DIAS[horario.diaSemana]}`} placeholder="HH:MM" placeholderTextColor={cores.textoSecundario} value={horario.intervaloFim ?? ''} onChangeText={(valor) => atualizar(indice, 'intervaloFim', valor)} style={[styles.horario, { color: cores.campoTexto, backgroundColor: cores.campo, borderColor: cores.borda }]} maxLength={5} keyboardType="numbers-and-punctuation" />
+                <Pressable accessibilityRole="button" onPress={() => alterar(horarios.map((item, atual) => atual === indice ? { ...item, intervaloInicio: null, intervaloFim: null } : item))} style={{ minHeight: 44, justifyContent: 'center' }}><Text style={{ color: cores.destaque }}>Sem pausa</Text></Pressable>
+            </View>
         </View>)}
         {!horarios.length ? <Text style={[styles.vazio, { color: cores.textoSecundario }]}>Nenhum dia de funcionamento configurado.</Text> : null}
         {diasDisponiveis.length ? <View style={styles.diasDisponiveis}>

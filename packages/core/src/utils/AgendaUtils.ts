@@ -5,7 +5,7 @@ export default class AgendaUtils {
     static horariosDoDia() {
         return {
             manha: this.gerarHorarios([8, 9, 10, 11]),
-            tardeNoite: this.gerarHorarios([13, 14, 15, 16, 17, 18, 19, 20]),
+            tardeNoite: this.gerarHorarios([12, 13, 14, 15, 16, 17, 18, 19, 20]),
         }
     }
 

@@ -152,7 +152,7 @@ export default function AgendaCalendario(props: Props) {
         </View>
         <View style={styles.legenda}>
             <Legenda cor={cores.destaque} texto="Agendado" /><Legenda cor={cores.sucesso} texto="Confirmado" />
-            <Legenda cor="#7C3AED" texto="Em atendimento" /><Legenda cor="#0EA5E9" texto="Preparação" />
+            <Legenda cor="#7C3AED" texto="Em atendimento" />
             <Legenda cor="#F97316" texto="Deslocamento" /><Legenda cor={cores.perigo} texto="Bloqueado/ausente" />
         </View>
         <Modal visible={Boolean(selecionado)} transparent animationType="fade" onRequestClose={() => setSelecionado(null)}>
@@ -178,7 +178,7 @@ export default function AgendaCalendario(props: Props) {
         <Modal visible={reagendando} transparent animationType="slide" onRequestClose={() => setReagendando(false)}>
             <View style={styles.modalFundo}><View style={[styles.detalhes, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
                 <Text style={[styles.detalhesTitulo, { color: cores.texto }]}>Reagendar atendimento</Text>
-                <Text style={[styles.detalhesMeta, { color: cores.textoSecundario }]}>A disponibilidade completa de profissional, recursos, preparação e deslocamento será validada antes da alteração.</Text>
+                <Text style={[styles.detalhesMeta, { color: cores.textoSecundario }]}>A disponibilidade de profissional, recursos e deslocamento será validada antes da alteração.</Text>
                 <View style={styles.campos}><TextInput value={novaData} onChangeText={setNovaData} placeholder="AAAA-MM-DD" placeholderTextColor={cores.textoSecundario} style={[styles.campo, { color: cores.texto, borderColor: cores.borda }]} />
                     <TextInput value={novoHorario} onChangeText={setNovoHorario} placeholder="HH:mm" placeholderTextColor={cores.textoSecundario} style={[styles.campo, styles.campoHorario, { color: cores.texto, borderColor: cores.borda }]} /></View>
                 <TextInput value={motivo} onChangeText={setMotivo} placeholder="Motivo do reagendamento (opcional)" placeholderTextColor={cores.textoSecundario} style={[styles.campo, { color: cores.texto, borderColor: cores.borda }]} />

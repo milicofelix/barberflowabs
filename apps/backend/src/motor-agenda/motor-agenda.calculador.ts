@@ -22,13 +22,11 @@ export class MotorAgendaCalculador {
     modeloAtendimento: ModeloAtendimento,
     deslocamentoSolicitado = 0,
   ): PeriodoAgenda {
-    const preparoAntes = servicos[0]?.preparoAntesMinutos ?? 0;
-    const preparoDepois = servicos[servicos.length - 1]?.preparoDepoisMinutos ?? 0;
-    const transicoes = servicos.slice(1).reduce((total, atual, indice) => {
-      const anterior = servicos[indice];
-      return total + Math.max(anterior.preparoDepoisMinutos, atual.preparoAntesMinutos);
-    }, 0);
-    const duracao = servicos.reduce((total, servico) => total + servico.duracaoMinutos, 0) + transicoes;
+    // Preparação fica desativada até validar essa necessidade com as unidades.
+    // Preserva o contrato e os dados legados, mas não acrescenta buffers/transições.
+    const preparoAntes = 0;
+    const preparoDepois = 0;
+    const duracao = servicos.reduce((total, servico) => total + servico.duracaoMinutos, 0);
     const deslocamentoPadrao = Math.max(0, ...servicos.map((servico) => servico.deslocamentoMinutos));
     const deslocamento = modeloAtendimento === 'DOMICILIAR'
       ? Math.max(deslocamentoSolicitado, deslocamentoPadrao)

@@ -17,7 +17,8 @@ export default class Horarios {
         }
 
         const { manha, tardeNoite } = AgendaUtils.horariosDoDia()
-        const horarios = manha.includes(this.inicio) ? manha : tardeNoite
+        // Manhã/tarde são seções visuais, não um intervalo obrigatório.
+        const horarios = [...manha, ...tardeNoite]
         return this.horariosConsecutivos(horarios)
     }
 

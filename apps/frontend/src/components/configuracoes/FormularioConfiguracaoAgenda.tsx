@@ -29,8 +29,8 @@ const horariosPadrao: HorarioFuncionamento[] = [0, 1, 2, 3, 4, 5, 6].map((diaSem
     diaSemana,
     inicio: '08:00',
     fim: '21:00',
-    intervaloInicio: '12:00',
-    intervaloFim: '13:00',
+    intervaloInicio: '',
+    intervaloFim: '',
     ativo: diaSemana !== 0,
 }))
 

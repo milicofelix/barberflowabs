@@ -28,7 +28,7 @@ export default function Slogan() {
     useEffect(() => { const previa = new window.Image(); previa.src = imagem }, [imagem])
     return (
         <div className="home-identidade relative h-[450px] bg-white sm:h-[700px] dark:bg-slate-950">
-            <img src={imagem} alt="" decoding="async" onError={() => setFalhou(true)} className="home-imagem absolute right-0 top-36 h-32 w-1/3 rounded-l-3xl object-cover dark:top-0 dark:h-full dark:w-full dark:rounded-none" />
+            <img src={imagem} alt="" decoding="async" onError={() => setFalhou(true)} className="home-imagem absolute inset-0 h-full w-full object-cover" />
             <div
                 className="
                     home-sobre-imagem flex flex-col items-center

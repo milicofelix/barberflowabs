@@ -115,8 +115,6 @@ export default function GestaoServicos({ itens, erro, recarregar, salvar, exclui
             <Text style={[styles.rotulo, { color: cores.texto }]}>Modelo de atendimento</Text><View style={styles.modelos}>{MODELOS.map((modelo) => <Pressable key={modelo.id}
                 onPress={() => alterar('modeloAtendimento', modelo.id)} style={[styles.chip, { borderColor: cores.borda }, form.modeloAtendimento === modelo.id && { backgroundColor: cores.destaque, borderColor: cores.destaque }]}>
                 <Text style={{ color: form.modeloAtendimento === modelo.id ? cores.destaqueTexto : cores.texto, fontWeight: '800' }}>{modelo.nome}</Text></Pressable>)}</View>
-            <View style={styles.duasColunas}><View style={styles.coluna}><CampoTexto label="Preparo antes (min)" value={form.preparoAntesMinutos} onChangeText={(v) => alterar('preparoAntesMinutos', v.replace(/\D/g, ''))} keyboardType="number-pad" /></View>
-                <View style={styles.coluna}><CampoTexto label="Preparo depois (min)" value={form.preparoDepoisMinutos} onChangeText={(v) => alterar('preparoDepoisMinutos', v.replace(/\D/g, ''))} keyboardType="number-pad" /></View></View>
             {form.modeloAtendimento !== 'PRESENCIAL' ? <CampoTexto label="Deslocamento (min)" value={form.deslocamentoMinutos} onChangeText={(v) => alterar('deslocamentoMinutos', v.replace(/\D/g, ''))} keyboardType="number-pad" /> : null}
             <Text style={[styles.rotulo, { color: cores.texto }]}>Profissionais habilitados</Text>
             {profissionais.length ? <View style={styles.profissionais}>{profissionais.map((profissional) => { const ativo = form.profissionalIds.includes(profissional.id); return <Pressable key={profissional.id}

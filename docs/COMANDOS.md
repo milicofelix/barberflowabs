@@ -683,6 +683,22 @@ docker compose exec -T app sh -lc 'cd apps/backend && npx jest midia --runInBand
 
 Gera os contratos compartilhados e executa os 15 testes de processamento, associação e identidade. As checagens TypeScript web/backend/mobile estão documentadas acima. Não há migration, nova dependência nativa ou necessidade de novo build nativo específico desta fase; recarregue o bundle atualizado. O build nativo com os módulos da Fase 3 continua necessário para câmera e upload do aparelho.
 
+### Testar agenda sem preparação antes/depois
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && npx jest motor-agenda.calculador --runInBand'
+```
+
+Testa duração exata, múltiplos serviços, limites de funcionamento e deslocamento domiciliar sem criar reservas reais. Não há migration neste ajuste.
+
+### Testar pausa somente quando explicitamente configurada
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && npx jest intervalo-opcional --runInBand'
+```
+
+Confere a inclusão do meio-dia na grade padrão, travessia entre manhã/tarde e respeito ao intervalo cadastrado. Não grava horários nem reservas na base.
+
 ## Limpezas Destrutivas
 
 

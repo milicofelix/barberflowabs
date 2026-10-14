@@ -134,14 +134,13 @@ export default function AgendamentoAssistido({ dataInicial, chaveInicial }: Prop
 
     const modalidades: Modalidade[] = contexto?.modeloAtendimento === 'HIBRIDO'
         ? ['PRESENCIAL', 'DOMICILIAR'] : [contexto?.modeloAtendimento === 'DOMICILIAR' ? 'DOMICILIAR' : 'PRESENCIAL']
-    const preparacao = minutosPreparacao(servicos)
     const resumo = <View style={[styles.cartao, styles.resumoCartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
         <Text style={[styles.titulo, { color: cores.texto }]}>Resumo antes da confirmação</Text>
         <Text style={[styles.resumo, { color: cores.texto }]}>Cliente: {clientes.find((item) => item.id === clienteId)?.nome ?? 'não selecionado'}</Text>
         <Text style={[styles.resumo, { color: cores.texto }]}>Profissional: {profissional?.nome ?? 'não selecionado'}</Text>
         <Text style={[styles.resumo, { color: cores.texto }]}>Serviços: {servicos.map((item) => item.nome).join(', ') || 'não selecionados'}</Text>
         <Text style={[styles.resumoDestaque, { color: cores.destaque }]}>Duração: {duracaoTotal()} · Total: {precoTotal().toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</Text>
-        <Text style={[styles.resumo, { color: cores.textoSecundario }]}>Preparação operacional: {preparacao} min{modalidade === 'DOMICILIAR' ? ` · deslocamento: ${Number(deslocamento || 0)} min por trecho` : ''}</Text>
+        {modalidade === 'DOMICILIAR' ? <Text style={[styles.resumo, { color: cores.textoSecundario }]}>Deslocamento: {Number(deslocamento || 0)} min por trecho</Text> : null}
         {recursosAlocados.length ? <Text style={[styles.ajuda, { color: cores.sucesso }]}>Recursos validados: {recursosAlocados.map((id) => contexto?.recursos.find((item) => item.id === id)?.nome ?? `#${id}`).join(', ')}</Text> : null}
         <TextInput value={observacoes} onChangeText={setObservacoes} multiline placeholder="Observações internas do atendimento" placeholderTextColor={cores.textoSecundario} style={[styles.observacoes, { borderColor: cores.borda, color: cores.campoTexto, backgroundColor: cores.campo }]} />
     </View>
@@ -201,15 +200,6 @@ function mascaraTelefone(valor: string) {
 }
 function rotuloOrigem(origem: Origem) {
     return ({ RECEPCAO: 'Recepção', TELEFONE: 'Telefone', WHATSAPP: 'WhatsApp', PRESENCIAL: 'Presencial', OUTRO: 'Outro' } as Record<Origem, string>)[origem]
-}
-function minutosPreparacao(servicos: Array<{ preparoAntesMinutos?: number; preparoDepoisMinutos?: number }>) {
-    if (!servicos.length) return 0
-    const antes = Number(servicos[0].preparoAntesMinutos ?? 0)
-    const depois = Number(servicos[servicos.length - 1].preparoDepoisMinutos ?? 0)
-    const transicoes = servicos.slice(1).reduce((total, servico, indice) => total + Math.max(
-        Number(servicos[indice].preparoDepoisMinutos ?? 0), Number(servico.preparoAntesMinutos ?? 0),
-    ), 0)
-    return antes + transicoes + depois
 }
 
 const styles = StyleSheet.create({

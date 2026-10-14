@@ -138,3 +138,25 @@ Substituir progressivamente a lista diaria da Gestao Diaria por uma agenda opera
 ## Proxima Evolucao — Importacao De Clientes Do Celular
 
 A substituicao da importacao manual por VCF/seeder foi planejada em `docs/PLANO_IMPORTACAO_CONTATOS_MOBILE.md`. O fluxo pedira permissao somente por acao explicita, selecionara os contatos localmente, enviara apenas os escolhidos e mantera consentimentos de comunicacao desativados por padrao.
+
+## Simplificação De Duração — Preparação Desativada
+
+### Almoço Opcional, Sem Bloqueio Automático
+
+A grade padrão compartilhada inclui 12h–13h e permite um serviço atravessar as seções visuais “Manhã” e “Tarde”. Não há almoço presumido: somente `intervaloInicio` e `intervaloFim` explicitamente cadastrados bloqueiam o período. O formulário web não preenche mais 12h–13h automaticamente para uma configuração nova; intervalos já salvos são preservados.
+
+No mobile, Configurações → Agenda permite informar/limpar o intervalo de cada dia da unidade. Gestão diária → Equipe → Escalas permite informar/limpar o intervalo de cada dia do profissional. Ambos oferecem “Sem pausa”; campos vazios permitem atender ao meio-dia. A validação existente requer os dois horários quando um intervalo é preenchido. É possível registrar um bloqueio pontual na agenda quando o almoço varia, sem fixar uma pausa semanal.
+
+Inspeção da Ricosty: a unidade não tinha intervalo registrado, o profissional Shis não tinha escala individual e não havia bloqueios cadastrados. Nenhum desses dados foi alterado. A hipótese de almoço não ficou confirmada para aquela tentativa; a preparação antiga também podia causar a recusa das 11h, conforme diagnóstico anterior.
+
+Aceite: serviço de 90 minutos às 11h deve atravessar 12h sem impedimento quando não há pausa; com intervalo explícito 12h–13h deve ficar indisponível e permitir 13h, se não houver outra reserva/escala/recurso bloqueando. Limpar e salvar o intervalo deve liberar o período novamente. Recarregar web/mobile e garantir que o backend está executando o código atualizado; nenhuma migration ou novo módulo nativo é necessário.
+
+Verificação técnica do intervalo: 3 testes passaram, assim como o build do core, TypeScript da web e `git diff --check`. Mobile permanece somente com os dois erros de tipagem anteriores da agenda; aceite visual e novo teste no aparelho pendentes.
+
+Por decisão de produto, preparação antes/depois e transições entre serviços estão desativadas no motor da agenda. Atendimento presencial ocupa exatamente a soma das durações selecionadas: limpeza de pele de 90 minutos às 11h termina às 12h30. Horário de funcionamento, escalas, conflitos e recursos continuam sendo validados. Deslocamento domiciliar permanece separado e ativo.
+
+Os campos de preparação foram retirados dos formulários de serviços/sugestões/curadoria na web e mobile e do resumo assistido. Os valores antigos no cadastro de serviços são preservados, mas ignorados pelo calculador. Novos agendamentos e reagendamentos gravam preparação zero nos itens; não há migration ou alteração direta dos agendamentos existentes. Reservas antigas mantêm os períodos registrados, inclusive bloqueios históricos, até serem reagendadas — não foi feito recálculo em massa.
+
+Aceite: na Ricosty, quarta 14/10/2026, limpeza de pele às 11h deve ocupar 11h–12h30; às 17h30 deve terminar às 19h; às 17h45 deve ser recusada. Também testar dois serviços consecutivos e atendimento domiciliar. A aceitação ainda depende de profissional, recursos e horário livres. O erro 500 de credenciais inválidas em `/auth/login` é uma pendência independente, não alterada neste ajuste.
+
+Verificação: 4 testes do calculador e dos limites de funcionamento passaram. TypeScript web/backend e `git diff --check` passaram; mobile mantém os dois erros anteriores de agenda (data possivelmente nula e conversão do mapa de períodos), sem novos erros deste ajuste. Aceite manual e confirmação de reserva no aparelho ainda pendentes; nenhuma reserva real foi criada ou alterada durante os testes.

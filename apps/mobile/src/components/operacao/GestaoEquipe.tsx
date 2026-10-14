@@ -87,6 +87,12 @@ export function EscalasEquipe({ profissionais, buscar, salvar }: {
         <Chips itens={profissionais.map((item) => ({ id: item.id, nome: item.nome }))} atual={profissionalId} selecionar={selecionar} />
         {profissionalId ? <><View style={styles.campos}><CampoTexto label="Início" value={inicio} onChangeText={(v) => atualizarHorarios('inicio', v)} /><CampoTexto label="Fim" value={fim} onChangeText={(v) => atualizarHorarios('fim', v)} /></View>
             <View style={styles.chips}>{DIAS.map((nome, dia) => <Chip key={nome} nome={nome} ativo={escalas.some((item) => item.diaSemana === dia)} acao={() => alternarDia(dia)} />)}</View>
+            {escalas.map((escala, indice) => <View key={escala.diaSemana} style={styles.campos}>
+                <Text style={{ color: cores.textoSecundario }}>{DIAS[escala.diaSemana]} — intervalo opcional (vazio: sem pausa fixa)</Text>
+                <CampoTexto label="Início do intervalo (HH:MM)" value={escala.intervaloInicio ?? ''} onChangeText={(valor) => setEscalas((itens) => itens.map((item, atual) => atual === indice ? { ...item, intervaloInicio: valor } : item))} maxLength={5} />
+                <CampoTexto label="Fim do intervalo (HH:MM)" value={escala.intervaloFim ?? ''} onChangeText={(valor) => setEscalas((itens) => itens.map((item, atual) => atual === indice ? { ...item, intervaloFim: valor } : item))} maxLength={5} />
+                <Botao texto="Sem pausa fixa" acao={() => setEscalas((itens) => itens.map((item, atual) => atual === indice ? { ...item, intervaloInicio: null, intervaloFim: null } : item))} />
+            </View>)}
             <Botao texto="Salvar escala" acao={() => salvar(profissionalId, escalas)} /></> : <Text style={[styles.texto, { color: cores.textoSecundario }]}>Selecione um profissional.</Text>}
     </View>
 }
