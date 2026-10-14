@@ -476,6 +476,14 @@ Cria somente os usuarios inexistentes e vincula os contatos ao estabelecimento R
 
 ## Catálogo Inteligente De Serviços
 
+### Verificar os tipos do mobile sem gerar build
+
+```bash
+/Users/adrianofreitas/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node apps/mobile/node_modules/typescript/bin/tsc --project apps/mobile/tsconfig.json --noEmit
+```
+
+Executado a partir da raiz do projeto. Usa o Node disponível no ambiente Codex para verificar os tipos do aplicativo sem gerar arquivos. Em um terminal com Node no PATH, pode usar `node` no lugar do caminho absoluto. Dependências do workspace precisam estar disponíveis para a verificação completa.
+
 ### Popular somente segmentos, especialidades e serviços sugeridos
 
 ```bash

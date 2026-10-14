@@ -96,11 +96,35 @@ O corpo contém `itens`, com `servicoSugeridoId`, `preco` e os ajustes operacion
 
 ## Fase 3 — Paridade Mobile
 
-- [ ] Criar seleção e filtros adequados para tela pequena.
-- [ ] Permitir revisão individual dos serviços selecionados.
-- [ ] Criar os serviços em lote com feedback por item.
-- [ ] Atualizar imediatamente catálogo, configuração e agenda.
+- [x] Criar seleção e filtros adequados para tela pequena.
+- [x] Permitir revisão individual dos serviços selecionados.
+- [x] Criar os serviços em lote com feedback por item.
+- [x] Atualizar imediatamente catálogo, configuração e agenda.
 - [ ] Validar acessibilidade, teclado, rolagem e estados de carregamento.
+
+Implementação da Fase 3:
+
+- Operação → Serviços ganhou o botão “Serviços sugeridos”, com fluxo em tela cheia;
+- busca por texto e filtros entre os segmentos da própria unidade, omitindo sugestões já cadastradas;
+- seleção múltipla seguida de revisão individual de preço, duração, modalidade, preparação, deslocamento e profissionais;
+- integração com o mesmo endpoint transacional da web, com resultado por serviço criado ou ignorado;
+- bloqueio de toques repetidos durante o envio e preservação da revisão em caso de erro;
+- atualização da lista e dos dados operacionais após importar; a agenda consulta os serviços novamente ao receber foco;
+- suporte aos dois temas, áreas seguras, teclado, rolagem e rótulos de acessibilidade.
+
+### Aceite Manual Da Fase 3
+
+1. Com as migrations e o seed das Fases 1–2 aplicados, entrar como gestor no mobile.
+2. Abrir Operação → Serviços → Serviços sugeridos.
+3. Conferir os filtros da unidade e pesquisar por nome ou especialidade.
+4. Selecionar dois serviços, abrir “Revisar selecionados” e preencher preços (incluindo valor com vírgula).
+5. Ajustar duração e preparação, escolher modalidade e profissionais e adicionar.
+6. Conferir o resultado por item, fechar e verificar os serviços na lista e na agenda.
+7. Reabrir e conferir que serviços já importados não reaparecem; testar cadastro manual e edição.
+8. Testar erro de conexão e limite do plano: a revisão deve permanecer disponível para correção e nova tentativa.
+9. Validar em Android/iOS os dois temas, teclado, leitor de tela e rolagem de uma seleção extensa.
+
+Verificação: `git diff --check` sem problemas. A checagem TypeScript local foi executada, mas não passou devido a dependências não resolvidas e erros existentes em outros arquivos do mobile. Nenhum diagnóstico foi reportado no novo componente `ServicosSugeridos.tsx`. O aceite visual em aparelho permanece pendente.
 
 ## Fase 4 — Curadoria E Governança
 
@@ -120,4 +144,4 @@ O corpo contém `itens`, com `servicoSugeridoId`, `preco` e os ajustes operacion
 
 ## Estado Atual
 
-As Fases 1 e 2 foram implementadas em 13/10/2026. Migrations, geração do Prisma Client, seed, testes e builds não foram executados automaticamente.
+As Fases 1–3 estão implementadas; o aceite visual mobile permanece pendente. Nesta Fase 3 não foram necessárias novas migrations ou dependências nativas. A checagem TypeScript local foi executada com os impedimentos registrados acima.

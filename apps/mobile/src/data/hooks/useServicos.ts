@@ -1,5 +1,6 @@
 import { Servico } from '@uniflowabs/core'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
+import { useFocusEffect } from '@react-navigation/native'
 import useAPI from './useAPI'
 import useSessao from './useSessao'
 import { mensagemDoErro } from './useAPI'
@@ -26,9 +27,7 @@ export default function useServicos() {
         }
     }, [carregando, httpGet])
 
-    useEffect(() => {
-        carregarServicos()
-    }, [carregarServicos])
+    useFocusEffect(useCallback(() => { void carregarServicos() }, [carregarServicos]))
 
     return {
         servicos,

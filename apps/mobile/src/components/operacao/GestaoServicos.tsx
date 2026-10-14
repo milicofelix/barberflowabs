@@ -1,4 +1,5 @@
 import CampoTexto from '@/src/components/shared/CampoTexto'
+import ServicosSugeridos from './ServicosSugeridos'
 import Confirmacao from '@/src/components/shared/Confirmacao'
 import EstadoErro from '@/src/components/shared/EstadoErro'
 import EstadoVazio from '@/src/components/shared/EstadoVazio'
@@ -99,6 +100,7 @@ export default function GestaoServicos({ itens, erro, recarregar, salvar, exclui
     }
 
     return <View style={styles.lista}>
+        <ServicosSugeridos servicos={itens} profissionais={profissionais} aoConcluir={recarregar} />
         <View style={[styles.formulario, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
             <View style={styles.cabecalho}><Text style={[styles.subtitulo, { color: cores.texto }]}>{editandoId ? 'Editar serviço' : 'Novo serviço'}</Text>
                 {editandoId ? <Pressable onPress={novo}><Text style={{ color: cores.destaque, fontWeight: '800' }}>Cancelar edição</Text></Pressable> : null}</View>

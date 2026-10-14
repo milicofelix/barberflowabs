@@ -84,6 +84,7 @@ export type ModeloAtendimentoServico = 'PRESENCIAL' | 'DOMICILIAR' | 'HIBRIDO'
 
 export interface ServicoOperacional {
     id: number
+    servicoSugeridoId?: number | null
     nome: string
     descricao: string
     preco: number

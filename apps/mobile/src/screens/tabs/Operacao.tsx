@@ -91,7 +91,7 @@ export default function Operacao({ navigation }: Props) {
                 <ImportadorContatos aoConcluir={() => dados.recarregar()} />
             </View></> : null}
         {secao === 'SERVICOS' ? <GestaoServicos itens={gestaoServicos.servicos} profissionais={dados.profissionais} carregando={gestaoServicos.carregando}
-            erro={gestaoServicos.erro} recarregar={gestaoServicos.carregar} salvar={gestaoServicos.salvar} excluir={gestaoServicos.excluir} /> : null}
+            erro={gestaoServicos.erro} recarregar={async () => { await Promise.all([gestaoServicos.carregar(), dados.recarregar()]) }} salvar={gestaoServicos.salvar} excluir={gestaoServicos.excluir} /> : null}
         {!dados.carregando && secao === 'EQUIPE' ? <><EquipeOperacao itens={dados.profissionais} criar={dados.criarProfissional} /><EscalasEquipe profissionais={dados.profissionais} buscar={dados.buscarEscalas} salvar={dados.salvarEscalas} /><MembrosEquipe membros={dados.membros} usuarios={dados.usuariosDisponiveis} profissionais={dados.profissionais} salvar={dados.salvarMembro} criarPerfil={dados.criarPerfilParaMembro} remover={dados.removerMembro} /></> : null}
         {!dados.carregando && secao === 'CAPACIDADE' ? <GestaoRecursos itens={dados.recursos} criar={dados.criarRecurso} buscarIndisponibilidades={dados.buscarIndisponibilidades} indisponibilizar={dados.indisponibilizarRecurso} removerIndisponibilidade={dados.removerIndisponibilidade} /> : null}
         {!dados.carregando && secao === 'FINANCEIRO' ? <AtalhoCentralFinanceira
