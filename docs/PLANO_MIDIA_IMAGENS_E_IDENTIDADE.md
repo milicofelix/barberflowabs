@@ -226,6 +226,8 @@ Verificação técnica: build do core, checagem TypeScript web/backend e 15 test
 
 ## Sequência E Estado
 
+A seção “Clientes Que Agendam Online” da Home web está temporariamente sem fotos/depoimentos demonstrativos. O fluxo futuro de participação voluntária, revisão e retirada foi separado em `docs/PLANO_CLIENTES_DEPOIMENTOS_E_AUTORIZACAO.md`. Foto pessoal não será reutilizada automaticamente como autorização de divulgação.
+
 Executar as fases na ordem 1 → 2 → 3 → 4 → 5 → 6. A fundação de upload e entrega persistente precede os seletores. A galeria inicial reutiliza os arquivos pertinentes já disponíveis; novas artes poderão ser criadas durante a curadoria, quando necessárias.
 
 Status: Fases 1–4 implementadas; aceite visual e de dispositivo pendente. O backend passou nos 10 testes de mídia e na checagem de tipos; a web também passou na checagem completa de tipos. A preparação do ambiente da Fase 1 continua necessária. Próximo desenvolvimento: Fase 5 — Curadoria e operação da galeria.
