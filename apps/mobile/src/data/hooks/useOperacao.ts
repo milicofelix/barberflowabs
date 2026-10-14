@@ -1,6 +1,7 @@
 import type {
     AgendamentoOperacional, DashboardOperacional, EscalaProfissional, IndisponibilidadeRecurso, MembroEquipe,
     PermissaoEquipe, ProfissionalOperacional, RecursoOperacional, UsuarioEquipe,
+    NovaContaMembro,
     RespostaAgendaOperacional, VisualizacaoAgenda,
     FiltrosAgendaOperacional, RestricaoAgendaOperacional,
 } from '../operacao/tipos'
@@ -179,6 +180,7 @@ export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'da
     async function salvarMembro(dados: { usuarioId: number; profissionalId?: number | null; papel: string; permissoes: PermissaoEquipe[]; ativo?: boolean }, membroId?: number) {
         return executarAcao(() => membroId ? httpPut(`/equipe/${membroId}`, dados) : httpPost('/equipe', dados))
     }
+    const criarContaMembro = (dados: NovaContaMembro) => executarAcao(() => httpPost('/equipe/com-conta', dados))
     async function criarPerfilParaMembro(membro: MembroEquipe, sexo: 'MASCULINO' | 'FEMININO') {
         return executarAcao(async () => {
             const profissional = await httpPost<ProfissionalOperacional>('/profissionais', {
@@ -214,7 +216,7 @@ export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'da
 
     return {
         dashboard, agendamentos, restricoesAgenda, filtrosAgenda, setFiltrosAgenda, profissionais, membros, usuariosDisponiveis, recursos, permissoes, data, setData, fusoHorario, carregando, erro,
-        recarregar: carregar, alterarStatus, reagendar, criarProfissional, salvarMembro, criarPerfilParaMembro, removerMembro,
+        recarregar: carregar, alterarStatus, reagendar, criarProfissional, salvarMembro, criarContaMembro, criarPerfilParaMembro, removerMembro,
         buscarEscalas, salvarEscalas, criarRecurso, buscarIndisponibilidades, indisponibilizarRecurso, removerIndisponibilidade,
     }
 }

@@ -30,6 +30,14 @@ export class AuthMiddleware implements NestMiddleware {
         throw new HttpException('Usuário não encontrado', 401);
       }
 
+      if (payload.trocarSenhaObrigatoria && !usuario.trocarSenhaObrigatoria) {
+        throw new HttpException('A senha temporária já foi substituída. Entre novamente.', 401);
+      }
+      const caminho = String(req.originalUrl ?? req.url).split('?')[0].replace(/\/$/, '');
+      if (usuario.trocarSenhaObrigatoria && caminho !== '/auth/alterar-senha') {
+        throw new HttpException({ message: 'Altere sua senha temporária para continuar.', codigo: 'TROCA_SENHA_OBRIGATORIA' }, 403);
+      }
+
       delete usuario.senha;
       const emailsSuperAdmin = (process.env.SUPER_ADMIN_EMAILS ?? '')
         .split(',')
@@ -49,6 +57,7 @@ export class AuthMiddleware implements NestMiddleware {
       req.usuario = usuario;
       next();
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       throw new HttpException('Token inválido', 401);
     }
   }

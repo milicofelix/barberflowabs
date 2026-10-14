@@ -1,8 +1,9 @@
 import CampoTexto from '@/src/components/shared/CampoTexto'
 import FeedbackSucesso from '@/src/components/shared/FeedbackSucesso'
+import CadastroContaMembro from './CadastroContaMembro'
 import { mensagemDoErro } from '@/src/data/hooks/useAPI'
 import useTema from '@/src/data/contexts/ContextoTema'
-import type { EscalaProfissional, MembroEquipe, PermissaoEquipe, ProfissionalOperacional, UsuarioEquipe } from '@/src/data/operacao/tipos'
+import type { EscalaProfissional, MembroEquipe, NovaContaMembro, PermissaoEquipe, ProfissionalOperacional, UsuarioEquipe } from '@/src/data/operacao/tipos'
 import { useEffect, useRef, useState } from 'react'
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native'
 
@@ -18,10 +19,11 @@ const PERMISSOES: Array<{ id: PermissaoEquipe; nome: string }> = [
 ]
 const DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
-export function MembrosEquipe({ membros, usuarios, profissionais, salvar, criarPerfil, remover, erro }: {
+export function MembrosEquipe({ membros, usuarios, profissionais, salvar, criarConta, criarPerfil, remover, erro }: {
     membros: MembroEquipe[]; usuarios: UsuarioEquipe[]; profissionais: ProfissionalOperacional[]
     salvar: (dados: { usuarioId: number; profissionalId?: number | null; papel: string; permissoes: PermissaoEquipe[]; ativo?: boolean }, membroId?: number) => Promise<boolean>
     criarPerfil: (membro: MembroEquipe, sexo: 'MASCULINO' | 'FEMININO') => Promise<boolean>
+    criarConta: (dados: NovaContaMembro) => Promise<boolean>
     remover: (id: number) => Promise<boolean>
     erro?: string | null
 }) {
@@ -30,11 +32,13 @@ export function MembrosEquipe({ membros, usuarios, profissionais, salvar, criarP
     const [permissoes, setPermissoes] = useState<PermissaoEquipe[]>(['AGENDA_GERENCIAR'])
     const [salvando, setSalvando] = useState(false)
     const [resultado, setResultado] = useState<'sucesso' | 'erro' | null>(null)
+    const [novaConta, setNovaConta] = useState(false)
     const membroSelecionado = membros.find((membro) => membro.usuarioId === usuarioId)
     const responsavelSelecionado = membroSelecionado?.usuario.papel === 'ESTABLISHMENT_OWNER'
     const profissionalSelecionado = profissionais.find((profissional) => profissional.id === profissionalId)
     const contas = Array.from(new Map([...usuarios, ...membros.map((item) => item.usuario)].map((conta) => [conta.id, conta])).values())
     const selecionarUsuario = (id: number) => {
+        setNovaConta(false)
         setUsuarioId(id); setResultado(null)
         const membro = membros.find((item) => item.usuarioId === id)
         if (membro) {
@@ -47,8 +51,9 @@ export function MembrosEquipe({ membros, usuarios, profissionais, salvar, criarP
     const selecionarProfissional = (id: number) => {
         const membro = membros.find((item) => item.profissionalId === id)
         if (membro) selecionarUsuario(membro.usuarioId)
-        else if (membroSelecionado?.profissionalId) {
-            setUsuarioId(null); setPapel('PROFISSIONAL'); setPermissoes(['AGENDA_GERENCIAR'])
+        else if (!usuarioId || membroSelecionado?.profissionalId) {
+            setUsuarioId(null); setNovaConta(true)
+            if (membroSelecionado) { setPapel('PROFISSIONAL'); setPermissoes(['AGENDA_GERENCIAR']) }
         }
         setProfissionalId(id); setResultado(null)
     }
@@ -67,17 +72,19 @@ export function MembrosEquipe({ membros, usuarios, profissionais, salvar, criarP
     }
     return <View style={styles.lista}><View style={[styles.bloco, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
         <Text style={[styles.subtitulo, { color: cores.texto }]}>{membroSelecionado ? 'Editar acesso do membro' : 'Vincular usuário à equipe'}</Text>
-        <Text style={[styles.rotulo, { color: cores.textoSecundario }]}>Conta de acesso (obrigatória)</Text><Chips itens={contas.map((item) => ({ id: item.id, nome: `${item.nome} · ${item.email}` }))} atual={usuarioId} selecionar={selecionarUsuario} desabilitado={salvando} />
-        {!usuarios.length ? <Text style={[styles.aviso, { color: cores.textoSecundario }]}>Não há novas contas da unidade disponíveis para vincular. Você pode selecionar um membro existente para editar seu acesso. Cadastrar um profissional não cria uma conta de acesso; permissões só podem ser atribuídas a uma conta vinculada à unidade.</Text> : null}
+        <Chips itens={[{ id: 'EXISTENTE', nome: 'Usar conta existente' }, { id: 'NOVA', nome: 'Cadastrar nova conta' }]} atual={novaConta ? 'NOVA' : 'EXISTENTE'} selecionar={(modo) => { setNovaConta(modo === 'NOVA'); setUsuarioId(null); setResultado(null); if (membroSelecionado) { setProfissionalId(null); setPapel('PROFISSIONAL'); setPermissoes(['AGENDA_GERENCIAR']) } }} desabilitado={salvando} />
+        {!novaConta ? <><Text style={[styles.rotulo, { color: cores.textoSecundario }]}>Conta de acesso (obrigatória)</Text><Chips itens={contas.map((item) => ({ id: item.id, nome: `${item.nome} · ${item.email}` }))} atual={usuarioId} selecionar={selecionarUsuario} desabilitado={salvando} />
+        {!usuarios.length ? <Text style={[styles.aviso, { color: cores.textoSecundario }]}>Para uma pessoa sem conta, escolha “Cadastrar nova conta” e informe o e-mail e a senha temporária.</Text> : null}</> : null}
         <Text style={[styles.rotulo, { color: cores.textoSecundario }]}>Papel</Text><Chips itens={['GESTOR', 'RECEPCIONISTA', 'PROFISSIONAL'].map((id) => ({ id, nome: id }))} atual={papel} selecionar={setPapel} desabilitado={salvando || responsavelSelecionado} />
         <Text style={[styles.rotulo, { color: cores.textoSecundario }]}>Perfil profissional opcional</Text><Chips itens={profissionais.map((item) => ({ id: item.id, nome: item.nome }))} atual={profissionalId} selecionar={selecionarProfissional} desabilitado={salvando} />
-        {!usuarioId ? <Text accessibilityRole="alert" style={[styles.aviso, { color: cores.textoSecundario }]}>{profissionalSelecionado ? `Perfil selecionado: ${profissionalSelecionado.nome}. Selecione acima a conta de acesso dessa pessoa para atribuir permissões. O perfil profissional sozinho não cria um login.` : 'Selecione a conta de acesso para habilitar o salvamento das permissões.'}</Text> : null}
+        {!usuarioId && !novaConta ? <Text accessibilityRole="alert" style={[styles.aviso, { color: cores.textoSecundario }]}>Selecione a conta de acesso ou escolha “Cadastrar nova conta”.</Text> : null}
         <View style={styles.cabecalhoPermissoes}><Text style={[styles.rotulo, { color: cores.textoSecundario }]}>Permissões</Text><View style={styles.atalhosPermissoes}>
             <Pressable disabled={salvando || responsavelSelecionado} onPress={() => setPermissoes(PERMISSOES.map((item) => item.id))}><Text style={styles.atalhoPermissao}>Selecionar todas</Text></Pressable>
             <Pressable disabled={salvando || responsavelSelecionado} onPress={() => setPermissoes([])}><Text style={styles.atalhoRemover}>Remover todas</Text></Pressable>
         </View></View><View style={styles.chips}>{PERMISSOES.map((item) => <Chip key={item.id} nome={item.nome} ativo={permissoes.includes(item.id)} acao={() => alternar(item.id)} desabilitado={salvando || responsavelSelecionado} />)}</View>
         {responsavelSelecionado ? <Text style={styles.protegido}>Responsável principal · acesso total protegido</Text> : null}
-        <Botao texto={salvando ? 'Salvando membro...' : membroSelecionado ? 'Salvar permissões do membro' : 'Adicionar membro'} acao={submeter} desabilitado={!usuarioId || salvando} />
+        {novaConta ? <CadastroContaMembro profissional={profissionalSelecionado} papel={papel} permissoes={permissoes} criar={criarConta} erro={erro} ocupar={setSalvando} aoConcluir={() => setProfissionalId(null)} />
+            : <Botao texto={salvando ? 'Salvando membro...' : membroSelecionado ? 'Salvar permissões do membro' : 'Adicionar membro'} acao={submeter} desabilitado={!usuarioId || salvando} />}
         {resultado === 'sucesso' ? <FeedbackSucesso mensagem="Acesso do membro salvo." /> : null}
         {resultado === 'erro' ? <Text accessibilityRole="alert" style={styles.erro}>{erro ?? 'Não foi possível adicionar o membro. Tente novamente.'}</Text> : null}
     </View>{membros.map((item) => {

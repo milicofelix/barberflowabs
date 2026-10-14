@@ -335,6 +335,8 @@ docker compose exec -T app sh -lc 'cd apps/backend && npx prisma generate'
 
 Regenera o cliente a partir do `schema.prisma`. Execute depois de migrations que alterem modelos usados pelo codigo.
 
+Para o cadastro de membros com senha temporaria, aplicar a migration `20261014230000_add_member_temporary_password` com o comando acima de migrations e depois gerar o Prisma Client. A coluna nova `usuarios.trocarSenhaObrigatoria` preserva as contas existentes com valor `false`. O procedimento e o aceite manual estao em [CADASTRO_MEMBROS_E_SENHA_TEMPORARIA.md](CADASTRO_MEMBROS_E_SENHA_TEMPORARIA.md). Nao e necessario resetar a base nem executar seed.
+
 ### Executar o seed
 
 ```bash

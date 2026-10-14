@@ -64,6 +64,7 @@ model Usuario {
   midias                               Midia[]
   emailTecnico                         Boolean                      @default(false)
   senha                                String
+  trocarSenhaObrigatoria               Boolean                      @default(false)
   telefone                             String?
   telefoneNormalizado                  String?
   dataNascimento                       DateTime?

@@ -29,6 +29,7 @@ export class UsuarioPrisma implements RepositorioUsuario {
         nome: true,
         email: true,
         senha: true,
+        trocarSenhaObrigatoria: true,
         telefone: true,
         fotoURL: true,
         membroEstabelecimento: true,
@@ -51,5 +52,13 @@ export class UsuarioPrisma implements RepositorioUsuario {
     }
 
     return membroEstabelecimento ? 'ESTABLISHMENT_MEMBER' : 'CUSTOMER';
+  }
+
+  async alterarSenha(id: number, hashAtual: string, hashNovo: string) {
+    const resultado = await this.prisma.usuario.updateMany({
+      where: { id, senha: hashAtual },
+      data: { senha: hashNovo, trocarSenhaObrigatoria: false },
+    });
+    return resultado.count === 1;
   }
 }

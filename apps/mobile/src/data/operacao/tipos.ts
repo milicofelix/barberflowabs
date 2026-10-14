@@ -107,6 +107,10 @@ export type DadosServicoOperacional = Omit<ServicoOperacional, 'id' | 'qtdeSlots
 export type PermissaoEquipe = 'EQUIPE_GERENCIAR' | 'ESCALAS_GERENCIAR' | 'RECURSOS_GERENCIAR' | 'AGENDA_GERENCIAR' | 'FINANCEIRO_VISUALIZAR' | 'FINANCEIRO_GERENCIAR' | 'FINANCEIRO_AUDITAR' | 'RELACIONAMENTO_VISUALIZAR' | 'RELACIONAMENTO_GERENCIAR' | 'CONFIGURACOES_GERENCIAR'
 
 export interface UsuarioEquipe { id: number; nome: string; email: string; telefone?: string | null; papel?: string }
+export interface NovaContaMembro {
+    nome?: string; email: string; senhaTemporaria: string; profissionalId?: number | null
+    papel: string; permissoes: PermissaoEquipe[]
+}
 export interface MembroEquipe {
     id: number; usuarioId: number; profissionalId?: number | null; papel: 'GESTOR' | 'RECEPCIONISTA' | 'PROFISSIONAL'
     permissoes: PermissaoEquipe[]; ativo: boolean; usuario: UsuarioEquipe; profissional?: { id: number; nome: string } | null

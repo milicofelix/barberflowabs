@@ -32,6 +32,10 @@ export class EquipePolicy {
     if (!Number.isInteger(Number(dados?.usuarioId)) || Number(dados.usuarioId) <= 0) {
       throw new BadRequestException('Usuário inválido');
     }
+    this.validarAcesso(dados);
+  }
+
+  validarAcesso(dados: Pick<SalvarMembroEquipeDto, 'papel' | 'permissoes'>) {
     if (!PAPEIS_EQUIPE.includes(dados?.papel as any)) throw new BadRequestException('Papel de equipe inválido');
     if (!Array.isArray(dados?.permissoes) || dados.permissoes.some((item) => !PERMISSOES_EQUIPE.includes(item))) {
       throw new BadRequestException('Permissões de equipe inválidas');

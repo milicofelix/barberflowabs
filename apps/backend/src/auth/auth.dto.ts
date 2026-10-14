@@ -14,9 +14,12 @@ export type RefreshTokenDto = {
   token: string;
 };
 
+export type AlterarSenhaDto = { senhaAtual: string; novaSenha: string };
+
 export type UsuarioRole = 'SUPER_ADMIN' | 'APP_OWNER' | 'ESTABLISHMENT_OWNER' | 'ESTABLISHMENT_MEMBER' | 'CUSTOMER';
 
 export type AuthTokenPayload = {
+  trocarSenhaObrigatoria?: boolean;
   fotoURL?: string | null;
   sub: number;
   id: number;

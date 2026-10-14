@@ -18,6 +18,7 @@ import AlternadorTema from '@/src/components/shared/AlternadorTema'
 import { ProvedorTema } from '@/src/data/contexts/ContextoTema'
 import useTema from '@/src/data/contexts/ContextoTema'
 import SinoNotificacoesGlobal from '@/src/components/notificacoes/SinoNotificacoesGlobal'
+import TrocaSenhaObrigatoria from './TrocaSenhaObrigatoria'
 
 const Stack = createNativeStackNavigator<StackParamList>()
 
@@ -26,6 +27,7 @@ function Navegacao() {
     const { modo, cores } = useTema()
 
     if (carregando) return <Carregando mensagem="Validando sua sessão..." />
+    if (usuario?.trocarSenhaObrigatoria) return <TrocaSenhaObrigatoria />
 
     return (
         <NavigationContainer theme={{ ...(modo === 'dark' ? DarkTheme : DefaultTheme), colors: { primary: cores.destaque, background: cores.fundo, card: cores.superficie, text: cores.texto, border: cores.borda, notification: cores.perigo } }}>

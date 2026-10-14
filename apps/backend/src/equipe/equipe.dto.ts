@@ -8,6 +8,15 @@ export interface SalvarMembroEquipeDto {
   ativo?: boolean;
 }
 
+export interface CriarContaMembroDto {
+  nome?: string;
+  email: string;
+  senhaTemporaria: string;
+  profissionalId?: number | null;
+  papel: string;
+  permissoes: PermissaoEquipe[];
+}
+
 export interface SalvarEscalaDto {
   unidadeId?: number | null;
   diaSemana: number;

@@ -1,13 +1,19 @@
 import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import { validarNumeroInteiroPositivo } from 'src/shared/validacao';
-import { SalvarEscalasDto, SalvarMembroEquipeDto } from './equipe.dto';
+import { CriarContaMembroDto, SalvarEscalasDto, SalvarMembroEquipeDto } from './equipe.dto';
+import { CriarContaMembroService } from './criar-conta-membro.service';
 import { EquipePolicy } from './equipe.policy';
 import { EquipePrisma } from './equipe.prisma';
 
 @Controller('equipe')
 export class EquipeController {
-  constructor(private readonly repo: EquipePrisma, private readonly policy: EquipePolicy) {}
+  constructor(private readonly repo: EquipePrisma, private readonly policy: EquipePolicy, private readonly criarConta: CriarContaMembroService) {}
+
+  @Post('com-conta')
+  criarComConta(@Body() dados: CriarContaMembroDto, @UsuarioLogado() usuario: any) {
+    return this.criarConta.executar(usuario, dados);
+  }
 
   @Get('minhas-permissoes')
   minhasPermissoes(@UsuarioLogado() usuario: any) {

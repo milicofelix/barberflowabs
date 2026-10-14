@@ -5,6 +5,7 @@ interface Usuario {
     nome: string;
     email: string;
     senha?: string;
+    trocarSenhaObrigatoria?: boolean;
     telefone?: string;
     fotoURL?: string | null;
     dataNascimento?: string | null;

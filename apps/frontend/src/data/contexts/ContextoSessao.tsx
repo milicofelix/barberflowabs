@@ -3,6 +3,7 @@ import { Usuario } from '@uniflowabs/core'
 import { createContext, useCallback, useEffect, useState } from 'react'
 import cookie from 'js-cookie'
 import { jwtDecode } from 'jwt-decode'
+import TrocaSenhaObrigatoria from '@/components/auth/TrocaSenhaObrigatoria'
 
 const URL_BASE = process.env.NEXT_PUBLIC_API_URL
 
@@ -106,6 +107,7 @@ export function ProvedorSessao(props: any) {
                     papel: payload.papel ?? payload.role,
                     role: payload.role,
                     telefone: payload.telefone,
+                    trocarSenhaObrigatoria: payload.trocarSenhaObrigatoria ?? false,
                 },
             }
         } catch (e) {
@@ -135,7 +137,7 @@ export function ProvedorSessao(props: any) {
                 encerrarSessao,
             }}
         >
-            {props.children}
+            {sessao.usuario?.trocarSenhaObrigatoria ? <TrocaSenhaObrigatoria /> : props.children}
         </ContextoSessao.Provider>
     )
 }

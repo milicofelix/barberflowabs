@@ -2,10 +2,13 @@ import { Body, Controller, Post, UnauthorizedException } from '@nestjs/common';
 import { LoginUsuario, RegistrarUsuario, Usuario } from '@uniflowabs/core';
 import { UsuarioPrisma } from './usuario.prisma';
 import { BcryptProvider } from './bcrypt.provider';
+import { AlterarSenhaService } from './alterar-senha.service';
+import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import * as jwt from 'jsonwebtoken';
 import { validarEmail, validarSenha, validarTextoObrigatorio } from 'src/shared/validacao';
 import {
   AuthTokenPayload,
+  AlterarSenhaDto,
   LoginDto,
   RefreshTokenDto,
   RegistrarUsuarioDto,
@@ -16,6 +19,7 @@ export class AuthController {
   constructor(
     private readonly repo: UsuarioPrisma,
     private readonly cripto: BcryptProvider,
+    private readonly alterarSenhaService: AlterarSenhaService,
   ) {}
 
   @Post('registrar')
@@ -63,6 +67,10 @@ export class AuthController {
       throw new UnauthorizedException('Usuário não encontrado');
     }
 
+    if (payload.trocarSenhaObrigatoria && !usuario.trocarSenhaObrigatoria) {
+      throw new UnauthorizedException('A senha temporária já foi substituída. Entre novamente.');
+    }
+
     delete usuario.senha;
     return jwt.sign(this.criarPayloadToken(usuario), process.env.JWT_SECRET!, {
       expiresIn: '15d',
@@ -73,6 +81,12 @@ export class AuthController {
     validarTextoObrigatorio(usuario.nome, 'Nome');
     validarEmail(usuario.email);
     validarSenha(usuario.senha);
+  }
+
+  @Post('alterar-senha')
+  async alterarSenha(@Body() dados: AlterarSenhaDto, @UsuarioLogado() usuario: Usuario) {
+    const atualizado = await this.alterarSenhaService.executar(usuario.email, dados);
+    return jwt.sign(this.criarPayloadToken(atualizado), process.env.JWT_SECRET!, { expiresIn: '15d' });
   }
 
   private validarLogin(dados: LoginDto) {
@@ -95,6 +109,7 @@ export class AuthController {
       role: papel,
       telefone: usuario.telefone,
       fotoURL: usuario.fotoURL,
+      trocarSenhaObrigatoria: usuario.trocarSenhaObrigatoria ?? false,
     };
   }
 

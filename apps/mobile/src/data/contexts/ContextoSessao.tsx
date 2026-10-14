@@ -17,6 +17,7 @@ interface TokenPayload {
     role?: Usuario['role'] | 'ESTABLISHMENT_OWNER' | 'APP_OWNER'
     telefone?: string
     fotoURL?: string | null
+    trocarSenhaObrigatoria?: boolean
     exp?: number
 }
 
@@ -52,6 +53,7 @@ function decodificarSessao(token: string): Sessao | null {
                 role: payload.role as Usuario['role'],
                 telefone: payload.telefone,
                 fotoURL: payload.fotoURL,
+                trocarSenhaObrigatoria: payload.trocarSenhaObrigatoria ?? false,
             },
         }
     } catch {
