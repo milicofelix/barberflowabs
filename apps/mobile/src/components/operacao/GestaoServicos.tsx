@@ -1,5 +1,6 @@
 import CampoTexto from '@/src/components/shared/CampoTexto'
 import ServicosSugeridos from './ServicosSugeridos'
+import SeletorImagem from '@/src/components/midia/SeletorImagem'
 import Confirmacao from '@/src/components/shared/Confirmacao'
 import EstadoErro from '@/src/components/shared/EstadoErro'
 import EstadoVazio from '@/src/components/shared/EstadoVazio'
@@ -21,6 +22,7 @@ interface Props {
 }
 
 interface Formulario {
+    midiaId?: string | null
     nome: string
     descricao: string
     preco: string
@@ -89,6 +91,7 @@ export default function GestaoServicos({ itens, erro, recarregar, salvar, exclui
                 preparoAntesMinutos: Number(form.preparoAntesMinutos || 0), preparoDepoisMinutos: Number(form.preparoDepoisMinutos || 0),
                 deslocamentoMinutos: form.modeloAtendimento === 'PRESENCIAL' ? 0 : Number(form.deslocamentoMinutos || 0),
                 profissionalIds: form.profissionalIds,
+                midiaId: form.midiaId,
             }, editandoId)
             if (concluido) novo()
         } finally { setProcessando(false) }
@@ -120,7 +123,7 @@ export default function GestaoServicos({ itens, erro, recarregar, salvar, exclui
                 onPress={() => alternarProfissional(profissional.id)} style={[styles.chipProfissional, { borderColor: ativo ? cores.destaque : cores.borda, backgroundColor: ativo ? cores.destaque : cores.campo }]}>
                 <Text style={{ color: ativo ? cores.destaqueTexto : cores.texto, fontWeight: '800' }}>{profissional.nome}</Text></Pressable> })}</View>
                 : <Text style={[styles.aviso, { color: cores.textoSecundario }]}>Cadastre primeiro um profissional em Operação → Equipe.</Text>}
-            <CampoTexto label="Imagem (caminho ou URL)" value={form.imagemURL} onChangeText={(v) => alterar('imagemURL', v)} autoCapitalize="none" />
+            <SeletorImagem valor={form.imagemURL} finalidade="SERVICO" padrao="/servicos/combo.jpg" disabled={processando} alterar={(imagemURL, midiaId) => setForm((atual) => ({ ...atual, imagemURL, midiaId }))} />
             <CampoTexto label="Requisitos e observações" value={form.observacoes} onChangeText={(v) => alterar('observacoes', v)} multiline />
             {validacao ? <Text style={styles.erro}>{validacao}</Text> : null}
             <Pressable disabled={processando} onPress={submeter} style={[styles.botao, processando && styles.desabilitado]}><Text style={styles.botaoTexto}>{processando ? 'Salvando...' : 'Salvar serviço'}</Text></Pressable>

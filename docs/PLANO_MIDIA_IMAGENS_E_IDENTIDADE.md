@@ -120,17 +120,43 @@ Verificação: checagem TypeScript completa da web passou. Os dois erros de tipa
 
 ## Fase 3 — Galeria Visual E Upload No Mobile
 
-- [ ] Replicar galeria e seleção visual em serviços, profissionais, perfil pessoal e configuração da capa.
-- [ ] Integrar seletor nativo da biblioteca com autorização solicitada somente ao usar o recurso.
-- [ ] Tratar cancelamento da seleção, acesso limitado a fotos e permissão negada sem bloquear o formulário.
-- [ ] Oferecer câmera como opção, se compatível com o fluxo definido, com permissão específica.
-- [ ] Comprimir/converter fotos antes do envio quando apropriado e suportar orientação e formatos do aparelho.
-- [ ] Criar envio multipart no cliente da API, evitando headers JSON no upload.
-- [ ] Mostrar progresso, erro recuperável, repetição segura e prévia da foto selecionada.
-- [ ] Atualizar sessão e componentes após salvar, sem exigir novo login.
+- [x] Replicar galeria e seleção visual em serviços, profissionais, perfil pessoal e configuração da capa.
+- [x] Integrar seletor nativo da biblioteca com autorização solicitada somente ao usar o recurso.
+- [x] Tratar cancelamento da seleção, acesso limitado a fotos e permissão negada sem bloquear o formulário.
+- [x] Oferecer câmera como opção, se compatível com o fluxo definido, com permissão específica.
+- [x] Comprimir/converter fotos antes do envio quando apropriado e suportar orientação e formatos do aparelho.
+- [x] Criar envio multipart no cliente da API, evitando headers JSON no upload.
+- [x] Mostrar progresso, erro recuperável, repetição segura e prévia da foto selecionada.
+- [x] Atualizar sessão e componentes após salvar, sem exigir novo login.
 - [ ] Validar Android/iOS, teclado, rolagem, fotos grandes e conexão instável.
 
 Se forem necessárias dependências ou configurações nativas, registrar em `docs/COMANDOS.md` os comandos e a necessidade de novo development build. Reiniciar o Docker não substitui esse build.
+
+Implementação: `SeletorImagem` compartilhado no mobile, com galeria por finalidade, filtros de segmento, fotos do aparelho, câmera, prévia e retorno ao padrão. Serviços manuais e sugeridos usam o mesmo componente. Profissionais existentes têm ação própria de salvar foto. A capa está em Configurações → Identidade pública; a foto pessoal está em Perfil → Minha foto para todos os perfis e também nas configurações operacionais. O refresh da sessão propaga `fotoURL` sem novo login.
+
+O seletor de biblioteca usa o acesso pontual do sistema, sem solicitar acesso amplo antecipado. Câmera pede permissão somente ao tocar em “Tirar foto”; recusa oferece galeria e atalho para permissões. Cancelar não altera o registro. Fotos são recortadas (1:1 ou 16:9), redimensionadas para até 800/1600 pixels de largura e convertidas para JPEG antes do envio, inclusive as fotos HEIC que o dispositivo conseguir decodificar. O backend continua validando e removendo metadados. Compatibilidade real de formatos e acesso limitado precisa do aceite no aparelho.
+
+Upload cria mídia sem alterar o registro; salvar realiza a associação. Erros de associação após criação de serviço/profissional informam que o registro já foi salvo e permitem corrigir pela edição, evitando repetir a criação. O upload usa multipart sem `Content-Type` JSON, progresso e timeout recuperável. A navegação mantém os caminhos legados. Não há nova migration nesta fase; a preparação da Fase 1 continua necessária.
+
+Dependências nativas: `expo-image-picker` e `expo-image-manipulator`, instaladas com `expo install`. O plugin configura as mensagens de câmera/fotos e não solicita microfone. Um development build antigo pode continuar exibindo a galeria, mas precisa ser reconstruído para disponibilizar os módulos novos. Comandos em `docs/COMANDOS.md`.
+
+### Aceite Manual Da Fase 3
+
+1. Instalar o novo development build em Android/iOS e entrar como responsável.
+2. Em Gestão diária → Serviços, criar e editar usando galeria, aparelho e “Usar padrão”. Repetir em Serviços sugeridos antes de importar.
+3. Em Equipe, adicionar profissional com foto e trocar a foto de um profissional existente; conferir no agendamento.
+4. Em Configurações → Identidade pública, salvar a capa; conferir na listagem e detalhes após atualizar os dados.
+5. Em Perfil → Minha foto, testar cliente, gestor e superadmin; salvar e conferir atualização sem refazer login.
+6. Cancelar o seletor, recusar câmera, permitir acesso limitado a fotos e retornar das configurações do aparelho. O formulário deve continuar utilizável.
+7. Testar foto HEIC no iPhone, foto grande/vertical, câmera, rotação, teclados e rolagem nos dois temas.
+8. Interromper conexão durante upload e tentar novamente. Um registro já criado não deve ser duplicado ao corrigir sua foto.
+9. Testar conta sem permissão de configuração: backend deve rejeitar associação/upload de imagem da unidade; foto pessoal permanece permitida.
+
+Aceite Android/iOS e validação visual permanecem pendentes. Não declarar paridade visual final antes desses testes.
+
+Instalação concluída com sucesso: `expo-image-picker@57.0.20` e `expo-image-manipulator@57.0.21`, com manifesto e lockfile atualizados. A consulta `expo config --type public --json` concluiu com sucesso e reconheceu o plugin.
+
+Verificação técnica: `git diff --check` passou. A checagem TypeScript com os módulos novos disponíveis não apontou erros nas integrações de mídia; o projeto ainda tem três erros anteriores em `AgendamentoAssistido` (data possivelmente nula), `useOperacao` (conversão do mapa de períodos) e `PerfilEstabelecimento` (tipo de capa exige `distanciaKm`). A checagem completa não está aprovada enquanto essas pendências existirem.
 
 ## Fase 4 — Padrões Sociais E Fundos Dinâmicos Da Home
 
@@ -173,6 +199,8 @@ As regras devem usar classificação estruturada do estabelecimento, e não pala
 
 Executar as fases na ordem 1 → 2 → 3 → 4 → 5 → 6. A fundação de upload e entrega persistente precede os seletores. A galeria inicial reutiliza os arquivos pertinentes já disponíveis; novas artes poderão ser criadas durante a curadoria, quando necessárias.
 
-Status: Fases 1–2 implementadas. O backend passou nos 10 testes de mídia e na checagem de tipos; a web também passou na checagem completa de tipos. A preparação do ambiente da Fase 1 e o aceite visual permanecem necessários. Próximo passo: Fase 3 — Galeria visual e upload no mobile.
+Status: Fases 1–3 implementadas; aceite visual e de dispositivo pendente. O backend passou nos 10 testes de mídia e na checagem de tipos; a web também passou na checagem completa de tipos. A preparação do ambiente da Fase 1 continua necessária. Próximo desenvolvimento: Fase 4 — Padrões sociais e fundos dinâmicos da Home.
 
 Referências de implementação: [upload multipart no NestJS](https://docs.nestjs.com/techniques/file-upload) e [processamento e remoção de metadados no Sharp](https://sharp.pixelplumbing.com/api-output/).
+
+Referências mobile: [seletor e configuração nativa do Expo ImagePicker](https://docs.expo.dev/versions/latest/sdk/imagepicker/) e [conversão/recorte com ImageManipulator](https://docs.expo.dev/versions/latest/sdk/imagemanipulator/).

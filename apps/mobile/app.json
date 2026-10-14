@@ -39,6 +39,11 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      ["expo-image-picker", {
+        "photosPermission": "Escolha fotos para seu perfil, serviços e estabelecimento na UniFlow ABS.",
+        "cameraPermission": "Permita que a UniFlow ABS tire a foto que você deseja usar.",
+        "microphonePermission": false
+      }],
       "expo-font",
       [
         "expo-splash-screen",

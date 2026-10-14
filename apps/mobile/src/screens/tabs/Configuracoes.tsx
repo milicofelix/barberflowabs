@@ -1,4 +1,6 @@
 import CampoTexto from '@/src/components/shared/CampoTexto'
+import ImagemRegistro from '@/src/components/midia/ImagemRegistro'
+import useSessao from '@/src/data/hooks/useSessao'
 import HorariosAgenda from '@/src/components/configuracoes/HorariosAgenda'
 import Carregando from '@/src/components/shared/Carregando'
 import EstadoErro from '@/src/components/shared/EstadoErro'
@@ -13,6 +15,7 @@ import { useFocusEffect } from '@react-navigation/native'
 import { useCallback, useState } from 'react'
 
 export default function Configuracoes() {
+    const { usuario, renovarSessao } = useSessao()
     const { cores } = useTema()
     const dados = useConfiguracoesEstabelecimento()
     useFocusEffect(useCallback(() => { dados.carregar() }, [dados.carregar]))
@@ -23,11 +26,13 @@ export default function Configuracoes() {
         <Text style={styles.sobretitulo}>CONFIGURAÇÕES</Text><Text style={[styles.titulo, { color: cores.texto }]}>Seu estabelecimento</Text>
         {dados.prontidao ? <Prontidao dados={dados.prontidao} /> : null}
         <Secao titulo="Identidade pública">
+            <ImagemRegistro titulo="Capa do estabelecimento" valor={dados.perfil.imagemCapaURL} entidade="ESTABELECIMENTO" entidadeId={usuario?.estabelecimentoId} finalidade="CAPA" aoSalvar={dados.carregar} />
             <CampoTexto label="Nome público" value={dados.perfil.nomePublico ?? ''} onChangeText={(v) => atualizarPerfil('nomePublico', v)} />
             <CampoTexto label="Descrição" value={dados.perfil.descricaoPublica ?? ''} onChangeText={(v) => atualizarPerfil('descricaoPublica', v)} multiline />
             <CampoTexto label="Telefone" value={dados.perfil.telefone ?? ''} onChangeText={(v) => atualizarPerfil('telefone', v)} keyboardType="phone-pad" />
             <CampoTexto label="E-mail" value={dados.perfil.email ?? ''} onChangeText={(v) => atualizarPerfil('email', v)} keyboardType="email-address" />
         </Secao>
+        <Secao titulo="Minha foto"><ImagemRegistro titulo="Foto pessoal" valor={usuario?.fotoURL} entidade="USUARIO" finalidade="AVATAR" aoSalvar={renovarSessao} /></Secao>
         <Secao titulo="Localização">
             <CampoTexto label="Endereço" value={dados.perfil.endereco ?? ''} onChangeText={(v) => atualizarPerfil('endereco', v)} />
             <CampoTexto label="Bairro" value={dados.perfil.bairro ?? ''} onChangeText={(v) => atualizarPerfil('bairro', v)} />

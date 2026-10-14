@@ -1,8 +1,11 @@
 import { StyleSheet, View, Image, Text, Pressable } from 'react-native'
 import { Usuario } from '@uniflowabs/core'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { resolverPerfil } from '@/src/data/auth/perfis'
 import useTema from '@/src/data/contexts/ContextoTema'
+import useSessao from '@/src/data/hooks/useSessao'
+import ImagemRegistro from '@/src/components/midia/ImagemRegistro'
+import { urlMidia } from '@/src/components/midia/SeletorImagem'
 
 export interface PerfilUsuarioProps {
     usuario: Usuario
@@ -11,7 +14,10 @@ export interface PerfilUsuarioProps {
 }
 
 export default function PerfilUsuario(props: PerfilUsuarioProps) {
+    const { renovarSessao } = useSessao()
     const { cores } = useTema()
+    const [fotoFalhou, setFotoFalhou] = useState(false)
+    useEffect(() => setFotoFalhou(false), [props.usuario.fotoURL])
     const perfil = resolverPerfil(props.usuario)
     const nomePerfil = {
         CUSTOMER: 'Cliente',
@@ -23,10 +29,11 @@ export default function PerfilUsuario(props: PerfilUsuarioProps) {
 
     return (
         <View style={styles.container}>
-            <Image source={require('@/assets/images/avatar.png')} style={styles.avatar} />
+            {props.usuario.fotoURL && !fotoFalhou ? <Image source={{ uri: urlMidia(props.usuario.fotoURL) }} onError={() => setFotoFalhou(true)} style={styles.avatar} /> : <View style={[styles.avatar, { backgroundColor: cores.destaque, alignItems: 'center', justifyContent: 'center' }]}><Text style={{ color: cores.destaqueTexto, fontSize: 30, fontWeight: '800' }}>{props.usuario.nome.trim().split(/\s+/).slice(0, 2).map((p) => p[0]).join('').toUpperCase()}</Text></View>}
             <Text style={[styles.destaque, { color: cores.texto }]}>Fala, {props.usuario?.nome}!</Text>
             <Text style={[styles.texto, { color: cores.textoSecundario }]}>E-mail: {props.usuario?.email.toLowerCase()}</Text>
             <Text style={styles.perfil}>{nomePerfil}</Text>
+            <View style={{ width: '100%', marginVertical: 20 }}><ImagemRegistro titulo="Minha foto" valor={props.usuario.fotoURL} entidade="USUARIO" finalidade="AVATAR" aoSalvar={renovarSessao} /></View>
             {perfil === 'CUSTOMER' ? <Pressable style={[styles.botaoEstabelecimento, { borderColor: cores.destaque }]} onPress={props.cadastrarEstabelecimento}>
                 <Text style={[styles.textoEstabelecimento, { color: cores.destaque }]}>Cadastrar meu estabelecimento</Text>
             </Pressable> : null}
@@ -45,8 +52,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     avatar: {
-        width: '45%',
-        height: '45%',
+        width: 96,
+        height: 96,
         borderRadius: 9999,
         marginRight: 12,
     },

@@ -1,4 +1,6 @@
 import CampoTexto from '@/src/components/shared/CampoTexto'
+import SeletorImagem from '@/src/components/midia/SeletorImagem'
+import ImagemRegistro from '@/src/components/midia/ImagemRegistro'
 import type {
     AgendamentoOperacional, DashboardOperacional, ProfissionalOperacional,
 } from '@/src/data/operacao/tipos'
@@ -37,25 +39,28 @@ export function AgendaOperacao({ itens, alterarStatus }: {
     </View>)}</View>
 }
 
-export function EquipeOperacao({ itens, criar }: {
-    itens: ProfissionalOperacional[]; criar: (dados: Omit<ProfissionalOperacional, 'id'>) => Promise<boolean>
+export function EquipeOperacao({ itens, criar, recarregar }: {
+    itens: ProfissionalOperacional[]; criar: (dados: Omit<ProfissionalOperacional, 'id'>) => Promise<boolean>; recarregar: () => Promise<void>
 }) {
     const { cores } = useTema()
     const [nome, setNome] = useState(''); const [descricao, setDescricao] = useState(''); const [salvando, setSalvando] = useState(false)
+    const [imagemURL, setImagemURL] = useState('/profissionais/profissional-1.jpg'); const [midiaId, setMidiaId] = useState<string | null | undefined>()
     async function submeter() {
         if (!nome.trim() || !descricao.trim() || salvando) return
         try {
             setSalvando(true)
-            const criado = await criar({ nome: nome.trim(), descricao: descricao.trim(), imagemURL: '/profissionais/profissional-1.jpg' })
-            if (criado) { setNome(''); setDescricao('') }
+            const criado = await criar({ nome: nome.trim(), descricao: descricao.trim(), imagemURL, midiaId })
+            if (criado) { setNome(''); setDescricao(''); setImagemURL('/profissionais/profissional-1.jpg'); setMidiaId(undefined) }
         }
         finally { setSalvando(false) }
     }
     return <View style={styles.lista}><View style={[styles.formulario, { backgroundColor: cores.superficie }]}><Text style={[styles.subtitulo, { color: cores.texto }]}>Adicionar profissional</Text>
         <CampoTexto label="Nome" value={nome} onChangeText={setNome} /><CampoTexto label="Apresentação" value={descricao} onChangeText={setDescricao} />
+        <SeletorImagem titulo="Foto do profissional" valor={imagemURL} finalidade="PROFISSIONAL" padrao="/profissionais/profissional-1.jpg" disabled={salvando} alterar={(url, id) => { setImagemURL(url); setMidiaId(id) }} />
         <Botao texto={salvando ? 'Salvando...' : 'Adicionar à equipe'} acao={submeter} /></View>
         {itens.map((item) => <View key={item.id} style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}><Text style={[styles.titulo, { color: cores.texto }]}>{item.nome}</Text>
-            <Text style={[styles.descricao, { color: cores.textoSecundario }]}>{item.descricao}</Text><Text style={styles.meta}>★ {Number(item.avaliacao ?? 5).toFixed(1)}</Text></View>)}</View>
+            <Text style={[styles.descricao, { color: cores.textoSecundario }]}>{item.descricao}</Text><Text style={styles.meta}>★ {Number(item.avaliacao ?? 5).toFixed(1)}</Text>
+            <ImagemRegistro titulo="Foto do profissional" valor={item.imagemURL} entidade="PROFISSIONAL" entidadeId={item.id} finalidade="PROFISSIONAL" aoSalvar={recarregar} /></View>)}</View>
 }
 
 export function AtalhoCentralFinanceira({ abrir }: { abrir: () => void }) {

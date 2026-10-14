@@ -16,6 +16,7 @@ interface TokenPayload {
     papel?: Usuario['papel'] | 'ESTABLISHMENT_OWNER' | 'APP_OWNER'
     role?: Usuario['role'] | 'ESTABLISHMENT_OWNER' | 'APP_OWNER'
     telefone?: string
+    fotoURL?: string | null
     exp?: number
 }
 
@@ -50,6 +51,7 @@ function decodificarSessao(token: string): Sessao | null {
                 papel: payload.papel as Usuario['papel'],
                 role: payload.role as Usuario['role'],
                 telefone: payload.telefone,
+                fotoURL: payload.fotoURL,
             },
         }
     } catch {

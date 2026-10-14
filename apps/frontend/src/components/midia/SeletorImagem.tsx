@@ -25,7 +25,7 @@ export default function SeletorImagem({ valor, finalidade, alterar, titulo = 'Im
     const [posicao, setPosicao] = useState({ x: 50, y: 50 })
     const [falhou, setFalhou] = useState(false)
     const [tentativa, setTentativa] = useState(0)
-    const proporcao = finalidade === 'CAPA' ? 16 / 9 : 1
+    const proporcao = finalidade === 'CAPA' || finalidade === 'SERVICO' ? 16 / 9 : 1
     const nomesSegmentos: Record<string, string> = { barbearia: 'Barbearia', 'salao-beleza': 'Salão de cabelo', 'manicure-pedicure': 'Manicure e pedicure', 'clinica-estetica': 'Clínica de estética', 'spa-bem-estar': 'Spa e bem-estar', beleza: 'Estética e beleza' }
     useEffect(() => { setFalhou(false) }, [valor])
     useEffect(() => { return () => { if (foto) URL.revokeObjectURL(foto) } }, [foto])
@@ -53,9 +53,10 @@ export default function SeletorImagem({ valor, finalidade, alterar, titulo = 'Im
         setEnviando(true); setErro(''); setProgresso(0)
         try {
             const imagem = new Image(); imagem.src = foto; await imagem.decode()
-            const largura = Math.min(imagem.naturalWidth, imagem.naturalHeight * proporcao)
-            const altura = largura / proporcao
-            const canvas = document.createElement('canvas'); canvas.width = Math.min(finalidade === 'CAPA' ? 1600 : 800, Math.round(largura)); canvas.height = Math.round(canvas.width / proporcao)
+            const largura = finalidade === 'SERVICO' ? imagem.naturalWidth : Math.min(imagem.naturalWidth, imagem.naturalHeight * proporcao)
+            const altura = finalidade === 'SERVICO' ? imagem.naturalHeight : largura / proporcao
+            const escala = Math.min(1, (finalidade === 'CAPA' ? 1600 : 800) / Math.max(largura, altura))
+            const canvas = document.createElement('canvas'); canvas.width = Math.max(1, Math.round(largura * escala)); canvas.height = Math.max(1, Math.round(altura * escala))
             const ctx = canvas.getContext('2d'); if (!ctx) throw new Error('Não foi possível preparar a foto')
             ctx.drawImage(imagem, (imagem.naturalWidth - largura) * posicao.x / 100, (imagem.naturalHeight - altura) * posicao.y / 100, largura, altura, 0, 0, canvas.width, canvas.height)
             const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((b) => b ? resolve(b) : reject(new Error('Não foi possível preparar a foto')), 'image/webp', 0.85))

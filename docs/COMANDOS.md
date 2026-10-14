@@ -622,6 +622,50 @@ Cria o database `uniflow_abs` no MySQL compartilhado e permite que o usuario ja 
 
 Depois de alterar `DATABASE_URL`, recrie o servico `app`, aplique as migrations e execute o seed usando os comandos ja documentados nas secoes Docker, Prisma e Seed.
 
+## Galeria E Upload Mobile — Fase 3
+
+### Instalar seletor de fotos e conversão na versão compatível com o Expo
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/mobile && npx expo install expo-image-picker expo-image-manipulator'
+```
+
+Comando utilizado nesta fase. Mantém as dependências e o `yarn.lock` alinhados ao SDK do projeto.
+
+### Verificar os tipos do mobile dentro do Docker
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/mobile && npx tsc --noEmit --incremental false'
+```
+
+### Gerar um novo development build no computador (não executado automaticamente)
+
+Android, com SDK Android/JDK e aparelho ou emulador configurados:
+
+```bash
+cd apps/mobile
+npx expo run:android
+```
+
+iOS, no macOS com Xcode e simulador/aparelho configurados:
+
+```bash
+cd apps/mobile
+npx expo run:ios
+```
+
+Execute apenas a opção da plataforma desejada. Esses comandos geram/configuram o projeto nativo e instalam o aplicativo de desenvolvimento. O Metro/API continuam usando a configuração de rede atual. Recriar o Docker ou ler novamente o QR não adiciona módulos nativos a um development build antigo. Para builds distribuídos por EAS, use o fluxo de build da equipe em vez desses comandos locais.
+
+Esta fase não adiciona migration. Galeria vazia ou rota de mídia indisponível exige conferir a preparação da Fase 1 (migration, volume e seed), não recriar a unidade.
+
+### Conferir configuração pública do Expo (somente leitura)
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/mobile && npx expo config --type public --json'
+```
+
+Verifica o registro do plugin e das mensagens de permissão; não gera nem instala o aplicativo nativo.
+
 ## Limpezas Destrutivas
 
 Comandos de remocao de `node_modules`, lockfiles, volumes ou dados nao ficam prontos para copiar nesta secao. A necessidade e o alvo devem ser diagnosticados primeiro para evitar apagar dependencias ou dados de outros projetos que compartilham a infraestrutura.

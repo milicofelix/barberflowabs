@@ -74,6 +74,7 @@ export interface RespostaAgendaOperacional {
 
 export interface ProfissionalOperacional {
     id: number
+    midiaId?: string | null
     nome: string
     descricao: string
     imagemURL: string
@@ -84,6 +85,7 @@ export type ModeloAtendimentoServico = 'PRESENCIAL' | 'DOMICILIAR' | 'HIBRIDO'
 
 export interface ServicoOperacional {
     id: number
+    midiaId?: string | null
     servicoSugeridoId?: number | null
     nome: string
     descricao: string

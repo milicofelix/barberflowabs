@@ -51,9 +51,20 @@ export default function useGestaoServicos(ativo: boolean) {
         }
     }, [carregar])
 
-    const salvar = (dados: DadosServicoOperacional, id?: number) => {
-        const payload = preparar(dados)
-        return executar(() => id ? httpPut(`/servicos/${id}`, payload) : httpPost('/servicos', payload))
+    const salvar = async (dados: DadosServicoOperacional, id?: number) => {
+        const { midiaId, ...semMidia } = dados
+        try {
+            const payload = preparar(semMidia)
+            const resposta = id ? await httpPut<ServicoOperacional>(`/servicos/${id}`, payload) : await httpPost<ServicoOperacional>('/servicos', payload)
+            let pendencia: string | null = null
+            if (midiaId !== undefined) {
+                try { await httpPut('/midias/associacao', { entidade: 'SERVICO', entidadeId: resposta.id, midiaId }) }
+                catch (e) { pendencia = `Serviço salvo. Revise a imagem na edição: ${mensagemDoErro(e)}` }
+            }
+            await carregar()
+            if (pendencia) setErro(pendencia)
+            return true
+        } catch (e) { setErro(mensagemDoErro(e)); return false }
     }
 
     const excluir = (id: number) => executar(() => httpDelete(`/servicos/${id}`))

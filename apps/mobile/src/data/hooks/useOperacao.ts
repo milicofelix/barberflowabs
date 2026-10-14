@@ -164,7 +164,17 @@ export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'da
         return sucesso
     }
     async function criarProfissional(dados: Omit<ProfissionalOperacional, 'id'>) {
-        return executarAcao(() => httpPost('/profissionais', { ...dados, avaliacao: 5, quantidadeAvaliacoes: 0 }))
+        const { midiaId, ...campos } = dados
+        let pendencia: string | null = null
+        const sucesso = await executarAcao(async () => {
+            const profissional = await httpPost<ProfissionalOperacional>('/profissionais', { ...campos, avaliacao: 5, quantidadeAvaliacoes: 0 })
+            if (midiaId !== undefined) {
+                try { await httpPut('/midias/associacao', { entidade: 'PROFISSIONAL', entidadeId: profissional.id, midiaId }) }
+                catch (e) { pendencia = `Profissional salvo. Revise a foto na equipe: ${mensagemDoErro(e)}` }
+            }
+        })
+        if (pendencia) setErro(pendencia)
+        return sucesso
     }
     async function salvarMembro(dados: { usuarioId: number; profissionalId?: number | null; papel: string; permissoes: PermissaoEquipe[]; ativo?: boolean }, membroId?: number) {
         return executarAcao(() => membroId ? httpPut(`/equipe/${membroId}`, dados) : httpPost('/equipe', dados))

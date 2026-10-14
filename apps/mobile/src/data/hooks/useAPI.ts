@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 import useSessao from './useSessao'
 import useEstabelecimento from './useEstabelecimento'
+import type { FinalidadeMidia, ImagemGaleria } from '@uniflowabs/core'
 
 const URL_BASE = process.env.API_URL
 
@@ -112,5 +113,24 @@ export default function useAPI() {
     const httpPut = useCallback(<T,>(caminho: string, body?: unknown, opcoes?: OpcoesRequisicao) => executar<T>('PUT', caminho, body, opcoes), [executar])
     const httpDelete = useCallback(<T,>(caminho: string, body?: unknown, opcoes?: OpcoesRequisicao) => executar<T>('DELETE', caminho, body, opcoes), [executar])
 
-    return { httpGet, httpPost, httpPut, httpDelete }
+    const httpUpload = useCallback((uri: string, finalidade: FinalidadeMidia, progresso: (valor: number) => void) => new Promise<ImagemGaleria>((resolve, reject) => {
+        if (!URL_BASE) { reject(new Error('API não configurada')); return }
+        const xhr = new XMLHttpRequest(); xhr.open('POST', `${URL_BASE}/midias/upload`)
+        if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+        xhr.upload.onprogress = (e) => { if (e.lengthComputable) progresso(Math.round(e.loaded * 100 / e.total)) }
+        xhr.onerror = () => reject(new Error('Falha de conexão ao enviar a foto. Tente novamente.'))
+        xhr.timeout = 120000; xhr.ontimeout = () => reject(new Error('O envio demorou demais. Tente novamente.'))
+        xhr.onload = () => {
+            try {
+                const dados = JSON.parse(xhr.responseText)
+                if (xhr.status < 200 || xhr.status >= 300) { if (xhr.status === 401) void encerrarSessao(); reject(new Error(mensagemDaResposta(dados, xhr.status))) }
+                else resolve(dados)
+            } catch { reject(new Error('Resposta inválida ao enviar foto')) }
+        }
+        const body = new FormData(); body.append('finalidade', finalidade)
+        body.append('arquivo', { uri, name: 'foto.jpg', type: 'image/jpeg' } as any)
+        xhr.send(body)
+    }), [token, encerrarSessao])
+
+    return { httpGet, httpPost, httpPut, httpDelete, httpUpload }
 }

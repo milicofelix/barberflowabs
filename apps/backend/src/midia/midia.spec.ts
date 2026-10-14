@@ -30,6 +30,15 @@ describe('Processamento de mídia', () => {
     await expect(storage.processar(randomUUID(), Buffer.from('<svg></svg>'), 'AVATAR')).rejects.toBeInstanceOf(BadRequestException);
     await expect(storage.processar(randomUUID(), Buffer.alloc(LIMITE_UPLOAD + 1), 'AVATAR')).rejects.toBeInstanceOf(BadRequestException);
   });
+  it('preserva proporção e bordas de serviços horizontais e verticais, sem ampliar', async () => {
+    for (const [width, height, largura, altura] of [[1600, 900, 800, 450], [900, 1600, 450, 800], [160, 90, 160, 90]]) {
+      const entrada = await sharp({ create: { width, height, channels: 3, background: '#0033ff' } }).png().toBuffer();
+      const versoes = await storage.processar(randomUUID(), entrada, 'SERVICO');
+      expect(versoes.principal.largura).toBe(largura);
+      expect(versoes.principal.altura).toBe(altura);
+      expect(versoes.miniatura.largura / versoes.miniatura.altura).toBeCloseTo(width / height, 1);
+    }
+  });
   it('não permite leitura fora do diretório de mídia', async () => {
     await expect(storage.ler({ id: '../../.env' }, 'principal')).rejects.toBeInstanceOf(BadRequestException);
     await expect(storage.ler({ id: randomUUID() }, '../principal')).rejects.toBeInstanceOf(BadRequestException);

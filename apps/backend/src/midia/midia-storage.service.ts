@@ -27,7 +27,7 @@ export class MidiaStorageService {
     try {
       for (const [versao, largura, altura] of [['miniatura', 256, 256], ['principal', finalidade === 'CAPA' ? 1600 : 800, finalidade === 'CAPA' ? 900 : 800]] as const) {
         const { data, info } = await sharp(buffer, { limitInputPixels: 20_000_000 })
-          .rotate().resize(largura, altura, { fit: 'cover' }).webp({ quality: 82 }).toBuffer({ resolveWithObject: true })
+          .rotate().resize(largura, altura, finalidade === 'SERVICO' ? { fit: 'inside', withoutEnlargement: true } : { fit: 'cover' }).webp({ quality: 82 }).toBuffer({ resolveWithObject: true })
           .catch(() => { throw new BadRequestException('Imagem corrompida ou não suportada'); });
         await writeFile(this.caminho(id, versao), data, { flag: 'wx' });
         versoes[versao] = { url: `/midias/arquivos/${id}/${versao}`, largura: info.width, altura: info.height, bytes: info.size };

@@ -4,9 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import CampoTexto from '@/src/components/shared/CampoTexto'
 import useTema from '@/src/data/contexts/ContextoTema'
 import useAPI, { mensagemDoErro } from '@/src/data/hooks/useAPI'
+import SeletorImagem from '@/src/components/midia/SeletorImagem'
 import type { ModeloAtendimentoServico, ServicoOperacional } from '@/src/data/operacao/tipos'
 
 interface Sugestao {
+    imagemURL: string
     id: number; segmentoId: number; nome: string; descricao: string
     segmento: { id: number; nome: string }
     especialidades: Array<{ id: number; nome: string }>
@@ -18,13 +20,14 @@ interface Catalogo {
     segmentos: Array<{ segmentoId: number; segmento: { id: number; nome: string } }>
 }
 interface Revisao {
+    imagemURL: string; midiaId?: string | null
     servicoSugeridoId: number; preco: string; duracaoMinutos: string
     modeloAtendimento: ModeloAtendimentoServico
     preparoAntesMinutos: string; preparoDepoisMinutos: string; deslocamentoMinutos: string
     profissionalIds: number[]
 }
 interface Resultado {
-    criados: Array<{ id: number; nome: string }>
+    criados: Array<{ id: number; nome: string; servicoSugeridoId?: number | null }>
     ignorados: Array<{ servicoSugeridoId: number; nome?: string; motivo: string }>
 }
 
@@ -34,7 +37,7 @@ export default function ServicosSugeridos({ servicos, profissionais, aoConcluir 
     aoConcluir: () => void | Promise<void>
 }) {
     const { cores } = useTema()
-    const { httpGet, httpPost } = useAPI()
+    const { httpGet, httpPost, httpPut } = useAPI()
     const [aberto, setAberto] = useState(false)
     const [carregando, setCarregando] = useState(false)
     const [salvando, setSalvando] = useState(false)
@@ -70,6 +73,7 @@ export default function ServicosSugeridos({ servicos, profissionais, aoConcluir 
             if (copia[item.id]) delete copia[item.id]
             else copia[item.id] = {
                 servicoSugeridoId: item.id, preco: '', duracaoMinutos: String(item.duracaoMinutos),
+                imagemURL: item.imagemURL,
                 modeloAtendimento: catalogo?.modeloAtendimento === 'HIBRIDO' ? item.modeloAtendimento : (catalogo?.modeloAtendimento ?? item.modeloAtendimento),
                 preparoAntesMinutos: String(item.preparoAntesMinutos), preparoDepoisMinutos: String(item.preparoDepoisMinutos),
                 deslocamentoMinutos: String(item.deslocamentoMinutos), profissionalIds: [],
@@ -95,8 +99,15 @@ export default function ServicosSugeridos({ servicos, profissionais, aoConcluir 
         bloqueado.current = true; setSalvando(true); setErro('')
         try {
             const resposta = await httpPost<Resultado>('/servicos/sugeridos/importar', { itens })
+            const falhas: string[] = []
+            for (const item of itens.filter((i) => i.midiaId !== undefined)) {
+                const criado = resposta.criados.find((s) => s.servicoSugeridoId === item.servicoSugeridoId) ?? servicos.find((s) => s.servicoSugeridoId === item.servicoSugeridoId)
+                if (criado) try { await httpPut('/midias/associacao', { entidade: 'SERVICO', entidadeId: criado.id, midiaId: item.midiaId }) }
+                catch { falhas.push(criado.nome) }
+            }
             setResultado(resposta); setSelecionados({})
             try { await aoConcluir() } catch { setErro('Serviços adicionados. Atualize a lista para consultar as alterações.') }
+            if (falhas.length) setErro(`Serviços adicionados. Revise as imagens na edição: ${falhas.join(', ')}.`)
         } catch (e) { setErro(mensagemDoErro(e)) }
         finally { bloqueado.current = false; setSalvando(false) }
     }
@@ -147,6 +158,7 @@ export default function ServicosSugeridos({ servicos, profissionais, aoConcluir 
                                 const form = selecionados[item.id]!
                                 return <View key={item.id} style={[styles.cartao, { borderColor: cores.borda, backgroundColor: cores.superficie }]}>
                                     <Text style={[styles.nome, { color: cores.texto }]}>{item.nome}</Text>
+                                    <SeletorImagem valor={form.imagemURL} finalidade="SERVICO" padrao="/servicos/combo.jpg" disabled={salvando} alterar={(imagemURL, midiaId) => setSelecionados((atuais) => ({ ...atuais, [item.id]: { ...atuais[item.id]!, imagemURL, midiaId } }))} />
                                     <CampoTexto label="Preço (R$)" value={form.preco} keyboardType="decimal-pad" onChangeText={(v) => alterar(item.id, 'preco', v.replace(/[^0-9,.]/g, ''))} />
                                     {(['duracaoMinutos', 'preparoAntesMinutos', 'preparoDepoisMinutos'] as const).map((campo, indice) => <CampoTexto key={campo} label={['Duração (min)', 'Preparação antes (min)', 'Preparação depois (min)'][indice]!} value={form[campo]} keyboardType="number-pad" onChangeText={(v) => alterar(item.id, campo, v.replace(/\D/g, ''))} />)}
                                     <Text style={{ color: cores.texto }}>Modalidade</Text><View style={styles.chips}>{modelos.map((modelo) => <View key={modelo}>{chip(modelo === 'PRESENCIAL' ? 'No local' : modelo === 'DOMICILIAR' ? 'Domiciliar' : 'Híbrido', form.modeloAtendimento === modelo, () => alterar(item.id, 'modeloAtendimento', modelo))}</View>)}</View>

@@ -1,6 +1,6 @@
 import PerfilUsuario from '@/src/components/usuario/PerfilUsuario'
 import useSessao from '@/src/data/hooks/useSessao'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
@@ -35,9 +35,9 @@ export default function Usuario({ navigation }: Props) {
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: cores.fundo }]}>
-            <View style={{ flex: 1, paddingTop: 15 }}>
+            <ScrollView contentContainerStyle={{ paddingTop: 15 }} keyboardShouldPersistTaps="handled">
                 <PerfilUsuario usuario={usuario!} logout={logout} cadastrarEstabelecimento={abrirCadastroEstabelecimento} />
-            </View>
+            </ScrollView>
         </SafeAreaView>
     )
 }
