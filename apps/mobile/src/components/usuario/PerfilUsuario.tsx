@@ -28,7 +28,7 @@ export default function PerfilUsuario(props: PerfilUsuarioProps) {
     return (
         <View style={styles.container}>
             <AvatarUsuario nome={props.usuario.nome} fotoURL={props.usuario.fotoURL} />
-            <Text style={[styles.destaque, { color: cores.texto }]}>Fala, {props.usuario?.nome}!</Text>
+            <Text style={[styles.destaque, { color: cores.texto }]}>Olá, {props.usuario?.nome}!</Text>
             <Text style={[styles.texto, { color: cores.textoSecundario }]}>E-mail: {props.usuario?.email.toLowerCase()}</Text>
             <Text style={styles.perfil}>{nomePerfil}</Text>
             <View style={{ width: '100%', marginVertical: 20 }}><ImagemRegistro titulo="Minha foto" valor={props.usuario.fotoURL} entidade="USUARIO" finalidade="AVATAR" aoSalvar={renovarSessao} /></View>

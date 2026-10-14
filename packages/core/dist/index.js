@@ -127,6 +127,7 @@ var profissionais = [
   {
     id: 1,
     nome: "Marcos Almeida",
+    sexo: "MASCULINO",
     descricao: "Especialista em cortes masculinos cl\xE1ssicos, acabamento com m\xE1quina e atendimento consultivo.",
     imagemURL: "/profissionais/profissional-1.jpg",
     avaliacao: 5,
@@ -135,6 +136,7 @@ var profissionais = [
   {
     id: 2,
     nome: "Roberto Lima",
+    sexo: "MASCULINO",
     descricao: "Profissional focado em barba, desenho, aparo e finaliza\xE7\xE3o para diferentes estilos.",
     imagemURL: "/profissionais/profissional-2.jpg",
     avaliacao: 4.5,
@@ -143,6 +145,7 @@ var profissionais = [
   {
     id: 3,
     nome: "Kathya Martins",
+    sexo: "FEMININO",
     descricao: "Atendimento preciso em cortes modernos, visagismo e finaliza\xE7\xF5es personalizadas.",
     imagemURL: "/profissionais/profissional-3.jpg",
     avaliacao: 5,
@@ -151,6 +154,7 @@ var profissionais = [
   {
     id: 4,
     nome: "S\xE9rgio Rocha",
+    sexo: "MASCULINO",
     descricao: "Experi\xEAncia em cortes degrad\xEA, barba alinhada e acabamento detalhado.",
     imagemURL: "/profissionais/profissional-4.jpg",
     avaliacao: 4.5,
@@ -159,6 +163,7 @@ var profissionais = [
   {
     id: 5,
     nome: "Rafael Souza",
+    sexo: "MASCULINO",
     descricao: "Especialista em m\xE1quina, cortes baixos e manuten\xE7\xE3o r\xE1pida com acabamento limpo.",
     imagemURL: "/profissionais/profissional-5.jpg",
     avaliacao: 4.5,
@@ -167,6 +172,7 @@ var profissionais = [
   {
     id: 6,
     nome: "Fernanda Costa",
+    sexo: "FEMININO",
     descricao: "Profissional com foco em atendimento personalizado, cortes vers\xE1teis e finaliza\xE7\xE3o cuidadosa.",
     imagemURL: "/profissionais/profissional-6.jpg",
     avaliacao: 5,

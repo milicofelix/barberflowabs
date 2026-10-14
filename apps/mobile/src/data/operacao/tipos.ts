@@ -76,6 +76,7 @@ export interface ProfissionalOperacional {
     id: number
     midiaId?: string | null
     nome: string
+    sexo: 'MASCULINO' | 'FEMININO' | 'NAO_INFORMADO'
     descricao: string
     imagemURL: string
     avaliacao?: number

@@ -11,6 +11,11 @@ export class EstabelecimentoPublicoController {
     return this.repo.listarEstabelecimentos(filtros);
   }
 
+  @Get('profissionais')
+  listarProfissionais() {
+    return this.repo.listarProfissionaisPublicos();
+  }
+
   @Get(':slug')
   async buscarPorSlug(@Param('slug') slug: string) {
     const estabelecimento = await this.repo.buscarEstabelecimentoPorSlug(slug);

@@ -37,7 +37,7 @@ export default function CampoProfissional(props: CampoProfissionalProps) {
                     <View style={{ alignItems: 'center' }}>
                         <Image
                             style={{ width: 100, height: 100, borderRadius: 6 }}
-                            source={imagemDoProfissional(p.imagemURL)}
+                            source={imagemDoProfissional(p.imagemURL, p.sexo)}
                             resizeMode="cover"
                         />
                         <Text style={{ color: value?.id === p?.id ? '#FFFFFF' : cores.texto, paddingVertical: 5 }}>

@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Req } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Put, Req } from '@nestjs/common';
 import { ProfissionalPrisma } from './profissional.prisma';
 import { TenantService } from 'src/shared/tenant.service';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
@@ -59,6 +59,8 @@ export class ProfissionalController {
   private validarProfissional(dados: CriarProfissionalDto) {
     validarTextoObrigatorio(dados?.nome, 'Nome');
     validarTextoObrigatorio(dados?.descricao, 'Descrição');
-    validarTextoObrigatorio(dados?.imagemURL, 'Imagem');
+    if (!['MASCULINO', 'FEMININO'].includes(dados?.sexo)) {
+      throw new BadRequestException('Sexo deve ser masculino ou feminino');
+    }
   }
 }

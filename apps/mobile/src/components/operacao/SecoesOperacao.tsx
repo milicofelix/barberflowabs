@@ -44,20 +44,29 @@ export function EquipeOperacao({ itens, criar, recarregar }: {
 }) {
     const { cores } = useTema()
     const [nome, setNome] = useState(''); const [descricao, setDescricao] = useState(''); const [salvando, setSalvando] = useState(false)
-    const [imagemURL, setImagemURL] = useState('/profissionais/profissional-1.jpg'); const [midiaId, setMidiaId] = useState<string | null | undefined>()
+    const [sexo, setSexo] = useState<'MASCULINO' | 'FEMININO' | null>(null)
+    const [imagemURL, setImagemURL] = useState(''); const [midiaId, setMidiaId] = useState<string | null | undefined>()
+    const imagemPadrao = `/profissionais/avatar-${sexo === 'FEMININO' ? 'feminino' : 'masculino'}.png`
+    function selecionarSexo(novoSexo: 'MASCULINO' | 'FEMININO') {
+        const padroes = ['/profissionais/avatar-masculino.png', '/profissionais/avatar-feminino.png', '/profissionais/profissional-1.jpg']
+        if (!imagemURL || padroes.includes(imagemURL)) { setImagemURL(`/profissionais/avatar-${novoSexo === 'FEMININO' ? 'feminino' : 'masculino'}.png`); setMidiaId(null) }
+        setSexo(novoSexo)
+    }
     async function submeter() {
-        if (!nome.trim() || !descricao.trim() || salvando) return
+        if (!nome.trim() || !sexo || !descricao.trim() || salvando) return
         try {
             setSalvando(true)
-            const criado = await criar({ nome: nome.trim(), descricao: descricao.trim(), imagemURL, midiaId })
-            if (criado) { setNome(''); setDescricao(''); setImagemURL('/profissionais/profissional-1.jpg'); setMidiaId(undefined) }
+            const criado = await criar({ nome: nome.trim(), sexo, descricao: descricao.trim(), imagemURL: imagemURL || imagemPadrao, midiaId })
+            if (criado) { setNome(''); setSexo(null); setDescricao(''); setImagemURL(''); setMidiaId(undefined) }
         }
         finally { setSalvando(false) }
     }
     return <View style={styles.lista}><View style={[styles.formulario, { backgroundColor: cores.superficie }]}><Text style={[styles.subtitulo, { color: cores.texto }]}>Adicionar profissional</Text>
-        <CampoTexto label="Nome" value={nome} onChangeText={setNome} /><CampoTexto label="Apresentação" value={descricao} onChangeText={setDescricao} />
-        <SeletorImagem titulo="Foto do profissional" valor={imagemURL} finalidade="PROFISSIONAL" padrao="/profissionais/profissional-1.jpg" disabled={salvando} alterar={(url, id) => { setImagemURL(url); setMidiaId(id) }} />
-        <Botao texto={salvando ? 'Salvando...' : 'Adicionar à equipe'} acao={submeter} /></View>
+        <CampoTexto label="Nome" value={nome} onChangeText={setNome} />
+        <Text style={[styles.rotulo, { color: cores.textoSecundario }]}>Sexo</Text><View style={styles.modelos}>{(['MASCULINO', 'FEMININO'] as const).map((opcao) => <Pressable key={opcao} onPress={() => selecionarSexo(opcao)} style={[styles.chip, { borderColor: sexo === opcao ? cores.destaque : cores.borda, backgroundColor: sexo === opcao ? cores.destaque : cores.campo }]}><Text style={[styles.chipTexto, { color: sexo === opcao ? '#fff' : cores.texto }]}>{opcao === 'MASCULINO' ? 'Masculino' : 'Feminino'}</Text></Pressable>)}</View>
+        <CampoTexto label="Apresentação" value={descricao} onChangeText={setDescricao} />
+        <SeletorImagem titulo="Foto do profissional" valor={sexo ? (imagemURL || imagemPadrao) : ''} finalidade="PROFISSIONAL" padrao={sexo ? imagemPadrao : ''} disabled={salvando || !sexo} alterar={(url, id) => { setImagemURL(url); setMidiaId(id) }} />
+        <Botao texto={salvando ? 'Salvando...' : 'Adicionar à equipe'} acao={submeter} desabilitado={salvando || !nome.trim() || !sexo || !descricao.trim()} /></View>
         {itens.map((item) => <View key={item.id} style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}><Text style={[styles.titulo, { color: cores.texto }]}>{item.nome}</Text>
             <Text style={[styles.descricao, { color: cores.textoSecundario }]}>{item.descricao}</Text><Text style={styles.meta}>★ {Number(item.avaliacao ?? 5).toFixed(1)}</Text>
             <ImagemRegistro titulo="Foto do profissional" valor={item.imagemURL} entidade="PROFISSIONAL" entidadeId={item.id} finalidade="PROFISSIONAL" aoSalvar={recarregar} /></View>)}</View>
@@ -72,14 +81,15 @@ export function AtalhoCentralFinanceira({ abrir }: { abrir: () => void }) {
     </View>
 }
 
-function Botao({ texto, acao }: { texto: string; acao: () => void }) {
-    return <Pressable style={styles.botao} onPress={acao}><Text style={styles.botaoTexto}>{texto}</Text></Pressable>
+function Botao({ texto, acao, desabilitado = false }: { texto: string; acao: () => void; desabilitado?: boolean }) {
+    return <Pressable disabled={desabilitado} style={[styles.botao, desabilitado && styles.desabilitado]} onPress={acao}><Text style={styles.botaoTexto}>{texto}</Text></Pressable>
 }
 
 const styles = StyleSheet.create({
     grade: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 }, lista: { gap: 10 }, cartao: { backgroundColor: '#101E33', borderRadius: 13, padding: 14, borderWidth: 1, borderColor: '#26364E' },
     titulo: { color: '#FFF', fontSize: 16, fontWeight: '800' }, subtitulo: { color: '#FFF', fontSize: 18, fontWeight: '900', marginBottom: 8 }, descricao: { color: '#AEBBCE', marginTop: 5, lineHeight: 19 }, meta: { color: '#E7B84B', marginTop: 8 },
+    rotulo: { fontSize: 12, fontWeight: '700', marginTop: 3 }, modelos: { flexDirection: 'row', gap: 7, marginBottom: 4 },
     acoes: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 10 }, chip: { borderWidth: 1, borderColor: '#43516A', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 7 }, chipAtivo: { borderColor: '#E7B84B', backgroundColor: '#493B16' }, chipTexto: { color: '#E7EAF0', fontSize: 10, fontWeight: '800' },
     filtrosAgenda: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 4 }, formulario: { backgroundColor: '#101E33', borderRadius: 14, padding: 15, gap: 7, marginBottom: 5 }, botao: { minHeight: 46, backgroundColor: '#E7B84B', borderRadius: 11, alignItems: 'center', justifyContent: 'center', marginTop: 5 }, botaoTexto: { color: '#081426', fontWeight: '900' },
-    atalhoFinanceiro: { borderWidth: 1, borderRadius: 14, padding: 16 },
+    atalhoFinanceiro: { borderWidth: 1, borderRadius: 14, padding: 16 }, desabilitado: { opacity: .45 },
 })

@@ -44,10 +44,10 @@ async function seedEstruturaDoEstabelecimento(
 
   const profissional = await prisma.profissional.upsert({
     where: { estabelecimentoId_nome: { estabelecimentoId, nome: item.profissional } },
-    update: { descricao: `Especialista da ${item.nome}.`, imagemURL: '/profissionais/profissional-1.jpg' },
+    update: { descricao: `Especialista da ${item.nome}.`, sexo: sexoPeloNome(item.profissional), imagemURL: '/profissionais/profissional-1.jpg' },
     create: {
       estabelecimentoId, nome: item.profissional, descricao: `Especialista da ${item.nome}.`,
-      imagemURL: '/profissionais/profissional-1.jpg', avaliacao: 5, quantidadeAvaliacoes: 0,
+      sexo: sexoPeloNome(item.profissional), imagemURL: '/profissionais/profissional-1.jpg', avaliacao: 5, quantidadeAvaliacoes: 0,
     },
   });
 
@@ -71,6 +71,11 @@ async function seedEstruturaDoEstabelecimento(
       intervaloInicio: '13:00', intervaloFim: '14:00', ativo: true,
     })),
   });
+}
+
+function sexoPeloNome(nome: string) {
+  const nomesFemininos = ['Camila', 'Juliana', 'Larissa', 'Priscila', 'Marina', 'Renata', 'Aline', 'Isabela', 'Nathalia', 'Bianca'];
+  return nomesFemininos.some((primeiroNome) => nome.startsWith(primeiroNome)) ? 'FEMININO' : 'MASCULINO';
 }
 
 function dadosDoEstabelecimento(item: (typeof estabelecimentosMarketplaceTatuape)[number]) {

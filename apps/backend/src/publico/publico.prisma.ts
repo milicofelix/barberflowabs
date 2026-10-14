@@ -8,6 +8,37 @@ const TIME_ZONE_PADRAO = 'America/Sao_Paulo';
 export class PublicoPrisma {
   constructor(private readonly prisma: PrismaService) {}
 
+  listarProfissionaisPublicos() {
+    return this.prisma.profissional.findMany({
+      where: {
+        estabelecimento: this.criteriosPublicacao(),
+        servicosHabilitados: { some: { ativo: true } },
+      },
+      orderBy: [
+        { avaliacao: 'desc' },
+        { quantidadeAvaliacoes: 'desc' },
+        { nome: 'asc' },
+      ],
+      select: {
+        id: true,
+        nome: true,
+        sexo: true,
+        descricao: true,
+        imagemURL: true,
+        avaliacao: true,
+        quantidadeAvaliacoes: true,
+        estabelecimento: {
+          select: {
+            id: true,
+            nome: true,
+            nomePublico: true,
+            slug: true,
+          },
+        },
+      },
+    });
+  }
+
   async listarEstabelecimentos(filtros: any = {}) {
     const latitude = this.numero(filtros.lat);
     const longitude = this.numero(filtros.lng);
@@ -164,6 +195,7 @@ export class PublicoPrisma {
           select: {
             id: true,
             nome: true,
+            sexo: true,
             descricao: true,
             preco: true,
             qtdeSlots: true,

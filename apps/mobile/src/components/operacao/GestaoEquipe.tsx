@@ -19,7 +19,7 @@ const DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 export function MembrosEquipe({ membros, usuarios, profissionais, salvar, criarPerfil, remover }: {
     membros: MembroEquipe[]; usuarios: UsuarioEquipe[]; profissionais: ProfissionalOperacional[]
     salvar: (dados: { usuarioId: number; profissionalId?: number | null; papel: string; permissoes: PermissaoEquipe[]; ativo?: boolean }, membroId?: number) => Promise<boolean>
-    criarPerfil: (membro: MembroEquipe) => Promise<boolean>
+    criarPerfil: (membro: MembroEquipe, sexo: 'MASCULINO' | 'FEMININO') => Promise<boolean>
     remover: (id: number) => Promise<boolean>
 }) {
     const { cores } = useTema(); const [usuarioId, setUsuarioId] = useState<number | null>(null)
@@ -57,14 +57,16 @@ export function MembrosEquipe({ membros, usuarios, profissionais, salvar, criarP
 function VincularPerfil({ membro, profissionais, salvar, criarPerfil }: {
     membro: MembroEquipe; profissionais: ProfissionalOperacional[]
     salvar: (dados: { usuarioId: number; profissionalId?: number | null; papel: string; permissoes: PermissaoEquipe[]; ativo?: boolean }, membroId?: number) => Promise<boolean>
-    criarPerfil: (membro: MembroEquipe) => Promise<boolean>
+    criarPerfil: (membro: MembroEquipe, sexo: 'MASCULINO' | 'FEMININO') => Promise<boolean>
 }) {
     const { cores } = useTema()
     const [criando, setCriando] = useState(false)
+    const [sexo, setSexo] = useState<'MASCULINO' | 'FEMININO' | null>(null)
     const [profissionalId, setProfissionalId] = useState<number | null>(profissionais.length === 1 ? profissionais[0].id : null)
     useEffect(() => { if (profissionais.length === 1) setProfissionalId(profissionais[0].id) }, [profissionais])
     if (!profissionais.length) return <View style={styles.vinculo}><Text style={[styles.aviso, { color: cores.textoSecundario }]}>Ainda não existe um perfil profissional para este membro.</Text>
-        <Botao texto={criando ? 'Criando perfil...' : `Criar e vincular perfil de ${membro.usuario.nome}`} desabilitado={criando} acao={async () => { setCriando(true); await criarPerfil(membro); setCriando(false) }} /></View>
+        <Text style={[styles.rotulo, { color: cores.textoSecundario }]}>Sexo</Text><Chips itens={[{ id: 'MASCULINO' as const, nome: 'Masculino' }, { id: 'FEMININO' as const, nome: 'Feminino' }]} atual={sexo} selecionar={setSexo} />
+        <Botao texto={criando ? 'Criando perfil...' : `Criar e vincular perfil de ${membro.usuario.nome}`} desabilitado={criando || !sexo} acao={async () => { if (!sexo) return; setCriando(true); await criarPerfil(membro, sexo); setCriando(false) }} /></View>
     const vincular = () => profissionalId && salvar({
         usuarioId: membro.usuarioId, profissionalId, papel: membro.papel,
         permissoes: membro.permissoes, ativo: membro.ativo,

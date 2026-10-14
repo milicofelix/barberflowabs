@@ -179,12 +179,13 @@ export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'da
     async function salvarMembro(dados: { usuarioId: number; profissionalId?: number | null; papel: string; permissoes: PermissaoEquipe[]; ativo?: boolean }, membroId?: number) {
         return executarAcao(() => membroId ? httpPut(`/equipe/${membroId}`, dados) : httpPost('/equipe', dados))
     }
-    async function criarPerfilParaMembro(membro: MembroEquipe) {
+    async function criarPerfilParaMembro(membro: MembroEquipe, sexo: 'MASCULINO' | 'FEMININO') {
         return executarAcao(async () => {
             const profissional = await httpPost<ProfissionalOperacional>('/profissionais', {
                 nome: membro.usuario.nome,
+                sexo,
                 descricao: `Atendimento realizado por ${membro.usuario.nome}`,
-                imagemURL: '/profissionais/profissional-1.jpg',
+                imagemURL: `/profissionais/avatar-${sexo === 'FEMININO' ? 'feminino' : 'masculino'}.png`,
                 avaliacao: 5,
                 quantidadeAvaliacoes: 0,
             })

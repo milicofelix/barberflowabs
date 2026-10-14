@@ -27,10 +27,11 @@ const servicoVazio: Omit<Servico, 'id'> = {
     imagemURL: '/servicos/corte-de-cabelo.jpg',
 }
 
-const profissionalVazio: Omit<Profissional, 'id'> = {
+const profissionalVazio: Omit<Profissional, 'id' | 'sexo'> & { sexo: '' | 'MASCULINO' | 'FEMININO' } = {
     nome: '',
+    sexo: '',
     descricao: '',
-    imagemURL: '/profissionais/profissional-1.jpg',
+    imagemURL: '',
     avaliacao: 5,
     quantidadeAvaliacoes: 0,
 }
@@ -218,8 +219,13 @@ export default function PainelGestaoOperacional() {
 
     async function salvarProfissional() {
         setMensagem('')
+        if (!['MASCULINO', 'FEMININO'].includes(profissional.sexo)) {
+            setMensagem('Selecione o sexo do profissional.')
+            return
+        }
         const payload = {
             nome: profissional.nome,
+            sexo: profissional.sexo,
             descricao: profissional.descricao,
             imagemURL: profissional.imagemURL,
             avaliacao: Number(profissional.avaliacao ?? 5),
@@ -966,6 +972,16 @@ function FormularioServico(props: any) {
 }
 
 function FormularioProfissional(props: any) {
+    const selecionarSexo = (sexo: 'MASCULINO' | 'FEMININO') => {
+        const padroes = ['/profissionais/avatar-masculino.png', '/profissionais/avatar-feminino.png', '/profissionais/profissional-1.jpg']
+        const imagemURL = !props.profissional.imagemURL || padroes.includes(props.profissional.imagemURL)
+            ? `/profissionais/avatar-${sexo === 'FEMININO' ? 'feminino' : 'masculino'}.png`
+            : props.profissional.imagemURL
+        props.onChange({ ...props.profissional, sexo, imagemURL, midiaId: imagemURL === props.profissional.imagemURL ? props.profissional.midiaId : null })
+    }
+    const imagemPadrao = props.profissional.sexo
+        ? `/profissionais/avatar-${props.profissional.sexo === 'FEMININO' ? 'feminino' : 'masculino'}.png`
+        : ''
     return (
         <FormularioBase
             titulo={props.profissional.id ? 'Editar profissional' : 'Novo profissional'}
@@ -973,8 +989,16 @@ function FormularioProfissional(props: any) {
             onNovo={props.onNovo}
         >
             <Campo label="Nome" value={props.profissional.nome} onChange={(nome) => props.onChange({ ...props.profissional, nome })} />
+            <label className="flex flex-col gap-2 text-sm text-zinc-400">
+                Sexo
+                <select className="input" value={props.profissional.sexo ?? ''} onChange={(e) => selecionarSexo(e.target.value as 'MASCULINO' | 'FEMININO')}>
+                    <option value="" disabled>Selecione</option>
+                    <option value="MASCULINO">Masculino</option>
+                    <option value="FEMININO">Feminino</option>
+                </select>
+            </label>
             <Campo label="Descrição" value={props.profissional.descricao} onChange={(descricao) => props.onChange({ ...props.profissional, descricao })} />
-            <SeletorImagem titulo="Foto do profissional" finalidade="PROFISSIONAL" valor={props.profissional.imagemURL} padrao="/profissionais/profissional-1.jpg" alterar={(imagemURL, midiaId) => props.onChange({ ...props.profissional, imagemURL, midiaId })} />
+            <SeletorImagem titulo="Foto do profissional" finalidade="PROFISSIONAL" valor={imagemPadrao ? (props.profissional.imagemURL || imagemPadrao) : ''} padrao={imagemPadrao} disabled={!imagemPadrao} alterar={(imagemURL, midiaId) => props.onChange({ ...props.profissional, imagemURL, midiaId })} />
             <Campo label="Avaliação" type="number" value={props.profissional.avaliacao} onChange={(avaliacao) => props.onChange({ ...props.profissional, avaliacao })} />
         </FormularioBase>
     )

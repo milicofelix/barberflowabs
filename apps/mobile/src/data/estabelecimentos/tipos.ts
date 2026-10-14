@@ -30,6 +30,7 @@ export interface CategoriaMarketplace extends SegmentoPublico { descricao?: stri
 export interface ProfissionalPublico {
     id: number
     nome: string
+    sexo?: 'MASCULINO' | 'FEMININO' | 'NAO_INFORMADO'
     descricao?: string | null
     imagemURL?: string | null
     avaliacao?: number | null

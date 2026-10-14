@@ -10,9 +10,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum SexoProfissional {
+  MASCULINO
+  FEMININO
+  NAO_INFORMADO
+}
+
 model Midia {
-  id                String @id @default(uuid())
-  chaveCatalogo     String? @unique
+  id                String           @id @default(uuid())
+  chaveCatalogo     String?          @unique
   titulo            String
   escopo            String
   finalidade        String
@@ -21,11 +27,11 @@ model Midia {
   estabelecimentoId Int?
   arquivoOrigem     String?
   versoes           Json
-  ativo             Boolean @default(true)
-  status            String @default("DISPONIVEL")
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  usuario           Usuario? @relation(fields: [usuarioId], references: [id])
+  ativo             Boolean          @default(true)
+  status            String           @default("DISPONIVEL")
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  usuario           Usuario?         @relation(fields: [usuarioId], references: [id])
   estabelecimento   Estabelecimento? @relation(fields: [estabelecimentoId], references: [id])
   vinculos          MidiaVinculo[]
 
@@ -36,12 +42,12 @@ model Midia {
 }
 
 model MidiaVinculo {
-  id         Int @id @default(autoincrement())
+  id         Int      @id @default(autoincrement())
   midiaId    String
   entidade   String
   entidadeId Int
   createdAt  DateTime @default(now())
-  midia      Midia @relation(fields: [midiaId], references: [id])
+  midia      Midia    @relation(fields: [midiaId], references: [id])
 
   @@unique([entidade, entidadeId])
   @@index([midiaId])
@@ -49,42 +55,42 @@ model MidiaVinculo {
 }
 
 model Usuario {
-  id           Int           @id @default(autoincrement())
-  estabelecimentoId  Int?
-  nome         String
-  email        String        @unique
-  emailContato String?
-  fotoURL      String?
-  midias       Midia[]
-  emailTecnico Boolean       @default(false)
-  senha        String
-  telefone     String?
-  telefoneNormalizado String?
-  dataNascimento DateTime?
-  membroEstabelecimento     Boolean
-  papel        String        @default("CUSTOMER")
-  estabelecimento    Estabelecimento?    @relation(fields: [estabelecimentoId], references: [id])
-  agendamentos Agendamento[]
-  agendamentosCriados Agendamento[] @relation("AgendamentoCriadoPor")
-  lancamentosFinanceiros LancamentoFinanceiro[]
-  logsAuditoria LogAuditoria[]
-  caixasAbertos FechamentoCaixa[] @relation("CaixaAbertoPor")
-  caixasFechados FechamentoCaixa[] @relation("CaixaFechadoPor")
-  lembretesRelacionamento LembreteRelacionamento[]
-  avaliacoes Avaliacao[]
-  denunciasRevisadas DenunciaPerfilPublico[] @relation("DenunciaPerfilRevisor")
-  estabelecimentosCliente ClienteEstabelecimento[]
-  reagendamentosRealizados HistoricoReagendamento[] @relation("HistoricoReagendamentoAutor")
-  vinculosEquipe MembroEquipe[]
-  preferenciasComunicacao PreferenciaComunicacao[]
-  enviosComunicacao EnvioComunicacao[]
-  solicitacoesEstabelecimento SolicitacaoEstabelecimento[] @relation("SolicitanteSolicitacaoEstabelecimento")
+  id                                   Int                          @id @default(autoincrement())
+  estabelecimentoId                    Int?
+  nome                                 String
+  email                                String                       @unique
+  emailContato                         String?
+  fotoURL                              String?
+  midias                               Midia[]
+  emailTecnico                         Boolean                      @default(false)
+  senha                                String
+  telefone                             String?
+  telefoneNormalizado                  String?
+  dataNascimento                       DateTime?
+  membroEstabelecimento                Boolean
+  papel                                String                       @default("CUSTOMER")
+  estabelecimento                      Estabelecimento?             @relation(fields: [estabelecimentoId], references: [id])
+  agendamentos                         Agendamento[]
+  agendamentosCriados                  Agendamento[]                @relation("AgendamentoCriadoPor")
+  lancamentosFinanceiros               LancamentoFinanceiro[]
+  logsAuditoria                        LogAuditoria[]
+  caixasAbertos                        FechamentoCaixa[]            @relation("CaixaAbertoPor")
+  caixasFechados                       FechamentoCaixa[]            @relation("CaixaFechadoPor")
+  lembretesRelacionamento              LembreteRelacionamento[]
+  avaliacoes                           Avaliacao[]
+  denunciasRevisadas                   DenunciaPerfilPublico[]      @relation("DenunciaPerfilRevisor")
+  estabelecimentosCliente              ClienteEstabelecimento[]
+  reagendamentosRealizados             HistoricoReagendamento[]     @relation("HistoricoReagendamentoAutor")
+  vinculosEquipe                       MembroEquipe[]
+  preferenciasComunicacao              PreferenciaComunicacao[]
+  enviosComunicacao                    EnvioComunicacao[]
+  solicitacoesEstabelecimento          SolicitacaoEstabelecimento[] @relation("SolicitanteSolicitacaoEstabelecimento")
   solicitacoesEstabelecimentoRevisadas SolicitacaoEstabelecimento[] @relation("RevisorSolicitacaoEstabelecimento")
-  notificacoes NotificacaoUsuario[]
-  importacoesContatosOperadas ImportacaoContatoLote[] @relation("ImportacaoContatoOperador")
-  itensImportacaoContato ImportacaoContatoItem[]
-  agendamentosControladosManualmente Agendamento[] @relation("ControleManualAgendamento")
-  transicoesAtendimentoDestinadas TransicaoAgendamento[] @relation("DestinatarioTransicaoAgendamento")
+  notificacoes                         NotificacaoUsuario[]
+  importacoesContatosOperadas          ImportacaoContatoLote[]      @relation("ImportacaoContatoOperador")
+  itensImportacaoContato               ImportacaoContatoItem[]
+  agendamentosControladosManualmente   Agendamento[]                @relation("ControleManualAgendamento")
+  transicoesAtendimentoDestinadas      TransicaoAgendamento[]       @relation("DestinatarioTransicaoAgendamento")
 
   @@index([estabelecimentoId])
   @@index([telefoneNormalizado])
@@ -92,24 +98,25 @@ model Usuario {
 }
 
 model Profissional {
-  id                   Int           @id @default(autoincrement())
-  estabelecimentoId          Int
-  nome                 String
-  descricao            String        @db.Text
-  imagemURL            String
-  avaliacao            Float
-  quantidadeAvaliacoes Int
-  estabelecimento            Estabelecimento     @relation(fields: [estabelecimentoId], references: [id])
-  agendamentos         Agendamento[]
-  bloqueiosAgenda      BloqueioAgenda[]
+  id                     Int                         @id @default(autoincrement())
+  estabelecimentoId      Int
+  nome                   String
+  sexo                   SexoProfissional            @default(NAO_INFORMADO)
+  descricao              String                      @db.Text
+  imagemURL              String
+  avaliacao              Float
+  quantidadeAvaliacoes   Int
+  estabelecimento        Estabelecimento             @relation(fields: [estabelecimentoId], references: [id])
+  agendamentos           Agendamento[]
+  bloqueiosAgenda        BloqueioAgenda[]
   lancamentosFinanceiros LancamentoFinanceiro[]
-  avaliacoes           Avaliacao[]
-  especialidades       ProfissionalEspecialidade[]
-  servicosHabilitados  ProfissionalServico[]
-  vinculoEquipe        MembroEquipe?
-  escalas              EscalaProfissional[]
-  configuracoesComissao ConfiguracaoComissao[]
-  repassesFinanceiros   RepasseFinanceiro[]
+  avaliacoes             Avaliacao[]
+  especialidades         ProfissionalEspecialidade[]
+  servicosHabilitados    ProfissionalServico[]
+  vinculoEquipe          MembroEquipe?
+  escalas                EscalaProfissional[]
+  configuracoesComissao  ConfiguracaoComissao[]
+  repassesFinanceiros    RepasseFinanceiro[]
 
   @@unique([estabelecimentoId, nome])
   @@index([estabelecimentoId])
@@ -117,25 +124,25 @@ model Profissional {
 }
 
 model Servico {
-  id           Int           @id @default(autoincrement())
-  estabelecimentoId  Int
-  servicoSugeridoId Int?
-  nome         String
-  descricao    String        @db.Text
-  preco        Decimal       @db.Decimal(10, 2)
-  qtdeSlots    Int
-  imagemURL    String
-  observacoes  String?        @db.Text
-  modeloAtendimento String    @default("PRESENCIAL")
-  duracaoMinutos       Int     @default(15)
-  preparoAntesMinutos  Int     @default(0)
-  preparoDepoisMinutos Int     @default(0)
-  deslocamentoMinutos  Int     @default(0)
-  estabelecimento    Estabelecimento     @relation(fields: [estabelecimentoId], references: [id])
-  servicoSugerido    ServicoSugerido?    @relation(fields: [servicoSugeridoId], references: [id])
-  agendamentos Agendamento[]
-  requisitos   ServicoRequisito[]
-  especialidades ServicoEspecialidade[]
+  id                       Int                    @id @default(autoincrement())
+  estabelecimentoId        Int
+  servicoSugeridoId        Int?
+  nome                     String
+  descricao                String                 @db.Text
+  preco                    Decimal                @db.Decimal(10, 2)
+  qtdeSlots                Int
+  imagemURL                String
+  observacoes              String?                @db.Text
+  modeloAtendimento        String                 @default("PRESENCIAL")
+  duracaoMinutos           Int                    @default(15)
+  preparoAntesMinutos      Int                    @default(0)
+  preparoDepoisMinutos     Int                    @default(0)
+  deslocamentoMinutos      Int                    @default(0)
+  estabelecimento          Estabelecimento        @relation(fields: [estabelecimentoId], references: [id])
+  servicoSugerido          ServicoSugerido?       @relation(fields: [servicoSugeridoId], references: [id])
+  agendamentos             Agendamento[]
+  requisitos               ServicoRequisito[]
+  especialidades           ServicoEspecialidade[]
   profissionaisHabilitados ProfissionalServico[]
   recursosNecessarios      ServicoRecurso[]
   itensAgendamento         AgendamentoServico[]
@@ -148,50 +155,50 @@ model Servico {
 }
 
 model Agendamento {
-  id          Int      @id @default(autoincrement())
-  data        DateTime
-  estabelecimentoId Int
-  status      String   @default("AGENDADO")
-  valorTotal  Decimal  @default(0) @db.Decimal(10, 2)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  dataFim     DateTime?
-  inicioOcupacao DateTime?
-  fimOcupacao DateTime?
-  unidadeId   Int?
-  modeloAtendimento String @default("PRESENCIAL")
-  enderecoAtendimento String? @db.Text
-  deslocamentoMinutos Int @default(0)
-  reagendadoEm DateTime?
-  criadoPorId Int?
-  origem      String   @default("APP_CLIENTE")
-  observacoes String?  @db.Text
-  automacaoAtendimentoAtiva Boolean @default(true)
-  controleManualEm DateTime?
-  controleManualPorId Int?
-  iniciadoEm DateTime?
-  finalizadoEm DateTime?
-  revisaoFluxo Int @default(1)
+  id                        Int       @id @default(autoincrement())
+  data                      DateTime
+  estabelecimentoId         Int
+  status                    String    @default("AGENDADO")
+  valorTotal                Decimal   @default(0) @db.Decimal(10, 2)
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  dataFim                   DateTime?
+  inicioOcupacao            DateTime?
+  fimOcupacao               DateTime?
+  unidadeId                 Int?
+  modeloAtendimento         String    @default("PRESENCIAL")
+  enderecoAtendimento       String?   @db.Text
+  deslocamentoMinutos       Int       @default(0)
+  reagendadoEm              DateTime?
+  criadoPorId               Int?
+  origem                    String    @default("APP_CLIENTE")
+  observacoes               String?   @db.Text
+  automacaoAtendimentoAtiva Boolean   @default(true)
+  controleManualEm          DateTime?
+  controleManualPorId       Int?
+  iniciadoEm                DateTime?
+  finalizadoEm              DateTime?
+  revisaoFluxo              Int       @default(1)
 
   estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
-  unidade   Unidade?  @relation(fields: [unidadeId], references: [id])
+  unidade         Unidade?        @relation(fields: [unidadeId], references: [id])
 
-  usuario   Usuario @relation(fields: [usuarioId], references: [id])
-  usuarioId Int
-  criadoPor Usuario? @relation("AgendamentoCriadoPor", fields: [criadoPorId], references: [id])
+  usuario           Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId         Int
+  criadoPor         Usuario? @relation("AgendamentoCriadoPor", fields: [criadoPorId], references: [id])
   controleManualPor Usuario? @relation("ControleManualAgendamento", fields: [controleManualPorId], references: [id])
 
   profissional   Profissional @relation(fields: [profissionalId], references: [id])
   profissionalId Int
 
-  servicos Servico[]
-  itens AgendamentoServico[]
-  recursos AgendamentoRecurso[]
+  servicos                Servico[]
+  itens                   AgendamentoServico[]
+  recursos                AgendamentoRecurso[]
   historicoReagendamentos HistoricoReagendamento[]
-  avaliacao Avaliacao?
-  contasFinanceiras ContaFinanceira[]
-  enviosComunicacao EnvioComunicacao[]
-  transicoesAtendimento TransicaoAgendamento[]
+  avaliacao               Avaliacao?
+  contasFinanceiras       ContaFinanceira[]
+  enviosComunicacao       EnvioComunicacao[]
+  transicoesAtendimento   TransicaoAgendamento[]
 
   @@index([estabelecimentoId])
   @@index([profissionalId, data])
@@ -205,100 +212,100 @@ model Agendamento {
 }
 
 model Estabelecimento {
-  id            Int            @id @default(autoincrement())
-  nome          String
-  slug          String         @unique
-  telefone      String?
-  email         String?
-  nomePublico   String?
-  descricaoPublica String?     @db.Text
-  imagemCapaURL String?
-  midias       Midia[]
-  endereco      String?
-  bairro        String?
-  cidade        String?
-  estado        String?
-  latitude      Float?
-  longitude     Float?
-  aceitaAgendamentoOnline Boolean @default(true)
-  destaque      Boolean        @default(false)
-  status        String         @default("TRIAL")
-  reviewStatus  String         @default("APPROVED")
-  approvedAt    DateTime?
-  approvedById  Int?
-  rejectedAt    DateTime?
-  rejectedById  Int?
-  reviewReason  String?        @db.Text
-  comercialStatus String        @default("NOVO")
-  notasInternas String?         @db.Text
-  ultimoContatoEm DateTime?
-  proximoContatoEm DateTime?
-  trialEndsAt   DateTime?
-  antecedenciaMinutos Int      @default(30)
-  lembreteAgendamentoAtivo Boolean @default(true)
-  lembreteAntecedenciaMinutos Int @default(1440)
-  janelaSilenciosaInicio String @default("22:00") @db.VarChar(5)
-  janelaSilenciosaFim String @default("08:00") @db.VarChar(5)
-  fluxoAtendimentoAutomaticoAtivo Boolean @default(false)
-  inicioAtendimentoAutomaticoAtivo Boolean @default(true)
-  finalizacaoAtendimentoAutomaticaAtiva Boolean @default(true)
-  avisoAtendimentoAntecedenciaMinutos Int @default(10)
-  tipoEstabelecimento String   @default("BARBEARIA")
-  modeloAtendimento   String   @default("PRESENCIAL")
-  fusoHorario         String   @default("America/Sao_Paulo")
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  unidades      Unidade[]
-  usuarios      Usuario[]
-  profissionais Profissional[]
-  servicos      Servico[]
-  agendamentos  Agendamento[]
-  horariosFuncionamento HorarioFuncionamento[]
-  bloqueiosAgenda       BloqueioAgenda[]
-  lancamentosFinanceiros LancamentoFinanceiro[]
-  assinatura             AssinaturaEstabelecimento?
-  logsAuditoria          LogAuditoria[]
-  lembretesRelacionamento LembreteRelacionamento[]
-  avaliacoes             Avaliacao[]
-  denunciasPerfil        DenunciaPerfilPublico[]
-  clientes                ClienteEstabelecimento[]
-  segmentos               EstabelecimentoSegmento[]
-  especialidades          EstabelecimentoEspecialidade[]
-  especialidadesProfissionais ProfissionalEspecialidade[]
-  especialidadesServicos      ServicoEspecialidade[]
-  profissionaisServicos       ProfissionalServico[]
-  recursos                     Recurso[]
-  membrosEquipe                MembroEquipe[]
-  escalasProfissionais         EscalaProfissional[]
-  indisponibilidadesRecursos   IndisponibilidadeRecurso[]
-  configuracoesComissao        ConfiguracaoComissao[]
-  formasPagamento              FormaPagamento[]
-  contasFinanceiras            ContaFinanceira[]
-  fechamentosCaixa             FechamentoCaixa[]
-  repassesFinanceiros          RepasseFinanceiro[]
-  eventosGateway               EventoGatewayPagamento[]
-  conciliacoesFinanceiras      ConciliacaoFinanceira[]
-  preferenciasComunicacao      PreferenciaComunicacao[]
-  templatesComunicacao         TemplateComunicacao[]
-  enviosComunicacao             EnvioComunicacao[]
-  notificacoes                  NotificacaoUsuario[]
-  importacoesContatos           ImportacaoContatoLote[]
-  transicoesAtendimento         TransicaoAgendamento[]
-  solicitacaoOrigem             SolicitacaoEstabelecimento? @relation("EstabelecimentoGeradoSolicitacao")
+  id                                    Int                            @id @default(autoincrement())
+  nome                                  String
+  slug                                  String                         @unique
+  telefone                              String?
+  email                                 String?
+  nomePublico                           String?
+  descricaoPublica                      String?                        @db.Text
+  imagemCapaURL                         String?
+  midias                                Midia[]
+  endereco                              String?
+  bairro                                String?
+  cidade                                String?
+  estado                                String?
+  latitude                              Float?
+  longitude                             Float?
+  aceitaAgendamentoOnline               Boolean                        @default(true)
+  destaque                              Boolean                        @default(false)
+  status                                String                         @default("TRIAL")
+  reviewStatus                          String                         @default("APPROVED")
+  approvedAt                            DateTime?
+  approvedById                          Int?
+  rejectedAt                            DateTime?
+  rejectedById                          Int?
+  reviewReason                          String?                        @db.Text
+  comercialStatus                       String                         @default("NOVO")
+  notasInternas                         String?                        @db.Text
+  ultimoContatoEm                       DateTime?
+  proximoContatoEm                      DateTime?
+  trialEndsAt                           DateTime?
+  antecedenciaMinutos                   Int                            @default(30)
+  lembreteAgendamentoAtivo              Boolean                        @default(true)
+  lembreteAntecedenciaMinutos           Int                            @default(1440)
+  janelaSilenciosaInicio                String                         @default("22:00") @db.VarChar(5)
+  janelaSilenciosaFim                   String                         @default("08:00") @db.VarChar(5)
+  fluxoAtendimentoAutomaticoAtivo       Boolean                        @default(false)
+  inicioAtendimentoAutomaticoAtivo      Boolean                        @default(true)
+  finalizacaoAtendimentoAutomaticaAtiva Boolean                        @default(true)
+  avisoAtendimentoAntecedenciaMinutos   Int                            @default(10)
+  tipoEstabelecimento                   String                         @default("BARBEARIA")
+  modeloAtendimento                     String                         @default("PRESENCIAL")
+  fusoHorario                           String                         @default("America/Sao_Paulo")
+  createdAt                             DateTime                       @default(now())
+  updatedAt                             DateTime                       @updatedAt
+  unidades                              Unidade[]
+  usuarios                              Usuario[]
+  profissionais                         Profissional[]
+  servicos                              Servico[]
+  agendamentos                          Agendamento[]
+  horariosFuncionamento                 HorarioFuncionamento[]
+  bloqueiosAgenda                       BloqueioAgenda[]
+  lancamentosFinanceiros                LancamentoFinanceiro[]
+  assinatura                            AssinaturaEstabelecimento?
+  logsAuditoria                         LogAuditoria[]
+  lembretesRelacionamento               LembreteRelacionamento[]
+  avaliacoes                            Avaliacao[]
+  denunciasPerfil                       DenunciaPerfilPublico[]
+  clientes                              ClienteEstabelecimento[]
+  segmentos                             EstabelecimentoSegmento[]
+  especialidades                        EstabelecimentoEspecialidade[]
+  especialidadesProfissionais           ProfissionalEspecialidade[]
+  especialidadesServicos                ServicoEspecialidade[]
+  profissionaisServicos                 ProfissionalServico[]
+  recursos                              Recurso[]
+  membrosEquipe                         MembroEquipe[]
+  escalasProfissionais                  EscalaProfissional[]
+  indisponibilidadesRecursos            IndisponibilidadeRecurso[]
+  configuracoesComissao                 ConfiguracaoComissao[]
+  formasPagamento                       FormaPagamento[]
+  contasFinanceiras                     ContaFinanceira[]
+  fechamentosCaixa                      FechamentoCaixa[]
+  repassesFinanceiros                   RepasseFinanceiro[]
+  eventosGateway                        EventoGatewayPagamento[]
+  conciliacoesFinanceiras               ConciliacaoFinanceira[]
+  preferenciasComunicacao               PreferenciaComunicacao[]
+  templatesComunicacao                  TemplateComunicacao[]
+  enviosComunicacao                     EnvioComunicacao[]
+  notificacoes                          NotificacaoUsuario[]
+  importacoesContatos                   ImportacaoContatoLote[]
+  transicoesAtendimento                 TransicaoAgendamento[]
+  solicitacaoOrigem                     SolicitacaoEstabelecimento?    @relation("EstabelecimentoGeradoSolicitacao")
 
   @@map("estabelecimentos")
 }
 
 model Segmento {
-  id              Int       @id @default(autoincrement())
-  slug            String    @unique
-  nome            String
-  descricao       String?   @db.Text
-  ativo           Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  especialidades  Especialidade[]
-  estabelecimentos EstabelecimentoSegmento[]
+  id                Int                                  @id @default(autoincrement())
+  slug              String                               @unique
+  nome              String
+  descricao         String?                              @db.Text
+  ativo             Boolean                              @default(true)
+  createdAt         DateTime                             @default(now())
+  updatedAt         DateTime                             @updatedAt
+  especialidades    Especialidade[]
+  estabelecimentos  EstabelecimentoSegmento[]
   solicitacoes      SolicitacaoEstabelecimentoSegmento[]
   servicosSugeridos ServicoSugerido[]
 
@@ -306,19 +313,19 @@ model Segmento {
 }
 
 model Especialidade {
-  id               Int       @id @default(autoincrement())
-  segmentoId       Int
-  slug             String
-  nome             String
-  descricao        String?   @db.Text
-  ativo             Boolean   @default(true)
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  segmento         Segmento  @relation(fields: [segmentoId], references: [id])
-  estabelecimentos EstabelecimentoEspecialidade[]
-  profissionais    ProfissionalEspecialidade[]
-  servicos         ServicoEspecialidade[]
-  solicitacoes     SolicitacaoEstabelecimentoEspecialidade[]
+  id                Int                                       @id @default(autoincrement())
+  segmentoId        Int
+  slug              String
+  nome              String
+  descricao         String?                                   @db.Text
+  ativo             Boolean                                   @default(true)
+  createdAt         DateTime                                  @default(now())
+  updatedAt         DateTime                                  @updatedAt
+  segmento          Segmento                                  @relation(fields: [segmentoId], references: [id])
+  estabelecimentos  EstabelecimentoEspecialidade[]
+  profissionais     ProfissionalEspecialidade[]
+  servicos          ServicoEspecialidade[]
+  solicitacoes      SolicitacaoEstabelecimentoEspecialidade[]
   servicosSugeridos ServicoSugeridoEspecialidade[]
 
   @@unique([segmentoId, slug])
@@ -327,26 +334,26 @@ model Especialidade {
 }
 
 model ServicoSugerido {
-  id                     Int       @id @default(autoincrement())
+  id                     Int                            @id @default(autoincrement())
   segmentoId             Int
-  slug                    String
-  nome                    String
-  descricao               String   @db.Text
-  imagemURL               String
-  modeloAtendimento       String    @default("PRESENCIAL")
-  duracaoMinutos          Int       @default(30)
-  preparoAntesMinutos     Int       @default(0)
-  preparoDepoisMinutos    Int       @default(0)
-  deslocamentoMinutos     Int       @default(0)
-  ordem                   Int       @default(0)
+  slug                   String
+  nome                   String
+  descricao              String                         @db.Text
+  imagemURL              String
+  modeloAtendimento      String                         @default("PRESENCIAL")
+  duracaoMinutos         Int                            @default(30)
+  preparoAntesMinutos    Int                            @default(0)
+  preparoDepoisMinutos   Int                            @default(0)
+  deslocamentoMinutos    Int                            @default(0)
+  ordem                  Int                            @default(0)
   requisitosOperacionais Json?
   recursosNecessarios    Json?
-  ativo                   Boolean   @default(true)
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
-  segmento                Segmento  @relation(fields: [segmentoId], references: [id])
-  especialidades          ServicoSugeridoEspecialidade[]
-  servicosImportados      Servico[]
+  ativo                  Boolean                        @default(true)
+  createdAt              DateTime                       @default(now())
+  updatedAt              DateTime                       @updatedAt
+  segmento               Segmento                       @relation(fields: [segmentoId], references: [id])
+  especialidades         ServicoSugeridoEspecialidade[]
+  servicosImportados     Servico[]
 
   @@unique([segmentoId, slug])
   @@index([segmentoId, ativo, ordem])
@@ -354,11 +361,11 @@ model ServicoSugerido {
 }
 
 model ServicoSugeridoEspecialidade {
-  id                Int               @id @default(autoincrement())
+  id                Int             @id @default(autoincrement())
   servicoSugeridoId Int
   especialidadeId   Int
-  servicoSugerido   ServicoSugerido   @relation(fields: [servicoSugeridoId], references: [id], onDelete: Cascade)
-  especialidade     Especialidade     @relation(fields: [especialidadeId], references: [id])
+  servicoSugerido   ServicoSugerido @relation(fields: [servicoSugeridoId], references: [id], onDelete: Cascade)
+  especialidade     Especialidade   @relation(fields: [especialidadeId], references: [id])
 
   @@unique([servicoSugeridoId, especialidadeId], map: "servico_sugerido_especialidade_uq")
   @@index([especialidadeId])
@@ -366,14 +373,14 @@ model ServicoSugeridoEspecialidade {
 }
 
 model EstabelecimentoSegmento {
-  id          Int       @id @default(autoincrement())
+  id                Int             @id @default(autoincrement())
   estabelecimentoId Int
-  segmentoId  Int
-  principal   Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  segmentoId        Int
+  principal         Boolean         @default(false)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
   estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
-  segmento    Segmento  @relation(fields: [segmentoId], references: [id])
+  segmento          Segmento        @relation(fields: [segmentoId], references: [id])
 
   @@unique([estabelecimentoId, segmentoId])
   @@index([segmentoId])
@@ -381,13 +388,13 @@ model EstabelecimentoSegmento {
 }
 
 model EstabelecimentoEspecialidade {
-  id              Int           @id @default(autoincrement())
-  estabelecimentoId     Int
-  especialidadeId Int
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  estabelecimento       Estabelecimento     @relation(fields: [estabelecimentoId], references: [id])
-  especialidade   Especialidade @relation(fields: [especialidadeId], references: [id])
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  especialidadeId   Int
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  especialidade     Especialidade   @relation(fields: [especialidadeId], references: [id])
 
   @@unique([estabelecimentoId, especialidadeId])
   @@index([especialidadeId])
@@ -395,40 +402,40 @@ model EstabelecimentoEspecialidade {
 }
 
 model SolicitacaoEstabelecimento {
-  id                  Int       @id @default(autoincrement())
-  usuarioId           Int
-  revisorId           Int?
-  estabelecimentoGeradoId Int? @unique
-  chaveAtiva          String?   @unique
-  status              String    @default("RASCUNHO")
-  nomePublico         String?
-  emailComercial      String?
-  telefoneComercial   String?
-  tipoEstabelecimento String?
-  modeloAtendimento   String?
-  planoSlug           String?
-  cep                 String?   @db.VarChar(8)
-  logradouro          String?
-  numero              String?
-  complemento         String?
-  pontoReferencia     String?
-  bairro              String?
-  cidade              String?
-  estado              String?   @db.VarChar(2)
-  termosVersao        String?
-  termosAceitosEm     DateTime?
-  enviadoEm           DateTime?
-  revisadoEm          DateTime?
-  motivoRevisao       String?   @db.Text
-  versao              Int       @default(1)
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  usuario             Usuario   @relation("SolicitanteSolicitacaoEstabelecimento", fields: [usuarioId], references: [id])
-  revisor             Usuario?  @relation("RevisorSolicitacaoEstabelecimento", fields: [revisorId], references: [id])
-  estabelecimentoGerado Estabelecimento? @relation("EstabelecimentoGeradoSolicitacao", fields: [estabelecimentoGeradoId], references: [id])
-  segmentos           SolicitacaoEstabelecimentoSegmento[]
-  especialidades      SolicitacaoEstabelecimentoEspecialidade[]
-  notificacoes        NotificacaoUsuario[]
+  id                      Int                                       @id @default(autoincrement())
+  usuarioId               Int
+  revisorId               Int?
+  estabelecimentoGeradoId Int?                                      @unique
+  chaveAtiva              String?                                   @unique
+  status                  String                                    @default("RASCUNHO")
+  nomePublico             String?
+  emailComercial          String?
+  telefoneComercial       String?
+  tipoEstabelecimento     String?
+  modeloAtendimento       String?
+  planoSlug               String?
+  cep                     String?                                   @db.VarChar(8)
+  logradouro              String?
+  numero                  String?
+  complemento             String?
+  pontoReferencia         String?
+  bairro                  String?
+  cidade                  String?
+  estado                  String?                                   @db.VarChar(2)
+  termosVersao            String?
+  termosAceitosEm         DateTime?
+  enviadoEm               DateTime?
+  revisadoEm              DateTime?
+  motivoRevisao           String?                                   @db.Text
+  versao                  Int                                       @default(1)
+  createdAt               DateTime                                  @default(now())
+  updatedAt               DateTime                                  @updatedAt
+  usuario                 Usuario                                   @relation("SolicitanteSolicitacaoEstabelecimento", fields: [usuarioId], references: [id])
+  revisor                 Usuario?                                  @relation("RevisorSolicitacaoEstabelecimento", fields: [revisorId], references: [id])
+  estabelecimentoGerado   Estabelecimento?                          @relation("EstabelecimentoGeradoSolicitacao", fields: [estabelecimentoGeradoId], references: [id])
+  segmentos               SolicitacaoEstabelecimentoSegmento[]
+  especialidades          SolicitacaoEstabelecimentoEspecialidade[]
+  notificacoes            NotificacaoUsuario[]
 
   @@index([usuarioId, status, updatedAt])
   @@index([status, enviadoEm])
@@ -437,13 +444,13 @@ model SolicitacaoEstabelecimento {
 }
 
 model SolicitacaoEstabelecimentoSegmento {
-  id            Int      @id @default(autoincrement())
+  id            Int                        @id @default(autoincrement())
   solicitacaoId Int
   segmentoId    Int
-  principal     Boolean  @default(false)
-  createdAt     DateTime @default(now())
+  principal     Boolean                    @default(false)
+  createdAt     DateTime                   @default(now())
   solicitacao   SolicitacaoEstabelecimento @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade, map: "solicitacao_segmento_solicitacao_fkey")
-  segmento      Segmento @relation(fields: [segmentoId], references: [id], map: "solicitacao_segmento_segmento_fkey")
+  segmento      Segmento                   @relation(fields: [segmentoId], references: [id], map: "solicitacao_segmento_segmento_fkey")
 
   @@unique([solicitacaoId, segmentoId], map: "solicitacao_segmento_unica")
   @@index([segmentoId], map: "solicitacao_segmento_segmento_idx")
@@ -451,12 +458,12 @@ model SolicitacaoEstabelecimentoSegmento {
 }
 
 model SolicitacaoEstabelecimentoEspecialidade {
-  id               Int      @id @default(autoincrement())
-  solicitacaoId    Int
-  especialidadeId  Int
-  createdAt        DateTime @default(now())
-  solicitacao      SolicitacaoEstabelecimento @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade, map: "solicitacao_especialidade_solicitacao_fkey")
-  especialidade    Especialidade @relation(fields: [especialidadeId], references: [id], map: "solicitacao_especialidade_especialidade_fkey")
+  id              Int                        @id @default(autoincrement())
+  solicitacaoId   Int
+  especialidadeId Int
+  createdAt       DateTime                   @default(now())
+  solicitacao     SolicitacaoEstabelecimento @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade, map: "solicitacao_especialidade_solicitacao_fkey")
+  especialidade   Especialidade              @relation(fields: [especialidadeId], references: [id], map: "solicitacao_especialidade_especialidade_fkey")
 
   @@unique([solicitacaoId, especialidadeId], map: "solicitacao_especialidade_unica")
   @@index([especialidadeId], map: "solicitacao_especialidade_idx")
@@ -464,21 +471,21 @@ model SolicitacaoEstabelecimentoEspecialidade {
 }
 
 model NotificacaoUsuario {
-  id                Int       @id @default(autoincrement())
+  id                Int                         @id @default(autoincrement())
   usuarioId         Int
   estabelecimentoId Int?
   solicitacaoId     Int?
   tipo              String
   titulo            String
-  mensagem          String    @db.Text
-  prioridade        String    @default("NORMAL")
+  mensagem          String                      @db.Text
+  prioridade        String                      @default("NORMAL")
   acaoUrl           String?
   metadados         Json?
   lidaEm            DateTime?
   expiraEm          DateTime?
-  createdAt         DateTime  @default(now())
-  usuario           Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  estabelecimento   Estabelecimento? @relation(fields: [estabelecimentoId], references: [id], onDelete: SetNull)
+  createdAt         DateTime                    @default(now())
+  usuario           Usuario                     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  estabelecimento   Estabelecimento?            @relation(fields: [estabelecimentoId], references: [id], onDelete: SetNull)
   solicitacao       SolicitacaoEstabelecimento? @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
 
   @@index([usuarioId, lidaEm, createdAt])
@@ -488,16 +495,16 @@ model NotificacaoUsuario {
 }
 
 model ProfissionalEspecialidade {
-  id              Int           @id @default(autoincrement())
-  estabelecimentoId     Int
-  profissionalId  Int
-  especialidadeId Int
-  principal       Boolean       @default(false)
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  estabelecimento       Estabelecimento     @relation(fields: [estabelecimentoId], references: [id])
-  profissional    Profissional  @relation(fields: [profissionalId], references: [id])
-  especialidade   Especialidade @relation(fields: [especialidadeId], references: [id])
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  profissionalId    Int
+  especialidadeId   Int
+  principal         Boolean         @default(false)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  profissional      Profissional    @relation(fields: [profissionalId], references: [id])
+  especialidade     Especialidade   @relation(fields: [especialidadeId], references: [id])
 
   @@unique([profissionalId, especialidadeId])
   @@index([estabelecimentoId, profissionalId])
@@ -506,15 +513,15 @@ model ProfissionalEspecialidade {
 }
 
 model ServicoEspecialidade {
-  id              Int           @id @default(autoincrement())
-  estabelecimentoId     Int
-  servicoId       Int
-  especialidadeId Int
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  estabelecimento       Estabelecimento     @relation(fields: [estabelecimentoId], references: [id])
-  servico         Servico       @relation(fields: [servicoId], references: [id])
-  especialidade   Especialidade @relation(fields: [especialidadeId], references: [id])
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  servicoId         Int
+  especialidadeId   Int
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  servico           Servico         @relation(fields: [servicoId], references: [id])
+  especialidade     Especialidade   @relation(fields: [especialidadeId], references: [id])
 
   @@unique([servicoId, especialidadeId])
   @@index([estabelecimentoId, servicoId])
@@ -523,16 +530,16 @@ model ServicoEspecialidade {
 }
 
 model ProfissionalServico {
-  id             Int          @id @default(autoincrement())
-  estabelecimentoId    Int
-  profissionalId Int
-  servicoId      Int
-  ativo          Boolean      @default(true)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  estabelecimento      Estabelecimento    @relation(fields: [estabelecimentoId], references: [id])
-  profissional   Profissional @relation(fields: [profissionalId], references: [id])
-  servico        Servico      @relation(fields: [servicoId], references: [id])
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  profissionalId    Int
+  servicoId         Int
+  ativo             Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  profissional      Profissional    @relation(fields: [profissionalId], references: [id])
+  servico           Servico         @relation(fields: [servicoId], references: [id])
 
   @@unique([profissionalId, servicoId])
   @@index([estabelecimentoId, ativo])
@@ -541,18 +548,18 @@ model ProfissionalServico {
 }
 
 model Recurso {
-  id          Int       @id @default(autoincrement())
-  estabelecimentoId Int
-  unidadeId   Int?
-  nome        String
-  tipo        String
-  capacidade  Int       @default(1)
-  ativo       Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
-  unidade     Unidade?  @relation(fields: [unidadeId], references: [id])
-  reservas    AgendamentoRecurso[]
+  id                 Int                        @id @default(autoincrement())
+  estabelecimentoId  Int
+  unidadeId          Int?
+  nome               String
+  tipo               String
+  capacidade         Int                        @default(1)
+  ativo              Boolean                    @default(true)
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+  estabelecimento    Estabelecimento            @relation(fields: [estabelecimentoId], references: [id])
+  unidade            Unidade?                   @relation(fields: [unidadeId], references: [id])
+  reservas           AgendamentoRecurso[]
   indisponibilidades IndisponibilidadeRecurso[]
 
   @@unique([estabelecimentoId, nome])
@@ -562,18 +569,18 @@ model Recurso {
 }
 
 model MembroEquipe {
-  id             Int           @id @default(autoincrement())
-  estabelecimentoId    Int
-  usuarioId      Int
-  profissionalId Int?          @unique
-  papel          String        @default("PROFISSIONAL")
-  permissoes     Json
-  ativo          Boolean       @default(true)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  estabelecimento      Estabelecimento     @relation(fields: [estabelecimentoId], references: [id])
-  usuario        Usuario       @relation(fields: [usuarioId], references: [id])
-  profissional   Profissional? @relation(fields: [profissionalId], references: [id])
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  usuarioId         Int
+  profissionalId    Int?            @unique
+  papel             String          @default("PROFISSIONAL")
+  permissoes        Json
+  ativo             Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  usuario           Usuario         @relation(fields: [usuarioId], references: [id])
+  profissional      Profissional?   @relation(fields: [profissionalId], references: [id])
 
   @@unique([estabelecimentoId, usuarioId])
   @@index([estabelecimentoId, ativo])
@@ -581,21 +588,21 @@ model MembroEquipe {
 }
 
 model EscalaProfissional {
-  id              Int          @id @default(autoincrement())
-  estabelecimentoId     Int
-  profissionalId Int
-  unidadeId       Int?
-  diaSemana       Int
-  inicio          String       @db.VarChar(5)
-  fim             String       @db.VarChar(5)
-  intervaloInicio String?      @db.VarChar(5)
-  intervaloFim    String?      @db.VarChar(5)
-  ativo           Boolean      @default(true)
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  estabelecimento       Estabelecimento    @relation(fields: [estabelecimentoId], references: [id])
-  profissional    Profissional @relation(fields: [profissionalId], references: [id])
-  unidade         Unidade?     @relation(fields: [unidadeId], references: [id])
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  profissionalId    Int
+  unidadeId         Int?
+  diaSemana         Int
+  inicio            String          @db.VarChar(5)
+  fim               String          @db.VarChar(5)
+  intervaloInicio   String?         @db.VarChar(5)
+  intervaloFim      String?         @db.VarChar(5)
+  ativo             Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  profissional      Profissional    @relation(fields: [profissionalId], references: [id])
+  unidade           Unidade?        @relation(fields: [unidadeId], references: [id])
 
   @@index([estabelecimentoId, diaSemana, ativo])
   @@index([profissionalId, diaSemana, ativo])
@@ -604,17 +611,17 @@ model EscalaProfissional {
 }
 
 model IndisponibilidadeRecurso {
-  id          Int      @id @default(autoincrement())
+  id                Int             @id @default(autoincrement())
   estabelecimentoId Int
-  recursoId   Int
-  inicio      DateTime
-  fim         DateTime
-  motivo      String?  @db.Text
-  ativo       Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  recursoId         Int
+  inicio            DateTime
+  fim               DateTime
+  motivo            String?         @db.Text
+  ativo             Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
   estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
-  recurso     Recurso   @relation(fields: [recursoId], references: [id])
+  recurso           Recurso         @relation(fields: [recursoId], references: [id])
 
   @@index([estabelecimentoId, inicio, fim])
   @@index([recursoId, inicio, fim, ativo])
@@ -644,8 +651,8 @@ model AgendamentoServico {
   preparoDepoisMinutos Int         @default(0)
   preco                Decimal     @db.Decimal(10, 2)
   createdAt            DateTime    @default(now())
-  agendamento           Agendamento @relation(fields: [agendamentoId], references: [id])
-  servico               Servico     @relation(fields: [servicoId], references: [id])
+  agendamento          Agendamento @relation(fields: [agendamentoId], references: [id])
+  servico              Servico     @relation(fields: [servicoId], references: [id])
 
   @@unique([agendamentoId, ordem])
   @@index([servicoId])
@@ -689,14 +696,14 @@ model HistoricoReagendamento {
 }
 
 model Requisito {
-  id        Int       @id @default(autoincrement())
-  slug      String    @unique
+  id        Int                @id @default(autoincrement())
+  slug      String             @unique
   nome      String
-  descricao String?   @db.Text
-  tipo      String    @default("INFORMATIVO")
-  ativo     Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  descricao String?            @db.Text
+  tipo      String             @default("INFORMATIVO")
+  ativo     Boolean            @default(true)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
   servicos  ServicoRequisito[]
 
   @@map("requisitos")
@@ -719,21 +726,21 @@ model ServicoRequisito {
 }
 
 model ClienteEstabelecimento {
-  id          Int       @id @default(autoincrement())
-  estabelecimentoId Int
-  usuarioId   Int
-  origem      String    @default("AGENDAMENTO")
+  id                    Int       @id @default(autoincrement())
+  estabelecimentoId     Int
+  usuarioId             Int
+  origem                String    @default("AGENDAMENTO")
   primeiroAgendamentoEm DateTime?
   ultimoAgendamentoEm   DateTime?
-  status      String    @default("ATIVO")
-  tags        Json?
-  observacoes String?   @db.Text
-  ultimaInteracaoEm DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  status                String    @default("ATIVO")
+  tags                  Json?
+  observacoes           String?   @db.Text
+  ultimaInteracaoEm     DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
-  usuario   Usuario   @relation(fields: [usuarioId], references: [id])
+  usuario         Usuario         @relation(fields: [usuarioId], references: [id])
 
   @@unique([estabelecimentoId, usuarioId])
   @@index([usuarioId])
@@ -741,23 +748,23 @@ model ClienteEstabelecimento {
 }
 
 model ImportacaoContatoLote {
-  id                 String   @id @default(uuid())
-  estabelecimentoId  Int
-  operadorId         Int
-  chaveIdempotencia  String
-  status             String   @default("SIMULADO")
-  totalRecebidos     Int      @default(0)
-  totalNovos         Int      @default(0)
-  totalExistentes    Int      @default(0)
-  totalInvalidos     Int      @default(0)
-  totalConflitos     Int      @default(0)
-  totalImportados    Int      @default(0)
-  confirmadoEm       DateTime?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  estabelecimento    Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
-  operador           Usuario @relation("ImportacaoContatoOperador", fields: [operadorId], references: [id])
-  itens              ImportacaoContatoItem[]
+  id                String                  @id @default(uuid())
+  estabelecimentoId Int
+  operadorId        Int
+  chaveIdempotencia String
+  status            String                  @default("SIMULADO")
+  totalRecebidos    Int                     @default(0)
+  totalNovos        Int                     @default(0)
+  totalExistentes   Int                     @default(0)
+  totalInvalidos    Int                     @default(0)
+  totalConflitos    Int                     @default(0)
+  totalImportados   Int                     @default(0)
+  confirmadoEm      DateTime?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  estabelecimento   Estabelecimento         @relation(fields: [estabelecimentoId], references: [id])
+  operador          Usuario                 @relation("ImportacaoContatoOperador", fields: [operadorId], references: [id])
+  itens             ImportacaoContatoItem[]
 
   @@unique([estabelecimentoId, chaveIdempotencia], map: "import_contatos_lote_tenant_chave_uq")
   @@index([estabelecimentoId, createdAt])
@@ -766,16 +773,16 @@ model ImportacaoContatoLote {
 }
 
 model ImportacaoContatoItem {
-  id          Int      @id @default(autoincrement())
+  id          Int                   @id @default(autoincrement())
   loteId      String
   usuarioId   Int?
   referencia  String
   fingerprint String
   resultado   String
   motivo      String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime              @default(now())
   lote        ImportacaoContatoLote @relation(fields: [loteId], references: [id], onDelete: Cascade)
-  usuario     Usuario? @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+  usuario     Usuario?              @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
 
   @@unique([loteId, referencia])
   @@index([usuarioId])
@@ -804,17 +811,17 @@ model PreferenciaComunicacao {
 }
 
 model TemplateComunicacao {
-  id                Int             @id @default(autoincrement())
+  id                Int                @id @default(autoincrement())
   estabelecimentoId Int
   nome              String
   evento            String
   canal             String
   assunto           String?
-  conteudo          String          @db.Text
-  ativo             Boolean         @default(true)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  conteudo          String             @db.Text
+  ativo             Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  estabelecimento   Estabelecimento    @relation(fields: [estabelecimentoId], references: [id])
   envios            EnvioComunicacao[]
 
   @@unique([estabelecimentoId, nome, canal])
@@ -823,37 +830,37 @@ model TemplateComunicacao {
 }
 
 model EnvioComunicacao {
-  id                Int                   @id @default(autoincrement())
-  estabelecimentoId Int
-  usuarioId         Int?
-  agendamentoId     Int?
-  templateId        Int?
-  canal             String
-  tipo              String
-  destinatario      String
-  assunto           String?
-  conteudo          String                @db.Text
-  status            String                @default("AGENDADO")
-  chaveIdempotencia String?
-  agendadoPara      DateTime
-  proximaTentativaEm DateTime?
-  tentativasRealizadas Int                 @default(0)
-  maximoTentativas  Int                   @default(3)
-  bloqueadoEm       DateTime?
-  bloqueadoPor      String?
-  provedor          String?
-  referenciaExterna String?
-  enviadoEm         DateTime?
-  erro              String?               @db.Text
-  metadados         Json?
-  createdAt         DateTime              @default(now())
-  updatedAt         DateTime              @updatedAt
-  estabelecimento   Estabelecimento       @relation(fields: [estabelecimentoId], references: [id])
-  usuario           Usuario?              @relation(fields: [usuarioId], references: [id])
-  agendamento       Agendamento?          @relation(fields: [agendamentoId], references: [id])
-  template          TemplateComunicacao?  @relation(fields: [templateId], references: [id])
-  tentativas        TentativaEnvioComunicacao[]
-  callbacks         CallbackEnvioComunicacao[]
+  id                   Int                         @id @default(autoincrement())
+  estabelecimentoId    Int
+  usuarioId            Int?
+  agendamentoId        Int?
+  templateId           Int?
+  canal                String
+  tipo                 String
+  destinatario         String
+  assunto              String?
+  conteudo             String                      @db.Text
+  status               String                      @default("AGENDADO")
+  chaveIdempotencia    String?
+  agendadoPara         DateTime
+  proximaTentativaEm   DateTime?
+  tentativasRealizadas Int                         @default(0)
+  maximoTentativas     Int                         @default(3)
+  bloqueadoEm          DateTime?
+  bloqueadoPor         String?
+  provedor             String?
+  referenciaExterna    String?
+  enviadoEm            DateTime?
+  erro                 String?                     @db.Text
+  metadados            Json?
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+  estabelecimento      Estabelecimento             @relation(fields: [estabelecimentoId], references: [id])
+  usuario              Usuario?                    @relation(fields: [usuarioId], references: [id])
+  agendamento          Agendamento?                @relation(fields: [agendamentoId], references: [id])
+  template             TemplateComunicacao?        @relation(fields: [templateId], references: [id])
+  tentativas           TentativaEnvioComunicacao[]
+  callbacks            CallbackEnvioComunicacao[]
 
   @@unique([estabelecimentoId, chaveIdempotencia])
   @@index([estabelecimentoId, status, agendadoPara])
@@ -865,17 +872,17 @@ model EnvioComunicacao {
 }
 
 model TentativaEnvioComunicacao {
-  id            Int              @id @default(autoincrement())
-  envioId       Int
-  numero        Int
-  status        String
-  provedor      String?
+  id                Int              @id @default(autoincrement())
+  envioId           Int
+  numero            Int
+  status            String
+  provedor          String?
   referenciaExterna String?
-  resposta      Json?
-  erro          String?          @db.Text
-  iniciadaEm    DateTime         @default(now())
-  finalizadaEm  DateTime?
-  envio         EnvioComunicacao @relation(fields: [envioId], references: [id], onDelete: Cascade)
+  resposta          Json?
+  erro              String?          @db.Text
+  iniciadaEm        DateTime         @default(now())
+  finalizadaEm      DateTime?
+  envio             EnvioComunicacao @relation(fields: [envioId], references: [id], onDelete: Cascade)
 
   @@unique([envioId, numero])
   @@index([status, iniciadaEm])
@@ -883,17 +890,17 @@ model TentativaEnvioComunicacao {
 }
 
 model CallbackEnvioComunicacao {
-  id                Int                @id @default(autoincrement())
+  id                Int               @id @default(autoincrement())
   envioId           Int?
   provedor          String
   eventoExternoId   String
   referenciaExterna String?
   tipo              String
   payload           Json
-  recebidoEm        DateTime           @default(now())
+  recebidoEm        DateTime          @default(now())
   processadoEm      DateTime?
-  erro              String?            @db.Text
-  envio             EnvioComunicacao?  @relation(fields: [envioId], references: [id], onDelete: SetNull)
+  erro              String?           @db.Text
+  envio             EnvioComunicacao? @relation(fields: [envioId], references: [id], onDelete: SetNull)
 
   @@unique([provedor, eventoExternoId])
   @@index([referenciaExterna])
@@ -902,15 +909,15 @@ model CallbackEnvioComunicacao {
 }
 
 model Unidade {
-  id          Int       @id @default(autoincrement())
-  estabelecimentoId Int
-  nome        String
-  endereco    String?
-  telefone    String?
-  ativa       Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  id                    Int                    @id @default(autoincrement())
+  estabelecimentoId     Int
+  nome                  String
+  endereco              String?
+  telefone              String?
+  ativa                 Boolean                @default(true)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  estabelecimento       Estabelecimento        @relation(fields: [estabelecimentoId], references: [id])
   horariosFuncionamento HorarioFuncionamento[]
   bloqueiosAgenda       BloqueioAgenda[]
   recursos              Recurso[]
@@ -923,19 +930,19 @@ model Unidade {
 }
 
 model HorarioFuncionamento {
-  id              Int       @id @default(autoincrement())
-  estabelecimentoId     Int
-  unidadeId       Int?
-  diaSemana       Int
-  inicio          String    @db.VarChar(5)
-  fim             String    @db.VarChar(5)
-  intervaloInicio String?   @db.VarChar(5)
-  intervaloFim    String?   @db.VarChar(5)
-  ativo           Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  estabelecimento       Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
-  unidade         Unidade?  @relation(fields: [unidadeId], references: [id])
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  unidadeId         Int?
+  diaSemana         Int
+  inicio            String          @db.VarChar(5)
+  fim               String          @db.VarChar(5)
+  intervaloInicio   String?         @db.VarChar(5)
+  intervaloFim      String?         @db.VarChar(5)
+  ativo             Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  unidade           Unidade?        @relation(fields: [unidadeId], references: [id])
 
   @@index([estabelecimentoId, diaSemana])
   @@index([unidadeId])
@@ -943,18 +950,18 @@ model HorarioFuncionamento {
 }
 
 model BloqueioAgenda {
-  id             Int           @id @default(autoincrement())
-  estabelecimentoId    Int
-  profissionalId Int?
-  unidadeId      Int?
-  inicio         DateTime
-  fim            DateTime
-  motivo         String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  estabelecimento      Estabelecimento     @relation(fields: [estabelecimentoId], references: [id])
-  profissional   Profissional? @relation(fields: [profissionalId], references: [id])
-  unidade        Unidade?      @relation(fields: [unidadeId], references: [id])
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  profissionalId    Int?
+  unidadeId         Int?
+  inicio            DateTime
+  fim               DateTime
+  motivo            String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  profissional      Profissional?   @relation(fields: [profissionalId], references: [id])
+  unidade           Unidade?        @relation(fields: [unidadeId], references: [id])
 
   @@index([estabelecimentoId, inicio, fim])
   @@index([profissionalId, inicio, fim])
@@ -963,20 +970,20 @@ model BloqueioAgenda {
 }
 
 model LancamentoFinanceiro {
-  id             Int           @id @default(autoincrement())
-  estabelecimentoId    Int
-  profissionalId Int?
-  usuarioId      Int?
-  tipo           String
-  categoria      String?
-  descricao      String
-  valor          Decimal       @db.Decimal(10, 2)
-  data           DateTime
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  estabelecimento      Estabelecimento     @relation(fields: [estabelecimentoId], references: [id])
-  profissional   Profissional? @relation(fields: [profissionalId], references: [id])
-  usuario        Usuario?      @relation(fields: [usuarioId], references: [id])
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  profissionalId    Int?
+  usuarioId         Int?
+  tipo              String
+  categoria         String?
+  descricao         String
+  valor             Decimal         @db.Decimal(10, 2)
+  data              DateTime
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  profissional      Profissional?   @relation(fields: [profissionalId], references: [id])
+  usuario           Usuario?        @relation(fields: [usuarioId], references: [id])
 
   @@index([estabelecimentoId, data])
   @@index([profissionalId, data])
@@ -1006,17 +1013,17 @@ model ConfiguracaoComissao {
 }
 
 model FormaPagamento {
-  id                Int             @id @default(autoincrement())
+  id                Int               @id @default(autoincrement())
   estabelecimentoId Int
   nome              String
   tipo              String
-  taxaPercentual    Decimal         @default(0) @db.Decimal(5, 2)
-  taxaFixa          Decimal         @default(0) @db.Decimal(10, 2)
-  prazoRecebimento  Int             @default(0)
-  ativa             Boolean         @default(true)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  taxaPercentual    Decimal           @default(0) @db.Decimal(5, 2)
+  taxaFixa          Decimal           @default(0) @db.Decimal(10, 2)
+  prazoRecebimento  Int               @default(0)
+  ativa             Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  estabelecimento   Estabelecimento   @relation(fields: [estabelecimentoId], references: [id])
   contas            ContaFinanceira[]
 
   @@unique([estabelecimentoId, nome])
@@ -1025,26 +1032,26 @@ model FormaPagamento {
 }
 
 model ContaFinanceira {
-  id                Int              @id @default(autoincrement())
+  id                Int                     @id @default(autoincrement())
   estabelecimentoId Int
-  agendamentoId     Int?             @unique
+  agendamentoId     Int?                    @unique
   formaPagamentoId  Int?
   tipo              String
   categoria         String?
   descricao         String
   documento         String?
-  valorOriginal     Decimal          @db.Decimal(10, 2)
-  valorPago         Decimal          @default(0) @db.Decimal(10, 2)
-  status            String           @default("PENDENTE")
+  valorOriginal     Decimal                 @db.Decimal(10, 2)
+  valorPago         Decimal                 @default(0) @db.Decimal(10, 2)
+  status            String                  @default("PENDENTE")
   competencia       DateTime
   vencimento        DateTime
   pagoEm            DateTime?
-  observacoes       String?          @db.Text
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-  estabelecimento   Estabelecimento  @relation(fields: [estabelecimentoId], references: [id])
-  agendamento       Agendamento?     @relation(fields: [agendamentoId], references: [id])
-  formaPagamento    FormaPagamento?  @relation(fields: [formaPagamentoId], references: [id])
+  observacoes       String?                 @db.Text
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  estabelecimento   Estabelecimento         @relation(fields: [estabelecimentoId], references: [id])
+  agendamento       Agendamento?            @relation(fields: [agendamentoId], references: [id])
+  formaPagamento    FormaPagamento?         @relation(fields: [formaPagamentoId], references: [id])
   conciliacoes      ConciliacaoFinanceira[]
 
   @@index([estabelecimentoId, tipo, status, vencimento])
@@ -1106,36 +1113,36 @@ model RepasseFinanceiro {
 }
 
 model PlanoAssinatura {
-  id              Int                  @id @default(autoincrement())
-  nome            String               @unique
-  slug            String               @unique
-  descricao       String               @db.Text
-  precoMensal     Decimal              @db.Decimal(10, 2)
-  limiteUsuarios  Int
-  limiteUnidades  Int
-  limiteServicos  Int
-  recursos        Json
-  ativo           Boolean              @default(true)
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-  assinaturas     AssinaturaEstabelecimento[]
+  id             Int                         @id @default(autoincrement())
+  nome           String                      @unique
+  slug           String                      @unique
+  descricao      String                      @db.Text
+  precoMensal    Decimal                     @db.Decimal(10, 2)
+  limiteUsuarios Int
+  limiteUnidades Int
+  limiteServicos Int
+  recursos       Json
+  ativo          Boolean                     @default(true)
+  createdAt      DateTime                    @default(now())
+  updatedAt      DateTime                    @updatedAt
+  assinaturas    AssinaturaEstabelecimento[]
 
   @@map("planos_assinatura")
 }
 
 model AssinaturaEstabelecimento {
-  id              Int              @id @default(autoincrement())
-  estabelecimentoId     Int              @unique
-  planoId         Int
-  status          String           @default("TRIAL")
-  trialEndsAt     DateTime?
-  currentPeriodEnd DateTime?
-  cancelAtPeriodEnd Boolean        @default(false)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  estabelecimento       Estabelecimento        @relation(fields: [estabelecimentoId], references: [id])
-  plano           PlanoAssinatura  @relation(fields: [planoId], references: [id])
-  cobrancas       CobrancaAssinatura[]
+  id                Int                  @id @default(autoincrement())
+  estabelecimentoId Int                  @unique
+  planoId           Int
+  status            String               @default("TRIAL")
+  trialEndsAt       DateTime?
+  currentPeriodEnd  DateTime?
+  cancelAtPeriodEnd Boolean              @default(false)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  estabelecimento   Estabelecimento      @relation(fields: [estabelecimentoId], references: [id])
+  plano             PlanoAssinatura      @relation(fields: [planoId], references: [id])
+  cobrancas         CobrancaAssinatura[]
 
   @@index([planoId])
   @@index([status])
@@ -1143,37 +1150,37 @@ model AssinaturaEstabelecimento {
 }
 
 model CobrancaAssinatura {
-  id             Int                       @id @default(autoincrement())
-  assinaturaId   Int
-  provedor       String                    @default("MANUAL")
-  referenciaExterna String?                @unique
-  valor          Decimal                   @db.Decimal(10, 2)
-  status         String                    @default("PENDENTE")
-  vencimento     DateTime
-  pagoEm         DateTime?
-  tentativas     Int                       @default(0)
-  linkPagamento  String?                   @db.Text
-  codigoPix      String?                   @db.Text
-  createdAt      DateTime                  @default(now())
-  updatedAt      DateTime                  @updatedAt
-  assinatura     AssinaturaEstabelecimento @relation(fields: [assinaturaId], references: [id], onDelete: Cascade)
+  id                Int                       @id @default(autoincrement())
+  assinaturaId      Int
+  provedor          String                    @default("MANUAL")
+  referenciaExterna String?                   @unique
+  valor             Decimal                   @db.Decimal(10, 2)
+  status            String                    @default("PENDENTE")
+  vencimento        DateTime
+  pagoEm            DateTime?
+  tentativas        Int                       @default(0)
+  linkPagamento     String?                   @db.Text
+  codigoPix         String?                   @db.Text
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  assinatura        AssinaturaEstabelecimento @relation(fields: [assinaturaId], references: [id], onDelete: Cascade)
 
   @@index([assinaturaId, status, vencimento])
   @@map("cobrancas_assinaturas")
 }
 
 model EventoGatewayPagamento {
-  id                Int             @id @default(autoincrement())
+  id                Int              @id @default(autoincrement())
   estabelecimentoId Int?
   provedor          String
   eventoExternoId   String
   tipo              String
   payload           Json
-  status            String          @default("PENDENTE")
+  status            String           @default("PENDENTE")
   processadoEm      DateTime?
-  erro              String?         @db.Text
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  erro              String?          @db.Text
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
   estabelecimento   Estabelecimento? @relation(fields: [estabelecimentoId], references: [id])
 
   @@unique([provedor, eventoExternoId])
@@ -1183,20 +1190,20 @@ model EventoGatewayPagamento {
 }
 
 model ConciliacaoFinanceira {
-  id                 Int             @id @default(autoincrement())
+  id                 Int              @id @default(autoincrement())
   estabelecimentoId  Int
   contaFinanceiraId  Int?
   provedor           String
   transacaoExternaId String
-  valorEsperado      Decimal         @db.Decimal(10, 2)
-  valorRecebido      Decimal         @db.Decimal(10, 2)
-  diferenca          Decimal         @db.Decimal(10, 2)
-  status             String          @default("PENDENTE")
+  valorEsperado      Decimal          @db.Decimal(10, 2)
+  valorRecebido      Decimal          @db.Decimal(10, 2)
+  diferenca          Decimal          @db.Decimal(10, 2)
+  status             String           @default("PENDENTE")
   conciliadoEm       DateTime?
-  observacoes        String?         @db.Text
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-  estabelecimento    Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  observacoes        String?          @db.Text
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  estabelecimento    Estabelecimento  @relation(fields: [estabelecimentoId], references: [id])
   contaFinanceira    ContaFinanceira? @relation(fields: [contaFinanceiraId], references: [id])
 
   @@unique([estabelecimentoId, provedor, transacaoExternaId])
@@ -1206,16 +1213,16 @@ model ConciliacaoFinanceira {
 }
 
 model LogAuditoria {
-  id          Int       @id @default(autoincrement())
+  id                Int              @id @default(autoincrement())
   estabelecimentoId Int?
-  usuarioId   Int?
-  acao        String
-  entidade    String
-  entidadeId  String?
-  detalhes    Json?
-  createdAt   DateTime  @default(now())
+  usuarioId         Int?
+  acao              String
+  entidade          String
+  entidadeId        String?
+  detalhes          Json?
+  createdAt         DateTime         @default(now())
   estabelecimento   Estabelecimento? @relation(fields: [estabelecimentoId], references: [id])
-  usuario     Usuario?   @relation(fields: [usuarioId], references: [id])
+  usuario           Usuario?         @relation(fields: [usuarioId], references: [id])
 
   @@index([estabelecimentoId, createdAt])
   @@index([usuarioId, createdAt])
@@ -1223,26 +1230,26 @@ model LogAuditoria {
 }
 
 model TransicaoAgendamento {
-  id                    Int       @id @default(autoincrement())
+  id                    Int             @id @default(autoincrement())
   agendamentoId         Int
   estabelecimentoId     Int
   destinatarioUsuarioId Int?
   revisaoFluxo          Int
   tipo                  String
-  status                String    @default("AGENDADA")
-  chaveIdempotencia     String    @unique
+  status                String          @default("AGENDADA")
+  chaveIdempotencia     String          @unique
   dataPrevista          DateTime
   processadoEm          DateTime?
-  tentativas            Int       @default(0)
+  tentativas            Int             @default(0)
   proximaTentativaEm    DateTime?
   bloqueadoEm           DateTime?
   bloqueadoPor          String?
-  erro                  String?   @db.Text
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-  agendamento           Agendamento @relation(fields: [agendamentoId], references: [id], onDelete: Cascade)
+  erro                  String?         @db.Text
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  agendamento           Agendamento     @relation(fields: [agendamentoId], references: [id], onDelete: Cascade)
   estabelecimento       Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
-  destinatario          Usuario? @relation("DestinatarioTransicaoAgendamento", fields: [destinatarioUsuarioId], references: [id], onDelete: SetNull)
+  destinatario          Usuario?        @relation("DestinatarioTransicaoAgendamento", fields: [destinatarioUsuarioId], references: [id], onDelete: SetNull)
 
   @@index([status, dataPrevista])
   @@index([status, proximaTentativaEm])
@@ -1253,20 +1260,20 @@ model TransicaoAgendamento {
 }
 
 model LembreteRelacionamento {
-  id             Int          @id @default(autoincrement())
-  estabelecimentoId    Int
-  usuarioId      Int?
-  agendamentoId  Int?
-  tipo           String
-  canal          String       @default("WHATSAPP")
-  status         String       @default("PENDENTE")
-  mensagem       String       @db.Text
-  dataPrevista   DateTime
-  enviadoEm      DateTime?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  estabelecimento      Estabelecimento    @relation(fields: [estabelecimentoId], references: [id])
-  usuario        Usuario?     @relation(fields: [usuarioId], references: [id])
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  usuarioId         Int?
+  agendamentoId     Int?
+  tipo              String
+  canal             String          @default("WHATSAPP")
+  status            String          @default("PENDENTE")
+  mensagem          String          @db.Text
+  dataPrevista      DateTime
+  enviadoEm         DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  usuario           Usuario?        @relation(fields: [usuarioId], references: [id])
 
   @@index([estabelecimentoId, status, dataPrevista])
   @@index([usuarioId])
@@ -1274,20 +1281,20 @@ model LembreteRelacionamento {
 }
 
 model Avaliacao {
-  id             Int          @id @default(autoincrement())
-  estabelecimentoId    Int
-  agendamentoId  Int          @unique
-  usuarioId      Int
-  profissionalId Int
-  nota           Int
-  comentario     String?      @db.Text
-  status         String       @default("APPROVED")
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  estabelecimento      Estabelecimento    @relation(fields: [estabelecimentoId], references: [id])
-  agendamento    Agendamento  @relation(fields: [agendamentoId], references: [id])
-  usuario        Usuario      @relation(fields: [usuarioId], references: [id])
-  profissional   Profissional @relation(fields: [profissionalId], references: [id])
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  agendamentoId     Int             @unique
+  usuarioId         Int
+  profissionalId    Int
+  nota              Int
+  comentario        String?         @db.Text
+  status            String          @default("APPROVED")
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  agendamento       Agendamento     @relation(fields: [agendamentoId], references: [id])
+  usuario           Usuario         @relation(fields: [usuarioId], references: [id])
+  profissional      Profissional    @relation(fields: [profissionalId], references: [id])
 
   @@index([estabelecimentoId, status])
   @@index([profissionalId, status])
@@ -1296,20 +1303,20 @@ model Avaliacao {
 }
 
 model DenunciaPerfilPublico {
-  id            Int       @id @default(autoincrement())
-  estabelecimentoId   Int
-  nome          String?
-  email         String?
-  motivo        String
-  mensagem      String    @db.Text
-  status        String    @default("PENDENTE")
-  resolucao     String?   @db.Text
-  revisadoPorId Int?
-  revisadoEm    DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  estabelecimento     Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
-  revisadoPor   Usuario?  @relation("DenunciaPerfilRevisor", fields: [revisadoPorId], references: [id])
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  nome              String?
+  email             String?
+  motivo            String
+  mensagem          String          @db.Text
+  status            String          @default("PENDENTE")
+  resolucao         String?         @db.Text
+  revisadoPorId     Int?
+  revisadoEm        DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  revisadoPor       Usuario?        @relation("DenunciaPerfilRevisor", fields: [revisadoPorId], references: [id])
 
   @@index([estabelecimentoId, status, createdAt])
   @@index([revisadoPorId])

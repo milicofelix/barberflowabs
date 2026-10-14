@@ -1,5 +1,4 @@
 import CampoTexto from '@/src/components/shared/CampoTexto'
-import ImagemRegistro from '@/src/components/midia/ImagemRegistro'
 import useSessao from '@/src/data/hooks/useSessao'
 import HorariosAgenda from '@/src/components/configuracoes/HorariosAgenda'
 import Carregando from '@/src/components/shared/Carregando'
@@ -16,7 +15,7 @@ import { useCallback, useState } from 'react'
 import CabecalhoIdentidadeUnidade from '@/src/components/shared/CabecalhoIdentidadeUnidade'
 
 export default function Configuracoes() {
-    const { usuario, renovarSessao } = useSessao()
+    const { usuario } = useSessao()
     const { cores } = useTema()
     const dados = useConfiguracoesEstabelecimento()
     useFocusEffect(useCallback(() => { dados.carregar() }, [dados.carregar]))
@@ -34,7 +33,6 @@ export default function Configuracoes() {
             <CampoTexto label="Telefone" value={dados.perfil.telefone ?? ''} onChangeText={(v) => atualizarPerfil('telefone', v)} keyboardType="phone-pad" />
             <CampoTexto label="E-mail" value={dados.perfil.email ?? ''} onChangeText={(v) => atualizarPerfil('email', v)} keyboardType="email-address" />
         </Secao>
-        <Secao titulo="Minha foto"><ImagemRegistro titulo="Foto pessoal" valor={usuario?.fotoURL} entidade="USUARIO" finalidade="AVATAR" aoSalvar={renovarSessao} /></Secao>
         <Secao titulo="Localização">
             <CampoTexto label="Endereço" value={dados.perfil.endereco ?? ''} onChangeText={(v) => atualizarPerfil('endereco', v)} />
             <CampoTexto label="Bairro" value={dados.perfil.bairro ?? ''} onChangeText={(v) => atualizarPerfil('bairro', v)} />

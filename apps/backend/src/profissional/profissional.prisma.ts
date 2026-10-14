@@ -15,9 +15,11 @@ export class ProfissionalPrisma implements RepositorioProfissional {
   }
 
   criar(estabelecimentoId: number, dados: CriarProfissionalDto): Promise<Profissional> {
+    const imagemURL = dados.imagemURL?.trim() || this.imagemPadrao(dados.sexo);
     return this.prisma.profissional.create({
       data: {
         ...dados,
+        imagemURL,
         avaliacao: dados.avaliacao ?? 5,
         quantidadeAvaliacoes: dados.quantidadeAvaliacoes ?? 0,
         estabelecimentoId,
@@ -30,10 +32,12 @@ export class ProfissionalPrisma implements RepositorioProfissional {
     estabelecimentoId: number,
     dados: CriarProfissionalDto,
   ): Promise<Profissional> {
+    const imagemURL = dados.imagemURL?.trim() || this.imagemPadrao(dados.sexo);
     return this.prisma.profissional.update({
       where: { id, estabelecimentoId },
       data: {
         ...dados,
+        imagemURL,
         avaliacao: dados.avaliacao ?? 5,
         quantidadeAvaliacoes: dados.quantidadeAvaliacoes ?? 0,
       },
@@ -44,5 +48,11 @@ export class ProfissionalPrisma implements RepositorioProfissional {
     await this.prisma.profissional.delete({
       where: { id, estabelecimentoId },
     });
+  }
+
+  private imagemPadrao(sexo: CriarProfissionalDto['sexo']) {
+    return sexo === 'FEMININO'
+      ? '/profissionais/avatar-feminino.png'
+      : '/profissionais/avatar-masculino.png';
   }
 }
