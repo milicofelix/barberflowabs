@@ -242,6 +242,23 @@ Ainda não foram marcados como aprovados os itens que dependem de interação re
 
 O build web de produção deve receber `NODE_ENV=production`. O container normal continua corretamente em `development`; executar `next build` herdando esse valor gera inconsistência entre os runtimes do React/Next e não representa a configuração de produção.
 
+## Correções De Equipe E Escalas — 14/10/2026
+
+- A associação de mídia de profissional com `midiaId: null` respeita o sexo cadastrado e usa a silhueta masculina ou feminina. A opção “Usar padrão” no editor mobile antecipa essa mesma imagem. Antes, o backend restaurava `/profissionais/profissional-1.jpg`, inclusive após a criação com silhueta.
+- O mobile envia somente os campos editáveis da escala e converte intervalos vazios para `null`. O backend também seleciona explicitamente os campos persistidos: IDs e relações devolvidos na consulta não entram no `createMany`.
+- A escala mostra carregamento e falhas de consulta, recupera os horários salvos e ignora respostas antigas quando o profissional selecionado muda. Durante o salvamento, impede nova submissão e mostra confirmação ou erro no formulário.
+- Inclusão de profissional e membro mostra confirmação/erro junto ao formulário. A tela explica os campos obrigatórios e a ausência de usuários disponíveis para vinculação. O primeiro toque no botão é processado mesmo com o teclado aberto.
+
+Revisão estática somente. Não foram executados testes, builds, typecheck, lint, chamadas à API, migrations ou reinícios. Não há mudança de schema, nova dependência ou migration nesta correção. Registros com foto antiga não foram alterados em lote.
+
+Roteiro para aceite pelo usuário no mobile:
+
+1. Adicionar um profissional masculino e outro feminino sem escolher foto; conferir a silhueta após salvar e reabrir a tela.
+2. Em profissional com foto antiga, escolher “Usar padrão” e “Salvar imagem”; conferir a silhueta correspondente ao sexo cadastrado.
+3. Carregar uma escala existente, alterar os dias/horários, deixar o intervalo vazio e salvar; reabrir para conferir a persistência. Conferir também um intervalo preenchido.
+4. Alternar entre profissionais e conferir os horários de cada escala. Em falha de conexão, conferir a mensagem e a opção de tentar carregar novamente.
+5. Adicionar profissional com o teclado aberto. Vincular uma conta disponível como membro; conferir a confirmação e a atualização da lista. Sem contas disponíveis, conferir a explicação do botão desabilitado.
+
 ## Sequência E Estado
 
 A seção “Clientes Que Agendam Online” da Home web está temporariamente sem fotos/depoimentos demonstrativos. O fluxo futuro de participação voluntária, revisão e retirada foi separado em `docs/PLANO_CLIENTES_DEPOIMENTOS_E_AUTORIZACAO.md`. Foto pessoal não será reutilizada automaticamente como autorização de divulgação.

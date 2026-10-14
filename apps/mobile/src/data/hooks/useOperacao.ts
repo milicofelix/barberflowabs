@@ -200,7 +200,13 @@ export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'da
     }
     const removerMembro = (id: number) => executarAcao(() => httpDelete(`/equipe/${id}`))
     const buscarEscalas = (profissionalId: number) => httpGet<EscalaProfissional[]>(`/equipe/profissionais/${profissionalId}/escalas`)
-    const salvarEscalas = (profissionalId: number, escalas: EscalaProfissional[]) => executarAcao(() => httpPut(`/equipe/profissionais/${profissionalId}/escalas`, { escalas }))
+    const salvarEscalas = (profissionalId: number, escalas: EscalaProfissional[]) => executarAcao(() => httpPut(`/equipe/profissionais/${profissionalId}/escalas`, {
+        escalas: escalas.map(({ unidadeId, diaSemana, inicio, fim, intervaloInicio, intervaloFim, ativo }) => ({
+            unidadeId: unidadeId ?? null, diaSemana, inicio: inicio.trim(), fim: fim.trim(),
+            intervaloInicio: intervaloInicio?.trim() || null, intervaloFim: intervaloFim?.trim() || null,
+            ativo: ativo ?? true,
+        })),
+    }))
     const criarRecurso = (dados: Omit<RecursoOperacional, 'id'>) => executarAcao(() => httpPost('/recursos', dados))
     const indisponibilizarRecurso = (id: number, dados: { inicio: string; fim: string; motivo?: string }) => executarAcao(() => httpPost(`/recursos/${id}/indisponibilidades`, dados))
     const buscarIndisponibilidades = (id: number) => httpGet<IndisponibilidadeRecurso[]>(`/recursos/${id}/indisponibilidades`)

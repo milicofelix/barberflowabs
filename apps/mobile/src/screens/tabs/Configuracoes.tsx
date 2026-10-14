@@ -1,4 +1,5 @@
 import CampoTexto from '@/src/components/shared/CampoTexto'
+import ImagemRegistro from '@/src/components/midia/ImagemRegistro'
 import useSessao from '@/src/data/hooks/useSessao'
 import HorariosAgenda from '@/src/components/configuracoes/HorariosAgenda'
 import Carregando from '@/src/components/shared/Carregando'

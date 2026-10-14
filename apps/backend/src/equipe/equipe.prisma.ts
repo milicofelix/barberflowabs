@@ -61,7 +61,13 @@ export class EquipePrisma {
     await this.prisma.$transaction(async (tx) => {
       await (tx as any).escalaProfissional.deleteMany({ where: { profissionalId, estabelecimentoId } });
       if (escalas.length) await (tx as any).escalaProfissional.createMany({
-        data: escalas.map((escala) => ({ ...escala, estabelecimentoId, profissionalId, unidadeId: escala.unidadeId ?? null, ativo: escala.ativo ?? true })),
+        data: escalas.map((escala) => ({
+          estabelecimentoId, profissionalId, unidadeId: escala.unidadeId ?? null,
+          diaSemana: escala.diaSemana, inicio: escala.inicio, fim: escala.fim,
+          intervaloInicio: escala.intervaloInicio || null,
+          intervaloFim: escala.intervaloFim || null,
+          ativo: escala.ativo ?? true,
+        })),
       });
     });
     return this.listarEscalas(profissionalId, estabelecimentoId);

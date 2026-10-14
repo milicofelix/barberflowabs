@@ -93,7 +93,10 @@ export class MidiaService {
         if (!midia || !midia.ativo || midia.status !== 'DISPONIVEL' || midia.finalidade !== config[2]) throw new BadRequestException('Imagem indisponível para esta finalidade');
         if (midia.escopo !== 'GLOBAL' && (pessoal ? midia.escopo !== 'USUARIO' || midia.usuarioId !== usuario.id : midia.escopo !== 'ESTABELECIMENTO' || midia.estabelecimentoId !== usuario.estabelecimentoId)) throw new ForbiddenException('Esta imagem pertence a outra conta/unidade');
       }
-      const padrao = pessoal || dados.entidade === 'ESTABELECIMENTO' ? null : dados.entidade === 'SERVICO' ? '/servicos/combo.jpg' : '/profissionais/profissional-1.jpg';
+      const avatarProfissional = registro.sexo === 'FEMININO'
+        ? '/profissionais/avatar-feminino.png'
+        : '/profissionais/avatar-masculino.png';
+      const padrao = pessoal || dados.entidade === 'ESTABELECIMENTO' ? null : dados.entidade === 'SERVICO' ? '/servicos/combo.jpg' : avatarProfissional;
       const url = midia ? midia.versoes.principal.url : padrao;
       await tx[config[0]].update({ where: { id }, data: { [config[1]]: url } });
       await tx.midiaVinculo.deleteMany({ where: { entidade: dados.entidade, entidadeId: id } });

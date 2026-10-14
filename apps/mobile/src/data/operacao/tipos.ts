@@ -112,7 +112,7 @@ export interface MembroEquipe {
     permissoes: PermissaoEquipe[]; ativo: boolean; usuario: UsuarioEquipe; profissional?: { id: number; nome: string } | null
 }
 export interface EscalaProfissional {
-    id?: number; diaSemana: number; inicio: string; fim: string; intervaloInicio?: string | null; intervaloFim?: string | null; ativo?: boolean
+    id?: number; unidadeId?: number | null; diaSemana: number; inicio: string; fim: string; intervaloInicio?: string | null; intervaloFim?: string | null; ativo?: boolean
 }
 export interface RecursoOperacional { id: number; nome: string; tipo: string; capacidade: number; ativo: boolean }
 export interface IndisponibilidadeRecurso { id: number; inicio: string; fim: string; motivo?: string | null }

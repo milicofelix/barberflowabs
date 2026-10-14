@@ -1,6 +1,7 @@
 import CampoTexto from '@/src/components/shared/CampoTexto'
 import SeletorImagem from '@/src/components/midia/SeletorImagem'
 import ImagemRegistro from '@/src/components/midia/ImagemRegistro'
+import FeedbackSucesso from '@/src/components/shared/FeedbackSucesso'
 import type {
     AgendamentoOperacional, DashboardOperacional, ProfissionalOperacional,
 } from '@/src/data/operacao/tipos'
@@ -39,13 +40,15 @@ export function AgendaOperacao({ itens, alterarStatus }: {
     </View>)}</View>
 }
 
-export function EquipeOperacao({ itens, criar, recarregar }: {
+export function EquipeOperacao({ itens, criar, recarregar, erro }: {
     itens: ProfissionalOperacional[]; criar: (dados: Omit<ProfissionalOperacional, 'id'>) => Promise<boolean>; recarregar: () => Promise<void>
+    erro?: string | null
 }) {
     const { cores } = useTema()
     const [nome, setNome] = useState(''); const [descricao, setDescricao] = useState(''); const [salvando, setSalvando] = useState(false)
     const [sexo, setSexo] = useState<'MASCULINO' | 'FEMININO' | null>(null)
     const [imagemURL, setImagemURL] = useState(''); const [midiaId, setMidiaId] = useState<string | null | undefined>()
+    const [resultado, setResultado] = useState<'sucesso' | 'erro' | null>(null)
     const imagemPadrao = `/profissionais/avatar-${sexo === 'FEMININO' ? 'feminino' : 'masculino'}.png`
     function selecionarSexo(novoSexo: 'MASCULINO' | 'FEMININO') {
         const padroes = ['/profissionais/avatar-masculino.png', '/profissionais/avatar-feminino.png', '/profissionais/profissional-1.jpg']
@@ -55,9 +58,10 @@ export function EquipeOperacao({ itens, criar, recarregar }: {
     async function submeter() {
         if (!nome.trim() || !sexo || !descricao.trim() || salvando) return
         try {
-            setSalvando(true)
+            setSalvando(true); setResultado(null)
             const criado = await criar({ nome: nome.trim(), sexo, descricao: descricao.trim(), imagemURL: imagemURL || imagemPadrao, midiaId })
             if (criado) { setNome(''); setSexo(null); setDescricao(''); setImagemURL(''); setMidiaId(undefined) }
+            setResultado(criado ? 'sucesso' : 'erro')
         }
         finally { setSalvando(false) }
     }
@@ -66,10 +70,14 @@ export function EquipeOperacao({ itens, criar, recarregar }: {
         <Text style={[styles.rotulo, { color: cores.textoSecundario }]}>Sexo</Text><View style={styles.modelos}>{(['MASCULINO', 'FEMININO'] as const).map((opcao) => <Pressable key={opcao} onPress={() => selecionarSexo(opcao)} style={[styles.chip, { borderColor: sexo === opcao ? cores.destaque : cores.borda, backgroundColor: sexo === opcao ? cores.destaque : cores.campo }]}><Text style={[styles.chipTexto, { color: sexo === opcao ? '#fff' : cores.texto }]}>{opcao === 'MASCULINO' ? 'Masculino' : 'Feminino'}</Text></Pressable>)}</View>
         <CampoTexto label="Apresentação" value={descricao} onChangeText={setDescricao} />
         <SeletorImagem titulo="Foto do profissional" valor={sexo ? (imagemURL || imagemPadrao) : ''} finalidade="PROFISSIONAL" padrao={sexo ? imagemPadrao : ''} disabled={salvando || !sexo} alterar={(url, id) => { setImagemURL(url); setMidiaId(id) }} />
-        <Botao texto={salvando ? 'Salvando...' : 'Adicionar à equipe'} acao={submeter} desabilitado={salvando || !nome.trim() || !sexo || !descricao.trim()} /></View>
+        <Text style={[styles.descricao, { color: cores.textoSecundario }]}>Preencha nome, sexo e apresentação para adicionar o profissional.</Text>
+        <Botao texto={salvando ? 'Salvando...' : 'Adicionar à equipe'} acao={submeter} desabilitado={salvando || !nome.trim() || !sexo || !descricao.trim()} />
+        {resultado === 'sucesso' ? <FeedbackSucesso mensagem="Profissional adicionado à equipe." /> : null}
+        {resultado === 'erro' ? <Text accessibilityRole="alert" style={{ color: '#B42318' }}>{erro ?? 'Não foi possível adicionar o profissional. Tente novamente.'}</Text> : null}
+        </View>
         {itens.map((item) => <View key={item.id} style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}><Text style={[styles.titulo, { color: cores.texto }]}>{item.nome}</Text>
             <Text style={[styles.descricao, { color: cores.textoSecundario }]}>{item.descricao}</Text><Text style={styles.meta}>★ {Number(item.avaliacao ?? 5).toFixed(1)}</Text>
-            <ImagemRegistro titulo="Foto do profissional" valor={item.imagemURL} entidade="PROFISSIONAL" entidadeId={item.id} finalidade="PROFISSIONAL" aoSalvar={recarregar} /></View>)}</View>
+            <ImagemRegistro titulo="Foto do profissional" valor={item.imagemURL} padrao={`/profissionais/avatar-${item.sexo === 'FEMININO' ? 'feminino' : 'masculino'}.png`} entidade="PROFISSIONAL" entidadeId={item.id} finalidade="PROFISSIONAL" aoSalvar={recarregar} /></View>)}</View>
 }
 
 export function AtalhoCentralFinanceira({ abrir }: { abrir: () => void }) {
