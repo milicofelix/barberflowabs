@@ -847,6 +847,7 @@ function SeletorServicosSugeridos(props: {
     const [busca, setBusca] = useState('')
     const [selecionados, setSelecionados] = useState<Record<number, any>>({})
     const [salvando, setSalvando] = useState(false)
+    const [erroImportacao, setErroImportacao] = useState('')
     const segmentoIds = new Set((props.catalogo?.segmentos ?? []).map((item: any) => item.segmentoId ?? item.segmento?.id))
     const nomesAtuais = new Set(props.servicosAtuais.map((item: any) => item.nome.toLocaleLowerCase('pt-BR')))
     const origensAtuais = new Set(props.servicosAtuais.map((item: any) => item.servicoSugeridoId).filter(Boolean))
@@ -859,6 +860,7 @@ function SeletorServicosSugeridos(props: {
     )
 
     function alternar(item: any) {
+        setErroImportacao('')
         setSelecionados((atuais) => {
             const copia = { ...atuais }
             if (copia[item.id]) delete copia[item.id]
@@ -873,14 +875,22 @@ function SeletorServicosSugeridos(props: {
     }
 
     function alterar(id: number, campo: string, valor: any) {
+        setErroImportacao('')
         setSelecionados((atuais) => ({ ...atuais, [id]: { ...atuais[id], [campo]: valor } }))
     }
 
     async function importar() {
         const itens = Object.values(selecionados).map((item: any) => ({
-            ...item, preco: Number(item.preco), duracaoMinutos: Number(item.duracaoMinutos),
+            ...item,
+            preco: Number(String(item.preco).replace(',', '.')),
+            duracaoMinutos: Number(item.duracaoMinutos),
         }))
-        if (!itens.length || itens.some((item: any) => !Number.isFinite(item.preco) || item.preco <= 0)) return
+        if (!itens.length) return
+        if (itens.some((item: any) => !Number.isFinite(item.preco) || item.preco <= 0)) {
+            setErroImportacao('Informe um preço maior que zero para todos os serviços selecionados.')
+            return
+        }
+        setErroImportacao('')
         setSalvando(true)
         const sucesso = await props.onImportar(itens)
         setSalvando(false)
@@ -888,7 +898,10 @@ function SeletorServicosSugeridos(props: {
     }
 
     const totalSelecionados = Object.keys(selecionados).length
-    const precosValidos = totalSelecionados > 0 && Object.values(selecionados).every((item: any) => Number(item.preco) > 0)
+    const precosPendentes = Object.values(selecionados).filter((item: any) => {
+        const preco = Number(String(item.preco).replace(',', '.'))
+        return !Number.isFinite(preco) || preco <= 0
+    }).length
 
     return <div className="flex flex-col gap-4 rounded border border-violet-500/30 bg-zinc-950 p-5">
         <div className="flex flex-wrap items-end justify-between gap-3">
@@ -925,9 +938,13 @@ function SeletorServicosSugeridos(props: {
             })}
         </div>
         {!sugestoes.length && segmentoIds.size > 0 && <Vazio texto={busca ? 'Nenhuma sugestão encontrada.' : 'Todas as sugestões disponíveis já foram adicionadas.'} />}
+        {erroImportacao && <p role="alert" className="rounded-lg border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-200">{erroImportacao}</p>}
         <div className="sticky bottom-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-700 bg-zinc-900/95 p-4 shadow-xl backdrop-blur">
-            <span className="text-sm font-semibold text-zinc-200">{totalSelecionados} serviço(s) selecionado(s)</span>
-            <button type="button" disabled={!precosValidos || salvando} onClick={importar} className="rounded bg-violet-600 px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">{salvando ? 'Adicionando...' : 'Adicionar selecionados'}</button>
+            <span className="text-sm font-semibold text-zinc-200">
+                {totalSelecionados} serviço(s) selecionado(s)
+                {precosPendentes > 0 && <small className="mt-1 block font-normal text-amber-300">{precosPendentes} com preço pendente</small>}
+            </span>
+            <button type="button" disabled={totalSelecionados === 0 || salvando} onClick={importar} className="rounded bg-violet-600 px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">{salvando ? 'Adicionando...' : 'Adicionar selecionados'}</button>
         </div>
     </div>
 }

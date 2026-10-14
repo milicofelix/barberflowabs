@@ -48,21 +48,27 @@ export default function Operacao({ navigation }: Props) {
     </>
 
     if (secao === 'AGENDA') {
+        const agenda = <>
+            {cabecalho}
+            <NavegacaoData data={dados.data} alterar={dados.setData} visualizacao={visualizacaoAgenda} />
+            {dados.erro ? <EstadoErro mensagem={dados.erro} tentarNovamente={dados.recarregar} /> : null}
+            {dados.carregando && !dados.dashboard ? <Carregando mensagem="Carregando operação..." /> : null}
+            {!dados.carregando ? <><Pressable accessibilityRole="button" accessibilityLabel="Abrir agenda em tela cheia" onPress={() => setAgendaTelaCheia(true)}
+                style={[styles.telaCheiaBotao, { borderColor: cores.borda, backgroundColor: cores.superficie }]}>
+                <Text style={[styles.telaCheiaTexto, { color: cores.texto }]}>⛶ Tela cheia</Text>
+            </Pressable><AgendaCalendario itens={dados.agendamentos} restricoes={dados.restricoesAgenda}
+                profissionais={dados.profissionais} recursos={dados.recursos} filtros={dados.filtrosAgenda} alterarFiltros={dados.setFiltrosAgenda} data={dados.data}
+                visualizacao={visualizacaoAgenda} alterarVisualizacao={setVisualizacaoAgenda} alterarData={dados.setData}
+                aoPressionarCelula={iniciarAgendamento}
+                alterarStatus={dados.alterarStatus} reagendar={dados.reagendar} fusoHorario={dados.fusoHorario} /></> : null}
+        </>
         return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}>
-            <View style={styles.conteudoAgenda}>
-                {cabecalho}
-                <NavegacaoData data={dados.data} alterar={dados.setData} visualizacao={visualizacaoAgenda} />
-                {dados.erro ? <EstadoErro mensagem={dados.erro} tentarNovamente={dados.recarregar} /> : null}
-                {dados.carregando && !dados.dashboard ? <Carregando mensagem="Carregando operação..." /> : null}
-                {!dados.carregando ? <><Pressable accessibilityRole="button" accessibilityLabel="Abrir agenda em tela cheia" onPress={() => setAgendaTelaCheia(true)}
-                    style={[styles.telaCheiaBotao, { borderColor: cores.borda, backgroundColor: cores.superficie }]}>
-                    <Text style={[styles.telaCheiaTexto, { color: cores.texto }]}>⛶ Tela cheia</Text>
-                </Pressable><AgendaCalendario itens={dados.agendamentos} restricoes={dados.restricoesAgenda}
-                    profissionais={dados.profissionais} recursos={dados.recursos} filtros={dados.filtrosAgenda} alterarFiltros={dados.setFiltrosAgenda} data={dados.data}
-                    visualizacao={visualizacaoAgenda} alterarVisualizacao={setVisualizacaoAgenda} alterarData={dados.setData}
-                    aoPressionarCelula={iniciarAgendamento}
-                    alterarStatus={dados.alterarStatus} reagendar={dados.reagendar} fusoHorario={dados.fusoHorario} /></> : null}
-            </View>
+            {visualizacaoAgenda === 'schedule'
+                ? <View style={[styles.conteudoAgenda, styles.conteudoAgendaLista]}>{agenda}</View>
+                : <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled" contentContainerStyle={styles.conteudoAgenda}
+                    refreshControl={<RefreshControl refreshing={dados.carregando} onRefresh={dados.recarregar} tintColor="#E7B84B" />}>
+                    {agenda}
+                </ScrollView>}
             <Modal visible={agendaTelaCheia} animationType="slide" presentationStyle="fullScreen" statusBarTranslucent onRequestClose={() => setAgendaTelaCheia(false)}>
                 <SafeAreaView style={[styles.telaCheia, { backgroundColor: cores.fundo }]} edges={['top', 'bottom']}>
                     <View style={styles.telaCheiaCabecalho}>
@@ -127,7 +133,7 @@ function passoVisualizacao(visualizacao: VisualizacaoAgenda) {
 }
 
 const styles = StyleSheet.create({
-    safeArea: { flex: 1, backgroundColor: '#081426' }, conteudo: { padding: 18, paddingBottom: 40 }, conteudoAgenda: { flex: 1, paddingHorizontal: 18, paddingTop: 18 },
+    safeArea: { flex: 1, backgroundColor: '#081426' }, conteudo: { padding: 18, paddingBottom: 40 }, conteudoAgenda: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 40 }, conteudoAgendaLista: { flex: 1 },
     sobretitulo: { color: '#E7B84B', fontSize: 12, fontWeight: '800', letterSpacing: 1.2 }, titulo: { color: '#FFF', fontSize: 29, fontWeight: '900', marginTop: 6 },
     data: { backgroundColor: '#101E33', color: '#FFF', borderRadius: 11, padding: 13, borderWidth: 1, borderColor: '#31415A', marginBottom: 12 },
     navegacaoData: { gap: 9, marginBottom: 2 }, acoesData: { flexDirection: 'row', gap: 8 },
