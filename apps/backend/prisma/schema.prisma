@@ -282,6 +282,8 @@ model ServicoSugerido {
   preparoDepoisMinutos    Int       @default(0)
   deslocamentoMinutos     Int       @default(0)
   ordem                   Int       @default(0)
+  requisitosOperacionais Json?
+  recursosNecessarios    Json?
   ativo                   Boolean   @default(true)
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt

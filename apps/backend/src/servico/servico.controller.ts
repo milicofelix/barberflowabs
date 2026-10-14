@@ -37,9 +37,6 @@ export class ServicoController {
     await this.validarPermissao(usuario);
     this.validarImportacaoSugeridos(dados);
     await this.limites.validarEstabelecimentoOperacional(usuario.estabelecimentoId);
-    const ids = [...new Set(dados.itens.map((item) => Number(item.servicoSugeridoId)))];
-    const quantidade = await this.repo.contarSugeridosNovos(usuario.estabelecimentoId, ids);
-    await this.limites.validarNovosServicos(usuario.estabelecimentoId, quantidade);
     return this.repo.importarSugeridos(usuario.estabelecimentoId, dados);
   }
 
@@ -99,6 +96,9 @@ export class ServicoController {
   private validarImportacaoSugeridos(dados: ImportarServicosSugeridosDto) {
     if (!Array.isArray(dados?.itens) || dados.itens.length === 0 || dados.itens.length > 50) {
       throw new BadRequestException('Selecione entre 1 e 50 serviços sugeridos');
+    }
+    if (dados.itens.some((item) => !item || typeof item !== 'object' || Array.isArray(item))) {
+      throw new BadRequestException('A seleção contém itens inválidos');
     }
     const ids = dados.itens.map((item) => Number(item.servicoSugeridoId));
     if (ids.some((id) => !Number.isInteger(id) || id <= 0) || new Set(ids).size !== ids.length) {

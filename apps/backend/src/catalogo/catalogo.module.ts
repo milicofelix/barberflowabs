@@ -9,10 +9,11 @@ import { CatalogoPrisma } from './catalogo.prisma';
 import { CatalogoService } from './catalogo.service';
 import { CatalogoConsultaPrisma } from './catalogo-consulta.prisma';
 import { CatalogoIntegridadePrisma } from './catalogo-integridade.prisma';
+import { CatalogoAdminController } from './catalogo-admin.controller';
 
 @Module({
   imports: [AuthModule, DbModule],
-  controllers: [CatalogoController],
+  controllers: [CatalogoController, CatalogoAdminController],
   providers: [
     CatalogoPrisma,
     CatalogoConsultaPrisma,
@@ -24,6 +25,7 @@ import { CatalogoIntegridadePrisma } from './catalogo-integridade.prisma';
 })
 export class CatalogoModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    consumer.apply(AuthMiddleware).forRoutes(CatalogoAdminController);
     consumer.apply(AuthMiddleware).forRoutes(
       { path: 'catalogo/estabelecimento', method: RequestMethod.PUT },
       { path: 'catalogo/profissionais/:id/especialidades', method: RequestMethod.PUT },

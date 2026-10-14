@@ -85,18 +85,23 @@ export class ServicoPrisma implements RepositorioServico {
         where: { id: estabelecimentoId },
         select: {
           modeloAtendimento: true,
+          status: true,
           segmentos: { select: { segmentoId: true } },
           especialidades: { select: { especialidadeId: true } },
           assinatura: { select: { plano: { select: { limiteServicos: true } } } },
           _count: { select: { servicos: true } },
         },
       });
+      if (!estabelecimento) throw new BadRequestException('Estabelecimento não encontrado');
+      if (['PAST_DUE', 'SUSPENDED', 'CANCELED'].includes(estabelecimento.status)) {
+        throw new ForbiddenException('Estabelecimento bloqueado por status da assinatura');
+      }
       const segmentoIds = estabelecimento?.segmentos.map((item: any) => item.segmentoId) ?? [];
       const especialidadeIds = new Set(estabelecimento?.especialidades.map((item: any) => item.especialidadeId) ?? []);
       const ids = [...new Set(dados.itens.map((item) => Number(item.servicoSugeridoId)))];
       const [sugestoes, existentes] = await Promise.all([
         tx.servicoSugerido.findMany({
-          where: { id: { in: ids }, segmentoId: { in: segmentoIds }, ativo: true },
+          where: { id: { in: ids }, segmentoId: { in: segmentoIds }, ativo: true, segmento: { ativo: true } },
           include: { especialidades: true },
         }),
         tx.servico.findMany({
@@ -138,7 +143,13 @@ export class ServicoPrisma implements RepositorioServico {
             modeloAtendimento: modalidade,
             preparoAntesMinutos: Number(item.preparoAntesMinutos ?? sugestao.preparoAntesMinutos),
             preparoDepoisMinutos: Number(item.preparoDepoisMinutos ?? sugestao.preparoDepoisMinutos),
-            deslocamentoMinutos: Number(item.deslocamentoMinutos ?? sugestao.deslocamentoMinutos),
+            deslocamentoMinutos: modalidade === 'PRESENCIAL' ? 0 : Number(item.deslocamentoMinutos ?? sugestao.deslocamentoMinutos),
+            requisitos: Array.isArray(sugestao.requisitosOperacionais) && sugestao.requisitosOperacionais.length ? {
+              create: sugestao.requisitosOperacionais.map((r: any) => ({ requisitoId: r.requisitoId, obrigatorio: r.obrigatorio })),
+            } : undefined,
+            recursosNecessarios: Array.isArray(sugestao.recursosNecessarios) && sugestao.recursosNecessarios.length ? {
+              create: sugestao.recursosNecessarios.map((r: any) => ({ tipoRecurso: r.tipoRecurso, quantidade: r.quantidade })),
+            } : undefined,
             especialidades: especialidadesCompativeis.length ? { create: especialidadesCompativeis.map((relacao: any) => ({ estabelecimentoId, especialidadeId: relacao.especialidadeId })) } : undefined,
             profissionaisHabilitados: item.profissionalIds?.length ? { create: [...new Set(item.profissionalIds.map(Number))].map((profissionalId) => ({ estabelecimentoId, profissionalId, ativo: true })) } : undefined,
           },

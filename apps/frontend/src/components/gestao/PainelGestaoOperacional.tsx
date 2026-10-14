@@ -163,8 +163,13 @@ export default function PainelGestaoOperacional() {
             nome: servico.nome,
             descricao: servico.descricao,
             preco: Number(servico.preco),
-            qtdeSlots: Number(servico.qtdeSlots),
+            duracaoMinutos: Number(servico.duracaoMinutos ?? Number(servico.qtdeSlots) * 15),
+            qtdeSlots: Math.ceil(Number(servico.duracaoMinutos ?? Number(servico.qtdeSlots) * 15) / 15),
             imagemURL: servico.imagemURL,
+            modeloAtendimento: servico.modeloAtendimento ?? 'PRESENCIAL',
+            preparoAntesMinutos: Number(servico.preparoAntesMinutos ?? 0),
+            preparoDepoisMinutos: Number(servico.preparoDepoisMinutos ?? 0),
+            deslocamentoMinutos: Number(servico.deslocamentoMinutos ?? 0),
         }
         const resposta = servico.id
             ? await httpPut(`/servicos/${servico.id}`, payload)
@@ -919,7 +924,7 @@ function FormularioServico(props: any) {
             <Campo label="Descrição" value={props.servico.descricao} onChange={(descricao) => props.onChange({ ...props.servico, descricao })} />
             <Campo label="Imagem" value={props.servico.imagemURL} onChange={(imagemURL) => props.onChange({ ...props.servico, imagemURL })} />
             <Campo label="Preço" type="number" value={props.servico.preco} onChange={(preco) => props.onChange({ ...props.servico, preco })} />
-            <Campo label="Slots de 15 min" type="number" value={props.servico.qtdeSlots} onChange={(qtdeSlots) => props.onChange({ ...props.servico, qtdeSlots })} />
+            <Campo label="Duração (minutos)" type="number" value={props.servico.duracaoMinutos ?? Number(props.servico.qtdeSlots) * 15} onChange={(duracaoMinutos) => props.onChange({ ...props.servico, duracaoMinutos, qtdeSlots: Math.ceil(Number(duracaoMinutos) / 15) })} />
         </FormularioBase>
     )
 }
@@ -986,7 +991,7 @@ function ListaServicos(props: {
                 <Linha
                     key={servico.id}
                     titulo={servico.nome}
-                    detalhe={`R$ ${Number(servico.preco).toFixed(2)} | ${servico.qtdeSlots * 15} min`}
+                    detalhe={`R$ ${Number(servico.preco).toFixed(2)} | ${servico.duracaoMinutos ?? servico.qtdeSlots * 15} min`}
                     onEditar={() => props.onEditar(servico)}
                     onExcluir={() => props.onExcluir(servico.id)}
                 />

@@ -57,6 +57,12 @@ const sugestoes: Sugestao[] = [
 ];
 
 export async function seedServicosSugeridos(prisma: PrismaClient) {
+  const imagensSegmento: Record<string, string> = {
+    'salao-beleza': '/estabelecimentos/salao-cabelo-default.png',
+    'clinica-estetica': '/estabelecimentos/clinica-estetica-default.png',
+    'spa-bem-estar': '/estabelecimentos/spa-bem-estar-default.png',
+    beleza: '/estabelecimentos/estetica-beleza-default.png',
+  };
   let processados = 0;
   for (const [ordem, item] of sugestoes.entries()) {
     const especialidade = await prisma.especialidade.findFirst({
@@ -64,16 +70,16 @@ export async function seedServicosSugeridos(prisma: PrismaClient) {
       select: { id: true, segmentoId: true },
     });
     if (!especialidade) continue;
+    const existente = await (prisma as any).servicoSugerido.findUnique({
+      where: { segmentoId_slug: { segmentoId: especialidade.segmentoId, slug: item.slug } }, select: { id: true },
+    });
+    if (existente) { processados += 1; continue; }
     const servico = await (prisma as any).servicoSugerido.upsert({
       where: { segmentoId_slug: { segmentoId: especialidade.segmentoId, slug: item.slug } },
-      update: {
-        nome: item.nome, descricao: item.descricao, duracaoMinutos: item.duracao,
-        preparoAntesMinutos: item.preparoAntes ?? 0, preparoDepoisMinutos: item.preparoDepois ?? 0,
-        imagemURL: item.imagem ?? '/servicos/combo.jpg', ordem, ativo: true,
-      },
+      update: {},
       create: {
         segmentoId: especialidade.segmentoId, slug: item.slug, nome: item.nome,
-        descricao: item.descricao, imagemURL: item.imagem ?? '/servicos/combo.jpg',
+        descricao: item.descricao, imagemURL: item.imagem ?? imagensSegmento[item.segmento] ?? '/servicos/combo.jpg',
         duracaoMinutos: item.duracao, preparoAntesMinutos: item.preparoAntes ?? 0,
         preparoDepoisMinutos: item.preparoDepois ?? 0, ordem, ativo: true,
       },

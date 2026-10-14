@@ -128,20 +128,90 @@ Verificação: `git diff --check` sem problemas. A checagem TypeScript local foi
 
 ## Fase 4 — Curadoria E Governança
 
-- [ ] Criar manutenção administrativa do catálogo global.
-- [ ] Permitir ativar, desativar e ordenar sugestões sem removê-las.
-- [ ] Registrar autoria e auditoria de alterações.
-- [ ] Adicionar imagens específicas e requisitos operacionais por sugestão.
-- [ ] Medir sugestões mais adotadas sem compartilhar dados entre tenants.
+Status: implementação concluída. Os três testes automatizados passaram; a aplicação da migration no ambiente e o aceite visual não foram realizados nesta execução. A Fase 5 concentra a validação final.
+
+- [x] Criar manutenção administrativa do catálogo global.
+- [x] Permitir ativar, desativar e ordenar sugestões sem removê-las.
+- [x] Registrar autoria e auditoria de alterações.
+- [x] Adicionar imagens específicas e requisitos operacionais por sugestão.
+- [x] Medir sugestões mais adotadas sem compartilhar dados entre tenants.
+
+### Implementação Da Fase 4
+
+O painel web do superadmin possui a seção expansível “Catálogo global de serviços”. Permite criar e editar sugestões, definir segmento e especialidades, imagem, ordem, modalidade, duração, preparação, requisitos e recursos necessários. Não há exclusão: a desativação remove a sugestão das consultas para importação, preservando serviços já cadastrados.
+
+As rotas `GET/POST /catalogo/admin` e `PUT /catalogo/admin/:id` exigem autenticação e papel `SUPER_ADMIN` ou `APP_OWNER`. Cada gravação cria um log global com administrador, data e snapshots anterior/novo dentro da mesma transação. A consulta administrativa inclui as últimas 50 alterações e métricas agregadas de adoção, sem nomes, preços, IDs de estabelecimentos ou dados de clientes.
+
+Os requisitos e recursos são copiados nas novas importações; alterações no catálogo não atualizam serviços já importados. O seed preserva registros existentes, inclusive sugestões desativadas ou personalizadas, e utiliza imagens pertinentes aos segmentos para novas sugestões.
+
+A curadoria desta fase fica no painel administrativo web. A seleção e importação mobile continuam utilizando o catálogo global atualizado.
+
+### Aceite Manual Da Fase 4
+
+1. Aplicar a migration `20261013230000_add_catalog_curation`, gerar o Prisma Client e reiniciar o backend com os comandos existentes em `docs/COMANDOS.md`.
+2. Entrar como superadmin na web e abrir “Catálogo global de serviços → Gerenciar”.
+3. Editar uma sugestão: alterar imagem, ordem, preparação e requisitos/recursos; salvar e conferir a auditoria.
+4. Desativar a sugestão e confirmar que deixa de aparecer para novas importações na web e no mobile.
+5. Confirmar que serviços já importados preservam os valores anteriores.
+6. Reativar e importar em uma unidade compatível; conferir os requisitos e recursos copiados.
+7. Executar novamente o seed e confirmar que as alterações administrativas são preservadas.
+8. Conferir a classificação de adoção e testar acesso negado com uma conta de gestor ou cliente.
+
+Verificação automática: três testes de autorização, validação e gravação com auditoria passaram no container. Na Fase 5, a consulta de status confirmou as 33 migrations aplicadas no banco `uniflow_abs`. O aceite visual permanece pendente.
 
 ## Fase 5 — Aceite Final
 
 - [ ] Validar criação web e mobile com estabelecimentos multissegmento.
-- [ ] Validar limites de assinatura e permissões de equipe.
+- [x] Validar limites de assinatura e permissões de equipe com testes automatizados.
 - [ ] Validar ausência de duplicidades em concorrência e repetição de requisição.
-- [ ] Validar que alterações futuras no catálogo não modificam serviços já importados.
-- [ ] Documentar operação, rollback e critérios de publicação.
+- [x] Validar que alterações futuras no catálogo não modificam serviços já importados com testes automatizados.
+- [x] Documentar operação, rollback e critérios de publicação.
+
+Status: verificações automatizadas executadas; aceite final condicionado aos testes de interface e concorrência com banco real abaixo. Não considerar os itens pendentes como homologados.
+
+### Evidências Executadas
+
+- 11 testes passaram em `servico-sugeridos.spec.ts` e `catalogo-admin.controller.spec.ts`, cobrindo dois segmentos, cópia de requisitos/recursos, profissional de outro tenant, limite de plano, assinatura bloqueada, repetição sem alteração do preço, nome manual existente, sugestões indisponíveis, permissões e auditoria da curadoria.
+- Os testes do repositório utilizam transação simulada; não comprovam comportamento concorrente do MySQL.
+- `prisma migrate status`: 33 migrations, banco `uniflow_abs` atualizado. Nenhuma migration foi aplicada nesta fase.
+- `git diff --check` passou.
+- A checagem TypeScript web foi executada; encontrou erros preexistentes em `useSolicitacaoEstabelecimento.ts:150` e `marketplace/marcadores.ts:22`. Nenhum diagnóstico no código alterado do catálogo. Esses erros impedem o aceite de compilação completo.
+
+### Correções Encontradas No Aceite
+
+- Lotes com itens nulos passam a retornar erro de validação em vez de erro interno.
+- Importação presencial grava deslocamento zero.
+- O status de assinatura é revalidado dentro da transação e segmentos desativados são excluídos da importação.
+- A verificação antecipada de capacidade foi removida do controller: a decisão de capacidade e idempotência ocorre dentro da transação protegida pelo lock do estabelecimento.
+- A edição manual web salva duração em minutos, calcula slots e preserva modalidade/preparação dos serviços importados.
+
+### Testes Manuais Restantes
+
+1. Em uma unidade com dois segmentos, importar serviços pela web e mobile e confirmar preços, duração, imagens, profissionais e disponibilidade para agenda.
+2. Editar na web a duração de um serviço importado e confirmar a nova duração no mobile e na agenda.
+3. Usar dois dispositivos/sessões na mesma unidade e importar simultaneamente a mesma sugestão: deve existir um único serviço e a outra operação deve informar que já foi adicionado.
+4. Repetir o cenário perto do limite do plano com sugestões diferentes: a soma não pode ultrapassar o limite e o lote recusado não deve criar registros parciais.
+5. Alterar/desativar uma sugestão como superadmin e conferir que serviços já importados preservam preço, duração e vínculos.
+6. Validar temas, teclado, leitor de tela, fonte ampliada e rolagem no Android/iOS.
+
+### Operação E Recuperação
+
+- Aplicar migrations e gerar o Prisma Client antes de publicar o código; executar o seeder específico somente para incluir sugestões ausentes. Os comandos já estão em `docs/COMANDOS.md`.
+- Desativar uma sugestão pelo superadmin para suspender novas adoções, preservando as unidades que já a importaram.
+- Para desfazer uma alteração de curadoria, consultar o snapshot anterior na auditoria e restaurar os campos pelo painel; a restauração gera outro log.
+- Para desfazer uma importação acidental, excluir os serviços pela gestão da própria unidade somente se não houver vínculos que impeçam exclusão. Serviços utilizados exigem avaliação dos registros dependentes; não apagar dados de agenda ou financeiro para liberar a exclusão.
+- Não usar `migrate reset` como rollback. As migrations deste catálogo são aditivas; em caso de regressão, interromper novas importações e corrigir por nova migration, preservando dados e referências existentes.
+
+### Critérios De Publicação
+
+Liberar o aceite final após os testes manuais acima, confirmação das migrations no ambiente alvo e checagem TypeScript completa sem erros. Registrar ambiente, data e responsável pelas validações. Os cenários automatizados devem continuar passando antes da publicação.
 
 ## Estado Atual
 
-As Fases 1–3 estão implementadas; o aceite visual mobile permanece pendente. Nesta Fase 3 não foram necessárias novas migrations ou dependências nativas. A checagem TypeScript local foi executada com os impedimentos registrados acima.
+As Fases 1–4 estão implementadas; o aceite visual mobile e da curadoria permanece pendente. A Fase 4 adiciona uma migration para requisitos/recursos das sugestões. A checagem TypeScript da Fase 3 tem os impedimentos registrados acima; os testes focados de governança da Fase 4 passaram.
+
+A Fase 5 teve sua parte automatizada executada, com correções e 11 testes aprovados. As migrations estão aplicadas no banco local. O aceite final segue pendente de validação visual, concorrência com MySQL real e resolução dos erros de TypeScript registrados acima.
+
+### Ajuste De Usabilidade — Serviços No Mobile
+
+Editar e Excluir passaram a ser botões com ícone, contorno, feedback de toque e altura mínima de 48 pontos. Ficam abaixo do resumo do serviço, com rótulos de acessibilidade que identificam o item. A exclusão continua exigindo confirmação. Validar em aparelho com nomes longos, fonte ampliada e temas claro/escuro.

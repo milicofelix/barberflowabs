@@ -8,6 +8,7 @@ import useTema from '@/src/data/contexts/ContextoTema'
 import type { DadosServicoOperacional, ModeloAtendimentoServico, ServicoOperacional } from '@/src/data/operacao/tipos'
 import { useState } from 'react'
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 
 interface Props {
     itens: ServicoOperacional[]
@@ -127,12 +128,20 @@ export default function GestaoServicos({ itens, erro, recarregar, salvar, exclui
         {erro ? <EstadoErro mensagem={erro} tentarNovamente={recarregar} /> : null}
         {!carregando && !erro && itens.length === 0 ? <EstadoVazio titulo="Nenhum serviço cadastrado" /> : null}
         {itens.map((item) => <View key={item.id} style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
-            <Image source={imagemDoServico(item.nome, item.imagemURL)} style={styles.imagem} />
+            <View style={styles.resumoCartao}><Image source={imagemDoServico(item.nome, item.imagemURL)} style={styles.imagem} />
             <View style={styles.info}><Text style={[styles.nome, { color: cores.texto }]}>{item.nome}</Text>
                 <Text style={{ color: cores.textoSecundario }}>{Number(item.preco).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} · {item.duracaoMinutos ?? item.qtdeSlots * 15} min</Text>
-                <Text style={[styles.modelo, { color: cores.destaque }]}>{(item.modeloAtendimento ?? 'PRESENCIAL').replace('_', ' ')}</Text></View>
-            <View style={styles.acoes}><Pressable onPress={() => editar(item)}><Text style={[styles.acao, { color: cores.destaque }]}>Editar</Text></Pressable>
-                <Pressable onPress={() => setExcluirId(item.id)}><Text style={[styles.acao, styles.excluir]}>Excluir</Text></Pressable></View>
+                <Text style={[styles.modelo, { color: cores.destaque }]}>{(item.modeloAtendimento ?? 'PRESENCIAL').replace('_', ' ')}</Text></View></View>
+            <View style={[styles.acoes, { borderTopColor: cores.borda }]}>
+                <Pressable accessibilityRole="button" accessibilityLabel={`Editar serviço ${item.nome}`} accessibilityState={{ disabled: processando }} disabled={processando}
+                    onPress={() => editar(item)} style={({ pressed }) => [styles.botaoAcao, { backgroundColor: cores.campo, borderColor: cores.destaque }, (pressed || processando) && styles.desabilitado]}>
+                    <Ionicons name="create-outline" size={20} color={cores.destaque} /><Text style={[styles.acao, { color: cores.destaque }]}>Editar</Text>
+                </Pressable>
+                <Pressable accessibilityRole="button" accessibilityLabel={`Excluir serviço ${item.nome}`} accessibilityState={{ disabled: processando }} disabled={processando}
+                    onPress={() => setExcluirId(item.id)} style={({ pressed }) => [styles.botaoAcao, styles.botaoExcluir, (pressed || processando) && styles.desabilitado]}>
+                    <Ionicons name="trash-outline" size={20} color="#DC2626" /><Text style={[styles.acao, styles.excluir]}>Excluir</Text>
+                </Pressable>
+            </View>
         </View>)}
         <Confirmacao visivel={excluirId !== null} titulo="Excluir serviço" mensagem="O serviço será removido do catálogo. Registros vinculados podem impedir a exclusão."
             confirmarLabel={processando ? 'Excluindo...' : 'Excluir'} onConfirmar={confirmarExclusao} onCancelar={() => setExcluirId(null)} />
@@ -144,5 +153,6 @@ const styles = StyleSheet.create({
     subtitulo: { fontSize: 18, fontWeight: '900' }, duasColunas: { flexDirection: 'row', gap: 10 }, coluna: { flex: 1 }, rotulo: { fontSize: 14, fontWeight: '700', marginBottom: 8 },
     modelos: { flexDirection: 'row', gap: 7, marginBottom: 16 }, chip: { flex: 1, alignItems: 'center', borderWidth: 1, borderRadius: 999, paddingVertical: 9 }, profissionais: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 16 }, chipProfissional: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 9 }, aviso: { marginBottom: 16 },
     botao: { minHeight: 48, borderRadius: 11, backgroundColor: '#E7B84B', alignItems: 'center', justifyContent: 'center' }, botaoTexto: { color: '#081426', fontWeight: '900' }, desabilitado: { opacity: 0.6 }, erro: { color: '#DC2626', marginBottom: 10 },
-    cartao: { flexDirection: 'row', alignItems: 'center', gap: 11, borderWidth: 1, borderRadius: 13, padding: 11 }, imagem: { width: 58, height: 58, borderRadius: 10 }, info: { flex: 1, gap: 3 }, nome: { fontSize: 16, fontWeight: '800' }, modelo: { fontSize: 11, fontWeight: '800' }, acoes: { alignItems: 'flex-end', gap: 9 }, acao: { fontWeight: '800' }, excluir: { color: '#DC2626' },
+    cartao: { gap: 12, borderWidth: 1, borderRadius: 13, padding: 13 }, resumoCartao: { flexDirection: 'row', alignItems: 'center', gap: 11 }, imagem: { width: 58, height: 58, borderRadius: 10 }, info: { flex: 1, gap: 3 }, nome: { fontSize: 16, fontWeight: '800' }, modelo: { fontSize: 11, fontWeight: '800' },
+    acoes: { flexDirection: 'row', gap: 10, borderTopWidth: 1, paddingTop: 12 }, botaoAcao: { flex: 1, minHeight: 48, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 12 }, botaoExcluir: { borderColor: '#DC2626', backgroundColor: 'rgba(220, 38, 38, 0.08)' }, acao: { fontWeight: '800', fontSize: 14 }, excluir: { color: '#DC2626' },
 })

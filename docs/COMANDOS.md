@@ -476,6 +476,30 @@ Cria somente os usuarios inexistentes e vincula os contatos ao estabelecimento R
 
 ## Catálogo Inteligente De Serviços
 
+### Executar os testes de aceite do catálogo
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && yarn test "servico-sugeridos.spec.ts|catalogo-admin.controller.spec.ts" --runInBand'
+```
+
+Executa testes isolados de importação, idempotência, limites, permissões, requisitos e auditoria. Utiliza repositórios simulados; não altera dados reais e não substitui a validação concorrente no MySQL.
+
+### Conferir tipos da web sem gerar arquivos
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/frontend && npx tsc --noEmit --incremental false'
+```
+
+Verifica os tipos de todo o frontend no container, sem gerar build nem cache incremental. Reporta também erros existentes fora da funcionalidade em validação.
+
+### Testar autorização e auditoria da curadoria
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && yarn test catalogo-admin.controller.spec.ts --runInBand'
+```
+
+Executa os testes específicos que verificam acesso exclusivo de superadmin, validação operacional e gravação conjunta da sugestão e auditoria. Não aplica migrations nem popula o banco.
+
 ### Verificar os tipos do mobile sem gerar build
 
 ```bash
