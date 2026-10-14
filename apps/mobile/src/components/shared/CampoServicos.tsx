@@ -32,7 +32,7 @@ function Opcao(props: { servico: Servico; onClick: (s: Servico) => void; selecio
                     <Image
                         style={styles.imagemServico}
                         source={imagemDoServico(props.servico.nome, props.servico.imagemURL)}
-                        resizeMode="cover"
+                        resizeMode="contain"
                     />
                     <Text style={[styles.textoServico, { color: props.selecionado ? '#FFFFFF' : cores.texto }]}>{props.servico.nome}</Text>
                 </View>
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     },
     imagemServico: {
         width: 122,
-        height: 122,
+        aspectRatio: 16 / 9,
         borderRadius: 6,
     },
 })

@@ -131,7 +131,7 @@ export default function GestaoServicos({ itens, erro, recarregar, salvar, exclui
         {erro ? <EstadoErro mensagem={erro} tentarNovamente={recarregar} /> : null}
         {!carregando && !erro && itens.length === 0 ? <EstadoVazio titulo="Nenhum serviço cadastrado" /> : null}
         {itens.map((item) => <View key={item.id} style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
-            <View style={styles.resumoCartao}><Image source={imagemDoServico(item.nome, item.imagemURL)} style={styles.imagem} />
+            <View style={styles.resumoCartao}><Image source={imagemDoServico(item.nome, item.imagemURL)} style={styles.imagem} resizeMode="contain" />
             <View style={styles.info}><Text style={[styles.nome, { color: cores.texto }]}>{item.nome}</Text>
                 <Text style={{ color: cores.textoSecundario }}>{Number(item.preco).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} · {item.duracaoMinutos ?? item.qtdeSlots * 15} min</Text>
                 <Text style={[styles.modelo, { color: cores.destaque }]}>{(item.modeloAtendimento ?? 'PRESENCIAL').replace('_', ' ')}</Text></View></View>

@@ -666,7 +666,16 @@ docker compose exec -T app sh -lc 'cd apps/mobile && npx expo config --type publ
 
 Verifica o registro do plugin e das mensagens de permissão; não gera nem instala o aplicativo nativo.
 
+### Testar processamento e associação de imagens
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && npx jest midia/midia.spec.ts --runInBand'
+```
+
+Inclui preservação de proporção em imagens de serviços, validação do upload e isolamento por conta/unidade. Não altera dados da base; os testes de arquivos usam uma pasta temporária própria.
+
 ## Limpezas Destrutivas
+
 
 Comandos de remocao de `node_modules`, lockfiles, volumes ou dados nao ficam prontos para copiar nesta secao. A necessidade e o alvo devem ser diagnosticados primeiro para evitar apagar dependencias ou dados de outros projetos que compartilham a infraestrutura.
 

@@ -14,7 +14,7 @@ export default function ItemServico(props: ItemServicoProps) {
                 width={150}
                 height={150}
                 alt={servico.nome}
-                className="object-cover"
+                className="aspect-video w-[150px] shrink-0 self-center bg-card object-contain"
             />
             <div className="flex flex-col p-5 gap-2">
                 <span className="text-xl font-black">{servico.nome}</span>

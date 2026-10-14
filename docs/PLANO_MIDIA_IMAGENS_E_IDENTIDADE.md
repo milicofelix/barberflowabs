@@ -65,7 +65,7 @@ Para foto pessoal, usar `entidade: "USUARIO"`; a conta é resolvida pela autenti
 ### Armazenamento E Processamento
 
 - Arquivos novos são normalizados para WebP estático, com correção automática da orientação e remoção dos metadados.
-- Miniatura: 256 × 256; principal: 800 × 800 para avatar/serviço/profissional e 1600 × 900 para capa, com recorte central.
+- Miniatura: até 256 × 256; principal: 800 × 800 para avatar/profissional e 1600 × 900 para capa, com recorte central. Serviços preservam a proporção em ambas as versões, limitados a 800 × 800 na principal, sem ampliar.
 - Limites: 5 MB por upload e 20 milhões de pixels na decodificação. O formato é identificado pelo conteúdo, independentemente do nome ou MIME enviado.
 - HEIC/HEIF não é aceito neste contrato inicial. A Fase 3 deve converter para JPEG antes do envio, evitando dependência de decodificador HEIC específico no servidor.
 - Volume Docker `uniflow_midias`, montado em `/var/lib/uniflow/midias`. `MIDIA_STORAGE_DIR` configura o armazenamento; `MIDIA_GALERIA_DIR` aponta para os arquivos iniciais da galeria.
@@ -99,7 +99,7 @@ Os comandos específicos ficam em `docs/COMANDOS.md`. Galeria visual, upload nos
 - [x] Retirar os campos técnicos de caminho/URL da experiência comum.
 - [ ] Validar navegação por teclado, rótulos, contraste nos dois temas e feedback de envio.
 
-Implementação: seletor compartilhado em `components/midia/SeletorImagem.tsx`, com diálogo nativo (foco/ESC), seleção de miniaturas, envio multipart com progresso e enquadramento horizontal/vertical. As capas usam proporção 16:9 e fotos/serviços usam proporção quadrada. O envio cria uma mídia; a associação ocorre ao salvar o registro. Se o registro foi criado e a associação falhar, a mensagem informa a pendência e a edição mantém o ID para evitar recriação.
+Implementação: seletor compartilhado em `components/midia/SeletorImagem.tsx`, com diálogo nativo (foco/ESC), seleção de miniaturas, envio multipart com progresso e enquadramento horizontal/vertical. As capas usam proporção 16:9 e avatares/profissionais usam proporção quadrada. Serviços agora preservam a imagem inteira e usam área de exibição 16:9. O envio cria uma mídia; a associação ocorre ao salvar o registro. Se o registro foi criado e a associação falhar, a mensagem informa a pendência e a edição mantém o ID para evitar recriação.
 
 “Configurações → Minha foto” está disponível para clientes, gestores e superadmin. Após salvar, o refresh atualiza o avatar do menu sem novo login. Sem foto, são exibidas iniciais em azul/violeta. Configurações operacionais continuam disponíveis apenas para os responsáveis da unidade.
 
@@ -134,7 +134,7 @@ Se forem necessárias dependências ou configurações nativas, registrar em `do
 
 Implementação: `SeletorImagem` compartilhado no mobile, com galeria por finalidade, filtros de segmento, fotos do aparelho, câmera, prévia e retorno ao padrão. Serviços manuais e sugeridos usam o mesmo componente. Profissionais existentes têm ação própria de salvar foto. A capa está em Configurações → Identidade pública; a foto pessoal está em Perfil → Minha foto para todos os perfis e também nas configurações operacionais. O refresh da sessão propaga `fotoURL` sem novo login.
 
-O seletor de biblioteca usa o acesso pontual do sistema, sem solicitar acesso amplo antecipado. Câmera pede permissão somente ao tocar em “Tirar foto”; recusa oferece galeria e atalho para permissões. Cancelar não altera o registro. Fotos são recortadas (1:1 ou 16:9), redimensionadas para até 800/1600 pixels de largura e convertidas para JPEG antes do envio, inclusive as fotos HEIC que o dispositivo conseguir decodificar. O backend continua validando e removendo metadados. Compatibilidade real de formatos e acesso limitado precisa do aceite no aparelho.
+O seletor de biblioteca usa o acesso pontual do sistema, sem solicitar acesso amplo antecipado. Câmera pede permissão somente ao tocar em “Tirar foto”; recusa oferece galeria e atalho para permissões. Cancelar não altera o registro. Avatares/profissionais são recortados em 1:1 e capas em 16:9. Serviços não são recortados. As fotos são redimensionadas para até 800/1600 pixels e convertidas para JPEG antes do envio, inclusive as fotos HEIC que o dispositivo conseguir decodificar. O backend continua validando e removendo metadados. Compatibilidade real de formatos e acesso limitado precisa do aceite no aparelho.
 
 Upload cria mídia sem alterar o registro; salvar realiza a associação. Erros de associação após criação de serviço/profissional informam que o registro já foi salvo e permitem corrigir pela edição, evitando repetir a criação. O upload usa multipart sem `Content-Type` JSON, progresso e timeout recuperável. A navegação mantém os caminhos legados. Não há nova migration nesta fase; a preparação da Fase 1 continua necessária.
 
@@ -159,6 +159,14 @@ Instalação concluída com sucesso: `expo-image-picker@57.0.20` e `expo-image-m
 Verificação técnica: `git diff --check` passou. A checagem TypeScript com os módulos novos disponíveis não apontou erros nas integrações de mídia; o projeto ainda tem três erros anteriores em `AgendamentoAssistido` (data possivelmente nula), `useOperacao` (conversão do mapa de períodos) e `PerfilEstabelecimento` (tipo de capa exige `distanciaKm`). A checagem completa não está aprovada enquanto essas pendências existirem.
 
 ## Fase 4 — Padrões Sociais E Fundos Dinâmicos Da Home
+
+### Ajuste de proporção das imagens de serviços (após Fase 3)
+
+Serviços preservam a proporção original em upload web/mobile e nas versões do backend: principal limitada a 800 × 800 e miniatura a 256 × 256, sem recorte nem ampliação. Fotos horizontais e verticais são exibidas inteiras (`contain`) em áreas 16:9 nos seletores e na escolha de serviços. O fundo da web usa a superfície do tema, não branco fixo no tema escuro. Avatares/profissionais continuam quadrados e capas continuam 16:9 com recorte.
+
+Não há migration nem necessidade de reduzir manualmente os arquivos. Imagens anteriormente recortadas não podem ser recuperadas por CSS: reenviar o original e salvar a nova associação. O seed existente não sobrescreve mídias antigas. Testar imagem horizontal, vertical e pequena, conferindo as bordas no agendamento e nos dois temas.
+
+Verificação do ajuste: 11 testes de mídia passaram, incluindo proporção horizontal/vertical e ausência de ampliação de imagens pequenas. TypeScript da web e `git diff --check` passaram. Mobile continua com os mesmos três erros anteriores de agenda/perfil, sem erros novos neste ajuste. Aceite visual no navegador/aparelho permanece pendente.
 
 - [ ] Substituir o avatar genérico atual por iniciais estilizadas, com possibilidade de foto própria.
 - [ ] Centralizar resolução de foto, capa e imagem padrão para web e mobile.

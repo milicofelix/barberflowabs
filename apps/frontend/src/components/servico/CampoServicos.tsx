@@ -29,6 +29,7 @@ function Opcao(props: {
                 height={150}
                 width={150}
                 alt={props.servico.nome}
+                className="aspect-video w-full bg-card object-contain"
             />
             <div
                 className={`
