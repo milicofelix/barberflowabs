@@ -30,6 +30,28 @@ export function MembrosEquipe({ membros, usuarios, profissionais, salvar, criarP
     const [permissoes, setPermissoes] = useState<PermissaoEquipe[]>(['AGENDA_GERENCIAR'])
     const [salvando, setSalvando] = useState(false)
     const [resultado, setResultado] = useState<'sucesso' | 'erro' | null>(null)
+    const membroSelecionado = membros.find((membro) => membro.usuarioId === usuarioId)
+    const responsavelSelecionado = membroSelecionado?.usuario.papel === 'ESTABLISHMENT_OWNER'
+    const profissionalSelecionado = profissionais.find((profissional) => profissional.id === profissionalId)
+    const contas = Array.from(new Map([...usuarios, ...membros.map((item) => item.usuario)].map((conta) => [conta.id, conta])).values())
+    const selecionarUsuario = (id: number) => {
+        setUsuarioId(id); setResultado(null)
+        const membro = membros.find((item) => item.usuarioId === id)
+        if (membro) {
+            setProfissionalId(membro.profissionalId ?? null); setPapel(membro.usuario.papel === 'ESTABLISHMENT_OWNER' ? 'GESTOR' : membro.papel)
+            setPermissoes(membro.usuario.papel === 'ESTABLISHMENT_OWNER' ? PERMISSOES.map((item) => item.id) : membro.permissoes)
+        } else if (membroSelecionado) {
+            setProfissionalId(null); setPapel('PROFISSIONAL'); setPermissoes(['AGENDA_GERENCIAR'])
+        }
+    }
+    const selecionarProfissional = (id: number) => {
+        const membro = membros.find((item) => item.profissionalId === id)
+        if (membro) selecionarUsuario(membro.usuarioId)
+        else if (membroSelecionado?.profissionalId) {
+            setUsuarioId(null); setPapel('PROFISSIONAL'); setPermissoes(['AGENDA_GERENCIAR'])
+        }
+        setProfissionalId(id); setResultado(null)
+    }
     const alternar = (id: PermissaoEquipe) => setPermissoes((atuais) => atuais.includes(id) ? atuais.filter((item) => item !== id) : [...atuais, id])
     const removerMembro = (membro: MembroEquipe) => Alert.alert('Remover membro', `Remover ${membro.usuario.nome} da equipe? O usuário e o perfil profissional não serão excluídos.`, [
         { text: 'Cancelar', style: 'cancel' }, { text: 'Remover', style: 'destructive', onPress: () => { void remover(membro.id) } },
@@ -38,23 +60,25 @@ export function MembrosEquipe({ membros, usuarios, profissionais, salvar, criarP
         if (!usuarioId || salvando) return
         setSalvando(true); setResultado(null)
         try {
-            const sucesso = await salvar({ usuarioId, profissionalId, papel, permissoes })
+            const sucesso = await salvar({ usuarioId, profissionalId, papel, permissoes, ativo: membroSelecionado?.ativo }, membroSelecionado?.id)
             if (sucesso) { setUsuarioId(null); setProfissionalId(null) }
             setResultado(sucesso ? 'sucesso' : 'erro')
         } finally { setSalvando(false) }
     }
     return <View style={styles.lista}><View style={[styles.bloco, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
-        <Text style={[styles.subtitulo, { color: cores.texto }]}>Vincular usuário à equipe</Text>
-        <Text style={[styles.rotulo, { color: cores.textoSecundario }]}>Usuário</Text><Chips itens={usuarios.map((item) => ({ id: item.id, nome: item.nome }))} atual={usuarioId} selecionar={setUsuarioId} desabilitado={salvando} />
-        {!usuarios.length ? <Text style={[styles.aviso, { color: cores.textoSecundario }]}>Não há usuários disponíveis para vincular. Esta lista mostra contas da unidade que ainda não são membros. Para cadastrar alguém sem conta no aplicativo, use “Adicionar profissional” acima.</Text> : null}
-        <Text style={[styles.rotulo, { color: cores.textoSecundario }]}>Papel</Text><Chips itens={['GESTOR', 'RECEPCIONISTA', 'PROFISSIONAL'].map((id) => ({ id, nome: id }))} atual={papel} selecionar={setPapel} />
-        <Text style={[styles.rotulo, { color: cores.textoSecundario }]}>Perfil profissional opcional</Text><Chips itens={profissionais.map((item) => ({ id: item.id, nome: item.nome }))} atual={profissionalId} selecionar={setProfissionalId} />
+        <Text style={[styles.subtitulo, { color: cores.texto }]}>{membroSelecionado ? 'Editar acesso do membro' : 'Vincular usuário à equipe'}</Text>
+        <Text style={[styles.rotulo, { color: cores.textoSecundario }]}>Conta de acesso (obrigatória)</Text><Chips itens={contas.map((item) => ({ id: item.id, nome: `${item.nome} · ${item.email}` }))} atual={usuarioId} selecionar={selecionarUsuario} desabilitado={salvando} />
+        {!usuarios.length ? <Text style={[styles.aviso, { color: cores.textoSecundario }]}>Não há novas contas da unidade disponíveis para vincular. Você pode selecionar um membro existente para editar seu acesso. Cadastrar um profissional não cria uma conta de acesso; permissões só podem ser atribuídas a uma conta vinculada à unidade.</Text> : null}
+        <Text style={[styles.rotulo, { color: cores.textoSecundario }]}>Papel</Text><Chips itens={['GESTOR', 'RECEPCIONISTA', 'PROFISSIONAL'].map((id) => ({ id, nome: id }))} atual={papel} selecionar={setPapel} desabilitado={salvando || responsavelSelecionado} />
+        <Text style={[styles.rotulo, { color: cores.textoSecundario }]}>Perfil profissional opcional</Text><Chips itens={profissionais.map((item) => ({ id: item.id, nome: item.nome }))} atual={profissionalId} selecionar={selecionarProfissional} desabilitado={salvando} />
+        {!usuarioId ? <Text accessibilityRole="alert" style={[styles.aviso, { color: cores.textoSecundario }]}>{profissionalSelecionado ? `Perfil selecionado: ${profissionalSelecionado.nome}. Selecione acima a conta de acesso dessa pessoa para atribuir permissões. O perfil profissional sozinho não cria um login.` : 'Selecione a conta de acesso para habilitar o salvamento das permissões.'}</Text> : null}
         <View style={styles.cabecalhoPermissoes}><Text style={[styles.rotulo, { color: cores.textoSecundario }]}>Permissões</Text><View style={styles.atalhosPermissoes}>
-            <Pressable onPress={() => setPermissoes(PERMISSOES.map((item) => item.id))}><Text style={styles.atalhoPermissao}>Selecionar todas</Text></Pressable>
-            <Pressable onPress={() => setPermissoes([])}><Text style={styles.atalhoRemover}>Remover todas</Text></Pressable>
-        </View></View><View style={styles.chips}>{PERMISSOES.map((item) => <Chip key={item.id} nome={item.nome} ativo={permissoes.includes(item.id)} acao={() => alternar(item.id)} />)}</View>
-        <Botao texto={salvando ? 'Adicionando membro...' : 'Adicionar membro'} acao={submeter} desabilitado={!usuarioId || salvando} />
-        {resultado === 'sucesso' ? <FeedbackSucesso mensagem="Membro adicionado à equipe." /> : null}
+            <Pressable disabled={salvando || responsavelSelecionado} onPress={() => setPermissoes(PERMISSOES.map((item) => item.id))}><Text style={styles.atalhoPermissao}>Selecionar todas</Text></Pressable>
+            <Pressable disabled={salvando || responsavelSelecionado} onPress={() => setPermissoes([])}><Text style={styles.atalhoRemover}>Remover todas</Text></Pressable>
+        </View></View><View style={styles.chips}>{PERMISSOES.map((item) => <Chip key={item.id} nome={item.nome} ativo={permissoes.includes(item.id)} acao={() => alternar(item.id)} desabilitado={salvando || responsavelSelecionado} />)}</View>
+        {responsavelSelecionado ? <Text style={styles.protegido}>Responsável principal · acesso total protegido</Text> : null}
+        <Botao texto={salvando ? 'Salvando membro...' : membroSelecionado ? 'Salvar permissões do membro' : 'Adicionar membro'} acao={submeter} desabilitado={!usuarioId || salvando} />
+        {resultado === 'sucesso' ? <FeedbackSucesso mensagem="Acesso do membro salvo." /> : null}
         {resultado === 'erro' ? <Text accessibilityRole="alert" style={styles.erro}>{erro ?? 'Não foi possível adicionar o membro. Tente novamente.'}</Text> : null}
     </View>{membros.map((item) => {
         const responsavelPrincipal = item.usuario.papel === 'ESTABLISHMENT_OWNER'

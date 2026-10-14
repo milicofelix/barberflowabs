@@ -248,6 +248,7 @@ O build web de produção deve receber `NODE_ENV=production`. O container normal
 - O mobile envia somente os campos editáveis da escala e converte intervalos vazios para `null`. O backend também seleciona explicitamente os campos persistidos: IDs e relações devolvidos na consulta não entram no `createMany`.
 - A escala mostra carregamento e falhas de consulta, recupera os horários salvos e ignora respostas antigas quando o profissional selecionado muda. Durante o salvamento, impede nova submissão e mostra confirmação ou erro no formulário.
 - Inclusão de profissional e membro mostra confirmação/erro junto ao formulário. A tela explica os campos obrigatórios e a ausência de usuários disponíveis para vinculação. O primeiro toque no botão é processado mesmo com o teclado aberto.
+- O formulário de acesso diferencia conta de usuário e perfil profissional. Selecionar um profissional já vinculado carrega o membro existente para editar permissões, sem duplicar o vínculo. A seleção de conta exibe nome/e-mail e inclui membros existentes; profissional sem vínculo exige seleção explícita da conta, sem associação automática por nome. O acesso total do responsável principal permanece protegido.
 
 Revisão estática somente. Não foram executados testes, builds, typecheck, lint, chamadas à API, migrations ou reinícios. Não há mudança de schema, nova dependência ou migration nesta correção. Registros com foto antiga não foram alterados em lote.
 
