@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, Logger, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { sign, verify } from 'jsonwebtoken';
 import { PrismaService } from 'src/db/prisma.service';
+import { FluxoAtendimentoService } from 'src/gestao/fluxo-atendimento.service';
 
 type AcaoAgendamento = 'CONFIRMAR' | 'CANCELAR' | 'REAGENDAR';
 
@@ -16,7 +17,10 @@ interface TokenAcao {
 export class JornadaAgendamentoService {
   private readonly logger = new Logger(JornadaAgendamentoService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly fluxoAtendimento: FluxoAtendimentoService,
+  ) {}
 
   async registrarCriacao(agendamentoId: number) {
     await this.executarSemInterromperAgenda('criação', async () => {
@@ -75,7 +79,13 @@ export class JornadaAgendamentoService {
     this.validarVinculoToken(payload, agendamento);
     if (agendamento.status === 'CONFIRMADO') return this.obterAcao(token);
     if (agendamento.status !== 'AGENDADO') throw new BadRequestException('Este agendamento não pode mais ser confirmado');
-    await this.prisma.agendamento.update({ where: { id: agendamento.id }, data: { status: 'CONFIRMADO' } });
+    await this.fluxoAtendimento.alterarManual(
+      agendamento.id,
+      agendamento.estabelecimentoId,
+      'CONFIRMADO',
+      agendamento.usuarioId,
+      'Confirmação pelo cliente',
+    );
     await this.registrarConfirmacao(agendamento.id);
     return { ...(await this.obterAcao(token)), status: 'CONFIRMADO' };
   }
@@ -88,7 +98,13 @@ export class JornadaAgendamentoService {
     if (!['AGENDADO', 'CONFIRMADO'].includes(agendamento.status) || agendamento.data <= new Date()) {
       throw new BadRequestException('Este agendamento não pode mais ser cancelado');
     }
-    await this.prisma.agendamento.update({ where: { id: agendamento.id }, data: { status: 'CANCELADO' } });
+    await this.fluxoAtendimento.alterarManual(
+      agendamento.id,
+      agendamento.estabelecimentoId,
+      'CANCELADO',
+      agendamento.usuarioId,
+      'Cancelamento pelo cliente',
+    );
     await this.registrarCancelamento(agendamento.id);
     return { ...(await this.obterAcao(token)), status: 'CANCELADO' };
   }

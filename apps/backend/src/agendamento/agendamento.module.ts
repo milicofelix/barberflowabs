@@ -9,9 +9,10 @@ import { TenantService } from 'src/shared/tenant.service';
 import { MotorAgendaModule } from 'src/motor-agenda/motor-agenda.module';
 import { RelacionamentoModule } from 'src/relacionamento/relacionamento.module';
 import { AgendamentoAcaoController } from './agendamento-acao.controller';
+import { AtendimentoModule } from 'src/atendimento/atendimento.module';
 
 @Module({
-  imports: [AuthModule, DbModule, SaasModule, MotorAgendaModule, RelacionamentoModule],
+  imports: [AuthModule, DbModule, SaasModule, MotorAgendaModule, RelacionamentoModule, AtendimentoModule],
   controllers: [AgendamentoController, AgendamentoAcaoController],
   providers: [AgendamentoPrisma, TenantService],
 })

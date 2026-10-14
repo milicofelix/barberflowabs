@@ -4,7 +4,7 @@ import Agendamento from '@uniflowabs/core/src/agendamento/model/Agendamento';
 import RepositorioAgendamento from '@uniflowabs/core/src/agendamento/provider/RepositorioAgendamento';
 import { DEFAULT_ESTABELECIMENTO_ID } from 'src/shared/tenant';
 
-const STATUS_AGENDAMENTO_ATIVO = ['AGENDADO', 'CONFIRMADO', 'CHECKIN'];
+const STATUS_AGENDAMENTO_ATIVO = ['AGENDADO', 'CONFIRMADO', 'ATRASADO', 'CHECKIN'];
 
 @Injectable()
 export class AgendamentoPrisma implements RepositorioAgendamento {
@@ -197,13 +197,10 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
   }
 
   async excluir(id: number): Promise<void> {
-    await this.prisma.agendamento.update({
-      where: { id },
-      data: { status: 'CANCELADO' },
-    });
+    throw new Error(`Cancelamento do agendamento ${id} exige usuário e estabelecimento`);
   }
 
-  async cancelar(id: number, usuarioId: number, estabelecimentoId: number | undefined, membroEstabelecimento: boolean) {
+  async buscarParaCancelar(id: number, usuarioId: number, estabelecimentoId: number | undefined, membroEstabelecimento: boolean) {
     const agendamento = await this.prisma.agendamento.findFirst({
       where: {
         id,
@@ -211,7 +208,7 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
         status: { in: ['AGENDADO', 'CONFIRMADO'] },
         ...(membroEstabelecimento ? {} : { usuarioId }),
       },
-      select: { id: true, data: true },
+      select: { id: true, data: true, estabelecimentoId: true },
     });
 
     if (!agendamento) return null;
@@ -220,13 +217,7 @@ export class AgendamentoPrisma implements RepositorioAgendamento {
       throw new Error('Não é possível cancelar um horário que já passou');
     }
 
-    const cancelado = await this.prisma.agendamento.update({
-      where: { id },
-      data: { status: 'CANCELADO' },
-      include: this.includeAgendamento(),
-    } as any);
-
-    return this.normalizarAgendamento(cancelado);
+    return agendamento;
   }
 
   async avaliar(id: number, usuarioId: number, nota: number, comentario?: string) {

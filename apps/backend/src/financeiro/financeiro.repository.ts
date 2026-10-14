@@ -83,7 +83,7 @@ export class FinanceiroRepository {
     });
   }
 
-  async registrarReceitaAgendamento(estabelecimentoId: number, usuarioId: number, agendamento: any) {
+  async registrarReceitaAgendamento(estabelecimentoId: number, usuarioId: number | null, agendamento: any) {
     try {
       return await this.db.$transaction(async (tx: any) => {
         const existente = await tx.contaFinanceira.findUnique({ where: { agendamentoId: agendamento.id } });

@@ -12,7 +12,7 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { Usuario } from '@uniflowabs/core';
+import { Usuario, statusAgendamentoValido } from '@uniflowabs/core';
 import { BcryptProvider } from 'src/auth/bcrypt.provider';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import {
@@ -36,16 +36,15 @@ import {
 import { GestaoPrisma } from './gestao.prisma';
 import { EquipePolicy } from 'src/equipe/equipe.policy';
 import { PermissaoEquipe } from 'src/equipe/equipe.constants';
-import { FinanceiroService } from 'src/financeiro/financeiro.service';
 import { MotorAgendaService } from 'src/motor-agenda/motor-agenda.service';
 import { ConflitoAgendaError } from 'src/motor-agenda/conflito-agenda.error';
 import { AgendaOperacionalService } from './agenda-operacional.service';
 import { AgendaAtualizacaoService } from 'src/motor-agenda/agenda-atualizacao.service';
 import { randomUUID } from 'crypto';
 import { ImportacaoContatosService } from './importacao-contatos.service';
+import { FluxoAtendimentoService } from './fluxo-atendimento.service';
 import { JornadaAgendamentoService } from 'src/relacionamento/jornada-agendamento.service';
 
-const STATUS_AGENDAMENTO = ['AGENDADO', 'CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW'];
 const ORIGENS_AGENDAMENTO_ASSISTIDO = ['RECEPCAO', 'TELEFONE', 'WHATSAPP', 'PRESENCIAL', 'OUTRO'];
 const TIPOS_LANCAMENTO = ['RECEITA', 'DESPESA'];
 const TIPOS_LEMBRETE = ['CONFIRMACAO', 'ANIVERSARIO', 'RETORNO', 'FIDELIDADE', 'CAMPANHA'];
@@ -58,11 +57,11 @@ export class GestaoController {
     private readonly repo: GestaoPrisma,
     private readonly cripto: BcryptProvider,
     private readonly equipePolicy: EquipePolicy,
-    private readonly financeiro: FinanceiroService,
     private readonly motorAgenda: MotorAgendaService,
     private readonly agendaOperacional: AgendaOperacionalService,
     private readonly atualizacoesAgenda: AgendaAtualizacaoService,
     private readonly importacaoContatos: ImportacaoContatosService,
+    private readonly fluxoAtendimento: FluxoAtendimentoService,
     private readonly jornadaAgendamento: JornadaAgendamentoService,
   ) {}
 
@@ -222,26 +221,20 @@ export class GestaoController {
   ) {
     await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
     validarNumeroInteiroPositivo(id, 'Agendamento');
-    if (!STATUS_AGENDAMENTO.includes(dados?.status)) {
+    if (!statusAgendamentoValido(dados?.status)) {
       throw new BadRequestException('Status inválido');
     }
 
-    const agendamento = await this.repo.atualizarStatusAgendamento(
+    const agendamento = await this.fluxoAtendimento.alterarManual(
       Number(id),
-      usuario.estabelecimentoId,
+      usuario.estabelecimentoId!,
       dados.status,
+      usuario.id!,
+      dados.motivo,
     );
-    if (!agendamento) throw new NotFoundException('Agendamento não encontrado');
-    if (dados.status === 'CONCLUIDO') {
-      await this.financeiro.registrarReceitaAgendamento(usuario.estabelecimentoId!, usuario.id!, agendamento);
-    }
     if (dados.status === 'CONFIRMADO') {
       await this.jornadaAgendamento.registrarConfirmacao(agendamento.id);
     }
-    if (['CANCELADO', 'NO_SHOW'].includes(dados.status)) {
-      await this.jornadaAgendamento.registrarCancelamento(agendamento.id);
-    }
-    this.atualizacoesAgenda.publicar(usuario.estabelecimentoId!);
     return agendamento;
   }
 

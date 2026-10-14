@@ -83,6 +83,8 @@ model Usuario {
   notificacoes NotificacaoUsuario[]
   importacoesContatosOperadas ImportacaoContatoLote[] @relation("ImportacaoContatoOperador")
   itensImportacaoContato ImportacaoContatoItem[]
+  agendamentosControladosManualmente Agendamento[] @relation("ControleManualAgendamento")
+  transicoesAtendimentoDestinadas TransicaoAgendamento[] @relation("DestinatarioTransicaoAgendamento")
 
   @@index([estabelecimentoId])
   @@index([telefoneNormalizado])
@@ -164,6 +166,12 @@ model Agendamento {
   criadoPorId Int?
   origem      String   @default("APP_CLIENTE")
   observacoes String?  @db.Text
+  automacaoAtendimentoAtiva Boolean @default(true)
+  controleManualEm DateTime?
+  controleManualPorId Int?
+  iniciadoEm DateTime?
+  finalizadoEm DateTime?
+  revisaoFluxo Int @default(1)
 
   estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
   unidade   Unidade?  @relation(fields: [unidadeId], references: [id])
@@ -171,6 +179,7 @@ model Agendamento {
   usuario   Usuario @relation(fields: [usuarioId], references: [id])
   usuarioId Int
   criadoPor Usuario? @relation("AgendamentoCriadoPor", fields: [criadoPorId], references: [id])
+  controleManualPor Usuario? @relation("ControleManualAgendamento", fields: [controleManualPorId], references: [id])
 
   profissional   Profissional @relation(fields: [profissionalId], references: [id])
   profissionalId Int
@@ -182,6 +191,7 @@ model Agendamento {
   avaliacao Avaliacao?
   contasFinanceiras ContaFinanceira[]
   enviosComunicacao EnvioComunicacao[]
+  transicoesAtendimento TransicaoAgendamento[]
 
   @@index([estabelecimentoId])
   @@index([profissionalId, data])
@@ -190,6 +200,7 @@ model Agendamento {
   @@index([estabelecimentoId, inicioOcupacao, fimOcupacao])
   @@index([estabelecimentoId, status, data])
   @@index([criadoPorId])
+  @@index([controleManualPorId])
   @@map("agendamentos")
 }
 
@@ -228,6 +239,10 @@ model Estabelecimento {
   lembreteAntecedenciaMinutos Int @default(1440)
   janelaSilenciosaInicio String @default("22:00") @db.VarChar(5)
   janelaSilenciosaFim String @default("08:00") @db.VarChar(5)
+  fluxoAtendimentoAutomaticoAtivo Boolean @default(false)
+  inicioAtendimentoAutomaticoAtivo Boolean @default(true)
+  finalizacaoAtendimentoAutomaticaAtiva Boolean @default(true)
+  avisoAtendimentoAntecedenciaMinutos Int @default(10)
   tipoEstabelecimento String   @default("BARBEARIA")
   modeloAtendimento   String   @default("PRESENCIAL")
   fusoHorario         String   @default("America/Sao_Paulo")
@@ -268,6 +283,7 @@ model Estabelecimento {
   enviosComunicacao             EnvioComunicacao[]
   notificacoes                  NotificacaoUsuario[]
   importacoesContatos           ImportacaoContatoLote[]
+  transicoesAtendimento         TransicaoAgendamento[]
   solicitacaoOrigem             SolicitacaoEstabelecimento? @relation("EstabelecimentoGeradoSolicitacao")
 
   @@map("estabelecimentos")
@@ -1204,6 +1220,34 @@ model LogAuditoria {
   @@index([estabelecimentoId, createdAt])
   @@index([usuarioId, createdAt])
   @@map("logs_auditoria")
+}
+
+model TransicaoAgendamento {
+  id                    Int       @id @default(autoincrement())
+  agendamentoId         Int
+  estabelecimentoId     Int
+  destinatarioUsuarioId Int?
+  revisaoFluxo          Int
+  tipo                  String
+  status                String    @default("AGENDADA")
+  chaveIdempotencia     String    @unique
+  dataPrevista          DateTime
+  processadoEm          DateTime?
+  tentativas            Int       @default(0)
+  bloqueadoEm           DateTime?
+  bloqueadoPor          String?
+  erro                  String?   @db.Text
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  agendamento           Agendamento @relation(fields: [agendamentoId], references: [id], onDelete: Cascade)
+  estabelecimento       Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  destinatario          Usuario? @relation("DestinatarioTransicaoAgendamento", fields: [destinatarioUsuarioId], references: [id], onDelete: SetNull)
+
+  @@index([status, dataPrevista])
+  @@index([estabelecimentoId, status, dataPrevista])
+  @@index([agendamentoId, revisaoFluxo])
+  @@index([destinatarioUsuarioId])
+  @@map("transicoes_agendamentos")
 }
 
 model LembreteRelacionamento {

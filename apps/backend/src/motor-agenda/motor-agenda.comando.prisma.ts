@@ -8,7 +8,7 @@ import {
 } from './motor-agenda.disponibilidade.prisma';
 import { ConflitoAgendaError } from './conflito-agenda.error';
 
-const STATUS_AGENDAMENTO_ATIVO = ['AGENDADO', 'CONFIRMADO', 'CHECKIN'];
+const STATUS_AGENDAMENTO_ATIVO = ['AGENDADO', 'CONFIRMADO', 'ATRASADO', 'CHECKIN'];
 
 @Injectable()
 export class MotorAgendaComandoPrisma {
@@ -57,6 +57,13 @@ export class MotorAgendaComandoPrisma {
         params.agendamento.id,
       );
       await tx.agendamentoRecurso.deleteMany({ where: { agendamentoId: params.agendamento.id } });
+      await tx.transicaoAgendamento.updateMany({
+        where: {
+          agendamentoId: params.agendamento.id,
+          status: { in: ['AGENDADA', 'PROCESSANDO'] },
+        },
+        data: { status: 'CANCELADA', processadoEm: new Date(), bloqueadoEm: null, bloqueadoPor: null },
+      });
       await tx.historicoReagendamento.create({ data: this.dadosHistorico(params) });
       return tx.agendamento.update({
         where: { id: params.agendamento.id },
@@ -69,6 +76,12 @@ export class MotorAgendaComandoPrisma {
           enderecoAtendimento: params.enderecoAtendimento?.trim() || null,
           deslocamentoMinutos: params.periodo.deslocamentoMinutos,
           reagendadoEm: new Date(),
+          automacaoAtendimentoAtiva: true,
+          controleManualEm: null,
+          controleManualPorId: null,
+          iniciadoEm: null,
+          finalizadoEm: null,
+          revisaoFluxo: { increment: 1 },
           recursos: { create: this.dadosRecursos(recursos, params.periodo) },
         },
         include: this.inclusoesAgendamento(),

@@ -10,9 +10,10 @@ import { ComunicacaoCallbackController } from './comunicacao-callback.controller
 import { ComunicacaoWorker } from './comunicacao.worker';
 import { ComunicacaoProviderRegistry, EmailSimuladoProvider, PushSimuladoProvider, WhatsappSimuladoProvider } from './comunicacao.provider';
 import { JornadaAgendamentoService } from './jornada-agendamento.service';
+import { AtendimentoModule } from 'src/atendimento/atendimento.module';
 
 @Module({
-  imports: [AuthModule, DbModule, EquipeModule],
+  imports: [AuthModule, DbModule, EquipeModule, AtendimentoModule],
   controllers: [RelacionamentoController, ComunicacaoCallbackController],
   providers: [
     RelacionamentoRepository, RelacionamentoService, ComunicacaoWorker,

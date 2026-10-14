@@ -138,6 +138,17 @@ declare class ObterHorariosOcupados implements CasoDeUso<Entrada$1, string[]> {
     private somarMinutos;
 }
 
+declare const STATUS_AGENDAMENTO: readonly ["AGENDADO", "CONFIRMADO", "ATRASADO", "CHECKIN", "CONCLUIDO", "CANCELADO", "NO_SHOW"];
+type StatusAgendamento = (typeof STATUS_AGENDAMENTO)[number];
+declare const ORIGENS_TRANSICAO_ATENDIMENTO: readonly ["MANUAL", "AUTOMATICA"];
+type OrigemTransicaoAtendimento = (typeof ORIGENS_TRANSICAO_ATENDIMENTO)[number];
+declare const TIPOS_TRANSICAO_ATENDIMENTO: readonly ["AVISO", "INICIAR", "FINALIZAR"];
+type TipoTransicaoAtendimento = (typeof TIPOS_TRANSICAO_ATENDIMENTO)[number];
+declare const STATUS_TRANSICAO_ATENDIMENTO: readonly ["AGENDADA", "PROCESSANDO", "PROCESSADA", "CANCELADA", "FALHOU"];
+type StatusTransicaoAtendimento = (typeof STATUS_TRANSICAO_ATENDIMENTO)[number];
+declare const ROTULOS_STATUS_AGENDAMENTO: Record<StatusAgendamento, string>;
+declare function statusAgendamentoValido(status: unknown): status is StatusAgendamento;
+
 declare const clientes: {
     id: number;
     imagemURL: string;
@@ -274,4 +285,4 @@ declare function capaPersonalizada(unidade?: IdentidadeEstabelecimento | null): 
 declare function iniciaisUsuario(nome: string): string;
 declare function resolverURLMidia(url: string, api: string): string;
 
-export { AgendaUtils, type Agendamento, type AssociacaoMidia, BuscarAgendaProfissionalPorDia, BuscarAgendamentosCliente, BuscarProfissionais, BuscarServicos, DateUtils, type EntidadeMidia, ExcluirAgendamento, type FinalidadeMidia, Horarios, type IdentidadeEstabelecimento, type ImagemGaleria, LoginUsuario, MoedaUtils, NovoAgendamento, ObterHorariosOcupados, type Profissional, type ProvedorCriptografia, RegistrarUsuario, type RepositorioAgendamento, type RepositorioProfissional, type RepositorioServico, type RepositorioUsuario, type ResultadoAssociacaoMidia, type Servico, TEMPO_SLOT, type Usuario, type VersaoMidia, capaPersonalizada, categoriaIdentidade, clientes, iniciaisUsuario, profissionais, resolverURLMidia, servicos };
+export { AgendaUtils, type Agendamento, type AssociacaoMidia, BuscarAgendaProfissionalPorDia, BuscarAgendamentosCliente, BuscarProfissionais, BuscarServicos, DateUtils, type EntidadeMidia, ExcluirAgendamento, type FinalidadeMidia, Horarios, type IdentidadeEstabelecimento, type ImagemGaleria, LoginUsuario, MoedaUtils, NovoAgendamento, ORIGENS_TRANSICAO_ATENDIMENTO, ObterHorariosOcupados, type OrigemTransicaoAtendimento, type Profissional, type ProvedorCriptografia, ROTULOS_STATUS_AGENDAMENTO, RegistrarUsuario, type RepositorioAgendamento, type RepositorioProfissional, type RepositorioServico, type RepositorioUsuario, type ResultadoAssociacaoMidia, STATUS_AGENDAMENTO, STATUS_TRANSICAO_ATENDIMENTO, type Servico, type StatusAgendamento, type StatusTransicaoAtendimento, TEMPO_SLOT, TIPOS_TRANSICAO_ATENDIMENTO, type TipoTransicaoAtendimento, type Usuario, type VersaoMidia, capaPersonalizada, categoriaIdentidade, clientes, iniciaisUsuario, profissionais, resolverURLMidia, servicos, statusAgendamentoValido };

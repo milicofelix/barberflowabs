@@ -99,6 +99,24 @@ export class AgendaController {
     if (typeof dados?.lembreteAgendamentoAtivo !== 'boolean') {
       throw new BadRequestException('Configuração do lembrete é obrigatória');
     }
+    for (const [campo, valor] of [
+      ['Fluxo automático', dados?.fluxoAtendimentoAutomaticoAtivo],
+      ['Início automático', dados?.inicioAtendimentoAutomaticoAtivo],
+      ['Finalização automática', dados?.finalizacaoAtendimentoAutomaticaAtiva],
+    ] as const) {
+      if (valor !== undefined && typeof valor !== 'boolean') {
+        throw new BadRequestException(`${campo} deve ser verdadeiro ou falso`);
+      }
+    }
+    if (dados?.avisoAtendimentoAntecedenciaMinutos !== undefined) {
+      validarNumeroInteiroPositivo(
+        dados.avisoAtendimentoAntecedenciaMinutos,
+        'Antecedência do aviso operacional',
+      );
+      if (dados.avisoAtendimentoAntecedenciaMinutos > 60) {
+        throw new BadRequestException('Antecedência do aviso operacional deve ser de no máximo 60 minutos');
+      }
+    }
     validarHorario(dados?.janelaSilenciosaInicio, 'Início da janela silenciosa');
     validarHorario(dados?.janelaSilenciosaFim, 'Fim da janela silenciosa');
     try {

@@ -6,11 +6,11 @@ import { MotorAgendaConsultaPrisma } from './motor-agenda.consulta.prisma';
 import { MotorAgendaDisponibilidadePrisma } from './motor-agenda.disponibilidade.prisma';
 import { MotorAgendaPolicy } from './motor-agenda.policy';
 import { MotorAgendaService } from './motor-agenda.service';
-import { AgendaAtualizacaoService } from './agenda-atualizacao.service';
 import { RelacionamentoModule } from 'src/relacionamento/relacionamento.module';
+import { AtendimentoModule } from 'src/atendimento/atendimento.module';
 
 @Module({
-  imports: [DbModule, RelacionamentoModule],
+  imports: [DbModule, RelacionamentoModule, AtendimentoModule],
   providers: [
     MotorAgendaCalculador,
     MotorAgendaComandoPrisma,
@@ -18,8 +18,7 @@ import { RelacionamentoModule } from 'src/relacionamento/relacionamento.module';
     MotorAgendaDisponibilidadePrisma,
     MotorAgendaPolicy,
     MotorAgendaService,
-    AgendaAtualizacaoService,
   ],
-  exports: [MotorAgendaService, AgendaAtualizacaoService],
+  exports: [MotorAgendaService, AtendimentoModule],
 })
 export class MotorAgendaModule {}

@@ -165,7 +165,7 @@ export class EstabelecimentoPrisma {
           usuarioId,
           acao: 'ESTABLISHMENT_PUBLIC_PROFILE_REVIEW_REQUESTED',
           entidade: 'Estabelecimento',
-          entidadeId: estabelecimentoId,
+          entidadeId: String(estabelecimentoId),
           detalhes: {
             observacao: dados.observacaoRevisao ?? null,
           },

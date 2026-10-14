@@ -31,16 +31,22 @@ __export(src_exports, {
   LoginUsuario: () => LoginUsuario,
   MoedaUtils: () => MoedaUtils,
   NovoAgendamento: () => NovoAgendamento,
+  ORIGENS_TRANSICAO_ATENDIMENTO: () => ORIGENS_TRANSICAO_ATENDIMENTO,
   ObterHorariosOcupados: () => ObterHorariosOcupados,
+  ROTULOS_STATUS_AGENDAMENTO: () => ROTULOS_STATUS_AGENDAMENTO,
   RegistrarUsuario: () => RegistrarUsuario,
+  STATUS_AGENDAMENTO: () => STATUS_AGENDAMENTO,
+  STATUS_TRANSICAO_ATENDIMENTO: () => STATUS_TRANSICAO_ATENDIMENTO,
   TEMPO_SLOT: () => TEMPO_SLOT,
+  TIPOS_TRANSICAO_ATENDIMENTO: () => TIPOS_TRANSICAO_ATENDIMENTO,
   capaPersonalizada: () => capaPersonalizada,
   categoriaIdentidade: () => categoriaIdentidade,
   clientes: () => clientes_default,
   iniciaisUsuario: () => iniciaisUsuario,
   profissionais: () => profissionais_default,
   resolverURLMidia: () => resolverURLMidia,
-  servicos: () => servicos_default
+  servicos: () => servicos_default,
+  statusAgendamentoValido: () => statusAgendamentoValido
 });
 module.exports = __toCommonJS(src_exports);
 
@@ -401,6 +407,38 @@ var ObterHorariosOcupados = class {
   }
 };
 
+// src/agendamento/status-atendimento.ts
+var STATUS_AGENDAMENTO = [
+  "AGENDADO",
+  "CONFIRMADO",
+  "ATRASADO",
+  "CHECKIN",
+  "CONCLUIDO",
+  "CANCELADO",
+  "NO_SHOW"
+];
+var ORIGENS_TRANSICAO_ATENDIMENTO = ["MANUAL", "AUTOMATICA"];
+var TIPOS_TRANSICAO_ATENDIMENTO = ["AVISO", "INICIAR", "FINALIZAR"];
+var STATUS_TRANSICAO_ATENDIMENTO = [
+  "AGENDADA",
+  "PROCESSANDO",
+  "PROCESSADA",
+  "CANCELADA",
+  "FALHOU"
+];
+var ROTULOS_STATUS_AGENDAMENTO = {
+  AGENDADO: "Agendado",
+  CONFIRMADO: "Confirmado",
+  ATRASADO: "Em atraso",
+  CHECKIN: "Em atendimento",
+  CONCLUIDO: "Finalizado",
+  CANCELADO: "Cancelado",
+  NO_SHOW: "N\xE3o compareceu"
+};
+function statusAgendamentoValido(status) {
+  return typeof status === "string" && STATUS_AGENDAMENTO.includes(status);
+}
+
 // src/profissional/service/BuscarProfissionais.ts
 var BuscarProfissionais = class {
   constructor(repo) {
@@ -508,14 +546,20 @@ function resolverURLMidia(url, api) {
   LoginUsuario,
   MoedaUtils,
   NovoAgendamento,
+  ORIGENS_TRANSICAO_ATENDIMENTO,
   ObterHorariosOcupados,
+  ROTULOS_STATUS_AGENDAMENTO,
   RegistrarUsuario,
+  STATUS_AGENDAMENTO,
+  STATUS_TRANSICAO_ATENDIMENTO,
   TEMPO_SLOT,
+  TIPOS_TRANSICAO_ATENDIMENTO,
   capaPersonalizada,
   categoriaIdentidade,
   clientes,
   iniciaisUsuario,
   profissionais,
   resolverURLMidia,
-  servicos
+  servicos,
+  statusAgendamentoValido
 });

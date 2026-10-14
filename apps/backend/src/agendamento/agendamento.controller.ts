@@ -1,6 +1,5 @@
 import {
   Usuario,
-  Agendamento,
   TEMPO_SLOT,
 } from '@uniflowabs/core';
 import {
@@ -33,8 +32,7 @@ import {
   ReagendarAgendamentoDto,
 } from 'src/motor-agenda/motor-agenda.dto';
 import { ConflitoAgendaError } from 'src/motor-agenda/conflito-agenda.error';
-import { AgendaAtualizacaoService } from 'src/motor-agenda/agenda-atualizacao.service';
-import { JornadaAgendamentoService } from 'src/relacionamento/jornada-agendamento.service';
+import { FluxoAtendimentoService } from 'src/gestao/fluxo-atendimento.service';
 
 @Controller('agendamentos')
 export class AgendamentoController {
@@ -43,8 +41,7 @@ export class AgendamentoController {
     private readonly limites: PlanoLimitesService,
     private readonly tenant: TenantService,
     private readonly motor: MotorAgendaService,
-    private readonly atualizacoesAgenda: AgendaAtualizacaoService,
-    private readonly jornada: JornadaAgendamentoService,
+    private readonly fluxoAtendimento: FluxoAtendimentoService,
   ) {}
 
   @Post()
@@ -199,23 +196,24 @@ export class AgendamentoController {
   ) {
     validarNumeroInteiroPositivo(id, 'Agendamento');
     const estabelecimentoId = await this.resolverEstabelecimentoAgendamento(req, usuario);
-    let agendamento: Agendamento | null;
     const podeCancelarComoMembro = !!usuario.membroEstabelecimento && usuario.estabelecimentoId === estabelecimentoId;
 
     try {
-      agendamento = await this.repo.cancelar(Number(id), usuario.id!, estabelecimentoId, podeCancelarComoMembro);
+      const cancelavel = await this.repo.buscarParaCancelar(
+        Number(id), usuario.id!, estabelecimentoId, podeCancelarComoMembro,
+      );
+      if (!cancelavel) throw new NotFoundException('Agendamento não encontrado para cancelamento');
+      return await this.fluxoAtendimento.alterarManual(
+        cancelavel.id,
+        cancelavel.estabelecimentoId,
+        'CANCELADO',
+        usuario.id!,
+        'Cancelamento solicitado no aplicativo',
+      );
     } catch (error: any) {
+      if (error instanceof NotFoundException) throw error;
       throw new BadRequestException(error?.message ?? 'Não foi possível cancelar o agendamento');
     }
-
-    if (!agendamento) {
-      throw new NotFoundException('Agendamento não encontrado para cancelamento');
-    }
-
-    this.atualizacoesAgenda.publicar(estabelecimentoId);
-    await this.jornada.registrarCancelamento(agendamento.id!);
-
-    return agendamento;
   }
 
   @Delete('meus/:id')
@@ -226,15 +224,17 @@ export class AgendamentoController {
     validarNumeroInteiroPositivo(id, 'Agendamento');
 
     try {
-      const agendamento = await this.repo.cancelar(Number(id), usuario.id!, undefined, false);
-      if (!agendamento) {
+      const cancelavel = await this.repo.buscarParaCancelar(Number(id), usuario.id!, undefined, false);
+      if (!cancelavel) {
         throw new NotFoundException('Agendamento não encontrado para cancelamento');
       }
-      if ((agendamento as any).estabelecimentoId) {
-        this.atualizacoesAgenda.publicar((agendamento as any).estabelecimentoId);
-      }
-      await this.jornada.registrarCancelamento(agendamento.id!);
-      return agendamento;
+      return await this.fluxoAtendimento.alterarManual(
+        cancelavel.id,
+        cancelavel.estabelecimentoId,
+        'CANCELADO',
+        usuario.id!,
+        'Cancelamento solicitado pelo cliente',
+      );
     } catch (error: any) {
       if (error instanceof NotFoundException) throw error;
       throw new BadRequestException(error?.message ?? 'Não foi possível cancelar o agendamento');

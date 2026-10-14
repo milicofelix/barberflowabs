@@ -80,7 +80,7 @@ export class FinanceiroService {
     });
   }
 
-  registrarReceitaAgendamento(estabelecimentoId: number, usuarioId: number, agendamento: any) {
+  registrarReceitaAgendamento(estabelecimentoId: number, usuarioId: number | null, agendamento: any) {
     return this.repo.registrarReceitaAgendamento(estabelecimentoId, usuarioId, agendamento);
   }
 

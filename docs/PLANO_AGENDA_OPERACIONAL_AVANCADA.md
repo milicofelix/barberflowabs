@@ -139,6 +139,10 @@ Substituir progressivamente a lista diaria da Gestao Diaria por uma agenda opera
 
 A substituicao da importacao manual por VCF/seeder foi planejada em `docs/PLANO_IMPORTACAO_CONTATOS_MOBILE.md`. O fluxo pedira permissao somente por acao explicita, selecionara os contatos localmente, enviara apenas os escolhidos e mantera consentimentos de comunicacao desativados por padrao.
 
+## Proxima Evolucao — Fluxo Automatico De Atendimentos
+
+O inicio e a conclusao automaticos, o aviso operacional dez minutos antes, o estado de atraso e a precedencia do controle manual foram planejados em `docs/PLANO_FLUXO_AUTOMATICO_ATENDIMENTOS.md`. A evolucao reutiliza `CHECKIN` como **Em atendimento** e `CONCLUIDO` como **Finalizado**, centralizando efeitos financeiros, auditoria, notificacoes e sincronizacao em um unico servico de transicao.
+
 ## Simplificação De Duração — Preparação Desativada
 
 ### Almoço Opcional, Sem Bloqueio Automático

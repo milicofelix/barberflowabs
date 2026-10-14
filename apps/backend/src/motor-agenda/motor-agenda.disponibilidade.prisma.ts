@@ -4,7 +4,7 @@ import { ConflitoAgendaError } from './conflito-agenda.error';
 import { PeriodoAgenda } from './motor-agenda.calculador';
 import { ContextoAgenda } from './motor-agenda.dto';
 
-const STATUS_ATIVOS = ['AGENDADO', 'CONFIRMADO', 'CHECKIN'];
+const STATUS_ATIVOS = ['AGENDADO', 'CONFIRMADO', 'ATRASADO', 'CHECKIN'];
 
 export interface AlocacaoRecurso {
   recursoId: number;

@@ -1,5 +1,8 @@
+import { StatusAgendamento } from '@uniflowabs/core';
+
 export interface AtualizarStatusAgendamentoDto {
-  status: string;
+  status: StatusAgendamento;
+  motivo?: string | null;
 }
 
 export interface ConsultarAgendaPeriodoDto {

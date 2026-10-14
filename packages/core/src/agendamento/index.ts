@@ -7,6 +7,8 @@ import NovoAgendamento from './service/NovoAgendamento'
 import ObterHorariosOcupados from './service/ObterHorariosOcupados'
 import RepositorioAgendamento from './provider/RepositorioAgendamento'
 
+export * from './status-atendimento'
+
 export type { Agendamento, RepositorioAgendamento }
 export {
     BuscarAgendamentosCliente,

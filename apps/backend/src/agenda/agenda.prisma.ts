@@ -110,6 +110,10 @@ export class AgendaPrisma {
           lembreteAntecedenciaMinutos: true,
           janelaSilenciosaInicio: true,
           janelaSilenciosaFim: true,
+          fluxoAtendimentoAutomaticoAtivo: true,
+          inicioAtendimentoAutomaticoAtivo: true,
+          finalizacaoAtendimentoAutomaticaAtiva: true,
+          avisoAtendimentoAntecedenciaMinutos: true,
         },
       }),
       this.prisma.horarioFuncionamento.findMany({
@@ -125,6 +129,10 @@ export class AgendaPrisma {
       lembreteAntecedenciaMinutos: estabelecimento?.lembreteAntecedenciaMinutos ?? 1440,
       janelaSilenciosaInicio: estabelecimento?.janelaSilenciosaInicio ?? '22:00',
       janelaSilenciosaFim: estabelecimento?.janelaSilenciosaFim ?? '08:00',
+      fluxoAtendimentoAutomaticoAtivo: estabelecimento?.fluxoAtendimentoAutomaticoAtivo ?? false,
+      inicioAtendimentoAutomaticoAtivo: estabelecimento?.inicioAtendimentoAutomaticoAtivo ?? true,
+      finalizacaoAtendimentoAutomaticaAtiva: estabelecimento?.finalizacaoAtendimentoAutomaticaAtiva ?? true,
+      avisoAtendimentoAntecedenciaMinutos: estabelecimento?.avisoAtendimentoAntecedenciaMinutos ?? 10,
       horarios,
     };
   }
@@ -140,6 +148,14 @@ export class AgendaPrisma {
           lembreteAntecedenciaMinutos: configuracao.lembreteAntecedenciaMinutos,
           janelaSilenciosaInicio: configuracao.janelaSilenciosaInicio,
           janelaSilenciosaFim: configuracao.janelaSilenciosaFim,
+          ...(configuracao.fluxoAtendimentoAutomaticoAtivo !== undefined
+            ? { fluxoAtendimentoAutomaticoAtivo: configuracao.fluxoAtendimentoAutomaticoAtivo } : {}),
+          ...(configuracao.inicioAtendimentoAutomaticoAtivo !== undefined
+            ? { inicioAtendimentoAutomaticoAtivo: configuracao.inicioAtendimentoAutomaticoAtivo } : {}),
+          ...(configuracao.finalizacaoAtendimentoAutomaticaAtiva !== undefined
+            ? { finalizacaoAtendimentoAutomaticaAtiva: configuracao.finalizacaoAtendimentoAutomaticaAtiva } : {}),
+          ...(configuracao.avisoAtendimentoAntecedenciaMinutos !== undefined
+            ? { avisoAtendimentoAntecedenciaMinutos: configuracao.avisoAtendimentoAntecedenciaMinutos } : {}),
         },
       }),
       this.prisma.horarioFuncionamento.deleteMany({

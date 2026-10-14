@@ -1,7 +1,7 @@
 export function auditarFinanceiro(
   tx: any,
   estabelecimentoId: number,
-  usuarioId: number,
+  usuarioId: number | null,
   acao: string,
   entidade: string,
   entidadeId: number | null,

@@ -3,7 +3,7 @@ import { PrismaService } from 'src/db/prisma.service';
 import { MarketplaceFiltrosDto } from './marketplace.dto';
 import { PublicoPrisma } from './publico.prisma';
 
-const STATUS_ATIVOS = ['AGENDADO', 'CONFIRMADO', 'CHECKIN'];
+const STATUS_ATIVOS = ['AGENDADO', 'CONFIRMADO', 'ATRASADO', 'CHECKIN'];
 
 @Injectable()
 export class MarketplacePrisma {

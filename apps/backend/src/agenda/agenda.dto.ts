@@ -20,5 +20,9 @@ export interface ConfiguracaoAgendaDto {
   lembreteAntecedenciaMinutos: number;
   janelaSilenciosaInicio: string;
   janelaSilenciosaFim: string;
+  fluxoAtendimentoAutomaticoAtivo?: boolean;
+  inicioAtendimentoAutomaticoAtivo?: boolean;
+  finalizacaoAtendimentoAutomaticaAtiva?: boolean;
+  avisoAtendimentoAntecedenciaMinutos?: number;
   horarios: HorarioFuncionamentoDto[];
 }
