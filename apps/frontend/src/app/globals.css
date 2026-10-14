@@ -119,6 +119,19 @@
         backdrop-filter: blur(1.5px);
     }
 
+    html:not(.dark) .home-identidade .slogan-conteudo {
+        background: linear-gradient(135deg, #ffffff, #f5f3ff);
+        border-color: #e0e7ff;
+        box-shadow: 0 12px 36px rgb(99 102 241 / 8%);
+        backdrop-filter: none;
+    }
+    html:not(.dark) .home-identidade .slogan-titulo,
+    html:not(.dark) .home-identidade .slogan-descricao { text-shadow: none; }
+    html:not(.dark) .home-identidade .slogan-titulo span,
+    html:not(.dark) .home-identidade .slogan-descricao { color: #172554 !important; }
+    html:not(.dark) .home-identidade .cabecalho-home { background: #fff; color: #172554; }
+    html.dark .home-identidade .home-sobre-imagem { background: rgb(4 10 26 / 72%); }
+
     .slogan-titulo,
     .slogan-descricao {
         text-shadow: 0 2px 5px rgba(0, 0, 0, .95), 0 0 22px rgba(0, 0, 0, .72);

@@ -34,8 +34,12 @@ __export(src_exports, {
   ObterHorariosOcupados: () => ObterHorariosOcupados,
   RegistrarUsuario: () => RegistrarUsuario,
   TEMPO_SLOT: () => TEMPO_SLOT,
+  capaPersonalizada: () => capaPersonalizada,
+  categoriaIdentidade: () => categoriaIdentidade,
   clientes: () => clientes_default,
+  iniciaisUsuario: () => iniciaisUsuario,
   profissionais: () => profissionais_default,
+  resolverURLMidia: () => resolverURLMidia,
   servicos: () => servicos_default
 });
 module.exports = __toCommonJS(src_exports);
@@ -454,6 +458,43 @@ var LoginUsuario = class {
     return usuario;
   }
 };
+
+// src/midia/identidade.ts
+var tipos = {
+  BARBEARIA: "barbearia",
+  SALAO_BELEZA: "salao-cabelo",
+  CLINICA_ESTETICA: "clinica-estetica",
+  ESTUDIO_BELEZA: "estetica-beleza",
+  ESMALTERIA: "manicure-pedicure",
+  SPA_BEM_ESTAR: "spa-bem-estar"
+};
+var segmentos = {
+  barbearia: "barbearia",
+  "salao-beleza": "salao-cabelo",
+  "manicure-pedicure": "manicure-pedicure",
+  "clinica-estetica": "clinica-estetica",
+  beleza: "estetica-beleza",
+  "spa-bem-estar": "spa-bem-estar"
+};
+function categoriaIdentidade(unidade) {
+  if (!unidade) return null;
+  const principal = unidade.segmentos?.find((s) => s.principal);
+  if (principal) return segmentos[principal.slug ?? principal.segmento?.slug ?? ""] ?? null;
+  if (tipos[unidade.tipoEstabelecimento ?? ""]) return tipos[unidade.tipoEstabelecimento];
+  const categorias = [...new Set(unidade.segmentos?.map((s) => segmentos[s.slug ?? s.segmento?.slug ?? ""]).filter(Boolean))];
+  return categorias.length === 1 ? categorias[0] : null;
+}
+function capaPersonalizada(unidade) {
+  const url = unidade?.imagemCapaURL?.trim();
+  if (!url || ["/banner.png", "/banners/principal.png"].includes(url)) return null;
+  return /^https?:\/\//i.test(url) || url.startsWith("/") && !url.startsWith("//") ? url : null;
+}
+function iniciaisUsuario(nome) {
+  return nome.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((p) => Array.from(p)[0]).join("").toUpperCase() || "U";
+}
+function resolverURLMidia(url, api) {
+  return url.startsWith("/midias/") ? `${api.replace(/\/$/, "")}${url}` : url;
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   AgendaUtils,
@@ -470,7 +511,11 @@ var LoginUsuario = class {
   ObterHorariosOcupados,
   RegistrarUsuario,
   TEMPO_SLOT,
+  capaPersonalizada,
+  categoriaIdentidade,
   clientes,
+  iniciaisUsuario,
   profissionais,
+  resolverURLMidia,
   servicos
 });

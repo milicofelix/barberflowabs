@@ -2,9 +2,10 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import useAPI from '@/data/hooks/useAPI'
 import type { FinalidadeMidia, ImagemGaleria } from '@uniflowabs/core'
+import { resolverURLMidia } from '@uniflowabs/core'
 
 export function urlImagemWeb(url?: string | null) {
-    return url?.startsWith('/midias/') ? `${process.env.NEXT_PUBLIC_API_URL}${url}` : url ?? ''
+    return resolverURLMidia(url ?? '', process.env.NEXT_PUBLIC_API_URL ?? '')
 }
 
 export default function SeletorImagem({ valor, finalidade, alterar, titulo = 'Imagem', padrao = '', disabled = false }: {

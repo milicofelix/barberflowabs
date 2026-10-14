@@ -674,6 +674,15 @@ docker compose exec -T app sh -lc 'cd apps/backend && npx jest midia/midia.spec.
 
 Inclui preservação de proporção em imagens de serviços, validação do upload e isolamento por conta/unidade. Não altera dados da base; os testes de arquivos usam uma pasta temporária própria.
 
+### Validar regras compartilhadas de identidade — Fase 4
+
+```bash
+docker compose exec -T app sh -lc 'cd packages/core && npx tsup src/index.ts --dts'
+docker compose exec -T app sh -lc 'cd apps/backend && npx jest midia --runInBand'
+```
+
+Gera os contratos compartilhados e executa os 15 testes de processamento, associação e identidade. As checagens TypeScript web/backend/mobile estão documentadas acima. Não há migration, nova dependência nativa ou necessidade de novo build nativo específico desta fase; recarregue o bundle atualizado. O build nativo com os módulos da Fase 3 continua necessário para câmera e upload do aparelho.
+
 ## Limpezas Destrutivas
 
 

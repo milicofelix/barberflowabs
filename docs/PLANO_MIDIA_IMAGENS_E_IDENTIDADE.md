@@ -168,19 +168,40 @@ Não há migration nem necessidade de reduzir manualmente os arquivos. Imagens a
 
 Verificação do ajuste: 11 testes de mídia passaram, incluindo proporção horizontal/vertical e ausência de ampliação de imagens pequenas. TypeScript da web e `git diff --check` passaram. Mobile continua com os mesmos três erros anteriores de agenda/perfil, sem erros novos neste ajuste. Aceite visual no navegador/aparelho permanece pendente.
 
-- [ ] Substituir o avatar genérico atual por iniciais estilizadas, com possibilidade de foto própria.
-- [ ] Centralizar resolução de foto, capa e imagem padrão para web e mobile.
-- [ ] Definir o fundo da Home operacional pelo segmento principal da unidade: barbearia, salão, manicure, estética, spa ou beleza.
-- [ ] Manter o fundo atual como opção para barbearia e reutilizar as capas existentes nos outros segmentos quando sua composição for adequada.
-- [ ] Usar composição neutra multissegmento quando não houver segmento principal, houver classificação indefinida ou o usuário estiver na Home pessoal da plataforma.
-- [ ] Para cliente, usar identidade neutra na Home pessoal; no contexto explícito de uma unidade, usar a identidade daquela unidade.
-- [ ] Para superadmin, usar identidade neutra da plataforma.
-- [ ] Manter a Home clara legível e branca; imagens por segmento podem aparecer em uma área de destaque, sem substituir todo o fundo claro.
-- [ ] Aplicar sobreposição e contraste no tema escuro para preservar leitura de “Próximos agendamentos” e cartões.
-- [ ] Priorizar imagem personalizada da unidade quando houver opção própria de capa para a Home, com fallback para segmento.
-- [ ] Cachear e pré-carregar as imagens utilizadas; mudança de imagem não pode remontar mapas, perder filtros ou recarregar listas completas.
+- [x] Substituir o avatar genérico atual por iniciais estilizadas, com possibilidade de foto própria.
+- [x] Centralizar resolução de foto, capa e imagem padrão para web e mobile.
+- [x] Definir o fundo da Home operacional pelo segmento principal da unidade: barbearia, salão, manicure, estética, spa ou beleza.
+- [x] Manter o fundo atual como opção para barbearia e reutilizar as capas existentes nos outros segmentos quando sua composição for adequada.
+- [x] Usar composição neutra multissegmento quando não houver segmento principal, houver classificação indefinida ou o usuário estiver na Home pessoal da plataforma.
+- [x] Para cliente, usar identidade neutra na Home pessoal; no contexto explícito de uma unidade, usar a identidade daquela unidade.
+- [x] Para superadmin, usar identidade neutra da plataforma.
+- [x] Manter a Home clara legível e branca; imagens por segmento podem aparecer em uma área de destaque, sem substituir todo o fundo claro.
+- [x] Aplicar sobreposição e contraste no tema escuro para preservar leitura de “Próximos agendamentos” e cartões.
+- [x] Priorizar imagem personalizada da unidade quando houver opção própria de capa para a Home, com fallback para segmento.
+- [x] Cachear e pré-carregar as imagens utilizadas; mudança de imagem não pode remontar mapas, perder filtros ou recarregar listas completas.
 
 As regras devem usar classificação estruturada do estabelecimento, e não palavras contidas no nome do negócio. A mesma regra de precedência deve ser documentada e reutilizada pelas duas plataformas.
+
+### Implementação E Precedência Da Fase 4
+
+Regras compartilhadas em `packages/core/src/midia/identidade.ts`. A capa personalizada tem prioridade, exceto os banners legados genéricos. Na ausência ou falha da capa, usar segmento marcado `principal`; se não houver principal, usar o tipo estruturado; sem tipo reconhecido, aceitar somente um segmento reconhecido. Principal desconhecido ou classificação ambígua resultam em visual neutro. Nomes do negócio e nomes livres de segmentos não participam da decisão.
+
+A Home pessoal de cliente/visitante e superadmin é neutra e ignora a seleção anterior persistida. No contexto explícito de unidade (lista/detalhes), aplica-se sua identidade. A Home operacional consulta apenas a unidade da sessão e confere o ID antes de usar a resposta. O perfil público autenticado agora inclui tipo e segmentos para essa leitura, sem mudança de permissões e sem migration.
+
+Mobile: fundo antigo reservado à barbearia, capas existentes para outros segmentos e composição neutra azul-escura sem fotografia quando indefinido. Modo claro permanece branco com orbes azul/violeta. Modo escuro tem sobreposição escura; capas novas são pré-carregadas e usam cache por URL. Retornar à Home atualiza a identidade, sem trocar a árvore de conteúdo. Web: a área superior usa a mesma regra, com imagem discreta no claro e fundo escurecido no dark; capa ausente usa identidade multissegmento. URLs versionadas reutilizam o cache do navegador; imagem da Home é pré-carregada. Listas, mapas e filtros não foram remontados nem tiveram seu estado alterado.
+
+Foto pessoal usa componentes próprios nas duas plataformas: foto salva primeiro, iniciais estilizadas azul/violeta quando ausente ou indisponível. Iniciais e resolução de URLs de mídia são compartilhadas. O logo e arquivos da marca não foram editados.
+
+### Aceite Manual Da Fase 4
+
+1. Conferir Home operacional de cada um dos seis tipos, sem capa própria, nos dois temas.
+2. Salvar capa própria, voltar à Home e conferir a prioridade; testar URL indisponível e fallback para segmento.
+3. Entrar como cliente e superadmin após visitar uma unidade: a Home pessoal não deve mostrar o fundo daquela unidade.
+4. Conferir unidade sem classificação e multissegmento sem principal/tipo reconhecido: visual neutro.
+5. Trocar foto pessoal, renovar sessão e conferir iniciais em caso de foto ausente/indisponível, inclusive nome vazio.
+6. Voltar ao mapa e à listagem após alterar foto/capa: filtros e seleção devem continuar preservados. Repetir após sair/entrar em outra conta.
+
+Verificação técnica: build do core, checagem TypeScript web/backend e 15 testes de mídia/identidade passaram. Mobile não tem erros novos desta fase; restam dois erros anteriores em `AgendamentoAssistido` e no mapa de períodos de `useOperacao`. O contrato de capas corrigiu o erro anterior de `distanciaKm` no perfil público. `git diff --check` passou. Aceite visual no navegador/Android/iOS permanece pendente; não foi realizado build nativo ou publicação nesta fase.
 
 ## Fase 5 — Curadoria E Operação Da Galeria
 
@@ -207,7 +228,7 @@ As regras devem usar classificação estruturada do estabelecimento, e não pala
 
 Executar as fases na ordem 1 → 2 → 3 → 4 → 5 → 6. A fundação de upload e entrega persistente precede os seletores. A galeria inicial reutiliza os arquivos pertinentes já disponíveis; novas artes poderão ser criadas durante a curadoria, quando necessárias.
 
-Status: Fases 1–3 implementadas; aceite visual e de dispositivo pendente. O backend passou nos 10 testes de mídia e na checagem de tipos; a web também passou na checagem completa de tipos. A preparação do ambiente da Fase 1 continua necessária. Próximo desenvolvimento: Fase 4 — Padrões sociais e fundos dinâmicos da Home.
+Status: Fases 1–4 implementadas; aceite visual e de dispositivo pendente. O backend passou nos 10 testes de mídia e na checagem de tipos; a web também passou na checagem completa de tipos. A preparação do ambiente da Fase 1 continua necessária. Próximo desenvolvimento: Fase 5 — Curadoria e operação da galeria.
 
 Referências de implementação: [upload multipart no NestJS](https://docs.nestjs.com/techniques/file-upload) e [processamento e remoção de metadados no Sharp](https://sharp.pixelplumbing.com/api-output/).
 

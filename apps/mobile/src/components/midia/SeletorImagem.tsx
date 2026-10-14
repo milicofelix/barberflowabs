@@ -6,8 +6,9 @@ import useAPI, { mensagemDoErro } from '@/src/data/hooks/useAPI'
 import useTema from '@/src/data/contexts/ContextoTema'
 import { imagemDoProfissional, imagemDoServico } from '@/src/data/constants/imagens'
 import type { FinalidadeMidia, ImagemGaleria } from '@uniflowabs/core'
+import { resolverURLMidia } from '@uniflowabs/core'
 
-export const urlMidia = (url: string) => url.startsWith('/') ? `${process.env.API_URL?.replace(/\/$/, '')}${url}` : url
+export const urlMidia = (url: string) => url.startsWith('/midias/') ? resolverURLMidia(url, process.env.API_URL ?? '') : url.startsWith('/') ? `${process.env.API_URL?.replace(/\/$/, '')}${url}` : url
 
 export default function SeletorImagem({ valor, finalidade, alterar, titulo = 'Imagem', padrao = '', disabled = false }: {
     valor?: string | null; finalidade: FinalidadeMidia; alterar: (url: string, id: string | null) => void

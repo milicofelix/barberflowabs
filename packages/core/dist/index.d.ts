@@ -257,4 +257,21 @@ interface ResultadoAssociacaoMidia {
     imagemURL: string | null;
 }
 
-export { AgendaUtils, type Agendamento, type AssociacaoMidia, BuscarAgendaProfissionalPorDia, BuscarAgendamentosCliente, BuscarProfissionais, BuscarServicos, DateUtils, type EntidadeMidia, ExcluirAgendamento, type FinalidadeMidia, Horarios, type ImagemGaleria, LoginUsuario, MoedaUtils, NovoAgendamento, ObterHorariosOcupados, type Profissional, type ProvedorCriptografia, RegistrarUsuario, type RepositorioAgendamento, type RepositorioProfissional, type RepositorioServico, type RepositorioUsuario, type ResultadoAssociacaoMidia, type Servico, TEMPO_SLOT, type Usuario, type VersaoMidia, clientes, profissionais, servicos };
+interface IdentidadeEstabelecimento {
+    imagemCapaURL?: string | null;
+    tipoEstabelecimento?: string | null;
+    segmentos?: Array<{
+        slug?: string;
+        principal?: boolean;
+        segmento?: {
+            slug?: string;
+        };
+    }>;
+}
+/** Sem heurística por nome: principal → tipo → único segmento reconhecido → neutro. */
+declare function categoriaIdentidade(unidade?: IdentidadeEstabelecimento | null): string | null;
+declare function capaPersonalizada(unidade?: IdentidadeEstabelecimento | null): string | null;
+declare function iniciaisUsuario(nome: string): string;
+declare function resolverURLMidia(url: string, api: string): string;
+
+export { AgendaUtils, type Agendamento, type AssociacaoMidia, BuscarAgendaProfissionalPorDia, BuscarAgendamentosCliente, BuscarProfissionais, BuscarServicos, DateUtils, type EntidadeMidia, ExcluirAgendamento, type FinalidadeMidia, Horarios, type IdentidadeEstabelecimento, type ImagemGaleria, LoginUsuario, MoedaUtils, NovoAgendamento, ObterHorariosOcupados, type Profissional, type ProvedorCriptografia, RegistrarUsuario, type RepositorioAgendamento, type RepositorioProfissional, type RepositorioServico, type RepositorioUsuario, type ResultadoAssociacaoMidia, type Servico, TEMPO_SLOT, type Usuario, type VersaoMidia, capaPersonalizada, categoriaIdentidade, clientes, iniciaisUsuario, profissionais, resolverURLMidia, servicos };

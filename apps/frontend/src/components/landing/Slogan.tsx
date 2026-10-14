@@ -1,14 +1,37 @@
-import Image from 'next/image'
+'use client'
+import { useEffect, useState } from 'react'
 import Cabecalho from '../shared/Cabecalho'
 import Link from 'next/link'
+import useSessao from '@/data/hooks/useSessao'
+import useAPI from '@/data/hooks/useAPI'
+import { capaDoEstabelecimento } from '@/data/estabelecimentos/capas'
+import type { IdentidadeEstabelecimento } from '@uniflowabs/core'
 
 export default function Slogan() {
+    const { usuario } = useSessao()
+    const { httpGet } = useAPI()
+    const admin = ['SUPER_ADMIN', 'APP_OWNER'].includes(String(usuario?.role ?? usuario?.papel))
+    const operacional = !admin && !!usuario?.estabelecimentoId && (usuario?.membroEstabelecimento || ['ESTABLISHMENT_OWNER', 'ESTABLISHMENT_MEMBER'].includes(String(usuario?.role ?? usuario?.papel)))
+    const [unidade, setUnidade] = useState<(IdentidadeEstabelecimento & { id: number }) | null>(null)
+    const [falhou, setFalhou] = useState(false)
+    useEffect(() => {
+        if (!operacional) return
+        let vigente = true
+        const carregar = () => httpGet('/estabelecimentos/minha/perfil-publico').then((dados) => { if (vigente && dados?.id === usuario?.estabelecimentoId) setUnidade(dados) })
+        void carregar()
+        window.addEventListener('focus', carregar)
+        return () => { vigente = false; window.removeEventListener('focus', carregar) }
+    }, [operacional, usuario?.estabelecimentoId, httpGet])
+    const contexto: IdentidadeEstabelecimento = operacional && unidade && unidade.id === usuario?.estabelecimentoId ? unidade : {}
+    const imagem = capaDoEstabelecimento(contexto, falhou)
+    useEffect(() => { setFalhou(false) }, [contexto.imagemCapaURL, contexto.tipoEstabelecimento])
+    useEffect(() => { const previa = new window.Image(); previa.src = imagem }, [imagem])
     return (
-        <div className="relative h-[450px] sm:h-[700px]">
-            <Image src="/banners/principal.png" fill alt="Estabelecimento" className="object-cover" />
+        <div className="home-identidade relative h-[450px] bg-white sm:h-[700px] dark:bg-slate-950">
+            <img src={imagem} alt="" decoding="async" onError={() => setFalhou(true)} className="home-imagem absolute right-0 top-36 h-32 w-1/3 rounded-l-3xl object-cover dark:top-0 dark:h-full dark:w-full dark:rounded-none" />
             <div
                 className="
-                    sobre-imagem flex flex-col items-center
+                    home-sobre-imagem flex flex-col items-center
                     absolute top-0 left-0 w-full h-full
                 "
             >

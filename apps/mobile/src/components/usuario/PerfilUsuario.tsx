@@ -1,11 +1,11 @@
-import { StyleSheet, View, Image, Text, Pressable } from 'react-native'
+import { StyleSheet, View, Text, Pressable } from 'react-native'
 import { Usuario } from '@uniflowabs/core'
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { resolverPerfil } from '@/src/data/auth/perfis'
 import useTema from '@/src/data/contexts/ContextoTema'
 import useSessao from '@/src/data/hooks/useSessao'
 import ImagemRegistro from '@/src/components/midia/ImagemRegistro'
-import { urlMidia } from '@/src/components/midia/SeletorImagem'
+import AvatarUsuario from '@/src/components/midia/AvatarUsuario'
 
 export interface PerfilUsuarioProps {
     usuario: Usuario
@@ -16,8 +16,6 @@ export interface PerfilUsuarioProps {
 export default function PerfilUsuario(props: PerfilUsuarioProps) {
     const { renovarSessao } = useSessao()
     const { cores } = useTema()
-    const [fotoFalhou, setFotoFalhou] = useState(false)
-    useEffect(() => setFotoFalhou(false), [props.usuario.fotoURL])
     const perfil = resolverPerfil(props.usuario)
     const nomePerfil = {
         CUSTOMER: 'Cliente',
@@ -29,7 +27,7 @@ export default function PerfilUsuario(props: PerfilUsuarioProps) {
 
     return (
         <View style={styles.container}>
-            {props.usuario.fotoURL && !fotoFalhou ? <Image source={{ uri: urlMidia(props.usuario.fotoURL) }} onError={() => setFotoFalhou(true)} style={styles.avatar} /> : <View style={[styles.avatar, { backgroundColor: cores.destaque, alignItems: 'center', justifyContent: 'center' }]}><Text style={{ color: cores.destaqueTexto, fontSize: 30, fontWeight: '800' }}>{props.usuario.nome.trim().split(/\s+/).slice(0, 2).map((p) => p[0]).join('').toUpperCase()}</Text></View>}
+            <AvatarUsuario nome={props.usuario.nome} fotoURL={props.usuario.fotoURL} />
             <Text style={[styles.destaque, { color: cores.texto }]}>Fala, {props.usuario?.nome}!</Text>
             <Text style={[styles.texto, { color: cores.textoSecundario }]}>E-mail: {props.usuario?.email.toLowerCase()}</Text>
             <Text style={styles.perfil}>{nomePerfil}</Text>
