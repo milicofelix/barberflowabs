@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
+import { ListarServicosSugeridosDto } from './catalogo.dto';
 
 @Injectable()
 export class CatalogoConsultaPrisma {
@@ -18,6 +19,33 @@ export class CatalogoConsultaPrisma {
       where: { ativo: true },
       orderBy: { nome: 'asc' },
     });
+  }
+
+  async listarServicosSugeridos(filtros: ListarServicosSugeridosDto) {
+    const busca = filtros.busca?.trim();
+    const sugestoes = await (this.prisma as any).servicoSugerido.findMany({
+      where: {
+        ativo: true,
+        segmento: { ativo: true },
+        ...(filtros.segmentoIds?.length ? { segmentoId: { in: filtros.segmentoIds } } : {}),
+        ...(filtros.especialidadeIds?.length ? {
+          especialidades: { some: { especialidadeId: { in: filtros.especialidadeIds }, especialidade: { ativo: true } } },
+        } : {}),
+        ...(busca ? { OR: [{ nome: { contains: busca } }, { descricao: { contains: busca } }] } : {}),
+      },
+      orderBy: [{ segmento: { nome: 'asc' } }, { ordem: 'asc' }, { nome: 'asc' }],
+      include: {
+        segmento: { select: { id: true, slug: true, nome: true } },
+        especialidades: {
+          where: { especialidade: { ativo: true } },
+          include: { especialidade: { select: { id: true, slug: true, nome: true } } },
+        },
+      },
+    });
+    return sugestoes.map(({ especialidades, ...sugestao }: any) => ({
+      ...sugestao,
+      especialidades: especialidades.map((item: any) => item.especialidade),
+    }));
   }
 
   async obterConfiguracao(estabelecimentoId: number) {

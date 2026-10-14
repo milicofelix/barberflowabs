@@ -474,6 +474,16 @@ docker compose exec -T app sh -lc 'cd apps/backend && VCF_PATH=/tmp/ricosty-cont
 
 Cria somente os usuarios inexistentes e vincula os contatos ao estabelecimento Ricosty. O processo e idempotente: novas execucoes reconhecem telefones e vinculos ja existentes.
 
+## Catálogo Inteligente De Serviços
+
+### Popular somente segmentos, especialidades e serviços sugeridos
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && npx ts-node prisma/seeds/catalogo-servicos.seed.ts'
+```
+
+Atualiza de forma idempotente o catálogo global usado para sugerir serviços. Não cria serviços nas unidades, não altera preços e não popula os dados demonstrativos do marketplace.
+
 ## Git
 
 ### Conferir alteracoes locais

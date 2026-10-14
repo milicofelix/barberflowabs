@@ -240,6 +240,7 @@ model Segmento {
   especialidades  Especialidade[]
   estabelecimentos EstabelecimentoSegmento[]
   solicitacoes      SolicitacaoEstabelecimentoSegmento[]
+  servicosSugeridos ServicoSugerido[]
 
   @@map("segmentos")
 }
@@ -258,10 +259,47 @@ model Especialidade {
   profissionais    ProfissionalEspecialidade[]
   servicos         ServicoEspecialidade[]
   solicitacoes     SolicitacaoEstabelecimentoEspecialidade[]
+  servicosSugeridos ServicoSugeridoEspecialidade[]
 
   @@unique([segmentoId, slug])
   @@index([segmentoId, ativo])
   @@map("especialidades")
+}
+
+model ServicoSugerido {
+  id                     Int       @id @default(autoincrement())
+  segmentoId             Int
+  slug                    String
+  nome                    String
+  descricao               String   @db.Text
+  imagemURL               String
+  modeloAtendimento       String    @default("PRESENCIAL")
+  duracaoMinutos          Int       @default(30)
+  preparoAntesMinutos     Int       @default(0)
+  preparoDepoisMinutos    Int       @default(0)
+  deslocamentoMinutos     Int       @default(0)
+  ordem                   Int       @default(0)
+  ativo                   Boolean   @default(true)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  segmento                Segmento  @relation(fields: [segmentoId], references: [id])
+  especialidades          ServicoSugeridoEspecialidade[]
+
+  @@unique([segmentoId, slug])
+  @@index([segmentoId, ativo, ordem])
+  @@map("servicos_sugeridos")
+}
+
+model ServicoSugeridoEspecialidade {
+  id                Int               @id @default(autoincrement())
+  servicoSugeridoId Int
+  especialidadeId   Int
+  servicoSugerido   ServicoSugerido   @relation(fields: [servicoSugeridoId], references: [id], onDelete: Cascade)
+  especialidade     Especialidade     @relation(fields: [especialidadeId], references: [id])
+
+  @@unique([servicoSugeridoId, especialidadeId], map: "servico_sugerido_especialidade_uq")
+  @@index([especialidadeId])
+  @@map("servicos_sugeridos_especialidades")
 }
 
 model EstabelecimentoSegmento {

@@ -4,6 +4,7 @@ import {
   AtualizarCatalogoEstabelecimentoDto,
   AtualizarCatalogoServicoDto,
   AtualizarEspecialidadesProfissionalDto,
+  ListarServicosSugeridosDto,
 } from './catalogo.dto';
 import { CatalogoPolicy } from './catalogo.policy';
 import { CatalogoPrisma } from './catalogo.prisma';
@@ -23,6 +24,10 @@ export class CatalogoService {
 
   listarRequisitos() {
     return this.consulta.listarRequisitos();
+  }
+
+  listarServicosSugeridos(filtros: ListarServicosSugeridosDto) {
+    return this.consulta.listarServicosSugeridos(filtros);
   }
 
   obterConfiguracao(estabelecimentoId: number) {

@@ -7,6 +7,12 @@ export interface AtualizarCatalogoEstabelecimentoDto {
   especialidadeIds: number[];
 }
 
+export interface ListarServicosSugeridosDto {
+  segmentoIds?: number[];
+  especialidadeIds?: number[];
+  busca?: string;
+}
+
 export interface AtualizarEspecialidadesProfissionalDto {
   especialidadeIds: number[];
   especialidadePrincipalId?: number | null;

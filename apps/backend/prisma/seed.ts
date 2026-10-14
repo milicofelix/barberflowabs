@@ -4,6 +4,7 @@ import * as bcrypt from 'bcrypt';
 import { seedMarketplaceTatuape } from './seeds/marketplace-tatuape.seed';
 import { seedHistoricoClientesOutubro } from './seeds/historico-clientes-outubro.seed';
 import { seedCatalogoMultissegmento } from './seeds/catalogo-multissegmento.seed';
+import { seedServicosSugeridos } from './seeds/servicos-sugeridos.seed';
 
 const prisma = new PrismaClient();
 const ESTABELECIMENTO_PADRAO_ID = 1;
@@ -346,6 +347,8 @@ async function seed() {
   console.info(`Seed concluido: ${totalMarketplaceTatuape} estabelecimentos do marketplace do Tatuape.`);
   const totalEspecialidades = await seedCatalogoMultissegmento(prisma);
   console.info(`Seed concluido: ${totalEspecialidades} especialidades do catalogo multissegmento.`);
+  const totalServicosSugeridos = await seedServicosSugeridos(prisma);
+  console.info(`Seed concluido: ${totalServicosSugeridos} servicos sugeridos do catalogo inteligente.`);
   const historico = await seedHistoricoClientesOutubro(prisma);
   console.info(`Seed concluido: ${historico.clientes} clientes e ${historico.agendamentos} atendimentos entre ${historico.inicio} e ${historico.fim}.`);
 }
