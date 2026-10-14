@@ -19,7 +19,7 @@ export function caminhoMarcador(estabelecimento: EstabelecimentoComClassificacao
 }
 
 function arquivoMarcador(estabelecimento: EstabelecimentoComClassificacao) {
-    const porTipo = ARQUIVOS[estabelecimento?.tipoEstabelecimento]
+    const porTipo = estabelecimento?.tipoEstabelecimento ? ARQUIVOS[estabelecimento.tipoEstabelecimento] : undefined
     if (porTipo) return porTipo
 
     const segmentos = estabelecimento?.segmentos ?? []

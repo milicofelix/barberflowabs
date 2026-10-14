@@ -2,6 +2,7 @@
 
 import useAPI from '@/data/hooks/useAPI'
 import useSessao from '@/data/hooks/useSessao'
+import SeletorImagem from '@/components/midia/SeletorImagem'
 import { Profissional, Servico } from '@uniflowabs/core'
 import { IconPencil, IconPlus, IconSparkles, IconTrash, IconX } from '@tabler/icons-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -175,7 +176,13 @@ export default function PainelGestaoOperacional() {
             ? await httpPut(`/servicos/${servico.id}`, payload)
             : await httpPost('/servicos', payload)
 
-        if (resposta?.statusCode) return setMensagem(resposta.message)
+        if (resposta?.statusCode !== undefined || !resposta?.id) return setMensagem(resposta?.message ?? 'Não foi possível salvar o serviço.')
+
+        if (servico.midiaId !== undefined) {
+            setServico({ ...servico, id: resposta.id })
+            const associacao = await httpPut('/midias/associacao', { entidade: 'SERVICO', entidadeId: resposta.id, midiaId: servico.midiaId })
+            if (associacao?.statusCode !== undefined) { await carregar(); return setMensagem(`Serviço salvo. Tente salvar novamente para concluir a imagem: ${associacao.message}`) }
+        }
 
         setServico(servicoVazio)
         await carregar()
@@ -193,7 +200,14 @@ export default function PainelGestaoOperacional() {
     async function importarServicosSugeridos(itens: any[]) {
         setMensagem('')
         const resposta = await httpPost('/servicos/sugeridos/importar', { itens })
-        if (resposta?.statusCode) { setMensagem(resposta.message); return false }
+        if (resposta?.statusCode !== undefined || !Array.isArray(resposta?.criados)) { setMensagem(resposta?.message ?? 'Não foi possível adicionar os serviços.'); return false }
+        for (const item of itens.filter((item) => item.midiaId !== undefined)) {
+            const criado = resposta?.criados?.find((s: any) => s.servicoSugeridoId === item.servicoSugeridoId)
+                ?? servicos.find((s: any) => s.servicoSugeridoId === item.servicoSugeridoId)
+            if (!criado) continue
+            const associacao = await httpPut('/midias/associacao', { entidade: 'SERVICO', entidadeId: criado.id, midiaId: item.midiaId })
+            if (associacao?.statusCode !== undefined) { await carregar(); setMensagem(`Serviços adicionados. Uma imagem precisa ser revista na edição do serviço: ${associacao.message}`); return false }
+        }
         await carregar()
         const criados = resposta?.criados?.length ?? 0
         const ignorados = resposta?.ignorados?.length ?? 0
@@ -215,7 +229,13 @@ export default function PainelGestaoOperacional() {
             ? await httpPut(`/profissionais/${profissional.id}`, payload)
             : await httpPost('/profissionais', payload)
 
-        if (resposta?.statusCode) return setMensagem(resposta.message)
+        if (resposta?.statusCode !== undefined || !resposta?.id) return setMensagem(resposta?.message ?? 'Não foi possível salvar o profissional.')
+
+        if (profissional.midiaId !== undefined) {
+            setProfissional({ ...profissional, id: resposta.id })
+            const associacao = await httpPut('/midias/associacao', { entidade: 'PROFISSIONAL', entidadeId: resposta.id, midiaId: profissional.midiaId })
+            if (associacao?.statusCode !== undefined) { await carregar(); return setMensagem(`Profissional salvo. Tente salvar novamente para concluir a imagem: ${associacao.message}`) }
+        }
 
         setProfissional(profissionalVazio)
         await carregar()
@@ -845,7 +865,7 @@ function SeletorServicosSugeridos(props: {
             else copia[item.id] = {
                 servicoSugeridoId: item.id, preco: '', duracaoMinutos: item.duracaoMinutos,
                 modeloAtendimento: props.catalogo?.modeloAtendimento === 'HIBRIDO' ? item.modeloAtendimento : (props.catalogo?.modeloAtendimento ?? item.modeloAtendimento), preparoAntesMinutos: item.preparoAntesMinutos,
-                preparoDepoisMinutos: item.preparoDepoisMinutos, deslocamentoMinutos: item.deslocamentoMinutos,
+                preparoDepoisMinutos: item.preparoDepoisMinutos, deslocamentoMinutos: item.deslocamentoMinutos, imagemURL: item.imagemURL,
                 profissionalIds: [],
             }
             return copia
@@ -887,6 +907,7 @@ function SeletorServicosSugeridos(props: {
                         <span className="flex-1"><strong className="text-zinc-100">{item.nome}</strong><span className="mt-1 block text-sm text-zinc-400">{item.descricao}</span><span className="mt-2 block text-xs font-semibold uppercase text-violet-300">{item.segmento?.nome} · {item.especialidades?.map((e: any) => e.nome).join(', ')}</span></span>
                     </label>
                     {configuracao && <div className="mt-4 grid gap-3 border-t border-zinc-800 pt-4 sm:grid-cols-2">
+                        <div className="sm:col-span-2"><SeletorImagem finalidade="SERVICO" valor={configuracao.imagemURL} padrao="/servicos/combo.jpg" disabled={salvando} alterar={(url, midiaId) => setSelecionados((atuais) => ({ ...atuais, [item.id]: { ...atuais[item.id], imagemURL: url, midiaId } }))} /></div>
                         <Campo label="Preço (R$)" type="number" value={configuracao.preco} onChange={(valor) => alterar(item.id, 'preco', valor)} />
                         <Campo label="Duração (minutos)" type="number" value={configuracao.duracaoMinutos} onChange={(valor) => alterar(item.id, 'duracaoMinutos', valor)} />
                         <label className="flex flex-col gap-2 text-sm text-zinc-400">Modalidade
@@ -922,7 +943,7 @@ function FormularioServico(props: any) {
         >
             <Campo label="Nome" value={props.servico.nome} onChange={(nome) => props.onChange({ ...props.servico, nome })} />
             <Campo label="Descrição" value={props.servico.descricao} onChange={(descricao) => props.onChange({ ...props.servico, descricao })} />
-            <Campo label="Imagem" value={props.servico.imagemURL} onChange={(imagemURL) => props.onChange({ ...props.servico, imagemURL })} />
+            <SeletorImagem finalidade="SERVICO" valor={props.servico.imagemURL} padrao="/servicos/combo.jpg" alterar={(imagemURL, midiaId) => props.onChange({ ...props.servico, imagemURL, midiaId })} />
             <Campo label="Preço" type="number" value={props.servico.preco} onChange={(preco) => props.onChange({ ...props.servico, preco })} />
             <Campo label="Duração (minutos)" type="number" value={props.servico.duracaoMinutos ?? Number(props.servico.qtdeSlots) * 15} onChange={(duracaoMinutos) => props.onChange({ ...props.servico, duracaoMinutos, qtdeSlots: Math.ceil(Number(duracaoMinutos) / 15) })} />
         </FormularioBase>
@@ -938,24 +959,31 @@ function FormularioProfissional(props: any) {
         >
             <Campo label="Nome" value={props.profissional.nome} onChange={(nome) => props.onChange({ ...props.profissional, nome })} />
             <Campo label="Descrição" value={props.profissional.descricao} onChange={(descricao) => props.onChange({ ...props.profissional, descricao })} />
-            <Campo label="Imagem" value={props.profissional.imagemURL} onChange={(imagemURL) => props.onChange({ ...props.profissional, imagemURL })} />
+            <SeletorImagem titulo="Foto do profissional" finalidade="PROFISSIONAL" valor={props.profissional.imagemURL} padrao="/profissionais/profissional-1.jpg" alterar={(imagemURL, midiaId) => props.onChange({ ...props.profissional, imagemURL, midiaId })} />
             <Campo label="Avaliação" type="number" value={props.profissional.avaliacao} onChange={(avaliacao) => props.onChange({ ...props.profissional, avaliacao })} />
         </FormularioBase>
     )
 }
 
 function FormularioBase(props: any) {
+    const [salvando, setSalvando] = useState(false)
+    const bloqueado = useRef(false)
+    async function submeter() {
+        if (bloqueado.current) return
+        bloqueado.current = true; setSalvando(true)
+        try { await props.onSubmit() } finally { bloqueado.current = false; setSalvando(false) }
+    }
     return (
         <div className="flex flex-col gap-4 rounded border border-zinc-800 bg-zinc-950 p-5">
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-zinc-100">{props.titulo}</h2>
-                <button type="button" onClick={props.onNovo} className="rounded bg-zinc-800 p-2 text-zinc-200">
+                <button type="button" disabled={salvando} onClick={props.onNovo} className="rounded bg-zinc-800 p-2 text-zinc-200">
                     <IconPlus size={18} />
                 </button>
             </div>
-            {props.children}
-            <button type="button" onClick={props.onSubmit} className="rounded bg-yellow-400 px-4 py-3 font-semibold text-black">
-                Salvar
+            <fieldset disabled={salvando} className="flex flex-col gap-4">{props.children}</fieldset>
+            <button type="button" disabled={salvando} onClick={submeter} className="rounded bg-yellow-400 px-4 py-3 font-semibold text-black disabled:opacity-50">
+                {salvando ? 'Salvando...' : 'Salvar'}
             </button>
         </div>
     )

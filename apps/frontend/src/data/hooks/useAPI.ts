@@ -135,5 +135,24 @@ export default function useAPI() {
         }
     }
 
-    return { httpGet, httpPost, httpPut, httpDelete }
+    const httpUpload = useCallback((arquivo: File, finalidade: string, progresso: (valor: number) => void) => new Promise<any>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+        xhr.open('POST', `${URL_BASE}/midias/upload`)
+        Object.entries(headersTenant()).forEach(([chave, valor]) => xhr.setRequestHeader(chave, String(valor)))
+        xhr.upload.onprogress = (evento) => { if (evento.lengthComputable) progresso(Math.round(evento.loaded * 100 / evento.total)) }
+        xhr.onerror = () => reject(new Error('Não foi possível enviar a imagem. Tente novamente.'))
+        xhr.timeout = 120_000
+        xhr.ontimeout = () => reject(new Error('O envio demorou demais. Tente novamente.'))
+        xhr.onload = () => {
+            try {
+                const dados = JSON.parse(xhr.responseText)
+                if (xhr.status < 200 || xhr.status >= 300) reject(new Error(dados.message ?? 'Não foi possível enviar a imagem'))
+                else resolve(dados)
+            } catch { reject(new Error('Resposta inválida ao enviar imagem')) }
+        }
+        const body = new FormData(); body.append('arquivo', arquivo); body.append('finalidade', finalidade)
+        xhr.send(body)
+    }), [headersTenant])
+
+    return { httpGet, httpPost, httpPut, httpDelete, httpUpload }
 }

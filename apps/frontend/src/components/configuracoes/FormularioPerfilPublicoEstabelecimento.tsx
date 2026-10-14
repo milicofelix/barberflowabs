@@ -1,6 +1,8 @@
 'use client'
 
 import useAPI from '@/data/hooks/useAPI'
+import useSessao from '@/data/hooks/useSessao'
+import SeletorImagem from '@/components/midia/SeletorImagem'
 import { MapPinned, Save } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 
@@ -21,12 +23,14 @@ const perfilVazio = {
 }
 
 export default function FormularioPerfilPublicoEstabelecimento() {
+    const { usuario } = useSessao()
     const { httpGet, httpPut } = useAPI()
     const [perfil, setPerfil] = useState<any>(perfilVazio)
     const [prontidao, setProntidao] = useState<any>(null)
     const [carregando, setCarregando] = useState(true)
     const [salvando, setSalvando] = useState(false)
     const [mensagem, setMensagem] = useState('')
+    const [midiaId, setMidiaId] = useState<string | null | undefined>()
 
     const carregar = useCallback(async () => {
         setCarregando(true)
@@ -65,12 +69,19 @@ export default function FormularioPerfilPublicoEstabelecimento() {
             longitude: perfil.longitude === '' ? null : Number(perfil.longitude),
         })
 
-        setSalvando(false)
-
-        if (resposta?.statusCode && resposta.statusCode >= 400) {
+        if (resposta?.statusCode !== undefined) {
+            setSalvando(false)
             setMensagem(resposta.message ?? 'Não foi possível salvar o perfil público.')
             return
         }
+
+        if (midiaId !== undefined) {
+            const associacao = await httpPut('/midias/associacao', { entidade: 'ESTABELECIMENTO', entidadeId: usuario?.estabelecimentoId, midiaId })
+            if (associacao?.statusCode !== undefined) { setSalvando(false); setMensagem(`Perfil salvo. Não foi possível concluir a foto: ${associacao.message}`); return }
+            resposta.imagemCapaURL = associacao.imagemURL
+            setMidiaId(undefined)
+        }
+        setSalvando(false)
 
         setPerfil(normalizarPerfil(resposta))
         const dadosProntidao = await httpGet('/estabelecimentos/minha/prontidao-publicacao')
@@ -93,7 +104,7 @@ export default function FormularioPerfilPublicoEstabelecimento() {
 
             <div className="grid gap-4 lg:grid-cols-2">
                 <Campo texto="Nome público" valor={perfil.nomePublico} onChange={(valor) => atualizar('nomePublico', valor)} />
-                <Campo texto="Imagem de capa" valor={perfil.imagemCapaURL} onChange={(valor) => atualizar('imagemCapaURL', valor)} placeholder="/banners/principal.png" />
+                <SeletorImagem titulo="Imagem de capa" finalidade="CAPA" valor={perfil.imagemCapaURL} disabled={salvando} alterar={(url, id) => { atualizar('imagemCapaURL', url); setMidiaId(id) }} />
                 <Campo texto="Telefone público" valor={perfil.telefone} onChange={(valor) => atualizar('telefone', valor)} />
                 <Campo texto="E-mail público" valor={perfil.email} onChange={(valor) => atualizar('email', valor)} />
             </div>

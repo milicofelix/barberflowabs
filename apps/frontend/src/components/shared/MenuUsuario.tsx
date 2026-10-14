@@ -6,7 +6,7 @@ import {
     DropdownMenuTrigger,
     DropdownMenuSeparator,
 } from '../ui/dropdown-menu'
-import Image from 'next/image'
+import AvatarUsuario from '@/components/midia/AvatarUsuario'
 import {
     IconCalendar,
     IconCreditCard,
@@ -34,9 +34,7 @@ export default function MenuUsuario() {
                         <span className="font-bold">{usuario.nome}</span>
                         <span className="text-zinc-400 text-xs">{usuario.email}</span>
                     </div>
-                    <div className="bg-zinc-700 w-10 h-10 p-1 rounded-full">
-                        <Image src="/avatar.png" width={40} height={40} alt="Avatar" />
-                    </div>
+                    <AvatarUsuario nome={usuario.nome} fotoURL={usuario.fotoURL} />
                 </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -80,7 +78,7 @@ export default function MenuUsuario() {
                         </Link>
                     </DropdownMenuItem>
                 )}
-                {responsavelEstabelecimento && (
+                {usuario && (
                     <DropdownMenuItem>
                         <Link href="/configuracoes" className="flex gap-2">
                             <IconSettings size={18} />

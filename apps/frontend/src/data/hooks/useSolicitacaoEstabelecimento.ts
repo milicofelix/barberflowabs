@@ -147,7 +147,7 @@ function mapearFormulario(solicitacao: SolicitacaoEstabelecimento): FormularioSo
     }
 }
 
-function validarPasso(passo: number, form: FormularioSolicitacao) {
+function validarPasso(passo: number, form: FormularioSolicitacao): string {
     if (passo === 1 && (!form.tipoEstabelecimento || !form.segmentoIds.length || !form.especialidadeIds.length)) return 'Selecione o tipo, ao menos um segmento e uma especialidade.'
     if (passo === 2 && (!form.nomePublico.trim() || !/^\S+@\S+\.\S+$/.test(form.emailComercial) || !/^\d{10,11}$/.test(somenteDigitos(form.telefoneComercial)) || !form.planoSlug)) return 'Preencha corretamente os dados comerciais e o plano.'
     const exigeEndereco = form.modeloAtendimento !== 'DOMICILIAR'

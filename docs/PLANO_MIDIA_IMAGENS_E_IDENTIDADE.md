@@ -90,14 +90,33 @@ Os comandos específicos ficam em `docs/COMANDOS.md`. Galeria visual, upload nos
 
 ## Fase 2 — Galeria Visual E Upload Na Web
 
-- [ ] Criar seletor compartilhado com prévia, miniaturas, filtros por segmento, upload, progresso, erro e opção de padrão.
-- [ ] Integrar aos serviços manuais, serviços sugeridos, profissionais e capa do estabelecimento.
-- [ ] Incluir “Minha foto” nas configurações pessoais, disponível para todos os perfis autenticados.
-- [ ] Atualizar foto no menu, perfil e demais lugares que hoje exibem avatar fixo.
-- [ ] Oferecer enquadramento com proporção adequada para foto ou capa, mantendo prévia antes de salvar.
-- [ ] Manter suporte aos caminhos antigos no carregamento das imagens existentes.
-- [ ] Retirar os campos técnicos de caminho/URL da experiência comum.
+- [x] Criar seletor compartilhado com prévia, miniaturas, filtros por segmento, upload, progresso, erro e opção de padrão.
+- [x] Integrar aos serviços manuais, serviços sugeridos, profissionais e capa do estabelecimento.
+- [x] Incluir “Minha foto” nas configurações pessoais, disponível para todos os perfis autenticados.
+- [x] Atualizar foto no menu e na configuração pessoal, substituindo o avatar fixo.
+- [x] Oferecer enquadramento com proporção adequada para foto ou capa, mantendo prévia antes de salvar.
+- [x] Manter suporte aos caminhos antigos no carregamento das imagens existentes.
+- [x] Retirar os campos técnicos de caminho/URL da experiência comum.
 - [ ] Validar navegação por teclado, rótulos, contraste nos dois temas e feedback de envio.
+
+Implementação: seletor compartilhado em `components/midia/SeletorImagem.tsx`, com diálogo nativo (foco/ESC), seleção de miniaturas, envio multipart com progresso e enquadramento horizontal/vertical. As capas usam proporção 16:9 e fotos/serviços usam proporção quadrada. O envio cria uma mídia; a associação ocorre ao salvar o registro. Se o registro foi criado e a associação falhar, a mensagem informa a pendência e a edição mantém o ID para evitar recriação.
+
+“Configurações → Minha foto” está disponível para clientes, gestores e superadmin. Após salvar, o refresh atualiza o avatar do menu sem novo login. Sem foto, são exibidas iniciais em azul/violeta. Configurações operacionais continuam disponíveis apenas para os responsáveis da unidade.
+
+A rota web `/midias/arquivos/:id/:versao` entrega as mídias do backend para componentes existentes, inclusive `next/image`, mantendo compatibilidade com caminhos antigos. É necessária a preparação da Fase 1 (migration, volume e seed). Esta fase não adiciona migration ou dependência.
+
+Verificação: checagem TypeScript completa da web passou. Os dois erros de tipagem registrados anteriormente foram corrigidos com anotação do retorno e proteção de índice indefinido. `git diff --check` passou. Aceite visual e interação de upload no navegador permanecem pendentes; a ferramenta de automação do navegador não está disponível nesta sessão.
+
+### Aceite Manual Da Fase 2
+
+1. Entrar como responsável e abrir Gestão → Serviços; conferir prévia e “Escolher imagem ou enviar foto”.
+2. Escolher uma imagem da galeria, salvar e conferir no fluxo de agendamento.
+3. Enviar JPEG/PNG/WebP, ajustar enquadramento, confirmar envio e salvar o serviço; conferir progresso e imagem persistida.
+4. Repetir para profissional e em Configurações → Perfil público → Imagem de capa.
+5. Selecionar uma sugestão de serviço e personalizar a imagem antes da importação.
+6. Entrar como cliente e superadmin; abrir Configurações → Minha foto, salvar e conferir o avatar atualizado no menu.
+7. Testar “Usar padrão”, arquivo acima de 5 MB, formato incompatível e falha de conexão.
+8. Navegar com Tab e ESC no seletor, conferir retorno do foco e repetir nos temas claro/escuro.
 
 ## Fase 3 — Galeria Visual E Upload No Mobile
 
@@ -154,6 +173,6 @@ As regras devem usar classificação estruturada do estabelecimento, e não pala
 
 Executar as fases na ordem 1 → 2 → 3 → 4 → 5 → 6. A fundação de upload e entrega persistente precede os seletores. A galeria inicial reutiliza os arquivos pertinentes já disponíveis; novas artes poderão ser criadas durante a curadoria, quando necessárias.
 
-Status: Fase 1 implementada. O Sharp foi instalado, o schema Prisma validado, o client gerado e a checagem TypeScript do backend passou. Os 10 testes de processamento, permissões, associação e limpeza segura passaram. A migration, a carga da galeria e a recriação do container com o volume novo devem ser feitas antes do uso da API. As telas e a validação visual serão tratadas nas Fases 2–3. Próximo passo: Fase 2 — Galeria visual e upload na web.
+Status: Fases 1–2 implementadas. O backend passou nos 10 testes de mídia e na checagem de tipos; a web também passou na checagem completa de tipos. A preparação do ambiente da Fase 1 e o aceite visual permanecem necessários. Próximo passo: Fase 3 — Galeria visual e upload no mobile.
 
 Referências de implementação: [upload multipart no NestJS](https://docs.nestjs.com/techniques/file-upload) e [processamento e remoção de metadados no Sharp](https://sharp.pixelplumbing.com/api-output/).
