@@ -12,12 +12,12 @@ export default function ItemProfissional(props: ItemProfissionalProps) {
     const { profissional } = props
     return (
         <article className="flex min-w-0 flex-col rounded-xl border border-border bg-card text-foreground overflow-hidden">
-            <div className="relative h-44 w-full">
+            <div className="relative h-72 w-full bg-card">
                 <Image
                     src={urlImagemProfissional(profissional.imagemURL, profissional.sexo)}
                     fill
                     alt={profissional.nome}
-                    className="object-cover object-top"
+                    className="object-contain object-center"
                     sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
                 />
             </div>
