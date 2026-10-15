@@ -24,7 +24,7 @@ export default function CabecalhoIdentidadeUnidade({ destaque = false }: { desta
     const estiloHero = destaque ? styles.heroDestaque : styles.heroCompacto
     const estiloSobreposicao = destaque ? styles.sobreposicaoDestaque : styles.sobreposicaoCompacta
     const conteudo = <View style={[styles.sobreposicao, estiloSobreposicao]}>
-        <View style={styles.marca}><MarcaUniFlow horizontal contraste exibirSlogan={destaque} /></View>
+        {unidade?.logoModo !== 'OCULTO' ? <View style={styles.marca}><MarcaUniFlow unidade={unidade ?? undefined} horizontal contraste exibirSlogan={destaque} /></View> : <View />}
         <View>
             <Text style={styles.rotulo}>SUA UNIDADE</Text>
             <Text numberOfLines={2} style={[styles.titulo, destaque ? styles.tituloDestaque : styles.tituloCompacto]}>

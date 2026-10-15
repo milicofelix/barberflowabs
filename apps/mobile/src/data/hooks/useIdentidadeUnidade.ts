@@ -1,6 +1,7 @@
 import type { IdentidadeEstabelecimento } from '@uniflowabs/core'
 import { useFocusEffect } from '@react-navigation/native'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { DeviceEventEmitter } from 'react-native'
 import { perfilOperacional, resolverPerfil } from '../auth/perfis'
 import useAPI, { mensagemDoErro } from './useAPI'
 import useSessao from './useSessao'
@@ -58,5 +59,9 @@ export default function useIdentidadeUnidade() {
     }, [estabelecimentoId, httpGet])
 
     useFocusEffect(useCallback(() => { void carregar(true) }, [carregar]))
-    return { unidade, operacional, erro, carregar }
+    useEffect(() => {
+        const listener = DeviceEventEmitter.addListener('uniflow:identidade-atualizada', () => { void carregar(true) })
+        return () => listener.remove()
+    }, [carregar])
+    return { unidade: operacional && unidade?.id === estabelecimentoId ? unidade : null, operacional, erro, carregar }
 }

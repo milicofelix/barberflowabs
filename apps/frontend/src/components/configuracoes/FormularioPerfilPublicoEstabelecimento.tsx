@@ -3,6 +3,7 @@
 import useAPI from '@/data/hooks/useAPI'
 import useSessao from '@/data/hooks/useSessao'
 import SeletorImagem from '@/components/midia/SeletorImagem'
+import ConfiguracaoLogo from './ConfiguracaoLogo'
 import { MapPinned, Save } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 
@@ -99,6 +100,7 @@ export default function FormularioPerfilPublicoEstabelecimento() {
 
     return (
         <div className="grid gap-6">
+            <ConfiguracaoLogo key={usuario?.estabelecimentoId} />
             <StatusPerfil perfil={perfil} />
             {prontidao && <ProntidaoPublicacao dados={prontidao} />}
 

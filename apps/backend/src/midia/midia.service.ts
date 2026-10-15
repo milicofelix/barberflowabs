@@ -49,8 +49,10 @@ export class MidiaService {
   async listar(usuario: any, finalidade: string, segmentoSlug?: string) {
     if (!Number.isInteger(usuario?.id) || usuario.id <= 0) throw new ForbiddenException('Autenticação necessária');
     this.finalidade(finalidade);
+    if (finalidade === 'LOGO' && !usuario.estabelecimentoId) throw new ForbiddenException('Selecione sua unidade para consultar logos');
     return (this.prisma as any).midia.findMany({
       where: { status: 'DISPONIVEL', ativo: true, finalidade, ...(segmentoSlug ? { OR: [{ segmentoSlug }, { segmentoSlug: null }] } : {}),
+        ...(finalidade === 'LOGO' ? { escopo: 'ESTABELECIMENTO', estabelecimentoId: usuario.estabelecimentoId } : {}),
         AND: [{ OR: [{ escopo: 'GLOBAL' }, { escopo: 'USUARIO', usuarioId: usuario.id }, ...(usuario.estabelecimentoId ? [{ escopo: 'ESTABELECIMENTO', estabelecimentoId: usuario.estabelecimentoId }] : [])] },
           { OR: [{ chaveCatalogo: null }, { chaveCatalogo: { notIn: CHAVES_FOTOS_PROFISSIONAIS_LEGADAS } }] }] },
       select: { id: true, titulo: true, finalidade: true, segmentoSlug: true, versoes: true }, orderBy: { titulo: 'asc' }, take: 200,
@@ -61,6 +63,7 @@ export class MidiaService {
     const uso = this.finalidade(finalidade);
     if (global) this.superadmin(usuario);
     else if (uso !== 'AVATAR') await this.equipe.validarPermissao(usuario, 'CONFIGURACOES_GERENCIAR');
+    if (uso === 'LOGO' && !global && String(usuario?.papel ?? usuario?.role).toUpperCase() !== 'ESTABLISHMENT_OWNER') throw new ForbiddenException('Apenas o dono pode enviar o logo da unidade');
     if (!arquivo?.buffer) throw new BadRequestException('Selecione uma imagem');
     const id = randomUUID();
     const versoes = await this.storage.processar(id, arquivo.buffer, uso);

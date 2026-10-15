@@ -137,7 +137,7 @@ export default function useAPI() {
             } catch { reject(new Error('Resposta inválida ao enviar foto')) }
         }
         const body = new FormData(); body.append('finalidade', finalidade)
-        body.append('arquivo', { uri, name: 'foto.jpg', type: 'image/jpeg' } as any)
+        body.append('arquivo', { uri, name: finalidade === 'LOGO' ? 'logo.png' : 'foto.jpg', type: finalidade === 'LOGO' ? 'image/png' : 'image/jpeg' } as any)
         xhr.send(body)
     }), [token, encerrarSessao])
 

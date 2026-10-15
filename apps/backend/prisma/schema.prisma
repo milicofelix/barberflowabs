@@ -227,6 +227,8 @@ model Estabelecimento {
   nomePublico                           String?
   descricaoPublica                      String?                        @db.Text
   imagemCapaURL                         String?
+  logoURL                               String?
+  logoModo                              String                         @default("PADRAO")
   midias                                Midia[]
   endereco                              String?
   bairro                                String?

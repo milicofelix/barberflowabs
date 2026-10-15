@@ -5,6 +5,7 @@ import { Star } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { salvarEstabelecimentoSelecionado } from '@/data/tenant/estabelecimentoSelecionado'
 import { capaDoEstabelecimento } from '@/data/estabelecimentos/capas'
+import Logo from '@/components/shared/Logo'
 
 const URL_BASE = process.env.NEXT_PUBLIC_API_URL
 
@@ -93,6 +94,7 @@ export default function PerfilPublicoEstabelecimento({ slug }: { slug: string })
                 style={{ backgroundImage: `linear-gradient(90deg, rgba(0,0,0,.82), rgba(0,0,0,.38)), url("${capa}")` }}
             >
                 <div className="container flex min-h-[420px] flex-col justify-end gap-5 py-10">
+                    {estabelecimento.logoModo === 'PERSONALIZADO' ? <Logo unidade={estabelecimento} /> : null}
                     <span className={statusClasse(estabelecimento.statusOperacional?.status)}>
                         {estabelecimento.statusOperacional?.label ?? 'Status indisponível'}
                     </span>

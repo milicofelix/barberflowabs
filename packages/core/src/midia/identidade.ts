@@ -1,4 +1,6 @@
 export interface IdentidadeEstabelecimento {
+    logoURL?: string | null
+    logoModo?: 'PADRAO' | 'PERSONALIZADO' | 'OCULTO'
     imagemCapaURL?: string | null
     tipoEstabelecimento?: string | null
     segmentos?: Array<{ slug?: string; principal?: boolean; segmento?: { slug?: string } }>

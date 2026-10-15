@@ -87,9 +87,9 @@ export default function PerfilEstabelecimento({ route, navigation }: Props) {
     return (
         <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['bottom']}>
             <ScrollView contentContainerStyle={styles.conteudo}>
-                <View style={[styles.marca, { backgroundColor: cores.superficie, borderBottomColor: cores.borda }]}>
-                    <MarcaUniFlow compacta exibirSlogan={false} />
-                </View>
+                {estabelecimento.logoModo !== 'OCULTO' ? <View style={[styles.marca, { backgroundColor: cores.superficie, borderBottomColor: cores.borda }]}>
+                    <MarcaUniFlow unidade={estabelecimento} compacta exibirSlogan={false} />
+                </View> : null}
                 <ImageBackground source={imagem} resizeMode="cover" style={styles.hero} imageStyle={styles.heroImagem}>
                     <View style={styles.heroOverlay}>
                         <Text style={[styles.status, estabelecimento.statusOperacional?.status === 'ABERTA' && styles.statusAberta]}>{estabelecimento.statusOperacional?.label}</Text>

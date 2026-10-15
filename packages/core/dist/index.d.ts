@@ -350,7 +350,16 @@ declare class MoedaUtils {
     static formatar(valor: number, locale?: string, moeda?: string): string;
 }
 
-type FinalidadeMidia = 'AVATAR' | 'SERVICO' | 'PROFISSIONAL' | 'CAPA';
+type FinalidadeMidia = 'AVATAR' | 'SERVICO' | 'PROFISSIONAL' | 'CAPA' | 'LOGO';
+type ModoLogoEstabelecimento = 'PADRAO' | 'PERSONALIZADO' | 'OCULTO';
+interface ConfiguracaoLogoEstabelecimento {
+    logoModo: ModoLogoEstabelecimento;
+    logoURL: string | null;
+}
+declare const OPCOES_LOGO_ESTABELECIMENTO: Array<{
+    modo: ModoLogoEstabelecimento;
+    titulo: string;
+}>;
 type EntidadeMidia = 'USUARIO' | 'SERVICO' | 'PROFISSIONAL' | 'ESTABELECIMENTO';
 interface VersaoMidia {
     url: string;
@@ -378,6 +387,8 @@ interface ResultadoAssociacaoMidia {
 }
 
 interface IdentidadeEstabelecimento {
+    logoURL?: string | null;
+    logoModo?: 'PADRAO' | 'PERSONALIZADO' | 'OCULTO';
     imagemCapaURL?: string | null;
     tipoEstabelecimento?: string | null;
     segmentos?: Array<{
@@ -400,4 +411,4 @@ declare function imagemProfissionalLegada(url?: string | null): boolean;
 declare function imagemPadraoProfissional(sexo?: string | null): string;
 declare function urlImagemProfissional(url?: string | null, sexo?: string | null): string;
 
-export { type AcaoAtendimento, AgendaUtils, type Agendamento, type AssociacaoMidia, type AtendimentoOperacional, BuscarAgendaProfissionalPorDia, BuscarAgendamentosCliente, BuscarProfissionais, BuscarServicos, CHAVES_FOTOS_PROFISSIONAIS_LEGADAS, type ConfiguracaoFluxoAtendimento, DateUtils, type EntidadeMidia, ExcluirAgendamento, type FinalidadeMidia, Horarios, type IdentidadeEstabelecimento, type ImagemGaleria, LoginUsuario, METRICAS_FLUXO_ATENDIMENTO, MoedaUtils, type MonitoramentoAtendimento, NovoAgendamento, OPCOES_FLUXO_ATENDIMENTO, ORIGENS_TRANSICAO_ATENDIMENTO, ObterHorariosOcupados, type OrigemTransicaoAtendimento, type Profissional, type ProvedorCriptografia, ROTULOS_ACOES, ROTULOS_STATUS_AGENDAMENTO, RegistrarUsuario, type RepositorioAgendamento, type RepositorioProfissional, type RepositorioServico, type RepositorioUsuario, type ResultadoAssociacaoMidia, STATUS_AGENDAMENTO, STATUS_TRANSICAO_ATENDIMENTO, type Servico, type SexoProfissional, type StatusAgendamento, type StatusTransicaoAtendimento, TEMPO_SLOT, TIPOS_TRANSICAO_ATENDIMENTO, type TipoTransicaoAtendimento, type Usuario, type VersaoMidia, acoesAtendimento, atendimentoTerminal, capaPersonalizada, categoriaIdentidade, clientes, comecaEmDezMinutos, dataAtendimento, horarioAtendimento, imagemPadraoProfissional, imagemProfissionalLegada, iniciaisUsuario, intervaloDiaAtendimento, profissionais, resolverURLMidia, rotuloStatus, servicos, statusAgendamentoValido, urlImagemProfissional };
+export { type AcaoAtendimento, AgendaUtils, type Agendamento, type AssociacaoMidia, type AtendimentoOperacional, BuscarAgendaProfissionalPorDia, BuscarAgendamentosCliente, BuscarProfissionais, BuscarServicos, CHAVES_FOTOS_PROFISSIONAIS_LEGADAS, type ConfiguracaoFluxoAtendimento, type ConfiguracaoLogoEstabelecimento, DateUtils, type EntidadeMidia, ExcluirAgendamento, type FinalidadeMidia, Horarios, type IdentidadeEstabelecimento, type ImagemGaleria, LoginUsuario, METRICAS_FLUXO_ATENDIMENTO, type ModoLogoEstabelecimento, MoedaUtils, type MonitoramentoAtendimento, NovoAgendamento, OPCOES_FLUXO_ATENDIMENTO, OPCOES_LOGO_ESTABELECIMENTO, ORIGENS_TRANSICAO_ATENDIMENTO, ObterHorariosOcupados, type OrigemTransicaoAtendimento, type Profissional, type ProvedorCriptografia, ROTULOS_ACOES, ROTULOS_STATUS_AGENDAMENTO, RegistrarUsuario, type RepositorioAgendamento, type RepositorioProfissional, type RepositorioServico, type RepositorioUsuario, type ResultadoAssociacaoMidia, STATUS_AGENDAMENTO, STATUS_TRANSICAO_ATENDIMENTO, type Servico, type SexoProfissional, type StatusAgendamento, type StatusTransicaoAtendimento, TEMPO_SLOT, TIPOS_TRANSICAO_ATENDIMENTO, type TipoTransicaoAtendimento, type Usuario, type VersaoMidia, acoesAtendimento, atendimentoTerminal, capaPersonalizada, categoriaIdentidade, clientes, comecaEmDezMinutos, dataAtendimento, horarioAtendimento, imagemPadraoProfissional, imagemProfissionalLegada, iniciaisUsuario, intervaloDiaAtendimento, profissionais, resolverURLMidia, rotuloStatus, servicos, statusAgendamentoValido, urlImagemProfissional };

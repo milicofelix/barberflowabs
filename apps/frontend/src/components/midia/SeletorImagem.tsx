@@ -55,8 +55,9 @@ export default function SeletorImagem({ valor, finalidade, alterar, titulo = 'Im
         setEnviando(true); setErro(''); setProgresso(0)
         try {
             const imagem = new Image(); imagem.src = foto; await imagem.decode()
-            const largura = finalidade === 'SERVICO' ? imagem.naturalWidth : Math.min(imagem.naturalWidth, imagem.naturalHeight * proporcao)
-            const altura = finalidade === 'SERVICO' ? imagem.naturalHeight : largura / proporcao
+            const preservar = finalidade === 'SERVICO' || finalidade === 'LOGO'
+            const largura = preservar ? imagem.naturalWidth : Math.min(imagem.naturalWidth, imagem.naturalHeight * proporcao)
+            const altura = preservar ? imagem.naturalHeight : largura / proporcao
             const escala = Math.min(1, (finalidade === 'CAPA' ? 1600 : 800) / Math.max(largura, altura))
             const canvas = document.createElement('canvas'); canvas.width = Math.max(1, Math.round(largura * escala)); canvas.height = Math.max(1, Math.round(altura * escala))
             const ctx = canvas.getContext('2d'); if (!ctx) throw new Error('Não foi possível preparar a foto')
@@ -69,14 +70,14 @@ export default function SeletorImagem({ valor, finalidade, alterar, titulo = 'Im
     }
     return <div className="grid gap-2">
         <span className="text-sm font-semibold text-foreground">{titulo}</span>
-        {valor && !falhou ? <img alt={titulo} src={urlImagemWeb(valor)} onError={() => setFalhou(true)} className="max-h-48 w-full rounded-xl border border-border bg-card" style={{ aspectRatio: proporcao, objectFit: finalidade === 'SERVICO' ? 'contain' : 'cover' }} /> : <div className="grid h-28 place-items-center rounded-xl border border-border bg-card text-sm text-muted-foreground">Imagem padrão</div>}
+        {valor && !falhou ? <img alt={titulo} src={urlImagemWeb(valor)} onError={() => setFalhou(true)} className="max-h-48 w-full rounded-xl border border-border bg-card" style={{ aspectRatio: proporcao, objectFit: finalidade === 'SERVICO' || finalidade === 'LOGO' ? 'contain' : 'cover' }} /> : <div className="grid h-28 place-items-center rounded-xl border border-border bg-card text-sm text-muted-foreground">Imagem padrão</div>}
         <div className="flex flex-wrap gap-2"><button type="button" disabled={disabled} onClick={abrir} className="rounded-lg border border-border px-3 py-2 text-foreground">Escolher imagem ou enviar foto</button>
             <button type="button" disabled={disabled} onClick={() => alterar(padrao, null)} className="rounded-lg border border-border px-3 py-2 text-foreground">Usar padrão</button></div>
         <dialog ref={dialog} aria-labelledby={id} onCancel={(e) => { if (enviando) e.preventDefault(); else { setAberto(false); setFoto(null) } }} className="w-[min(94vw,760px)] max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-background p-5 text-foreground backdrop:bg-black/60">
             <div className="flex items-center justify-between gap-3"><h2 id={id} className="text-xl font-bold">{foto ? 'Enquadrar foto' : titulo}</h2><button type="button" disabled={enviando} onClick={fechar} className="rounded-lg border border-border px-3 py-2">Fechar</button></div>
             {erro && <p role="alert" className="mt-3 text-red-500">{erro}</p>}
-            {foto ? <div className="mt-4 grid gap-3"><img src={foto} alt="Prévia do enquadramento" className="mx-auto w-full max-w-sm bg-card" style={{ aspectRatio: proporcao, objectFit: finalidade === 'SERVICO' ? 'contain' : 'cover', objectPosition: `${posicao.x}% ${posicao.y}%` }} />
-                {finalidade !== 'SERVICO' && <><label>Posição horizontal<input disabled={enviando} aria-label="Posição horizontal" type="range" min={0} max={100} value={posicao.x} onChange={(e) => setPosicao({ ...posicao, x: Number(e.target.value) })} className="w-full" /></label>
+            {foto ? <div className="mt-4 grid gap-3"><img src={foto} alt="Prévia do enquadramento" className="mx-auto w-full max-w-sm bg-card" style={{ aspectRatio: proporcao, objectFit: finalidade === 'SERVICO' || finalidade === 'LOGO' ? 'contain' : 'cover', objectPosition: `${posicao.x}% ${posicao.y}%` }} />
+                {finalidade !== 'SERVICO' && finalidade !== 'LOGO' && <><label>Posição horizontal<input disabled={enviando} aria-label="Posição horizontal" type="range" min={0} max={100} value={posicao.x} onChange={(e) => setPosicao({ ...posicao, x: Number(e.target.value) })} className="w-full" /></label>
                 <label>Posição vertical<input disabled={enviando} aria-label="Posição vertical" type="range" min={0} max={100} value={posicao.y} onChange={(e) => setPosicao({ ...posicao, y: Number(e.target.value) })} className="w-full" /></label></>}
                 {enviando && <label role="status">{progresso === 100 ? 'Processando imagem...' : `Enviando ${progresso}%`}<progress value={progresso} max={100} className="w-full" /></label>}
                 <button type="button" disabled={enviando} onClick={enviar} className="rounded-lg bg-violet-600 px-4 py-3 font-bold text-white">{enviando ? 'Enviando...' : 'Usar esta foto'}</button>

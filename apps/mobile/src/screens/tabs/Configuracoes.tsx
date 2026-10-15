@@ -2,6 +2,7 @@ import CampoTexto from '@/src/components/shared/CampoTexto'
 import ImagemRegistro from '@/src/components/midia/ImagemRegistro'
 import useSessao from '@/src/data/hooks/useSessao'
 import HorariosAgenda from '@/src/components/configuracoes/HorariosAgenda'
+import ConfiguracaoLogo from '@/src/components/configuracoes/ConfiguracaoLogo'
 import PainelFluxoAtendimento from '@/src/components/configuracoes/PainelFluxoAtendimento'
 import Carregando from '@/src/components/shared/Carregando'
 import EstadoErro from '@/src/components/shared/EstadoErro'
@@ -27,6 +28,7 @@ export default function Configuracoes() {
     return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}><ScrollView contentContainerStyle={styles.conteudo} keyboardShouldPersistTaps="handled">
         <CabecalhoIdentidadeUnidade />
         <Text style={styles.sobretitulo}>CONFIGURAÇÕES</Text><Text style={[styles.titulo, { color: cores.texto }]}>Seu estabelecimento</Text>
+        <ConfiguracaoLogo key={usuario?.estabelecimentoId} />
         {dados.prontidao ? <Prontidao dados={dados.prontidao} /> : null}
         <Secao titulo="Identidade pública">
             <ImagemRegistro titulo="Capa do estabelecimento" valor={dados.perfil.imagemCapaURL} entidade="ESTABELECIMENTO" entidadeId={usuario?.estabelecimentoId} finalidade="CAPA" aoSalvar={dados.carregar} />

@@ -60,8 +60,9 @@ export default function useIdentidadeUnidade() {
         if (!operacional) return
         const atualizar = () => { void carregar(true) }
         window.addEventListener('focus', atualizar)
-        return () => window.removeEventListener('focus', atualizar)
+        window.addEventListener('uniflow:identidade-atualizada', atualizar)
+        return () => { window.removeEventListener('focus', atualizar); window.removeEventListener('uniflow:identidade-atualizada', atualizar) }
     }, [carregar, operacional])
 
-    return { unidade, operacional, carregar }
+    return { unidade: operacional && unidade?.id === estabelecimentoId ? unidade : null, operacional, carregar }
 }

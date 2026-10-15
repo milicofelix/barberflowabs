@@ -1,4 +1,11 @@
-export type FinalidadeMidia = 'AVATAR' | 'SERVICO' | 'PROFISSIONAL' | 'CAPA'
+export type FinalidadeMidia = 'AVATAR' | 'SERVICO' | 'PROFISSIONAL' | 'CAPA' | 'LOGO'
+export type ModoLogoEstabelecimento = 'PADRAO' | 'PERSONALIZADO' | 'OCULTO'
+export interface ConfiguracaoLogoEstabelecimento { logoModo: ModoLogoEstabelecimento; logoURL: string | null }
+export const OPCOES_LOGO_ESTABELECIMENTO: Array<{ modo: ModoLogoEstabelecimento; titulo: string }> = [
+    { modo: 'PADRAO', titulo: 'Logo UniFlow ABS' },
+    { modo: 'PERSONALIZADO', titulo: 'Logo do estabelecimento' },
+    { modo: 'OCULTO', titulo: 'Não exibir logo' },
+]
 export type EntidadeMidia = 'USUARIO' | 'SERVICO' | 'PROFISSIONAL' | 'ESTABELECIMENTO'
 
 export interface VersaoMidia {

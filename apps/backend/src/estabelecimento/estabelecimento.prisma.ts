@@ -260,6 +260,8 @@ export class EstabelecimentoPrisma {
       nomePublico: true,
       descricaoPublica: true,
       imagemCapaURL: true,
+      logoModo: true,
+      logoURL: true,
       tipoEstabelecimento: true,
       segmentos: { include: { segmento: { select: { slug: true } } } },
       telefone: true,

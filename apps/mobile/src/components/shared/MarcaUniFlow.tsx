@@ -1,15 +1,29 @@
 import useTema from '@/src/data/contexts/ContextoTema'
+import useIdentidadeUnidade from '@/src/data/hooks/useIdentidadeUnidade'
+import { resolverURLMidia, type IdentidadeEstabelecimento } from '@uniflowabs/core'
+import { useEffect, useState } from 'react'
 import { Image, StyleSheet, Text, View } from 'react-native'
 
 interface MarcaUniFlowProps {
+    unidade?: IdentidadeEstabelecimento & { nome?: string | null; nomePublico?: string | null }
     compacta?: boolean
     exibirSlogan?: boolean
     horizontal?: boolean
     contraste?: boolean
 }
 
-export default function MarcaUniFlow({ compacta = false, exibirSlogan = true, horizontal = false, contraste = false }: MarcaUniFlowProps) {
+export default function MarcaUniFlow({ compacta = false, exibirSlogan = true, horizontal = false, contraste = false, unidade: informada }: MarcaUniFlowProps) {
     const { cores } = useTema()
+    const { unidade, operacional } = useIdentidadeUnidade()
+    const identidade = informada ?? unidade
+    const [falhou, setFalhou] = useState(false)
+    useEffect(() => setFalhou(false), [identidade?.logoURL])
+    if (!informada && operacional && !unidade) return null
+    if (identidade?.logoModo === 'OCULTO') return null
+    if (identidade?.logoModo === 'PERSONALIZADO' && identidade.logoURL) {
+        const nome = identidade.nomePublico || identidade.nome || 'Estabelecimento'
+        return falhou ? <Text style={{ color: contraste ? '#FFFFFF' : cores.texto }}>{nome}</Text> : <Image accessibilityLabel={`Logo ${nome}`} source={{ uri: resolverURLMidia(identidade.logoURL, process.env.API_URL ?? '') }} resizeMode="contain" onError={() => setFalhou(true)} style={{ width: horizontal ? 210 : 240, height: horizontal ? 68 : 100, maxWidth: '100%' }} />
+    }
     const estiloNome = horizontal ? styles.nomeHorizontal : compacta ? styles.nomeCompacto : styles.nome
     const estiloEmblema = horizontal ? styles.emblemaHorizontal : compacta ? styles.emblemaCompacto : styles.emblema
     const estiloCapsula = horizontal ? styles.absCapsulaHorizontal : compacta ? styles.absCapsulaCompacta : styles.absCapsula

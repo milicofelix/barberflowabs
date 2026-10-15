@@ -4,10 +4,21 @@ import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import { EstabelecimentoPrisma } from './estabelecimento.prisma';
 import { AtualizarPerfilPublicoEstabelecimentoDto, CriarEstabelecimentoDto } from './estabelecimento.dto';
 import { validarEmail, validarTextoObrigatorio } from 'src/shared/validacao';
+import { LogoEstabelecimentoRepository } from './logo-estabelecimento.repository';
 
 @Controller('estabelecimentos')
 export class EstabelecimentoController {
-  constructor(private readonly repo: EstabelecimentoPrisma) {}
+  constructor(private readonly repo: EstabelecimentoPrisma, private readonly logos: LogoEstabelecimentoRepository) {}
+
+  @Get('minha/logo')
+  obterLogo(@UsuarioLogado() u: Usuario) { this.validarDono(u); return this.logos.obter(u.estabelecimentoId); }
+
+  @Put('minha/logo')
+  salvarLogo(@UsuarioLogado() u: Usuario, @Body() d: { logoModo: string; midiaId?: string }) { this.validarDono(u); return this.logos.salvar(u.estabelecimentoId, u.id, d); }
+
+  private validarDono(u: Usuario) {
+    if (!u?.estabelecimentoId || String(u.papel ?? (u as any).role).toUpperCase() !== 'ESTABLISHMENT_OWNER') throw new ForbiddenException('Apenas o dono pode configurar o logo da unidade');
+  }
 
   @Get()
   listar() {

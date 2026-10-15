@@ -55,6 +55,8 @@ export interface HorarioFuncionamento {
 }
 
 export interface EstabelecimentoResumo {
+    logoModo?: 'PADRAO' | 'PERSONALIZADO' | 'OCULTO'
+    logoURL?: string | null
     id: number
     nome: string
     slug: string

@@ -1,5 +1,23 @@
 # Plano — Imagens, Upload E Identidade Multissegmento
 
+## Logo Da Unidade — 15/10/2026
+
+Implementado em Configurações na web e no mobile, com controle exclusivo do dono (`ESTABLISHMENT_OWNER`):
+
+- **Logo UniFlow ABS:** mantém o padrão atual; aplicado por padrão às unidades existentes.
+- **Logo do estabelecimento:** permite upload/seleção de mídia própria `LOGO`, substituindo emblema, nome UniFlow ABS e slogan pela imagem enviada.
+- **Não exibir logo:** remove a marca completa da área, mantendo banner, identificação textual da unidade e controles de navegação/tema/notificações.
+
+Web: Configurações → Perfil público → Logo do estabelecimento. Mobile: Configurações → Logo do estabelecimento. A alteração tem botão próprio **Salvar logo** e não depende de salvar endereço/agenda. Não altera aprovação administrativa nem a capa. Upload aceita JPEG, PNG e WebP de até 5 MB; proporção original e transparência são preservadas, com PNG recomendado. Não é necessário digitar caminho de imagem.
+
+API autenticada `GET|PUT /estabelecimentos/minha/logo`; grava `logoModo` e `logoURL`, valida titularidade/finalidade da mídia, registra vínculo independente da capa e auditoria. Ocultar/voltar ao padrão conserva a imagem salva para reuso. Renderização compartilhada em `Logo` (web) e `MarcaUniFlow` (mobile), aplicada aos cabeçalhos operacionais e à identidade do perfil público específico da unidade. Busca geral e páginas públicas da plataforma continuam com UniFlow ABS; não se trata de remover toda referência institucional à plataforma.
+
+Salvar publica atualização da identidade na sessão atual, sem depender de refresh manual. Outros dispositivos recebem a configuração na próxima consulta/retomada; não há canal push específico de identidade. Falha ao carregar logo personalizado apresenta o nome do estabelecimento, sem trocar silenciosamente pelo logo da plataforma. Se o modo estiver oculto, não renderiza marca de fallback.
+
+Migration aditiva `20261015230000_add_establishment_logo`: aplicar migrations, gerar Prisma Client e reiniciar pelo catálogo `COMANDOS.md`, após backup. Sem seed ou reset; sem novas dependências nativas. Testes de permissão, mídia, modos, vínculo e auditoria foram preparados, mas **não executados**, assim como builds, migrations e verificações visuais.
+
+Aceite manual: conferir os três modos nos temas claro/escuro, na Home e nas demais telas da unidade em web/Android/iOS; usar logo horizontal e PNG transparente; trocar capa e confirmar independência; tentar mídia de outra unidade e conta sem papel de dono; verificar que páginas públicas gerais não perdem a identidade UniFlow ABS.
+
 ## Ajuste Web — Fundo Por Tema (15/10/2026)
 
 O fundo geral da plataforma usa `/banners/principal-dia.png` no tema claro e mantém `/banners/principal.png` no escuro. A seleção acompanha o tema ativo, tanto por horário quanto por escolha manual, na Home, páginas com identidade compartilhada, busca pública, autenticação e carregamento. Capas personalizadas e imagens específicas por segmento continuam prioritárias. Mobile não foi alterado. Sem mudanças no banco; testes e builds não executados.

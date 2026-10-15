@@ -40,7 +40,7 @@ export default function SeletorImagem({ valor, finalidade, alterar, titulo = 'Im
                 const permissao = await Picker.requestCameraPermissionsAsync()
                 if (!permissao.granted) { setNegado(true); setErro('Câmera não autorizada. Você pode usar a galeria.'); return }
             }
-            const opcoes: ImagePickerOptions = { mediaTypes: ['images'], allowsEditing: finalidade !== 'SERVICO', aspect: finalidade === 'CAPA' ? [16, 9] : [1, 1], quality: 1 }
+            const opcoes: ImagePickerOptions = { mediaTypes: ['images'], allowsEditing: finalidade !== 'SERVICO' && finalidade !== 'LOGO', aspect: finalidade === 'CAPA' ? [16, 9] : [1, 1], quality: 1 }
             const resultado = camera ? await Picker.launchCameraAsync(opcoes) : await Picker.launchImageLibraryAsync(opcoes)
             if (resultado.canceled || !resultado.assets[0]) return
             const asset = resultado.assets[0]
@@ -48,7 +48,7 @@ export default function SeletorImagem({ valor, finalidade, alterar, titulo = 'Im
             const proporcao = finalidade === 'CAPA' ? 16 / 9 : 1
             const largura = Math.floor(Math.min(asset.width, asset.height * proporcao))
             const altura = Math.floor(largura / proporcao)
-            if (finalidade === 'SERVICO') {
+            if (finalidade === 'SERVICO' || finalidade === 'LOGO') {
                 const escala = Math.min(1, 800 / Math.max(asset.width, asset.height))
                 contexto.resize({ width: Math.max(1, Math.round(asset.width * escala)), height: Math.max(1, Math.round(asset.height * escala)) })
             } else {
@@ -56,7 +56,7 @@ export default function SeletorImagem({ valor, finalidade, alterar, titulo = 'Im
                 contexto.resize({ width: Math.min(largura, finalidade === 'CAPA' ? 1600 : 800) })
             }
             const imagem = await contexto.renderAsync()
-            const convertida = await imagem.saveAsync({ format: SaveFormat.JPEG, compress: 0.82 })
+            const convertida = await imagem.saveAsync({ format: finalidade === 'LOGO' ? SaveFormat.PNG : SaveFormat.JPEG, compress: 0.82 })
             setFoto(convertida.uri)
         } catch (e) {
             const mensagem = mensagemDoErro(e)
@@ -75,7 +75,7 @@ export default function SeletorImagem({ valor, finalidade, alterar, titulo = 'Im
     const botao = (texto: string, acao: () => void) => <Pressable accessibilityRole="button" disabled={disabled || enviando} onPress={acao} style={[styles.botao, { borderColor: cores.borda, backgroundColor: cores.campo }, (disabled || enviando) && { opacity: 0.5 }]}><Text style={{ color: cores.texto, fontWeight: '700' }}>{texto}</Text></Pressable>
     const nomes: Record<string, string> = { barbearia: 'Barbearia', 'salao-beleza': 'Salão', 'manicure-pedicure': 'Unhas', 'clinica-estetica': 'Estética', 'spa-bem-estar': 'Spa', beleza: 'Beleza' }
     return <View style={styles.bloco}><Text style={{ color: cores.texto, fontWeight: '700' }}>{titulo}</Text>
-        {valor && !falhou ? <Image source={finalidade === 'PROFISSIONAL' ? imagemDoProfissional(valor) : finalidade === 'SERVICO' ? imagemDoServico('', valor) : { uri: urlMidia(valor) }} resizeMode={finalidade === 'SERVICO' ? 'contain' : 'cover'} onError={() => setFalhou(true)} accessibilityLabel={titulo} style={[styles.previa, { aspectRatio: finalidade === 'CAPA' || finalidade === 'SERVICO' ? 16 / 9 : 1 }]} /> : <Text style={{ color: cores.textoSecundario }}>Imagem padrão</Text>}
+        {valor && !falhou ? <Image source={finalidade === 'PROFISSIONAL' ? imagemDoProfissional(valor) : finalidade === 'SERVICO' ? imagemDoServico('', valor) : { uri: urlMidia(valor) }} resizeMode={finalidade === 'SERVICO' || finalidade === 'LOGO' ? 'contain' : 'cover'} onError={() => setFalhou(true)} accessibilityLabel={titulo} style={[styles.previa, { aspectRatio: finalidade === 'CAPA' || finalidade === 'SERVICO' ? 16 / 9 : 1 }]} /> : <Text style={{ color: cores.textoSecundario }}>Imagem padrão</Text>}
         {botao('Escolher imagem ou enviar foto', () => { setFoto(null); setSegmento(null); setNegado(false); setAberto(true) })}
         {botao('Usar padrão', () => alterar(padrao, null))}
         <Modal visible={aberto} animationType="slide" presentationStyle="fullScreen" onRequestClose={fechar}>
@@ -83,7 +83,7 @@ export default function SeletorImagem({ valor, finalidade, alterar, titulo = 'Im
                 <Text style={[styles.titulo, { color: cores.texto }]}>{titulo}</Text>{botao('Fechar', fechar)}
                 {erro ? <Text accessibilityRole="alert" style={{ color: '#DC2626' }}>{erro}</Text> : null}
                 {negado ? botao('Abrir permissões do aparelho', () => { void Linking.openSettings() }) : null}
-                {foto ? <><Image source={{ uri: foto }} resizeMode={finalidade === 'SERVICO' ? 'contain' : 'cover'} style={[styles.previa, { aspectRatio: finalidade === 'CAPA' || finalidade === 'SERVICO' ? 16 / 9 : 1 }]} />
+                {foto ? <><Image source={{ uri: foto }} resizeMode={finalidade === 'SERVICO' || finalidade === 'LOGO' ? 'contain' : 'cover'} style={[styles.previa, { aspectRatio: finalidade === 'CAPA' || finalidade === 'SERVICO' ? 16 / 9 : 1 }]} />
                     <Text accessibilityRole="text" style={{ color: cores.texto }}>{enviando ? progresso === 100 ? 'Processando foto...' : `Enviando ${progresso}%` : 'Confira a foto antes de enviar.'}</Text>
                     {botao('Usar esta foto', enviar)}{botao('Escolher outra foto', () => setFoto(null))}</>
                     : <>{botao('Escolher do aparelho', () => escolher(false))}{botao('Tirar foto', () => escolher(true))}

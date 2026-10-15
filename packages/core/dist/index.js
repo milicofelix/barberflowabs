@@ -34,6 +34,7 @@ __export(src_exports, {
   MoedaUtils: () => MoedaUtils,
   NovoAgendamento: () => NovoAgendamento,
   OPCOES_FLUXO_ATENDIMENTO: () => OPCOES_FLUXO_ATENDIMENTO,
+  OPCOES_LOGO_ESTABELECIMENTO: () => OPCOES_LOGO_ESTABELECIMENTO,
   ORIGENS_TRANSICAO_ATENDIMENTO: () => ORIGENS_TRANSICAO_ATENDIMENTO,
   ObterHorariosOcupados: () => ObterHorariosOcupados,
   ROTULOS_ACOES: () => ROTULOS_ACOES,
@@ -588,6 +589,13 @@ var LoginUsuario = class {
   }
 };
 
+// src/midia/index.ts
+var OPCOES_LOGO_ESTABELECIMENTO = [
+  { modo: "PADRAO", titulo: "Logo UniFlow ABS" },
+  { modo: "PERSONALIZADO", titulo: "Logo do estabelecimento" },
+  { modo: "OCULTO", titulo: "N\xE3o exibir logo" }
+];
+
 // src/midia/identidade.ts
 var tipos = {
   BARBEARIA: "barbearia",
@@ -659,6 +667,7 @@ function urlImagemProfissional(url, sexo) {
   MoedaUtils,
   NovoAgendamento,
   OPCOES_FLUXO_ATENDIMENTO,
+  OPCOES_LOGO_ESTABELECIMENTO,
   ORIGENS_TRANSICAO_ATENDIMENTO,
   ObterHorariosOcupados,
   ROTULOS_ACOES,

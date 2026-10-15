@@ -323,6 +323,8 @@ export class PublicoPrisma {
       email: estabelecimento.email,
       descricao: estabelecimento.descricaoPublica,
       imagemCapaURL: this.imagemCapa(estabelecimento.imagemCapaURL),
+      logoModo: estabelecimento.logoModo,
+      logoURL: estabelecimento.logoURL,
       endereco: {
         logradouro: estabelecimento.endereco,
         bairro: estabelecimento.bairro,
@@ -496,6 +498,8 @@ export class PublicoPrisma {
       email: estabelecimento.email,
       descricao: estabelecimento.descricaoPublica,
       imagemCapaURL: this.imagemCapa(estabelecimento.imagemCapaURL),
+      logoModo: estabelecimento.logoModo,
+      logoURL: estabelecimento.logoURL,
       endereco: {
         logradouro: estabelecimento.endereco,
         bairro: estabelecimento.bairro,

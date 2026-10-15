@@ -16,7 +16,7 @@ export default function Cabecalho({ semFundo = false }: CabecalhoProps) {
         <header className={`cabecalho-hero flex h-36 items-start self-stretch text-white ${semFundo ? 'cabecalho-home' : 'bg-black/45'}`}>
             <nav className="container flex items-start justify-between pt-8">
                 <Logo />
-                <div>
+                <div className="ml-auto">
                     {usuario ? (
                         <div className="flex items-center gap-3"><CentralNotificacoes /><MenuUsuario /><AlternadorTema /></div>
                     ) : (

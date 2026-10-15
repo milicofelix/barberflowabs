@@ -316,6 +316,8 @@ docker compose exec -T app sh -lc 'cd apps/backend && npx prisma migrate deploy'
 
 Aplica, em ordem, somente as migrations versionadas que ainda estao pendentes. Altera a estrutura e possivelmente os dados do banco.
 
+Para o logo configurável da unidade, `20261015230000_add_establishment_logo` adiciona `logoURL` e `logoModo` com padrão `PADRAO`, sem alterar banners ou aprovações. Fazer backup, aplicar migrations, gerar o Prisma Client e reiniciar `app` pelas rotinas já catalogadas, nessa ordem. Sem reset, seed ou nova dependência nativa. Detalhes em [PLANO_MIDIA_IMAGENS_E_IDENTIDADE.md](PLANO_MIDIA_IMAGENS_E_IDENTIDADE.md).
+
 Para a Etapa 10 — Fase 5, aplica `20261015190000_add_loyalty_program` (oito tabelas novas, sem crédito retroativo ou ativação automática). Fazer backup e executar depois a geração do Prisma Client e o reinício de `app`, ambos já catalogados abaixo. Não executar reset ou seed. A API de atendimentos passa a depender dessas tabelas, mesmo com programa inativo: aplicar antes de utilizar a nova versão. Contratos e aceite em [ETAPA_10_RELACIONAMENTO_FIDELIZACAO_NOTIFICACOES.md](ETAPA_10_RELACIONAMENTO_FIDELIZACAO_NOTIFICACOES.md).
 
 A migration de dados `20261015030000_retire_legacy_professional_photos` substitui apenas fotos demonstrativas conhecidas por silhuetas de acordo com o sexo cadastrado, desativa os antigos itens globais e retira seus vinculos profissionais. Preserva uploads reais e nao muda o schema; mantenha backup antes de aplicar. Procedimento e aceite em [CORRECAO_AVATARES_PROFISSIONAIS.md](CORRECAO_AVATARES_PROFISSIONAIS.md).
@@ -800,6 +802,14 @@ docker compose exec -T app sh -lc 'cd apps/backend && yarn test "governanca.spec
 ```
 
 Testes isolados opcionais, não executados pelo agente. Não substituem conferência do SQL/concorrência no MySQL ou revisão jurídica. Expurgo/exclusão não possuem comando genérico pronto: exigem identidade, permissões e confirmações pelos contratos em [ETAPA_10_FASE_6_METRICAS_GOVERNANCA.md](ETAPA_10_FASE_6_METRICAS_GOVERNANCA.md). Nenhuma exportação, exclusão ou limpeza real foi executada automaticamente.
+
+## Testes opcionais do logo da unidade
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && yarn test "logo-estabelecimento.spec.ts|midia.spec.ts" --runInBand'
+```
+
+Comando opcional para os testes isolados de modos de logo, titularidade, associação de mídia e armazenamento. Não executado pelo agente; não substitui conferência visual na web e em Android/iOS. Não aplica migrations.
 
 ## Limpezas Destrutivas
 
