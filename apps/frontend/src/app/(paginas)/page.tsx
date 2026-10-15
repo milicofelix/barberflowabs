@@ -8,6 +8,7 @@ import Rodape from '@/components/shared/Rodape'
 import { usuarioOperacional } from '@/data/hooks/useIdentidadeUnidade'
 import useSessao from '@/data/hooks/useSessao'
 import type { PropsWithChildren } from 'react'
+import AtendimentosOperacionais from '@/components/gestao/AtendimentosOperacionais'
 
 function SecaoHome({ children }: PropsWithChildren) {
     return (
@@ -24,6 +25,7 @@ export default function Landing() {
     return (
         <div className="flex flex-col">
             <Slogan />
+            {!carregando && operacional ? <SecaoHome><AtendimentosOperacionais key={usuario?.estabelecimentoId} modo="home" /></SecaoHome> : null}
             {!carregando && !operacional ? (
                 <>
                     <SecaoHome>

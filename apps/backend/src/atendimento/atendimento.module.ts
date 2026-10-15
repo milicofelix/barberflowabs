@@ -5,6 +5,9 @@ import { FluxoAtendimentoService } from 'src/gestao/fluxo-atendimento.service';
 import { AgendaAtualizacaoService } from 'src/motor-agenda/agenda-atualizacao.service';
 import { AtendimentoWorker } from './atendimento.worker';
 import { OrquestradorAtendimentoService } from './orquestrador-atendimento.service';
+import { RetomarAutomacaoService } from './retomar-automacao.service';
+import { MotorAgendaConsultaPrisma } from 'src/motor-agenda/motor-agenda.consulta.prisma';
+import { MotorAgendaDisponibilidadePrisma } from 'src/motor-agenda/motor-agenda.disponibilidade.prisma';
 
 @Module({
   imports: [DbModule, FinanceiroModule],
@@ -13,7 +16,10 @@ import { OrquestradorAtendimentoService } from './orquestrador-atendimento.servi
     AgendaAtualizacaoService,
     OrquestradorAtendimentoService,
     AtendimentoWorker,
+    RetomarAutomacaoService,
+    MotorAgendaConsultaPrisma,
+    MotorAgendaDisponibilidadePrisma,
   ],
-  exports: [FluxoAtendimentoService, AgendaAtualizacaoService, OrquestradorAtendimentoService],
+  exports: [FluxoAtendimentoService, AgendaAtualizacaoService, OrquestradorAtendimentoService, RetomarAutomacaoService],
 })
 export class AtendimentoModule {}

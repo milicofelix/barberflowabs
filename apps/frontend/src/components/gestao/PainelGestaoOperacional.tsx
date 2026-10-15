@@ -6,6 +6,9 @@ import SeletorImagem from '@/components/midia/SeletorImagem'
 import { Profissional, Servico, urlImagemProfissional } from '@uniflowabs/core'
 import { IconPencil, IconPlus, IconSparkles, IconTrash, IconX } from '@tabler/icons-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import AtendimentosOperacionais from './AtendimentosOperacionais'
+import { rotuloStatus } from '@/data/atendimentos/operacao'
 
 type Aba =
     | 'dashboard'
@@ -60,19 +63,17 @@ const lembreteVazio = {
     dataPrevista: `${hoje()}T09:00`,
 }
 
-const statusAgenda = ['AGENDADO', 'CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW']
-const cacheAgenda = new Map<string, { dados: any; salvoEm: number }>()
-const cacheAgendaMs = 5 * 60_000
-
 export default function PainelGestaoOperacional() {
     const { httpGet, httpPost, httpPut, httpDelete } = useAPI()
     const { usuario } = useSessao()
     const [aba, setAba] = useState<Aba>('dashboard')
-    const [dataOperacao, setDataOperacao] = useState(hoje())
+    const parametros = useSearchParams()
+    const router = useRouter()
+    const parametroId = parametros.get('agendamentoId')
+    const agendamentoSelecionadoId = parametroId && /^\d+$/.test(parametroId) && Number.isSafeInteger(Number(parametroId)) && Number(parametroId) > 0 ? Number(parametroId) : null
     const [inicioRelatorio, setInicioRelatorio] = useState(hoje())
     const [fimRelatorio, setFimRelatorio] = useState(hoje())
     const [dashboard, setDashboard] = useState<any>(null)
-    const [agendamentos, setAgendamentos] = useState<any[]>([])
     const [clientes, setClientes] = useState<any[]>([])
     const [historico, setHistorico] = useState<any>(null)
     const [lancamentos, setLancamentos] = useState<any[]>([])
@@ -89,24 +90,15 @@ export default function PainelGestaoOperacional() {
     const [lancamento, setLancamento] = useState<any>(lancamentoVazio)
     const [lembrete, setLembrete] = useState<any>(lembreteVazio)
     const [mensagem, setMensagem] = useState('')
-    const revisaoAgenda = useRef<number | null>(null)
-
-    const consultarAgenda = useCallback(async (forcar = false) => {
-        const inicio = new Date(`${dataOperacao}T00:00:00`)
-        const fim = new Date(inicio)
-        fim.setDate(fim.getDate() + 1)
-        const chave = `${usuario?.estabelecimentoId ?? 'sem-estabelecimento'}:${inicio.toISOString()}:${fim.toISOString()}`
-        const existente = cacheAgenda.get(chave)
-        if (!forcar && existente && Date.now() - existente.salvoEm < cacheAgendaMs) return existente.dados
-        const dados = await httpGet(`/gestao/agenda?inicio=${encodeURIComponent(inicio.toISOString())}&fim=${encodeURIComponent(fim.toISOString())}&limite=200`)
-        if (!dados?.statusCode) cacheAgenda.set(chave, { dados, salvoEm: Date.now() })
-        return dados
-    }, [dataOperacao, httpGet, usuario?.estabelecimentoId])
+    useEffect(() => {
+        const solicitada = parametros.get('aba')
+        if (agendamentoSelecionadoId) setAba('agenda')
+        else if (['dashboard', 'agenda', 'clientes', 'financeiro', 'relatorios', 'relacionamento', 'servicos', 'profissionais'].includes(solicitada ?? '')) setAba(solicitada as Aba)
+    }, [agendamentoSelecionadoId, parametros])
 
     const carregar = useCallback(async () => {
         const [
             dadosDashboard,
-            dadosAgenda,
             dadosClientes,
             dadosFinanceiro,
             dadosRelatorio,
@@ -117,7 +109,6 @@ export default function PainelGestaoOperacional() {
             dadosCatalogoEstabelecimento,
         ] = await Promise.all([
             httpGet('/gestao/dashboard'),
-            consultarAgenda(),
             httpGet('/gestao/clientes'),
             httpGet(`/gestao/financeiro?inicio=${inicioRelatorio}&fim=${fimRelatorio}`),
             httpGet(`/gestao/relatorios?inicio=${inicioRelatorio}&fim=${fimRelatorio}`),
@@ -129,7 +120,6 @@ export default function PainelGestaoOperacional() {
         ])
 
         setDashboard(dadosDashboard?.statusCode ? null : dadosDashboard)
-        setAgendamentos(Array.isArray(dadosAgenda?.itens) ? dadosAgenda.itens : [])
         setClientes(Array.isArray(dadosClientes) ? dadosClientes : [])
         setLancamentos(Array.isArray(dadosFinanceiro) ? dadosFinanceiro : [])
         setRelatorio(dadosRelatorio?.statusCode ? null : dadosRelatorio)
@@ -138,26 +128,11 @@ export default function PainelGestaoOperacional() {
         setRelacionamento(dadosRelacionamento?.statusCode ? null : dadosRelacionamento)
         setServicosSugeridos(Array.isArray(dadosSugeridos) ? dadosSugeridos : [])
         setCatalogoEstabelecimento(dadosCatalogoEstabelecimento?.statusCode ? null : dadosCatalogoEstabelecimento)
-    }, [consultarAgenda, fimRelatorio, httpGet, inicioRelatorio])
+    }, [fimRelatorio, httpGet, inicioRelatorio])
 
     useEffect(() => {
         carregar()
     }, [carregar])
-
-    useEffect(() => {
-        const sincronizar = async () => {
-            const atual = await httpGet('/gestao/agenda/revisao')
-            if (atual?.statusCode || typeof atual?.revisao !== 'number') return
-            if (revisaoAgenda.current === null) revisaoAgenda.current = atual.revisao
-            else if (atual.revisao !== revisaoAgenda.current) {
-                revisaoAgenda.current = atual.revisao
-                const agenda = await consultarAgenda(true)
-                if (Array.isArray(agenda?.itens)) setAgendamentos(agenda.itens)
-            }
-        }
-        const intervalo = window.setInterval(() => { void sincronizar() }, 5_000)
-        return () => window.clearInterval(intervalo)
-    }, [consultarAgenda, httpGet])
 
     async function salvarServico() {
         setMensagem('')
@@ -256,20 +231,6 @@ export default function PainelGestaoOperacional() {
         setMensagem('Profissional excluído.')
     }
 
-    async function alterarStatus(id: number, status: string) {
-        setMensagem('')
-        const anteriores = agendamentos
-        setAgendamentos((atuais) => atuais.map((item) => item.id === id ? { ...item, status } : item))
-        const resposta = await httpPut(`/gestao/agendamentos/${id}/status`, { status })
-        if (resposta?.statusCode) {
-            setAgendamentos(anteriores)
-            return setMensagem(resposta.message)
-        }
-        const agenda = await consultarAgenda(true)
-        if (Array.isArray(agenda?.itens)) setAgendamentos(agenda.itens)
-        setMensagem('Status atualizado.')
-    }
-
     async function carregarHistorico(clienteId: number) {
         setMensagem('')
         const resposta = await httpGet(`/gestao/clientes/${clienteId}/historico`)
@@ -359,7 +320,7 @@ export default function PainelGestaoOperacional() {
                     ['servicos', 'Serviços'],
                     ['profissionais', 'Profissionais'],
                 ] as [Aba, string][]).map(([id, label]) => (
-                    <button key={id} type="button" onClick={() => setAba(id)} className={botaoAba(aba === id)}>
+                    <button key={id} type="button" onClick={() => { setAba(id); if (parametros.has('aba') || parametros.has('agendamentoId')) router.replace(`/gestao?aba=${id}`, { scroll: false }) }} className={botaoAba(aba === id)}>
                         {label}
                     </button>
                 ))}
@@ -368,12 +329,7 @@ export default function PainelGestaoOperacional() {
             {aba === 'dashboard' && <Dashboard dados={dashboard} />}
 
             {aba === 'agenda' && (
-                <PainelAgenda
-                    data={dataOperacao}
-                    agendamentos={agendamentos}
-                    onData={setDataOperacao}
-                    onStatus={alterarStatus}
-                />
+                <AtendimentosOperacionais key={usuario?.estabelecimentoId} modo="agenda" selecionadoId={agendamentoSelecionadoId} />
             )}
 
             {aba === 'clientes' && (
@@ -478,41 +434,6 @@ function Dashboard({ dados }: { dados: any }) {
     )
 }
 
-function PainelAgenda(props: any) {
-    return (
-        <section className="flex flex-col gap-4">
-            <Campo label="Data da agenda" type="date" value={props.data} onChange={props.onData} />
-            <div className="grid gap-3">
-                {props.agendamentos.map((agendamento: any) => (
-                    <div key={agendamento.id} className="rounded border border-zinc-800 bg-zinc-950 p-4">
-                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                            <div>
-                                <h3 className="font-bold text-zinc-100">
-                                    {hora(agendamento.data)} - {agendamento.usuario?.nome}
-                                </h3>
-                                <p className="text-sm text-zinc-400">
-                                    {agendamento.profissional?.nome} | {agendamento.servicos?.map((s: any) => s.nome).join(', ')}
-                                </p>
-                                <p className="text-sm text-zinc-500">{moeda(agendamento.valorTotal)}</p>
-                            </div>
-                            <select
-                                value={agendamento.status}
-                                onChange={(e) => props.onStatus(agendamento.id, e.target.value)}
-                                className="input lg:w-56"
-                            >
-                                {statusAgenda.map((status) => (
-                                    <option key={status}>{status}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                ))}
-                {props.agendamentos.length === 0 && <Vazio texto="Nenhum agendamento nesse dia." />}
-            </div>
-        </section>
-    )
-}
-
 function PainelClientes(props: any) {
     return (
         <section className="grid gap-6 xl:grid-cols-[360px_320px_1fr]">
@@ -553,7 +474,7 @@ function PainelClientes(props: any) {
                     {(props.historico?.agendamentos ?? []).map((agendamento: any) => (
                         <div key={agendamento.id} className="rounded border border-zinc-800 p-3">
                             <p className="font-semibold text-zinc-100">
-                                {dataHora(agendamento.data)} | {agendamento.status}
+                                {dataHora(agendamento.data)} | {rotuloStatus(agendamento.status)}
                             </p>
                             <p className="text-sm text-zinc-400">
                                 {agendamento.profissional?.nome} | {agendamento.servicos.map((s: any) => s.nome).join(', ')}

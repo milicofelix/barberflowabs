@@ -44,6 +44,7 @@ import { randomUUID } from 'crypto';
 import { ImportacaoContatosService } from './importacao-contatos.service';
 import { FluxoAtendimentoService } from './fluxo-atendimento.service';
 import { JornadaAgendamentoService } from 'src/relacionamento/jornada-agendamento.service';
+import { RetomarAutomacaoService } from 'src/atendimento/retomar-automacao.service';
 
 const ORIGENS_AGENDAMENTO_ASSISTIDO = ['RECEPCAO', 'TELEFONE', 'WHATSAPP', 'PRESENCIAL', 'OUTRO'];
 const TIPOS_LANCAMENTO = ['RECEITA', 'DESPESA'];
@@ -63,6 +64,7 @@ export class GestaoController {
     private readonly importacaoContatos: ImportacaoContatosService,
     private readonly fluxoAtendimento: FluxoAtendimentoService,
     private readonly jornadaAgendamento: JornadaAgendamentoService,
+    private readonly retomarAutomacao: RetomarAutomacaoService,
   ) {}
 
   @Get('dashboard')
@@ -173,6 +175,19 @@ export class GestaoController {
     return this.repo.listarAgendamentosFuturos(usuario.estabelecimentoId!);
   }
 
+  @Get('atendimentos/home')
+  async atendimentosHome(@UsuarioLogado() usuario: Usuario) {
+    await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
+    return this.repo.listarAtendimentosHome(usuario.estabelecimentoId!);
+  }
+
+  @Put('agendamentos/:id/retomar-automacao')
+  async retomarAtendimento(@Param('id') id: string, @UsuarioLogado() usuario: Usuario) {
+    await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
+    validarNumeroInteiroPositivo(id, 'Agendamento');
+    return this.retomarAutomacao.executar(Number(id), usuario.estabelecimentoId!, usuario.id!);
+  }
+
   @Get('agendamentos/clientes')
   async listarClientesParaAgendamento(@Query('busca') busca: string | undefined, @UsuarioLogado() usuario: Usuario) {
     await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
@@ -183,6 +198,13 @@ export class GestaoController {
   async contextoAgendamentoAssistido(@UsuarioLogado() usuario: Usuario) {
     await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
     return this.repo.contextoAgendamentoAssistido(usuario.estabelecimentoId!);
+  }
+
+  @Get('agendamentos/:id')
+  async obterAtendimento(@Param('id') id: string, @UsuarioLogado() usuario: Usuario) {
+    await this.validarPermissao(usuario, 'AGENDA_GERENCIAR');
+    validarNumeroInteiroPositivo(id, 'Agendamento');
+    return this.repo.obterAtendimento(Number(id), usuario.estabelecimentoId!);
   }
 
   @Post('agendamentos')

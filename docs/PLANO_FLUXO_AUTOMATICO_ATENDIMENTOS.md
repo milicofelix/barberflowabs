@@ -171,12 +171,54 @@ Verificação executada: migration aplicada em `uniflow_abs`, Prisma Client rege
 
 ## Fase 3 — Operação Web
 
-- [ ] Exibir rótulos **Em atendimento**, **Em atraso** e **Finalizado** na agenda e na Home operacional.
-- [ ] Destacar atendimentos que começam em até dez minutos.
-- [ ] Adicionar ações rápidas: atrasar, iniciar, finalizar, ausência e retomar automação.
-- [ ] Mostrar indicador **Automático** ou **Manual**, responsável e horário efetivo.
-- [ ] Abrir o atendimento correto ao tocar na notificação do sino.
-- [ ] Atualizar agenda, Home e sino sem refresh completo.
+- [x] Exibir rótulos **Em atendimento**, **Em atraso** e **Finalizado** na agenda e na Home operacional.
+- [x] Destacar atendimentos que começam em até dez minutos.
+- [x] Adicionar ações rápidas: atrasar, iniciar, finalizar, ausência e retomar automação.
+- [x] Mostrar indicador **Automático** ou **Manual**, responsável e horário efetivo.
+- [x] Abrir o atendimento correto ao tocar na notificação do sino.
+- [x] Atualizar agenda, Home e sino sem refresh completo.
+
+### Implementação Da Fase 3 — 15/10/2026
+
+Implementação em código concluída; homologação manual pendente. Não foram executados testes, builds, typecheck, lint, chamadas de verificação à API, migrations ou reinícios nesta entrega, conforme as diretrizes do projeto.
+
+Agenda e Home da web compartilham `AtendimentosOperacionais`, `CartaoAtendimentoOperacional` e o diálogo de confirmação das ações. Os rótulos usam o contrato canônico do core. O cartão destaca reservas que começam em até dez minutos, identifica profissional, modo automático/manual, autor do controle manual e datas efetivas de início/finalização. As datas são apresentadas no fuso da unidade; a consulta do dia também usa esse fuso.
+
+As ações são filtradas pela máquina de estados; ausência só aparece após o horário inicial. Ações manuais explicam que interrompem o fluxo automático e podem receber um motivo. Estados terminais não oferecem reabertura. O backend continua exigindo `AGENDA_GERENCIAR` e restringindo as consultas/alterações ao estabelecimento da sessão.
+
+A Home operacional prioriza até 30 reservas futuras/atendimentos atrasados ou em andamento e acrescenta até 20 finalizados nas últimas 24 horas. Os finalizados recentes permanecem visíveis para conferência sem ocupar o limite das próximas reservas. A agenda carrega todas as páginas do dia, em blocos de até 200 registros, com IDs únicos.
+
+Novos contratos protegidos:
+
+- `GET /gestao/atendimentos/home`: lista operacional da Home.
+- `GET /gestao/agendamentos/:id`: consulta exata para abrir a notificação, inclusive fora do período atualmente visível.
+- `PUT /gestao/agendamentos/:id/retomar-automacao`: retoma o fluxo de um atendimento ativo. Rotas fixas de clientes/contexto permanecem antes da rota dinâmica.
+
+A retomada valida a configuração da unidade, preserva o início efetivo quando existente e recalcula o término pela soma das durações comerciais persistidas nos itens do agendamento, sem preparação. Um atraso futuro volta a confirmado; após o horário, o atendimento pode iniciar ao retomar se o início automático estiver habilitado. A operação recusa unidades com fluxo desativado e orienta iniciar manualmente quando somente o início automático estiver desativado.
+
+A retomada é transacional, com locks de atendimento/profissional/recursos, validação de funcionamento, escala, bloqueios e disponibilidade. As reservas de recursos são atualizadas, a revisão é incrementada, tarefas antigas são canceladas e a decisão é auditada sem dados do cliente. Não registra receita: a conclusão continua sob responsabilidade do serviço único de transição. Repetir uma retomada já aplicada não duplica revisão nem auditoria; a programação pode ser reconstruída pelo orquestrador e pela reconciliação existente.
+
+O sino mantém o ID enviado em `acaoUrl`; a gestão interpreta os parâmetros, busca o registro da unidade e abre a aba Agenda com destaque e acesso por teclado. A seleção muda o dia para o dia do atendimento e permite fechar o destaque. Um ID de outra unidade é recusado; não se abre outro atendimento como fallback.
+
+Agenda e Home consultam a revisão leve a cada cinco segundos enquanto a página está visível; os dados completos são atualizados quando a revisão muda, após uma ação ou ao recuperar foco. Há reconciliação completa a cada minuto para recuperar mudanças de configuração ou reinício. O sino também consulta a cada cinco segundos e preserva as notificações anteriores durante falhas de rede. Não é utilizado refresh completo da página.
+
+Foram escritos testes direcionados da retomada: duração do snapshot, ausência de preparação, preservação do início efetivo, atraso futuro, repetição idempotente, estados terminais, tenant, configuração inativa, conflito de agenda e concorrência. Não foram executados. O arquivo extenso de gestão perdeu a lógica antiga de consulta/alteração da agenda; a operação nova ficou em componentes e hook próprios.
+
+Não há migration, nova dependência ou alteração de configuração nesta fase. Para carregar as novas rotas e serviços, o usuário deve executar o comando de reinício de `app` já documentado em `docs/COMANDOS.md`. A automação segue dependendo das configurações persistidas da unidade e do worker existente; esta fase não a habilita globalmente. Os controles de configuração e o aceite amplo continuam na Fase 5.
+
+### Aceite Manual Da Fase 3
+
+- [ ] Abrir Home e Gestão → Agenda com permissão de agenda, nos temas claro e escuro; conferir os rótulos e a identificação da unidade/profissional.
+- [ ] Criar reserva para daqui a até dez minutos e conferir o destaque sem recarregar a página.
+- [ ] Marcar atraso e conferir modo Manual, nome do operador e horário do controle; aguardar e confirmar que o worker não inicia/finaliza esse atendimento sozinho.
+- [ ] Iniciar manualmente, conferir início efetivo e depois finalizar; conferir rótulo Finalizado e permanência na Home por até 24 horas.
+- [ ] Retomar um atendimento iniciado com atraso e conferir término pelo início efetivo + duração; repetir o clique e conferir que a revisão/auditoria não duplicam.
+- [ ] Tentar retomar em período com conflito de profissional/recurso ou fora de funcionamento; conferir mensagem no diálogo e preservação do controle manual.
+- [ ] Conferir unidade com automação desativada: modo Manual, aviso de configuração e ausência de retomada implícita.
+- [ ] Abrir pelo sino um atendimento de outro dia; conferir o ID, o dia, o destaque e o foco. Repetir após navegar para outra aba da gestão.
+- [ ] Alterar status em outro dispositivo e conferir atualização de agenda, Home e sino sem refresh completo, mantendo a data escolhida e o diálogo em andamento.
+- [ ] Simular indisponibilidade temporária da API e conferir mensagem, preservação dos registros e recuperação ao retornar foco.
+- [ ] Conferir que conta sem `AGENDA_GERENCIAR` não consegue ler/alterar os atendimentos, e que IDs de outra unidade são recusados.
 
 ## Fase 4 — Paridade Mobile
 

@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { CONTROLE_ATENDIMENTO_INCLUDE } from './controle-atendimento.include';
 import { PrismaService } from 'src/db/prisma.service';
 import { randomUUID } from 'crypto';
 
@@ -258,6 +259,43 @@ export class GestaoPrisma {
     return agendamentos.map((agendamento) => this.normalizarAgendamento(agendamento));
   }
 
+  async listarAtendimentosHome(estabelecimentoId: number) {
+    const agora = new Date();
+    const include = {
+      ...CONTROLE_ATENDIMENTO_INCLUDE,
+      usuario: { select: { id: true, nome: true } },
+      profissional: { select: { id: true, nome: true } },
+      servicos: { select: { id: true, nome: true, preco: true, qtdeSlots: true } },
+    } as const;
+    const [ativos, finalizados] = await Promise.all([
+      this.prisma.agendamento.findMany({
+        where: { estabelecimentoId, OR: [
+          { status: { in: ['ATRASADO', 'CHECKIN'] } },
+          { status: { in: ['AGENDADO', 'CONFIRMADO'] }, OR: [{ data: { gte: agora } }, { dataFim: { gt: agora } }] },
+        ] }, include, orderBy: [{ data: 'asc' }, { id: 'asc' }], take: 30,
+      }),
+      this.prisma.agendamento.findMany({
+        where: { estabelecimentoId, status: 'CONCLUIDO', finalizadoEm: { gte: new Date(agora.getTime() - 86_400_000) } },
+        include, orderBy: [{ finalizadoEm: 'desc' }, { id: 'desc' }], take: 20,
+      }),
+    ]);
+    return [...ativos, ...finalizados].map((registro) => this.normalizarAgendamento(registro));
+  }
+
+  async obterAtendimento(id: number, estabelecimentoId: number) {
+    const registro = await this.prisma.agendamento.findFirst({
+      where: { id, estabelecimentoId },
+      include: {
+        ...CONTROLE_ATENDIMENTO_INCLUDE,
+        usuario: { select: { id: true, nome: true } },
+        profissional: { select: { id: true, nome: true } },
+        servicos: { select: { id: true, nome: true, preco: true, qtdeSlots: true } },
+      },
+    });
+    if (!registro) throw new NotFoundException('Atendimento não encontrado nesta unidade');
+    return this.normalizarAgendamento(registro);
+  }
+
   listarClientesParaAgendamento(estabelecimentoId: number, busca?: string) {
     const termo = busca?.trim();
     return (this.prisma as any).clienteEstabelecimento.findMany({
@@ -284,6 +322,7 @@ export class GestaoPrisma {
       where: { id: estabelecimentoId },
       select: {
         id: true,
+        fusoHorario: true,
         modeloAtendimento: true,
         unidades: {
           where: { ativa: true },

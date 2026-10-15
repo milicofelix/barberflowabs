@@ -1,10 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
 import { ConsultarAgendaPeriodoDto } from './gestao.dto';
+import { CONTROLE_ATENDIMENTO_INCLUDE } from './controle-atendimento.include';
 
 const STATUS_VALIDOS = new Set([
   'AGENDADO',
   'CONFIRMADO',
+  'ATRASADO',
   'CHECKIN',
   'CONCLUIDO',
   'CANCELADO',
@@ -60,6 +62,7 @@ export class AgendaOperacionalService {
         ...(filtros.status.length ? { status: { in: filtros.status } } : {}),
       },
       include: {
+        ...CONTROLE_ATENDIMENTO_INCLUDE,
         usuario: { select: { id: true, nome: true, email: true, telefone: true } },
         criadoPor: { select: { id: true, nome: true } },
         profissional: { select: { id: true, nome: true } },

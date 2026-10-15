@@ -3,6 +3,7 @@
 import PainelGestaoOperacional from '@/components/gestao/PainelGestaoOperacional'
 import CabecalhoComTitulo from '@/components/shared/CabecalhoComTitulo'
 import useSessao from '@/data/hooks/useSessao'
+import { Suspense } from 'react'
 
 export default function Page() {
     const { usuario } = useSessao()
@@ -29,7 +30,7 @@ export default function Page() {
                 descricao="Gerencie serviços e profissionais do estabelecimento."
             />
             <div className="container py-10">
-                <PainelGestaoOperacional />
+                <Suspense fallback={<p>Carregando operação...</p>}><PainelGestaoOperacional /></Suspense>
             </div>
         </div>
     )
