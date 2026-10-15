@@ -515,4 +515,79 @@ declare function linhasRelacionamento(dados: unknown, prefixo?: string, profundi
     valor: string;
 }>;
 
-export { type APIClienteRelacionamento, type AcaoAtendimento, type AcaoRelacionamento, AgendaUtils, type Agendamento, type AssociacaoMidia, type AtendimentoOperacional, BuscarAgendaProfissionalPorDia, BuscarAgendamentosCliente, BuscarProfissionais, BuscarServicos, CHAVES_FOTOS_PROFISSIONAIS_LEGADAS, type CampoRelacionamento, CentralRelacionamentoStore, type ConfiguracaoFluxoAtendimento, type ConfiguracaoLogoEstabelecimento, type DadosRelacionamento, DateUtils, type EntidadeMidia, type EstadoCentralRelacionamento, ExcluirAgendamento, type FinalidadeMidia, type FormularioRelacionamento, Horarios, type IdentidadeEstabelecimento, type ImagemGaleria, LoginUsuario, METRICAS_FLUXO_ATENDIMENTO, type ModoLogoEstabelecimento, MoedaUtils, type MonitoramentoAtendimento, NovoAgendamento, OPCOES_FLUXO_ATENDIMENTO, OPCOES_LOGO_ESTABELECIMENTO, ORIGENS_TRANSICAO_ATENDIMENTO, ObterHorariosOcupados, type OrigemTransicaoAtendimento, type Profissional, type ProvedorCriptografia, ROTULOS_ACOES, ROTULOS_STATUS_AGENDAMENTO, RegistrarUsuario, type RepositorioAgendamento, type RepositorioProfissional, type RepositorioServico, type RepositorioUsuario, type ResultadoAssociacaoMidia, STATUS_AGENDAMENTO, STATUS_TRANSICAO_ATENDIMENTO, type SecaoRelacionamento, type Servico, type SexoProfissional, type StatusAgendamento, type StatusTransicaoAtendimento, TEMPO_SLOT, TIPOS_TRANSICAO_ATENDIMENTO, type TipoTransicaoAtendimento, type Usuario, type VersaoMidia, acoesAtendimento, acoesRegistroRelacionamento, atendimentoTerminal, camposProgramaRelacionamento, canaisRelacionamento, capaPersonalizada, categoriaIdentidade, clientes, comecaEmDezMinutos, dataAtendimento, formularioClienteRelacionamento, formularioPreferenciaRelacionamento, formularioSupressaoRelacionamento, formulariosBeneficioRelacionamento, formulariosRelacionamento, horarioAtendimento, imagemPadraoProfissional, imagemProfissionalLegada, iniciaisUsuario, instanteLocalRelacionamento, intervaloDiaAtendimento, limitePaginaRelacionamento, linhasRelacionamento, objetoRelacionamento, prepararFormularioRelacionamento, profissionais, registrosRelacionamento, resolverURLMidia, rotuloRelacionamento, rotuloStatus, secoesRelacionamento, servicos, statusAgendamentoValido, tituloRegistroRelacionamento, urlImagemProfissional, valorRelacionamento, valoresFormularioRelacionamento };
+type StatusTourMapa = 'NAO_INICIADO' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'PULADO';
+type PosicaoPassoTour = 'ACIMA' | 'ABAIXO' | 'AUTOMATICA';
+interface EstadoTourMapa {
+    versao: number;
+    status: StatusTourMapa;
+    passoAtual: number;
+    atualizadoEm: string;
+}
+interface PassoTour {
+    id: string;
+    alvo: string;
+    titulo: string;
+    descricao: string;
+    posicao: PosicaoPassoTour;
+    indisponivel: 'EXPLICAR' | 'PULAR';
+}
+interface DefinicaoTour {
+    id: string;
+    versao: number;
+    chavePersistencia: string;
+    /** Só deve mudar mediante decisão explícita de produto. */
+    reiniciarAutomaticamenteNovaVersao: boolean;
+    passos: readonly PassoTour[];
+}
+interface PersistenciaTour {
+    ler(chave: string): Promise<string | null>;
+    salvar(chave: string, valor: string): Promise<void>;
+}
+/** Não admite coordenadas, textos pesquisados ou identidade do cliente/unidade. */
+interface EventoTour {
+    tourId: string;
+    versao: number;
+    passoId: string;
+    tipo: 'INICIO' | 'AVANCO' | 'RETORNO' | 'CONCLUSAO' | 'ABANDONO' | 'REINICIO';
+}
+declare function novoEstadoTour(versao: number, agora: string): EstadoTourMapa;
+declare function lerEstadoTour(texto: string): EstadoTourMapa | null;
+declare const TOUR_MAPA: DefinicaoTour;
+
+interface SnapshotTour {
+    estado: EstadoTourMapa;
+    carregando: boolean;
+    aberto: boolean;
+    erro: string;
+}
+declare class ControladorTour {
+    readonly definicao: DefinicaoTour;
+    private persistencia;
+    private agora;
+    private emitir?;
+    private disponivel;
+    private snapshot;
+    private ouvintes;
+    private fila;
+    private hidratacao;
+    private leituraSegura;
+    constructor(definicao: DefinicaoTour, persistencia: PersistenciaTour, agora?: () => string, emitir?: (evento: EventoTour) => void, disponivel?: (_alvo: string) => boolean);
+    obterSnapshot: () => SnapshotTour;
+    observar: (ouvinte: () => void) => () => void;
+    private atualizar;
+    carregar: () => Promise<void>;
+    private hidratar;
+    iniciar: (automatico?: boolean) => boolean;
+    avancar: () => void;
+    voltar: () => void;
+    pular: () => void;
+    concluir: () => void;
+    reiniciar: () => boolean;
+    /** Fechar a tela pausa a apresentação sem marcar conclusão ou apagar progresso. */
+    suspender: () => void;
+    aguardarPersistencia: () => Promise<void>;
+    private mover;
+    private salvar;
+}
+
+export { type APIClienteRelacionamento, type AcaoAtendimento, type AcaoRelacionamento, AgendaUtils, type Agendamento, type AssociacaoMidia, type AtendimentoOperacional, BuscarAgendaProfissionalPorDia, BuscarAgendamentosCliente, BuscarProfissionais, BuscarServicos, CHAVES_FOTOS_PROFISSIONAIS_LEGADAS, type CampoRelacionamento, CentralRelacionamentoStore, type ConfiguracaoFluxoAtendimento, type ConfiguracaoLogoEstabelecimento, ControladorTour, type DadosRelacionamento, DateUtils, type DefinicaoTour, type EntidadeMidia, type EstadoCentralRelacionamento, type EstadoTourMapa, type EventoTour, ExcluirAgendamento, type FinalidadeMidia, type FormularioRelacionamento, Horarios, type IdentidadeEstabelecimento, type ImagemGaleria, LoginUsuario, METRICAS_FLUXO_ATENDIMENTO, type ModoLogoEstabelecimento, MoedaUtils, type MonitoramentoAtendimento, NovoAgendamento, OPCOES_FLUXO_ATENDIMENTO, OPCOES_LOGO_ESTABELECIMENTO, ORIGENS_TRANSICAO_ATENDIMENTO, ObterHorariosOcupados, type OrigemTransicaoAtendimento, type PassoTour, type PersistenciaTour, type PosicaoPassoTour, type Profissional, type ProvedorCriptografia, ROTULOS_ACOES, ROTULOS_STATUS_AGENDAMENTO, RegistrarUsuario, type RepositorioAgendamento, type RepositorioProfissional, type RepositorioServico, type RepositorioUsuario, type ResultadoAssociacaoMidia, STATUS_AGENDAMENTO, STATUS_TRANSICAO_ATENDIMENTO, type SecaoRelacionamento, type Servico, type SexoProfissional, type SnapshotTour, type StatusAgendamento, type StatusTourMapa, type StatusTransicaoAtendimento, TEMPO_SLOT, TIPOS_TRANSICAO_ATENDIMENTO, TOUR_MAPA, type TipoTransicaoAtendimento, type Usuario, type VersaoMidia, acoesAtendimento, acoesRegistroRelacionamento, atendimentoTerminal, camposProgramaRelacionamento, canaisRelacionamento, capaPersonalizada, categoriaIdentidade, clientes, comecaEmDezMinutos, dataAtendimento, formularioClienteRelacionamento, formularioPreferenciaRelacionamento, formularioSupressaoRelacionamento, formulariosBeneficioRelacionamento, formulariosRelacionamento, horarioAtendimento, imagemPadraoProfissional, imagemProfissionalLegada, iniciaisUsuario, instanteLocalRelacionamento, intervaloDiaAtendimento, lerEstadoTour, limitePaginaRelacionamento, linhasRelacionamento, novoEstadoTour, objetoRelacionamento, prepararFormularioRelacionamento, profissionais, registrosRelacionamento, resolverURLMidia, rotuloRelacionamento, rotuloStatus, secoesRelacionamento, servicos, statusAgendamentoValido, tituloRegistroRelacionamento, urlImagemProfissional, valorRelacionamento, valoresFormularioRelacionamento };

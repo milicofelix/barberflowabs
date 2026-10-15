@@ -65,6 +65,8 @@ docker compose restart app
 
 Reinicia o servico sem reconstruir a imagem. Atualmente o backend usa `nest start` sem `--watch`, portanto mudancas em controllers, services e repositories exigem esse restart para entrarem em vigor.
 
+Também usar após a correção de `MIDIA_STORAGE_DIR` e `MIDIA_GALERIA_DIR` no `globalEnv` do `turbo.json`: o processo Turbo precisa reiniciar para repassar os diretórios ao backend. Com as variáveis e o volume já definidos no container atual, basta este restart, sem seed, migration ou recriação de mídias. Interrompe temporariamente backend, frontend e Metro do serviço `app`. Detalhes em `docs/OPERACAO_GALERIA_MIDIAS.md`.
+
 ### Parar sem remover
 
 ```bash
@@ -810,6 +812,14 @@ docker compose exec -T app sh -lc 'cd apps/backend && yarn test "logo-estabeleci
 ```
 
 Comando opcional para os testes isolados de modos de logo, titularidade, associação de mídia e armazenamento. Não executado pelo agente; não substitui conferência visual na web e em Android/iOS. Não aplica migrations.
+
+## Testes opcionais da fundação do tour do mapa
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && yarn test tour/tour-mapa.spec.ts --runInBand'
+```
+
+Executa os testes isolados do contrato/controlador compartilhado, persistência simulada, versionamento e registro de alvos mobile. Requer o serviço `app` em execução e dependências existentes. Não aplica migrations, não acessa dados de clientes e não substitui homologação da sobreposição em Android/iOS. Comando não executado pelo agente. A demonstração visual está em Perfil → Demonstração do tour, somente em desenvolvimento para clientes/visitantes.
 
 ## Limpezas Destrutivas
 

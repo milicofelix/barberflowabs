@@ -19,7 +19,8 @@ import { ProvedorTema } from '@/src/data/contexts/ContextoTema'
 import useTema from '@/src/data/contexts/ContextoTema'
 import SinoNotificacoesGlobal from '@/src/components/notificacoes/SinoNotificacoesGlobal'
 import TrocaSenhaObrigatoria from './TrocaSenhaObrigatoria'
-import { perfilAdmin, resolverPerfil } from '@/src/data/auth/perfis'
+import { perfilAdmin, perfilOperacional, resolverPerfil } from '@/src/data/auth/perfis'
+import TourMapaDemonstracao from './TourMapaDemonstracao'
 
 const Stack = createNativeStackNavigator<StackParamList>()
 
@@ -35,6 +36,8 @@ function Navegacao() {
         <NavigationContainer theme={{ ...(modo === 'dark' ? DarkTheme : DefaultTheme), colors: { primary: cores.destaque, background: cores.fundo, card: cores.superficie, text: cores.texto, border: cores.borda, notification: cores.perigo } }}>
             <Stack.Navigator>
                 <Stack.Screen name="Abas" component={Abas} options={{ headerShown: false }} />
+                {__DEV__ && !admin && !perfilOperacional(resolverPerfil(usuario)) ? <Stack.Screen name="TourMapaDemonstracao" component={TourMapaDemonstracao}
+                    options={{ title: 'Demonstração do tour', headerStyle: { backgroundColor: cores.superficie }, headerTintColor: cores.texto }} /> : null}
                 {!admin ? <Stack.Group navigationKey="cliente">
                     <Stack.Screen
                         name="PerfilEstabelecimento"

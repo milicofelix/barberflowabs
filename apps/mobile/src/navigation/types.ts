@@ -17,4 +17,5 @@ export type StackParamList = {
     PerfilEstabelecimento: { slug: string }
     OnboardingEstabelecimento: undefined
     CentralFinanceira: undefined
+    TourMapaDemonstracao: undefined
 }

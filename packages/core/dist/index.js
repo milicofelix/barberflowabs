@@ -27,6 +27,7 @@ __export(src_exports, {
   BuscarServicos: () => BuscarServicos,
   CHAVES_FOTOS_PROFISSIONAIS_LEGADAS: () => CHAVES_FOTOS_PROFISSIONAIS_LEGADAS,
   CentralRelacionamentoStore: () => CentralRelacionamentoStore,
+  ControladorTour: () => ControladorTour,
   DateUtils: () => DateUtils,
   ExcluirAgendamento: () => ExcluirAgendamento,
   Horarios: () => Horarios,
@@ -45,6 +46,7 @@ __export(src_exports, {
   STATUS_TRANSICAO_ATENDIMENTO: () => STATUS_TRANSICAO_ATENDIMENTO,
   TEMPO_SLOT: () => TEMPO_SLOT,
   TIPOS_TRANSICAO_ATENDIMENTO: () => TIPOS_TRANSICAO_ATENDIMENTO,
+  TOUR_MAPA: () => TOUR_MAPA,
   acoesAtendimento: () => acoesAtendimento,
   acoesRegistroRelacionamento: () => acoesRegistroRelacionamento,
   atendimentoTerminal: () => atendimentoTerminal,
@@ -66,8 +68,10 @@ __export(src_exports, {
   iniciaisUsuario: () => iniciaisUsuario,
   instanteLocalRelacionamento: () => instanteLocalRelacionamento,
   intervaloDiaAtendimento: () => intervaloDiaAtendimento,
+  lerEstadoTour: () => lerEstadoTour,
   limitePaginaRelacionamento: () => limitePaginaRelacionamento,
   linhasRelacionamento: () => linhasRelacionamento,
+  novoEstadoTour: () => novoEstadoTour,
   objetoRelacionamento: () => objetoRelacionamento,
   prepararFormularioRelacionamento: () => prepararFormularioRelacionamento,
   profissionais: () => profissionais_default,
@@ -990,6 +994,149 @@ function linhasRelacionamento(dados, prefixo = "", profundidade = 0) {
     return [{ titulo, valor: formatado }];
   });
 }
+
+// src/tour/contratos.ts
+function novoEstadoTour(versao, agora) {
+  return { versao, status: "NAO_INICIADO", passoAtual: 0, atualizadoEm: agora };
+}
+function lerEstadoTour(texto) {
+  try {
+    const estado = JSON.parse(texto);
+    if (!estado || !Number.isSafeInteger(estado.versao) || estado.versao < 1 || !["NAO_INICIADO", "EM_ANDAMENTO", "CONCLUIDO", "PULADO"].includes(estado.status) || !Number.isSafeInteger(estado.passoAtual) || estado.passoAtual < 0 || typeof estado.atualizadoEm !== "string" || !Number.isFinite(Date.parse(estado.atualizadoEm))) return null;
+    return { versao: estado.versao, status: estado.status, passoAtual: estado.passoAtual, atualizadoEm: estado.atualizadoEm };
+  } catch {
+    return null;
+  }
+}
+var TOUR_MAPA = {
+  id: "mapa",
+  versao: 1,
+  chavePersistencia: "@uniflowabs/tour_mapa:v1",
+  reiniciarAutomaticamenteNovaVersao: false,
+  passos: [
+    { id: "apresentacao", alvo: "descoberta.cabecalho", titulo: "Descubra novos atendimentos", descricao: "Encontre servi\xE7os e estabelecimentos perto de voc\xEA." },
+    { id: "visualizacao", alvo: "descoberta.visualizacao", titulo: "Lista ou mapa", descricao: "Alterne entre cart\xF5es e localiza\xE7\xE3o no mapa sem perder seus filtros." },
+    { id: "categorias", alvo: "descoberta.categorias", titulo: "Escolha uma categoria", descricao: "Escolha barbearia, beleza, manicure, spa e outros segmentos." },
+    { id: "filtros", alvo: "descoberta.filtros", titulo: "Refine sua busca", descricao: "Filtre por cidade, especialidade, pre\xE7o, avalia\xE7\xE3o, disponibilidade e dist\xE2ncia." },
+    { id: "distancia", alvo: "descoberta.sem-limite", titulo: "Dist\xE2ncia da busca", descricao: "Use uma dist\xE2ncia espec\xEDfica ou veja todos os resultados com Sem limite." },
+    { id: "localizacao", alvo: "descoberta.localizar", titulo: "Sua localiza\xE7\xE3o \xE9 opcional", descricao: "Se desejar, use Localizar e autorize sua localiza\xE7\xE3o. Avan\xE7ar neste tour n\xE3o solicita permiss\xE3o." },
+    { id: "marcadores", alvo: "descoberta.marcadores", titulo: "Conhe\xE7a os marcadores", descricao: "Cada \xEDcone representa o segmento do estabelecimento. Sem resultados, voc\xEA pode continuar normalmente." },
+    { id: "perfil", alvo: "descoberta.selecionado", titulo: "Veja os detalhes", descricao: "Toque em um marcador ou cart\xE3o para consultar servi\xE7os, pre\xE7os, hor\xE1rios e iniciar um agendamento." }
+  ].map((passo) => ({ ...passo, posicao: "AUTOMATICA", indisponivel: "EXPLICAR" }))
+};
+
+// src/tour/ControladorTour.ts
+var filasPersistencia = /* @__PURE__ */ new WeakMap();
+var ControladorTour = class {
+  constructor(definicao, persistencia, agora = () => (/* @__PURE__ */ new Date()).toISOString(), emitir, disponivel = (_alvo) => true) {
+    this.definicao = definicao;
+    this.persistencia = persistencia;
+    this.agora = agora;
+    this.emitir = emitir;
+    this.disponivel = disponivel;
+    this.ouvintes = /* @__PURE__ */ new Set();
+    this.fila = Promise.resolve();
+    this.hidratacao = null;
+    this.leituraSegura = false;
+    this.obterSnapshot = () => this.snapshot;
+    this.observar = (ouvinte) => {
+      this.ouvintes.add(ouvinte);
+      return () => {
+        this.ouvintes.delete(ouvinte);
+      };
+    };
+    this.carregar = () => {
+      if (this.hidratacao) return this.hidratacao;
+      this.hidratacao = this.hidratar();
+      return this.hidratacao;
+    };
+    this.iniciar = (automatico = false) => {
+      if (this.snapshot.carregando || this.snapshot.aberto) return false;
+      const estado = this.snapshot.estado;
+      if (automatico && (!this.leituraSegura || estado.versao === this.definicao.versao && ["CONCLUIDO", "PULADO"].includes(estado.status) || estado.versao !== this.definicao.versao && !this.definicao.reiniciarAutomaticamenteNovaVersao)) return false;
+      if (estado.versao > this.definicao.versao) {
+        this.atualizar({ erro: "Este dispositivo j\xE1 utilizou uma vers\xE3o mais recente do tour. Atualize o aplicativo." });
+        return false;
+      }
+      const passo = estado.versao === this.definicao.versao && estado.status === "EM_ANDAMENTO" ? estado.passoAtual : 0;
+      this.mover(passo, 1, "INICIO");
+      return true;
+    };
+    this.avancar = () => {
+      if (this.snapshot.aberto) this.mover(this.snapshot.estado.passoAtual + 1, 1, "AVANCO");
+    };
+    this.voltar = () => {
+      if (this.snapshot.aberto) this.mover(this.snapshot.estado.passoAtual - 1, -1, "RETORNO");
+    };
+    this.pular = () => {
+      if (this.snapshot.aberto) this.salvar("PULADO", this.snapshot.estado.passoAtual, "ABANDONO");
+    };
+    this.concluir = () => {
+      if (this.snapshot.aberto) this.salvar("CONCLUIDO", this.snapshot.estado.passoAtual, "CONCLUSAO");
+    };
+    this.reiniciar = () => {
+      if (this.snapshot.carregando || this.snapshot.estado.versao > this.definicao.versao) return false;
+      this.mover(0, 1, "REINICIO");
+      return true;
+    };
+    /** Fechar a tela pausa a apresentação sem marcar conclusão ou apagar progresso. */
+    this.suspender = () => this.atualizar({ aberto: false });
+    this.aguardarPersistencia = () => this.fila;
+    if (!Number.isSafeInteger(definicao.versao) || definicao.versao < 1 || !definicao.passos.length || new Set(definicao.passos.map((p) => p.id)).size !== definicao.passos.length) throw new Error("Defini\xE7\xE3o de tour inv\xE1lida");
+    this.snapshot = { estado: novoEstadoTour(definicao.versao, agora()), aberto: false, carregando: true, erro: "" };
+  }
+  atualizar(dados) {
+    this.snapshot = { ...this.snapshot, ...dados };
+    this.ouvintes.forEach((ouvinte) => ouvinte());
+  }
+  async hidratar() {
+    try {
+      await filasPersistencia.get(this.persistencia)?.get(this.definicao.chavePersistencia);
+      const salvo = await this.persistencia.ler(this.definicao.chavePersistencia);
+      const estado = salvo === null ? this.snapshot.estado : lerEstadoTour(salvo);
+      if (!estado || estado.versao === this.definicao.versao && estado.passoAtual >= this.definicao.passos.length) {
+        throw new Error("Progresso salvo inv\xE1lido. Reinicie o tour manualmente.");
+      }
+      this.leituraSegura = true;
+      this.atualizar({ estado, carregando: false });
+    } catch {
+      this.atualizar({ carregando: false, erro: "N\xE3o foi poss\xEDvel recuperar o progresso. O in\xEDcio autom\xE1tico foi desativado; voc\xEA pode reiniciar manualmente." });
+    }
+  }
+  mover(indice, direcao, evento) {
+    while (indice >= 0 && indice < this.definicao.passos.length) {
+      const passo = this.definicao.passos[indice];
+      if (passo.indisponivel !== "PULAR" || this.disponivel(passo.alvo)) {
+        this.salvar("EM_ANDAMENTO", indice, evento);
+        return;
+      }
+      indice += direcao;
+    }
+    if (direcao === 1) this.salvar("CONCLUIDO", this.definicao.passos.length - 1, "CONCLUSAO");
+  }
+  salvar(status, passoAtual, tipo) {
+    const estado = { versao: this.definicao.versao, status, passoAtual, atualizadoEm: this.agora() };
+    this.atualizar({ estado, aberto: status === "EM_ANDAMENTO", erro: "" });
+    const passoId = this.definicao.passos[passoAtual].id;
+    try {
+      this.emitir?.({ tourId: this.definicao.id, versao: estado.versao, passoId, tipo });
+    } catch {
+    }
+    let filas = filasPersistencia.get(this.persistencia);
+    if (!filas) {
+      filas = /* @__PURE__ */ new Map();
+      filasPersistencia.set(this.persistencia, filas);
+    }
+    this.fila = (filas.get(this.definicao.chavePersistencia) ?? Promise.resolve()).then(async () => {
+      try {
+        await this.persistencia.salvar(this.definicao.chavePersistencia, JSON.stringify(estado));
+      } catch {
+        this.atualizar({ erro: "O progresso n\xE3o p\xF4de ser salvo neste dispositivo. O tour poder\xE1 reaparecer ao reiniciar o app." });
+      }
+    });
+    filas.set(this.definicao.chavePersistencia, this.fila);
+  }
+};
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   AgendaUtils,
@@ -999,6 +1146,7 @@ function linhasRelacionamento(dados, prefixo = "", profundidade = 0) {
   BuscarServicos,
   CHAVES_FOTOS_PROFISSIONAIS_LEGADAS,
   CentralRelacionamentoStore,
+  ControladorTour,
   DateUtils,
   ExcluirAgendamento,
   Horarios,
@@ -1017,6 +1165,7 @@ function linhasRelacionamento(dados, prefixo = "", profundidade = 0) {
   STATUS_TRANSICAO_ATENDIMENTO,
   TEMPO_SLOT,
   TIPOS_TRANSICAO_ATENDIMENTO,
+  TOUR_MAPA,
   acoesAtendimento,
   acoesRegistroRelacionamento,
   atendimentoTerminal,
@@ -1038,8 +1187,10 @@ function linhasRelacionamento(dados, prefixo = "", profundidade = 0) {
   iniciaisUsuario,
   instanteLocalRelacionamento,
   intervaloDiaAtendimento,
+  lerEstadoTour,
   limitePaginaRelacionamento,
   linhasRelacionamento,
+  novoEstadoTour,
   objetoRelacionamento,
   prepararFormularioRelacionamento,
   profissionais,

@@ -16,6 +16,14 @@ Rotas autenticadas: `GET /midias/admin`, `POST /midias/admin/upload` e `PUT /mid
 
 Volume Docker `uniflow_midias`, montado em `/var/lib/uniflow/midias`; banco guarda metadados e vínculos. Alterar o diretório ou recriar o volume sem migrar os arquivos quebra referências. Nunca limpar o volume para resolver erro de imagem.
 
+### Correção Do Repasse De Ambiente — 15/10/2026
+
+`MIDIA_STORAGE_DIR` e `MIDIA_GALERIA_DIR` devem constar em `globalEnv` no `turbo.json`. O Docker pode ter essas variáveis corretamente configuradas, mas o Turborepo filtra o ambiente entregue aos subprocessos. Sem esse repasse, o backend usa o fallback `./storage/midias` e retorna **Arquivo de imagem não encontrado** para registros cujos arquivos estão no volume persistente.
+
+A correção inclui as duas variáveis na lista explícita, mantendo o filtro de ambiente e sem mudar URLs, arquivos ou registros. Reiniciar `app` pelo comando já catalogado em `docs/COMANDOS.md`; o processo Turbo precisa ser reiniciado para ler a configuração atualizada. Não exige rebuild da imagem Docker, migration, seed, novo upload ou limpeza de volumes. O reinício interrompe temporariamente backend, frontend e Metro hospedados nesse serviço.
+
+Aceite pelo responsável após o reinício: reabrir a URL de miniatura que retornava 404, conferir a versão principal e atualizar a galeria administrativa. A correção é do backend compartilhado e atende web e app. Não foram executados testes, builds, chamadas de API ou reinício nesta entrega.
+
 IDs são opacos e os arquivos são reprocessados para WebP sem EXIF. URLs de imagem são públicas e imutáveis por um ano; a listagem e a escrita são autenticadas. A galeria não é um armazenamento de documentos privados. Não sobrescrever bytes de um ID existente: para substituir, criar mídia nova e trocar o vínculo. Metadados não alteram o cache da imagem.
 
 ## Backup E Recuperação

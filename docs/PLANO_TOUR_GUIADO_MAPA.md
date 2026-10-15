@@ -72,17 +72,62 @@ A escolha de uma biblioteca de terceiros só deve ocorrer após uma prova com Ex
 
 ## Fase 1 — Contratos E Fundação Mobile
 
-- [ ] Definir contrato dos passos, versão e estado persistido.
-- [ ] Criar o controlador do tour com iniciar, avançar, voltar, pular, concluir e reiniciar.
-- [ ] Criar componente de sobreposição com destaque, cartão explicativo e indicador de progresso.
-- [ ] Registrar alvos por chave semântica e medir novamente após rotação, rolagem ou mudança de layout.
-- [ ] Garantir fallback quando o alvo não estiver montado ou sair da viewport.
-- [ ] Integrar tema claro/escuro e respeitar preferência de redução de movimento.
-- [ ] Cobrir controlador, persistência, versão e passos indisponíveis com testes.
+Status: implementação entregue em 15/10/2026, com demonstração restrita a desenvolvimento. Testes escritos, não executados; aceite em Android/iOS ainda não realizado. A descoberta e o mapa reais não foram instrumentados nesta fase.
+
+- [x] Definir contrato dos passos, versão e estado persistido.
+- [x] Criar o controlador do tour com iniciar, avançar, voltar, pular, concluir e reiniciar.
+- [x] Criar componente de sobreposição com destaque, cartão explicativo e indicador de progresso.
+- [x] Registrar alvos por chave semântica e medir novamente após rotação, rolagem ou mudança de layout.
+- [x] Garantir fallback quando o alvo não estiver montado ou sair da viewport.
+- [x] Integrar tema claro/escuro e respeitar preferência de redução de movimento.
+- [x] Escrever testes para controlador, persistência, versão e passos indisponíveis (execução a cargo do responsável).
 
 ### Critério De Saída
 
 O tour de demonstração deve funcionar sobre componentes comuns, sobreviver ao reinício do app e não reaparecer depois de concluído ou pulado.
+
+### Entrega Da Fundação
+
+- Contratos e oito textos-base da jornada real: `packages/core/src/tour/contratos.ts`, sem dependências de React Native, DOM ou mapas.
+- `ControladorTour`: hidratação antes de ações, iniciar/retomar, avançar, voltar, pular, concluir, reiniciar e suspender apresentação sem apagar progresso. Eventos opcionais têm somente ID técnico do tour, versão, ID do passo e tipo; não existe envio de analytics nesta fase.
+- Persistência mobile via AsyncStorage já existente. Gravações são sequenciais para que uma conclusão não seja sobrescrita por um avanço antigo. Erro de gravação é informado; não se promete retenção após reinício se o armazenamento estiver indisponível.
+- Estado concluído/pulado bloqueia reabertura automática na mesma versão. Versão nova não reabre por padrão; `reiniciarAutomaticamenteNovaVersao` é uma decisão explícita de produto. Uma versão antiga do app não sobrescreve progresso de versão superior.
+- Estado corrompido, índice inválido ou falha de leitura não são apagados silenciosamente e desabilitam início automático. O usuário pode optar pelo reinício manual, exceto quando o registro pertence a uma versão mais recente do app.
+- `ProvedorTour`, `AlvoTour`, `SobreposicaoTour` e hooks de medida/redução de movimento ficam em `apps/mobile/src/components/tour`. Registro de alvos e adaptador de persistência em `apps/mobile/src/data/tour`.
+- Alvos usam `measureInWindow`; a sobreposição mede sua própria origem para compensar offsets, rotação e layout. Contêineres com rolagem notificam o registro por `onScroll`/`onContentSizeChange`. Callbacks antigos são descartados; medida sem resposta tem fallback após 500 ms.
+- Alvos desmontados, inválidos ou parcialmente fora da viewport usam explicação geral; passos marcados como `PULAR` podem ser ignorados. Sem espaço para cartão e destaque, o cartão fica centralizado e continua navegável. Não há scroll automático nem alteração de filtros para fabricar um alvo disponível.
+- `Modal` transparente cobre a tela sem adicionar biblioteca. Máscara em quatro áreas, destaque por borda, cartão rolável, progresso textual e ações de no mínimo 48 pontos. Usa as cores do tema e safe areas; `reduceMotion` desativa o fade. Se a preferência ainda não foi lida, o padrão é sem animação.
+- A interação com elementos através do recorte ainda não está habilitada: nesta fase as ações estão no cartão. Integração com MapView/gestos/marcadores, foco avançado de leitor de tela e ciclo de segundo plano continuam nas Fases 2 e 3.
+
+### Como Abrir A Demonstração
+
+1. No app em modo de desenvolvimento (`__DEV__`), entrar como cliente ou permanecer visitante.
+2. Abrir a aba **Perfil** e tocar em **Demonstração do tour (desenvolvimento)**.
+3. No primeiro acesso à demonstração, aguardar a leitura do progresso e a montagem dos alvos. O tour demonstra cabeçalho, um componente de filtros, categorias e um passo propositalmente sem alvo.
+4. Usar **Iniciar ou retomar** para continuar e **Reiniciar demonstração** para voltar ao começo. É possível ocultar o alvo de exemplo antes de reiniciar e rolar a tela para conferir fallback fora da viewport.
+
+A rota e o botão não são registrados para proprietário/equipe/superadmin e não aparecem em release. Não há dados fictícios de estabelecimentos, pedido de localização, chamada à API do mapa ou início automático do tour real.
+
+Chaves independentes:
+
+- jornada real, reservada para a Fase 2: `@uniflowabs/tour_mapa:v1`;
+- demonstração da Fase 1: `@uniflowabs/tour_mapa:demonstracao:v1`.
+
+O número no estado é a versão efetiva. Ao evoluir o contrato, manter a chave-base para ler a decisão anterior; trocar a chave indiscriminadamente faria a aplicação esquecer quem pulou/concluiu. A demonstração não consome a preferência da jornada real.
+
+### Aceite Manual Da Fase 1
+
+- [ ] Primeiro acesso à demonstração abre no primeiro passo; Pular fecha sem exigir ação no componente de fundo.
+- [ ] Após Pular ou Concluir, encerrar e reabrir o app e a demonstração: não abrir automaticamente. Reiniciar manualmente volta ao primeiro passo.
+- [ ] Avançar, aguardar gravação e encerrar o app sem Pular/Concluir; reabrir a demonstração e conferir retomada do passo salvo, sem começar do zero.
+- [ ] Ocultar alvo, rolar até tirá-lo da viewport, girar o dispositivo e alterar tamanho da janela: conferir fallback e reposicionamento, sem destaque parado em coordenadas antigas.
+- [ ] Conferir claro/escuro, fonte ampliada, recorte de destaque, texto rolável e áreas seguras. O último passo sem alvo deve permitir Concluir.
+- [ ] Ativar Reduzir Movimento no sistema: conferir ausência de fade, inclusive ao reabrir a sobreposição.
+- [ ] Conferir que o botão não existe para conta operacional/admin ou em release e que a localização não é solicitada em nenhum passo.
+
+Testes de contrato em `apps/backend/src/tour/tour-mapa.spec.ts`: controlador, armazenamento em memória, ordem de gravação, reabertura, versão, corrupção/falhas, eventos sem dados pessoais e registro/viewport mobile. Não substituem testes de componente/medidas nativas ou homologação em Android/iOS. Comando opcional para execução pelo responsável catalogado em `docs/COMANDOS.md`.
+
+Sem alteração de schema, migration, seed, variável de ambiente ou dependência nativa. Nenhum teste, build, typecheck, lint, instalação ou reinício foi executado nesta entrega.
 
 ## Fase 2 — Integração Com O Mapa Mobile
 

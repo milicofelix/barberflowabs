@@ -7,7 +7,7 @@ import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { AbasParamList, StackParamList } from '@/src/navigation/types'
 import MarcaUniFlow from '@/src/components/shared/MarcaUniFlow'
-import { perfilOperacional, resolverPerfil } from '@/src/data/auth/perfis'
+import { perfilAdmin, perfilOperacional, resolverPerfil } from '@/src/data/auth/perfis'
 import CabecalhoIdentidadeUnidade from '@/src/components/shared/CabecalhoIdentidadeUnidade'
 
 type Props = BottomTabScreenProps<AbasParamList, 'Usuario'>
@@ -21,6 +21,11 @@ export default function Usuario({ navigation }: Props) {
         await encerrarSessao()
     }
     const abrirCadastroEstabelecimento = () => navigation.getParent<NativeStackNavigationProp<StackParamList>>()?.navigate('OnboardingEstabelecimento')
+    const demonstracaoTour = __DEV__ && !operacional && !perfilAdmin(resolverPerfil(usuario)) ? <Pressable accessibilityRole="button"
+        onPress={() => navigation.getParent<NativeStackNavigationProp<StackParamList>>()?.navigate('TourMapaDemonstracao')}
+        style={{ minHeight: 48, margin: 18, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: cores.borda }}>
+        <Text style={{ color: cores.texto, fontWeight: '700' }}>Demonstração do tour (desenvolvimento)</Text>
+    </Pressable> : null
 
     if (!usuario) {
         const entrar = () => navigation.getParent<NativeStackNavigationProp<StackParamList>>()?.navigate('Autenticacao')
@@ -32,6 +37,7 @@ export default function Usuario({ navigation }: Props) {
                 <Pressable onPress={entrar} style={[styles.entrar, { backgroundColor: cores.destaque }]}>
                     <Text style={[styles.entrarTexto, { color: cores.destaqueTexto }]}>Entrar ou criar conta</Text>
                 </Pressable>
+                {demonstracaoTour}
             </SafeAreaView>
         )
     }
@@ -41,6 +47,7 @@ export default function Usuario({ navigation }: Props) {
             <ScrollView contentContainerStyle={operacional ? styles.conteudoOperacional : styles.conteudoUsuario} keyboardShouldPersistTaps="handled">
                 {operacional ? <CabecalhoIdentidadeUnidade /> : null}
                 <PerfilUsuario usuario={usuario!} logout={logout} cadastrarEstabelecimento={abrirCadastroEstabelecimento} />
+                {demonstracaoTour}
             </ScrollView>
         </SafeAreaView>
     )
