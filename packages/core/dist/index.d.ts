@@ -200,6 +200,64 @@ declare function intervaloDiaAtendimento(data: string, fusoHorario: string): {
     fim: string;
 };
 
+interface ConfiguracaoFluxoAtendimento {
+    fluxoAtendimentoAutomaticoAtivo: boolean;
+    inicioAtendimentoAutomaticoAtivo: boolean;
+    finalizacaoAtendimentoAutomaticaAtiva: boolean;
+    avisoAtendimentoAntecedenciaMinutos: number;
+}
+interface MonitoramentoAtendimento {
+    geradoEm: string;
+    workerHabilitado: boolean;
+    periodoDesde: string;
+    metricas: {
+        automaticas: number;
+        manuais: number;
+        atrasos: number;
+        tarefasAtrasadas: number;
+        falhas: number;
+        divergencias: number;
+    };
+    tarefas: Array<{
+        id: number;
+        agendamentoId: number;
+        tipo: string;
+        status: string;
+        dataPrevista: string;
+        tentativas: number;
+        proximaTentativaEm: string | null;
+    }>;
+}
+declare const OPCOES_FLUXO_ATENDIMENTO: readonly [{
+    readonly campo: "fluxoAtendimentoAutomaticoAtivo";
+    readonly titulo: "Fluxo automático de atendimento";
+}, {
+    readonly campo: "inicioAtendimentoAutomaticoAtivo";
+    readonly titulo: "Iniciar automaticamente no horário";
+}, {
+    readonly campo: "finalizacaoAtendimentoAutomaticaAtiva";
+    readonly titulo: "Finalizar automaticamente ao término";
+}];
+declare const METRICAS_FLUXO_ATENDIMENTO: readonly [{
+    readonly campo: "automaticas";
+    readonly titulo: "Transições automáticas (7 dias)";
+}, {
+    readonly campo: "manuais";
+    readonly titulo: "Transições manuais (7 dias)";
+}, {
+    readonly campo: "atrasos";
+    readonly titulo: "Atrasos registrados (7 dias)";
+}, {
+    readonly campo: "tarefasAtrasadas";
+    readonly titulo: "Tarefas vencidas na fila";
+}, {
+    readonly campo: "falhas";
+    readonly titulo: "Falhas pendentes";
+}, {
+    readonly campo: "divergencias";
+    readonly titulo: "Finalizados sem receita (7 dias)";
+}];
+
 declare const clientes: {
     id: number;
     imagemURL: string;
@@ -342,4 +400,4 @@ declare function imagemProfissionalLegada(url?: string | null): boolean;
 declare function imagemPadraoProfissional(sexo?: string | null): string;
 declare function urlImagemProfissional(url?: string | null, sexo?: string | null): string;
 
-export { type AcaoAtendimento, AgendaUtils, type Agendamento, type AssociacaoMidia, type AtendimentoOperacional, BuscarAgendaProfissionalPorDia, BuscarAgendamentosCliente, BuscarProfissionais, BuscarServicos, CHAVES_FOTOS_PROFISSIONAIS_LEGADAS, DateUtils, type EntidadeMidia, ExcluirAgendamento, type FinalidadeMidia, Horarios, type IdentidadeEstabelecimento, type ImagemGaleria, LoginUsuario, MoedaUtils, NovoAgendamento, ORIGENS_TRANSICAO_ATENDIMENTO, ObterHorariosOcupados, type OrigemTransicaoAtendimento, type Profissional, type ProvedorCriptografia, ROTULOS_ACOES, ROTULOS_STATUS_AGENDAMENTO, RegistrarUsuario, type RepositorioAgendamento, type RepositorioProfissional, type RepositorioServico, type RepositorioUsuario, type ResultadoAssociacaoMidia, STATUS_AGENDAMENTO, STATUS_TRANSICAO_ATENDIMENTO, type Servico, type SexoProfissional, type StatusAgendamento, type StatusTransicaoAtendimento, TEMPO_SLOT, TIPOS_TRANSICAO_ATENDIMENTO, type TipoTransicaoAtendimento, type Usuario, type VersaoMidia, acoesAtendimento, atendimentoTerminal, capaPersonalizada, categoriaIdentidade, clientes, comecaEmDezMinutos, dataAtendimento, horarioAtendimento, imagemPadraoProfissional, imagemProfissionalLegada, iniciaisUsuario, intervaloDiaAtendimento, profissionais, resolverURLMidia, rotuloStatus, servicos, statusAgendamentoValido, urlImagemProfissional };
+export { type AcaoAtendimento, AgendaUtils, type Agendamento, type AssociacaoMidia, type AtendimentoOperacional, BuscarAgendaProfissionalPorDia, BuscarAgendamentosCliente, BuscarProfissionais, BuscarServicos, CHAVES_FOTOS_PROFISSIONAIS_LEGADAS, type ConfiguracaoFluxoAtendimento, DateUtils, type EntidadeMidia, ExcluirAgendamento, type FinalidadeMidia, Horarios, type IdentidadeEstabelecimento, type ImagemGaleria, LoginUsuario, METRICAS_FLUXO_ATENDIMENTO, MoedaUtils, type MonitoramentoAtendimento, NovoAgendamento, OPCOES_FLUXO_ATENDIMENTO, ORIGENS_TRANSICAO_ATENDIMENTO, ObterHorariosOcupados, type OrigemTransicaoAtendimento, type Profissional, type ProvedorCriptografia, ROTULOS_ACOES, ROTULOS_STATUS_AGENDAMENTO, RegistrarUsuario, type RepositorioAgendamento, type RepositorioProfissional, type RepositorioServico, type RepositorioUsuario, type ResultadoAssociacaoMidia, STATUS_AGENDAMENTO, STATUS_TRANSICAO_ATENDIMENTO, type Servico, type SexoProfissional, type StatusAgendamento, type StatusTransicaoAtendimento, TEMPO_SLOT, TIPOS_TRANSICAO_ATENDIMENTO, type TipoTransicaoAtendimento, type Usuario, type VersaoMidia, acoesAtendimento, atendimentoTerminal, capaPersonalizada, categoriaIdentidade, clientes, comecaEmDezMinutos, dataAtendimento, horarioAtendimento, imagemPadraoProfissional, imagemProfissionalLegada, iniciaisUsuario, intervaloDiaAtendimento, profissionais, resolverURLMidia, rotuloStatus, servicos, statusAgendamentoValido, urlImagemProfissional };

@@ -763,8 +763,15 @@ docker compose up -d --force-recreate app
 
 Quando web e backend voltarem, repita o primeiro comando. Quantidade e checksum devem permanecer idênticos. Nunca use `down -v`, `docker volume rm` ou reset do banco neste teste.
 
-## Limpezas Destrutivas
+### Testes Isolados Do Fluxo Automático — Fase 5
 
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && yarn test "operacao-fluxo|notificacao-concorrencia|atendimento-aceite|fluxo-atendimento.service.spec|atendimento.worker.spec|orquestrador-atendimento.service.spec|retomar-automacao.service.spec" --runInBand'
+```
+
+Execução opcional pelo usuário, com dependências e core atualizados. Cobre configuração, tenant/permissões, reprocessamento, regras de transição, aviso, receita idempotente e prioridade de comissões com repositórios simulados. Não altera dados reais, não aplica migrations e não substitui a homologação de concorrência no MySQL ou o aceite em dois dispositivos. Não foi executado automaticamente.
+
+## Limpezas Destrutivas
 
 Comandos de remocao de `node_modules`, lockfiles, volumes ou dados nao ficam prontos para copiar nesta secao. A necessidade e o alvo devem ser diagnosticados primeiro para evitar apagar dependencias ou dados de outros projetos que compartilham a infraestrutura.
 

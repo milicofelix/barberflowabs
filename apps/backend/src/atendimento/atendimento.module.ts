@@ -1,4 +1,9 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
+import { AuthModule } from 'src/auth/auth.module';
+import { AuthMiddleware } from 'src/auth/auth.middleware';
+import { EquipeModule } from 'src/equipe/equipe.module';
+import { OperacaoFluxoService } from './operacao-fluxo.service';
+import { OperacaoFluxoController } from './operacao-fluxo.controller';
 import { DbModule } from 'src/db/db.module';
 import { FinanceiroModule } from 'src/financeiro/financeiro.module';
 import { FluxoAtendimentoService } from 'src/gestao/fluxo-atendimento.service';
@@ -10,8 +15,10 @@ import { MotorAgendaConsultaPrisma } from 'src/motor-agenda/motor-agenda.consult
 import { MotorAgendaDisponibilidadePrisma } from 'src/motor-agenda/motor-agenda.disponibilidade.prisma';
 
 @Module({
-  imports: [DbModule, FinanceiroModule],
+  imports: [DbModule, FinanceiroModule, AuthModule, EquipeModule],
+  controllers: [OperacaoFluxoController],
   providers: [
+    OperacaoFluxoService,
     FluxoAtendimentoService,
     AgendaAtualizacaoService,
     OrquestradorAtendimentoService,
@@ -22,4 +29,8 @@ import { MotorAgendaDisponibilidadePrisma } from 'src/motor-agenda/motor-agenda.
   ],
   exports: [FluxoAtendimentoService, AgendaAtualizacaoService, OrquestradorAtendimentoService, RetomarAutomacaoService],
 })
-export class AtendimentoModule {}
+export class AtendimentoModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(AuthMiddleware).forRoutes(OperacaoFluxoController);
+  }
+}

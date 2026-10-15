@@ -195,17 +195,21 @@ export class OrquestradorAtendimentoService {
     if (!tarefa.destinatarioUsuarioId || agendamento.data.getTime() <= agora.getTime()) {
       return this.cancelarTarefa(tarefa.id, 'AVISO_FORA_DA_JANELA', agora);
     }
-    await (this.prisma as any).$transaction(async (tx: any) => {
-      const pendente = await tx.transicaoAgendamento.findFirst({
-        where: { id: tarefa.id, status: 'PROCESSANDO', bloqueadoPor: tarefa.bloqueadoPor },
-      });
-      if (!pendente) return;
+    const notificou = await (this.prisma as any).$transaction(async (tx: any) => {
+      const [config] = await tx.$queryRaw`SELECT fluxoAtendimentoAutomaticoAtivo FROM estabelecimentos WHERE id = ${tarefa.estabelecimentoId} FOR UPDATE`;
+      const [atual] = await tx.$queryRaw`SELECT revisaoFluxo, automacaoAtendimentoAtiva, controleManualEm, status, data FROM agendamentos WHERE id = ${tarefa.agendamentoId} AND estabelecimentoId = ${tarefa.estabelecimentoId} FOR UPDATE`;
+      const [pendente] = await tx.$queryRaw`SELECT status, bloqueadoPor FROM transicoes_agendamentos WHERE id = ${tarefa.id} AND estabelecimentoId = ${tarefa.estabelecimentoId} FOR UPDATE`;
+      if (pendente?.status !== 'PROCESSANDO' || pendente.bloqueadoPor !== tarefa.bloqueadoPor) return false;
+      if (!config?.fluxoAtendimentoAutomaticoAtivo || !atual || atual.revisaoFluxo !== tarefa.revisaoFluxo || !atual.automacaoAtendimentoAtiva || atual.controleManualEm || !['AGENDADO', 'CONFIRMADO'].includes(atual.status) || atual.data <= agora) {
+        await tx.transicaoAgendamento.update({ where: { id: tarefa.id }, data: { status: 'CANCELADA', processadoEm: agora, bloqueadoEm: null, bloqueadoPor: null, erro: 'AVISO_NAO_APLICAVEL' } });
+        return false;
+      }
       await tx.notificacaoUsuario.create({
         data: {
           usuarioId: tarefa.destinatarioUsuarioId,
           estabelecimentoId: tarefa.estabelecimentoId,
           tipo: 'ATENDIMENTO_PROXIMO',
-          titulo: 'Atendimento em 10 minutos',
+          titulo: 'Atendimento próximo',
           mensagem: `O atendimento de ${agendamento.usuario.nome} com ${agendamento.profissional.nome} começa em breve.`,
           prioridade: 'ALTA',
           acaoUrl: `/gestao?aba=agenda&agendamentoId=${agendamento.id}`,
@@ -222,9 +226,9 @@ export class OrquestradorAtendimentoService {
         where: { id: tarefa.id },
         data: { status: 'PROCESSADA', processadoEm: agora, bloqueadoEm: null, bloqueadoPor: null },
       });
+      return true;
     });
-    this.metricas.processadas += 1;
-    this.metricas.notificacoes += 1;
+    if (notificou) { this.metricas.processadas += 1; this.metricas.notificacoes += 1; }
   }
 
   async concluirTarefa(id: number, agora = new Date()) {
@@ -275,7 +279,7 @@ export class OrquestradorAtendimentoService {
   private cancelarPendentes(agendamentoId: number, agora: Date) {
     return (this.prisma as any).transicaoAgendamento.updateMany({
       where: { agendamentoId, status: { in: STATUS_TAREFAS_PENDENTES } },
-      data: { status: 'CANCELADA', processadoEm: agora, bloqueadoEm: null, bloqueadoPor: null },
+      data: { status: 'CANCELADA', processadoEm: agora, bloqueadoEm: null, bloqueadoPor: null, erro: 'AUTOMACAO_INATIVA' },
     });
   }
 

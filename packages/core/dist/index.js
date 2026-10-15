@@ -30,8 +30,10 @@ __export(src_exports, {
   ExcluirAgendamento: () => ExcluirAgendamento,
   Horarios: () => Horarios,
   LoginUsuario: () => LoginUsuario,
+  METRICAS_FLUXO_ATENDIMENTO: () => METRICAS_FLUXO_ATENDIMENTO,
   MoedaUtils: () => MoedaUtils,
   NovoAgendamento: () => NovoAgendamento,
+  OPCOES_FLUXO_ATENDIMENTO: () => OPCOES_FLUXO_ATENDIMENTO,
   ORIGENS_TRANSICAO_ATENDIMENTO: () => ORIGENS_TRANSICAO_ATENDIMENTO,
   ObterHorariosOcupados: () => ObterHorariosOcupados,
   ROTULOS_ACOES: () => ROTULOS_ACOES,
@@ -513,6 +515,21 @@ function intervaloDiaAtendimento(data, fusoHorario) {
   return { inicio: converter(dia), fim: converter(dia + 1) };
 }
 
+// src/agendamento/monitoramento-atendimento.ts
+var OPCOES_FLUXO_ATENDIMENTO = [
+  { campo: "fluxoAtendimentoAutomaticoAtivo", titulo: "Fluxo autom\xE1tico de atendimento" },
+  { campo: "inicioAtendimentoAutomaticoAtivo", titulo: "Iniciar automaticamente no hor\xE1rio" },
+  { campo: "finalizacaoAtendimentoAutomaticaAtiva", titulo: "Finalizar automaticamente ao t\xE9rmino" }
+];
+var METRICAS_FLUXO_ATENDIMENTO = [
+  { campo: "automaticas", titulo: "Transi\xE7\xF5es autom\xE1ticas (7 dias)" },
+  { campo: "manuais", titulo: "Transi\xE7\xF5es manuais (7 dias)" },
+  { campo: "atrasos", titulo: "Atrasos registrados (7 dias)" },
+  { campo: "tarefasAtrasadas", titulo: "Tarefas vencidas na fila" },
+  { campo: "falhas", titulo: "Falhas pendentes" },
+  { campo: "divergencias", titulo: "Finalizados sem receita (7 dias)" }
+];
+
 // src/profissional/service/BuscarProfissionais.ts
 var BuscarProfissionais = class {
   constructor(repo) {
@@ -638,8 +655,10 @@ function urlImagemProfissional(url, sexo) {
   ExcluirAgendamento,
   Horarios,
   LoginUsuario,
+  METRICAS_FLUXO_ATENDIMENTO,
   MoedaUtils,
   NovoAgendamento,
+  OPCOES_FLUXO_ATENDIMENTO,
   ORIGENS_TRANSICAO_ATENDIMENTO,
   ObterHorariosOcupados,
   ROTULOS_ACOES,

@@ -1,6 +1,7 @@
 'use client'
 
 import useAPI from '@/data/hooks/useAPI'
+import PainelFluxoAtendimento from './PainelFluxoAtendimento'
 import { useCallback, useEffect, useState } from 'react'
 
 interface HorarioFuncionamento {
@@ -119,6 +120,7 @@ export default function FormularioConfiguracaoAgenda() {
 
     return (
         <div className="flex flex-col gap-6">
+            <PainelFluxoAtendimento />
             <div className="grid gap-2">
                 <label className="text-sm uppercase text-zinc-400">Antecedência mínima</label>
                 <input

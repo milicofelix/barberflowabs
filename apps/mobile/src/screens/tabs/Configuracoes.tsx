@@ -2,6 +2,7 @@ import CampoTexto from '@/src/components/shared/CampoTexto'
 import ImagemRegistro from '@/src/components/midia/ImagemRegistro'
 import useSessao from '@/src/data/hooks/useSessao'
 import HorariosAgenda from '@/src/components/configuracoes/HorariosAgenda'
+import PainelFluxoAtendimento from '@/src/components/configuracoes/PainelFluxoAtendimento'
 import Carregando from '@/src/components/shared/Carregando'
 import EstadoErro from '@/src/components/shared/EstadoErro'
 import FeedbackSucesso from '@/src/components/shared/FeedbackSucesso'
@@ -51,6 +52,7 @@ export default function Configuracoes() {
             <CampoTexto label="Retomar envios às (HH:MM)" value={dados.agenda.janelaSilenciosaFim} onChangeText={(v) => dados.setAgenda((atual) => atual ? { ...atual, janelaSilenciosaFim: v } : atual)} />
             <HorariosAgenda horarios={dados.agenda.horarios} alterar={(horarios) => dados.setAgenda((atual) => atual ? { ...atual, horarios } : atual)} />
         </Secao>
+        <PainelFluxoAtendimento />
         <Secao titulo="Classificação">
             <Text style={styles.valor}>{dados.catalogo?.tipoEstabelecimento ?? 'Não definida'} · {dados.catalogo?.modeloAtendimento ?? 'Não definido'}</Text>
             <Text style={[styles.ajuda, { color: cores.textoSecundario }]}>Segmentos: {dados.catalogo?.segmentos?.map((item: any) => item.segmento?.nome).join(', ') || 'nenhum'}</Text>

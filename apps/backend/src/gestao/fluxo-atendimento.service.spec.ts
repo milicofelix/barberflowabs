@@ -24,6 +24,7 @@ function agendamento(overrides: Record<string, any> = {}) {
 
 function criarCenario(atual = agendamento(), depois?: any) {
   const tx = {
+    $queryRaw: jest.fn().mockResolvedValue([{ fluxoAtendimentoAutomaticoAtivo: true, inicioAtendimentoAutomaticoAtivo: true, finalizacaoAtendimentoAutomaticaAtiva: true }]),
     agendamento: {
       findFirst: jest.fn().mockResolvedValue(atual),
       updateMany: jest.fn().mockResolvedValue({ count: 1 }),
@@ -46,6 +47,13 @@ function criarCenario(atual = agendamento(), depois?: any) {
 
 describe('FluxoAtendimentoService', () => {
   const agora = new Date('2026-10-14T16:00:00.000Z');
+
+  it('revalida a configuração sob lock antes de uma transição automática', async () => {
+    const cenario = criarCenario();
+    cenario.tx.$queryRaw.mockResolvedValue([{ fluxoAtendimentoAutomaticoAtivo: false }]);
+    await expect(cenario.service.alterarAutomatico(17, 3, 'CHECKIN', agora)).rejects.toBeInstanceOf(ConflictException);
+    expect(cenario.tx.agendamento.updateMany).not.toHaveBeenCalled();
+  });
 
   it('assume controle manual, inicia o atendimento e cancela transições pendentes', async () => {
     const cenario = criarCenario();

@@ -68,6 +68,10 @@ export class FluxoAtendimentoService {
   async alterar(comando: AlterarStatusAtendimento) {
     const agora = comando.agora ?? new Date();
     const resultado = await this.prisma.$transaction(async (tx: any) => {
+      if (comando.origem === 'AUTOMATICA') {
+        const [config] = await tx.$queryRaw`SELECT fluxoAtendimentoAutomaticoAtivo, inicioAtendimentoAutomaticoAtivo, finalizacaoAtendimentoAutomaticaAtiva FROM estabelecimentos WHERE id = ${comando.estabelecimentoId} FOR UPDATE`;
+        if (!config?.fluxoAtendimentoAutomaticoAtivo || (comando.status === 'CHECKIN' && !config.inicioAtendimentoAutomaticoAtivo) || (comando.status === 'CONCLUIDO' && !config.finalizacaoAtendimentoAutomaticaAtiva)) throw new ConflictException('Automação desativada nas configurações da unidade');
+      }
       const atual = await tx.agendamento.findFirst({
         where: { id: comando.agendamentoId, estabelecimentoId: comando.estabelecimentoId },
         include: INCLUDE_AGENDAMENTO,

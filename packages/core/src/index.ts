@@ -1,5 +1,6 @@
 export * from './agendamento'
 export * from './agendamento/operacao-atendimento'
+export * from './agendamento/monitoramento-atendimento'
 export * from './constants'
 export * from './profissional'
 export * from './servico'

@@ -275,12 +275,59 @@ Não há mudança de schema, migration ou dependência nativa nesta fase. O app 
 
 ## Fase 5 — Configuração, Observabilidade E Aceite
 
-- [ ] Entregar os controles por estabelecimento na web e no mobile.
-- [ ] Criar painel de tarefas atrasadas/falhas e reprocessamento seguro.
-- [ ] Medir transições automáticas, intervenções manuais, atrasos e divergências.
+- [x] Entregar os controles por estabelecimento na web e no mobile.
+- [x] Criar painel de tarefas atrasadas/falhas e reprocessamento seguro.
+- [x] Medir transições automáticas, intervenções manuais, atrasos e divergências.
 - [ ] Validar conclusão financeira única e comissões.
 - [ ] Executar aceite com relógio controlado, reinício do worker e dois dispositivos simultâneos.
 - [ ] Ativar gradualmente por estabelecimento depois da homologação.
+
+### Implementação Da Fase 5 — 15/10/2026
+
+**Configuração e observabilidade implementadas; homologação e ativação pendentes.** Não foram executados testes, builds, typecheck, lint, chamadas de API, migrations, seeds ou reinícios. Não foram alteradas configurações persistidas nem habilitada a automação de qualquer estabelecimento. Os aceites pendentes das Fases 3 e 4 continuam pré-requisitos para a liberação.
+
+Na web, acessar **Configurações → Agenda → Fluxo automático de atendimentos**. No mobile, acessar **Configurações → Fluxo automático de atendimentos**. O painel é independente do formulário geral, de modo que salvar o fluxo não altera endereço ou horários de funcionamento. Ambos usam o mesmo contrato e os mesmos nomes de controles/métricas do core.
+
+Controles: chave geral, início automático, finalização automática e antecedência do aviso entre 1 e 60 minutos. Ao habilitar uma unidade inicialmente desativada, a interface exige confirmação de homologação e avisa que reservas automáticas já existentes podem ser processadas, inclusive as vencidas. Essa confirmação é uma proteção de UX do operador, não um sistema de certificação ou autorização adicional. O salvamento é transacional, auditado e publica a revisão da agenda; repetir os mesmos valores não duplica o registro de alteração.
+
+Desabilitar cancela tarefas agendadas afetadas. Reabilitar pode recuperar somente cancelamentos por configuração da revisão atual, com atendimento ainda ativo e automático e sem intervenção manual; não reabre tarefas processadas, falhas, cancelamentos de negócio ou revisões antigas. Mudanças da antecedência atualizam avisos ainda agendados. A reconciliação existente cria tarefas inexistentes no próximo ciclo; ela não é executada diretamente pelo botão Salvar.
+
+O serviço de transição automática revalida a configuração sob lock da unidade. O aviso também revalida configuração/agendamento e adquire lock da tarefa antes de criar a notificação, recusando outro worker que já a tenha concluído. O título do sino passou a **Atendimento próximo**, pois a antecedência agora é configurável e não necessariamente dez minutos.
+
+Contratos novos (autenticados e com `CONFIGURACOES_GERENCIAR`):
+
+- `GET /atendimentos/operacao/configuracao`.
+- `PUT /atendimentos/operacao/configuracao`.
+- `GET /atendimentos/operacao/monitoramento`.
+- `POST /atendimentos/operacao/tarefas/:id/reprocessar`.
+
+Todos usam exclusivamente o estabelecimento da sessão. O monitoramento não retorna nomes, contatos, corpos de mensagens ou erros internos: apenas IDs operacionais, estados, datas e tentativas. Mostra até 50 pendências ordenadas por data, incluindo falhas, tarefas agendadas vencidas e processamentos com lock expirado. Os contadores de fila consideram todo o estoque atual; os contadores de transições automáticas/manuais e atrasos usam auditoria persistida dos últimos sete dias. **Worker habilitado** informa somente a variável do servidor, não é heartbeat nem prova de atividade. O painel tem atualização explícita, sem iniciar um segundo worker no navegador/aparelho.
+
+Reprocessar exige confirmação e somente reenfileira uma tarefa `FALHOU`, mantendo ID/chave idempotente. Valida revisão, estado, configuração e controle manual; faz atualização condicional e auditoria na mesma transação. Não executa a tarefa diretamente, não assume controle automático, não libera locks em processamento e não corrige receitas automaticamente. Tarefas agendadas e locks expirados continuam sob responsabilidade do worker.
+
+O indicador financeiro identifica finalizados nos últimos sete dias com valor/serviço cobrável e sem conta `RECEBER`. É um alerta de receita ausente, **não uma conciliação financeira completa**: não compara valores, não atesta repasses e não prova a correção de comissões. A criação de receita continua no serviço financeiro existente e protegida pela chave única `ContaFinanceira.agendamentoId`. Falha financeira depois de uma conclusão pode aparecer neste indicador; reprocessar tarefa terminal é recusado e exige análise financeira, em vez de reabrir o atendimento ou emitir cobrança sem conferência.
+
+Foram escritos testes isolados de validação/tenant/permissão, reprocessamento e concorrência por atualização condicional, bloqueio por configuração, proteção do aviso contra tarefa já concluída, receita única repetida e prioridade das regras de comissão. **Não executados.** Mocks não substituem a homologação de locks/concorrência no MySQL, nem a conferência de repasses completos na aplicação.
+
+Não há mudança de schema, migration ou dependência nesta fase. Para carregar as novas rotas, o usuário deve reiniciar `app` com o comando já catalogado em `docs/COMANDOS.md`. O comando opcional dos testes isolados também foi registrado nesse catálogo, sem execução nesta entrega.
+
+### Aceite E Liberação Gradual Da Fase 5
+
+Preparar uma unidade de homologação com profissional/serviço/recurso e contas de teste; manter as demais unidades desativadas. Não usar clientes reais nem mudar o relógio do host/container. Cenários de relógio controlado devem usar as datas injetáveis de `processarLote`, `programar`, `notificar` e `alterarAutomatico` em testes isolados; não existe endpoint público para adiantar o tempo. Preencher evidências (IDs, horários, resultado, versão) antes de marcar cada item.
+
+- [ ] Concluir os aceites das Fases 3 e 4, incluindo claro/escuro, sino, data, filtros e retorno do segundo plano.
+- [ ] Conferir que unidade desativada permanece manual; salvar controles, recarregar web/mobile e confirmar persistência, auditoria única e antecedência mínima/máxima.
+- [ ] Com relógio controlado, validar aviso/início/fim nos instantes exatos e conferir a prioridade das ações manuais, inclusive simultâneas ao worker.
+- [ ] Rodar dois workers concorrentes em ambiente isolado MySQL e repetir/reiniciar ciclos: uma notificação, uma transição e uma conta a receber por atendimento.
+- [ ] Desativar durante o processamento e conferir bloqueio da automação/aviso. Reativar e conferir recuperação apenas das tarefas elegíveis, sem reabrir atendimentos manuais/terminais.
+- [ ] Provocar falha de infraestrutura controlada; conferir tentativas, backoff, falha terminal e reprocessamento com o mesmo ID. Repetir o clique e confirmar uma auditoria de reenfileiramento; recusar outra unidade, revisão antiga, ausência/cancelamento/finalização e controle manual.
+- [ ] Conferir os contadores contra a auditoria/fila; recuperar um lock expirado pelo worker após reinício, sem usar o botão Reprocessar para liberar lock.
+- [ ] Finalizar e repetir conclusão: uma conta `RECEBER` e uma auditoria financeira. Validar valores e comissões por profissional/serviço, repetir geração do mesmo período de repasses e conferir ausência de duplicidade; testar regras inativas e prioridade de regras específicas.
+- [ ] Simular falha financeira após a transição e conferir alerta de finalizado sem receita; revisar no Financeiro, sem reabrir automaticamente ou registrar pagamento fictício.
+- [ ] Com web e mobile simultâneos, conferir status, sino e controle manual; manter data/filtros/motivo ao atualizar e após indisponibilidade temporária da API.
+- [ ] Após aceite registrado, ativar **uma unidade piloto** pela interface e acompanhar pelo menos um ciclo completo, incluindo finalização financeira e repasse. Não habilitar por atualização global no banco.
+- [ ] Se houver divergência, desativar a chave geral da unidade, registrar os IDs e revisar; desativar não desfaz status/receitas já confirmados e não interrompe atendimentos manuais. Verificar o resultado de operações já concluídas no instante da desativação.
+- [ ] Liberar as próximas unidades individualmente somente após estabilização da piloto e guardar responsável, data e evidências da autorização de cada unidade.
 
 ## Cenários Obrigatórios De Aceite
 
