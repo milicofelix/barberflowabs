@@ -3,6 +3,7 @@ import Cabecalho from '../shared/Cabecalho'
 import Link from 'next/link'
 import useSessao from '@/data/hooks/useSessao'
 import ImagemIdentidadeUnidade from '../shared/ImagemIdentidadeUnidade'
+import NavegacaoEmBotoes from '../shared/NavegacaoEmBotoes'
 
 export default function Slogan() {
     const { carregando, usuario } = useSessao()
@@ -11,7 +12,7 @@ export default function Slogan() {
     const operacional = !admin && Boolean(usuario?.estabelecimentoId)
         && (Boolean(usuario?.membroEstabelecimento) || ['ESTABLISHMENT_OWNER', 'ESTABLISHMENT_MEMBER'].includes(papel))
     return (
-        <div className={`home-identidade relative bg-white dark:bg-slate-950 ${operacional ? 'home-operacional h-[100dvh] min-h-[560px]' : 'h-[450px] sm:h-[700px]'}`}>
+        <div className={`home-identidade relative bg-white dark:bg-slate-950 ${operacional ? 'home-operacional h-[100dvh] min-h-[560px]' : usuario ? 'h-[650px] sm:h-[780px]' : 'h-[450px] sm:h-[700px]'}`}>
             <ImagemIdentidadeUnidade className="home-imagem absolute inset-0 h-full w-full object-cover" />
             <div
                 className="
@@ -43,6 +44,7 @@ export default function Slogan() {
                         Ver Estabelecimentos
                     </Link>
                 </div> : null}
+                {usuario ? <div className="mt-auto w-full"><NavegacaoEmBotoes /></div> : null}
             </div>
         </div>
     )

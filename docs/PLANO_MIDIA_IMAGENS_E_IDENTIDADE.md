@@ -1,5 +1,19 @@
 # Plano — Imagens, Upload E Identidade Multissegmento
 
+## Navegação Web Em Botões Sobre O Banner — 15/10/2026
+
+O menu suspenso da conta foi substituído por acessos em cards com ícones, no rodapé do banner da Home e dos cabeçalhos internos. Componente compartilhado `NavegacaoEmBotoes`, com destinos definidos uma única vez em `data/navegacao/itensMenu.ts`:
+
+- Unidade/equipe: Início, Gestão, Financeiro, Configurações e Cobrança.
+- Cliente: Início, Estabelecimentos, Meus horários e Configurações.
+- Superadmin: Admin SaaS e Configurações.
+
+O topo mantém sino, tema, acesso à conta e botão Sair; não depende mais de abrir um dropdown para navegar. Os botões indicam a página ativa, permitem navegação por teclado e oferecem rolagem horizontal com orientação em telas estreitas. Banner personalizado e modos do logo foram preservados. Visitantes continuam com os acessos públicos existentes.
+
+A referência enviada foi usada somente como modelo visual; não foram inventadas rotas de tratamentos/contato nem alteradas as autorizações das páginas e APIs. A mudança é somente na web; abas inferiores do app permanecem como estão. Sem alteração de banco, dependências ou comandos operacionais. Testes, builds e verificações visuais não executados.
+
+Aceite manual: conferir os acessos dos três perfis, navegação/retorno, botão Sair, logo oculto/personalizado, temas claro/escuro e rolagem dos botões em navegador estreito; conferir que o título do cabeçalho interno não sobrepõe a navegação.
+
 ## Logo Da Unidade — 15/10/2026
 
 Implementado em Configurações na web e no mobile, com controle exclusivo do dono (`ESTABLISHMENT_OWNER`):

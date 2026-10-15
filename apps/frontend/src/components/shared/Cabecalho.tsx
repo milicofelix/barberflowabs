@@ -13,12 +13,12 @@ interface CabecalhoProps {
 export default function Cabecalho({ semFundo = false }: CabecalhoProps) {
     const { usuario } = useSessao()
     return (
-        <header className={`cabecalho-hero flex h-36 items-start self-stretch text-white ${semFundo ? 'cabecalho-home' : 'bg-black/45'}`}>
-            <nav className="container flex items-start justify-between pt-8">
+        <header className={`cabecalho-hero flex min-h-36 shrink-0 items-start self-stretch text-white ${semFundo ? 'cabecalho-home' : 'bg-black/45'}`}>
+            <nav aria-label="Conta e preferências" className="container flex flex-wrap items-start justify-between gap-4 pb-6 pt-8">
                 <Logo />
                 <div className="ml-auto">
                     {usuario ? (
-                        <div className="flex items-center gap-3"><CentralNotificacoes /><MenuUsuario /><AlternadorTema /></div>
+                        <div className="flex items-center gap-2 sm:gap-3"><CentralNotificacoes /><AlternadorTema /><MenuUsuario /></div>
                     ) : (
                         <div className="flex items-center gap-5">
                             <Link href="/estabelecimentos">Estabelecimentos</Link>
