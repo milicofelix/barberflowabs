@@ -1,34 +1,63 @@
 import { Ionicons } from '@expo/vector-icons'
-import { useCallback, useEffect, useState } from 'react'
-import { AppState, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { AppState, DeviceEventEmitter, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useNavigation } from '@react-navigation/native'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import type { StackParamList } from '@/src/navigation/types'
+import { EVENTO_ATENDIMENTOS } from '@/src/data/hooks/useSincronizacaoAtendimentos'
+import { perfilOperacional, resolverPerfil } from '@/src/data/auth/perfis'
 import useAPI, { mensagemDoErro } from '@/src/data/hooks/useAPI'
 import useTema from '@/src/data/contexts/ContextoTema'
 import useSessao from '@/src/data/hooks/useSessao'
 
-interface Notificacao { id: number; tipo: string; titulo: string; mensagem: string; lidaEm?: string | null }
-const INTERVALO_ATUALIZACAO_MS = 15_000
+interface Notificacao { id: number; tipo: string; titulo: string; mensagem: string; lidaEm?: string | null; acaoUrl?: string | null }
+const INTERVALO_ATUALIZACAO_MS = 5_000
 
 export default function SinoNotificacoes() {
     const { cores } = useTema(); const { httpGet, httpPut } = useAPI()
     const { usuario, renovarSessao } = useSessao()
+    const navigation = useNavigation<NativeStackNavigationProp<StackParamList>>()
+    const requisicao = useRef(0)
     const [aberto, setAberto] = useState(false); const [itens, setItens] = useState<Notificacao[]>([]); const [erro, setErro] = useState('')
     const carregar = useCallback(async () => {
+        const ticket = ++requisicao.current
+        if (!usuario) return
         try {
             const notificacoes = await httpGet<Notificacao[]>('/notificacoes', { escopoTenant: 'nenhum' })
+            if (ticket !== requisicao.current) return
             setItens(notificacoes); setErro('')
             const responsavel = usuario?.papel === 'ESTABLISHMENT_OWNER' || usuario?.role === 'ESTABLISHMENT_OWNER'
-            if (!responsavel && notificacoes.some((item) => item.tipo === 'SOLICITACAO_APPROVED')) await renovarSessao()
+            if (!responsavel && notificacoes.some((item) => !item.lidaEm && item.tipo === 'SOLICITACAO_APPROVED')) await renovarSessao()
         }
-        catch (e) { setErro(mensagemDoErro(e)) }
-    }, [httpGet, renovarSessao, usuario?.papel, usuario?.role])
+        catch (e) { if (ticket === requisicao.current) setErro(mensagemDoErro(e)) }
+    }, [httpGet, renovarSessao, usuario])
     useEffect(() => {
-        carregar()
-        const intervalo = setInterval(carregar, INTERVALO_ATUALIZACAO_MS)
+        void carregar()
+        const intervalo = setInterval(() => { if (AppState.currentState === 'active') void carregar() }, INTERVALO_ATUALIZACAO_MS)
         const assinatura = AppState.addEventListener('change', (estado) => { if (estado === 'active') carregar() })
-        return () => { clearInterval(intervalo); assinatura.remove() }
+        const evento = DeviceEventEmitter.addListener(EVENTO_ATENDIMENTOS, () => { void carregar() })
+        return () => { requisicao.current++; clearInterval(intervalo); assinatura.remove(); evento.remove() }
     }, [carregar])
-    async function ler(item: Notificacao) { if (!item.lidaEm) await httpPut(`/notificacoes/${item.id}/ler`, {}, { escopoTenant: 'nenhum' }); await carregar() }
-    async function lerTodas() { await httpPut('/notificacoes/ler-todas', {}, { escopoTenant: 'nenhum' }); await carregar() }
+    useEffect(() => { setItens([]); setAberto(false); setErro('') }, [usuario?.id])
+    async function ler(item: Notificacao) {
+        try {
+            if (!item.lidaEm) await httpPut(`/notificacoes/${item.id}/ler`, {}, { escopoTenant: 'nenhum' })
+            const url = item.acaoUrl
+            if (url?.startsWith('/gestao?') && !url.includes('\\') && perfilOperacional(resolverPerfil(usuario))) {
+                const parametros = new URLSearchParams(url.slice(url.indexOf('?') + 1))
+                const id = Number(parametros.get('agendamentoId'))
+                if (Number.isSafeInteger(id) && id > 0) {
+                    setAberto(false)
+                    navigation.navigate('Abas', { screen: 'Operacao', params: { agendamentoId: id, chave: Date.now() } })
+                }
+            }
+            await carregar()
+        } catch (e) { setErro(mensagemDoErro(e)) }
+    }
+    async function lerTodas() {
+        try { await httpPut('/notificacoes/ler-todas', {}, { escopoTenant: 'nenhum' }); await carregar() }
+        catch (e) { setErro(mensagemDoErro(e)) }
+    }
     const total = itens.filter(item => !item.lidaEm).length
     return <><Pressable accessibilityLabel="Notificações" onPress={() => { setAberto(true); carregar() }} style={[styles.sino, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
         <Ionicons name="notifications-outline" size={22} color={cores.texto} />{total ? <Text style={styles.contador}>{total}</Text> : null}

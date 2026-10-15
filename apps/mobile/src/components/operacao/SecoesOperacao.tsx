@@ -3,7 +3,7 @@ import SeletorImagem from '@/src/components/midia/SeletorImagem'
 import ImagemRegistro from '@/src/components/midia/ImagemRegistro'
 import FeedbackSucesso from '@/src/components/shared/FeedbackSucesso'
 import type {
-    AgendamentoOperacional, DashboardOperacional, ProfissionalOperacional,
+    DashboardOperacional, ProfissionalOperacional,
 } from '@/src/data/operacao/tipos'
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
@@ -19,26 +19,6 @@ export function ResumoOperacao({ dados }: { dados: DashboardOperacional | null }
         <CartaoMetrica titulo="Receita hoje" valor={moeda(dados.receitaHoje)} destaque />
         <CartaoMetrica titulo="Saldo do mês" valor={moeda(dados.saldoMes)} destaque />
     </View>
-}
-
-export function AgendaOperacao({ itens, alterarStatus }: {
-    itens: AgendamentoOperacional[]; alterarStatus: (id: number, status: string) => Promise<boolean>
-}) {
-    const { cores } = useTema()
-    const [profissionalId, setProfissionalId] = useState<number | null>(null)
-    const profissionais = Array.from(new Map(itens.filter((item) => item.profissional).map((item) => [item.profissional!.id, item.profissional!])).values())
-    const agenda = profissionalId ? itens.filter((item) => item.profissional?.id === profissionalId) : itens
-    return <View style={styles.lista}><View style={styles.filtrosAgenda}>
-        <Pressable onPress={() => setProfissionalId(null)} style={[styles.chip, { borderColor: cores.borda }, profissionalId === null && styles.chipAtivo]}><Text style={[styles.chipTexto, { color: cores.texto }]}>TODOS</Text></Pressable>
-        {profissionais.map((profissional) => <Pressable key={profissional.id} onPress={() => setProfissionalId(profissional.id)} style={[styles.chip, { borderColor: cores.borda }, profissionalId === profissional.id && styles.chipAtivo]}><Text style={[styles.chipTexto, { color: cores.texto }]}>{profissional.nome.toUpperCase()}</Text></Pressable>)}
-    </View>{agenda.map((item) => <View key={item.id} style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
-        <Text style={[styles.titulo, { color: cores.texto }]}>{item.usuario?.nome ?? 'Cliente'}</Text>
-        <Text style={[styles.descricao, { color: cores.textoSecundario }]}>{item.profissional?.nome ?? 'Profissional'} · {new Date(item.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</Text>
-        <Text style={[styles.descricao, { color: cores.textoSecundario }]}>{item.servicos?.map((servico) => servico.nome).join(' · ')}</Text>
-        <View style={styles.acoes}>{['CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW'].map((status) =>
-            <Pressable key={status} onPress={() => alterarStatus(item.id, status)} style={[styles.chip, { borderColor: cores.borda }, item.status === status && styles.chipAtivo]}>
-                <Text style={[styles.chipTexto, { color: cores.texto }]}>{status.replace('_', ' ')}</Text></Pressable>)}</View>
-    </View>)}</View>
 }
 
 export function EquipeOperacao({ itens, criar, recarregar, erro }: {

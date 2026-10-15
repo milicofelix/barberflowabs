@@ -1,44 +1,51 @@
 import EstadoErro from '@/src/components/shared/EstadoErro'
 import EstadoVazio from '@/src/components/shared/EstadoVazio'
-import useAPI, { mensagemDoErro } from '@/src/data/hooks/useAPI'
+import useAPI, { ErroAPI, mensagemDoErro } from '@/src/data/hooks/useAPI'
+import { useNavigation } from '@react-navigation/native'
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs'
+import type { AbasParamList } from '@/src/navigation/types'
 import useTema from '@/src/data/contexts/ContextoTema'
-import type { AgendamentoOperacional } from '@/src/data/operacao/tipos'
+import useSessao from '@/src/data/hooks/useSessao'
+import useSincronizacaoAtendimentos from '@/src/data/hooks/useSincronizacaoAtendimentos'
+import type { AgendamentoOperacional, PermissaoEquipe } from '@/src/data/operacao/tipos'
 import type { ReactNode } from 'react'
-import { useCallback, useEffect, useState } from 'react'
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { RefreshControl, ScrollView, StyleSheet, Text } from 'react-native'
+import CartaoAtendimento from './CartaoAtendimento'
 
 export default function ProximosAgendamentos({ cabecalho }: { cabecalho?: ReactNode }) {
-    const { cores } = useTema()
+    const { cores } = useTema(); const { usuario } = useSessao()
     const { httpGet } = useAPI()
+    const navigation = useNavigation<BottomTabNavigationProp<AbasParamList>>()
     const [itens, setItens] = useState<AgendamentoOperacional[]>([])
     const [carregando, setCarregando] = useState(false)
     const [erro, setErro] = useState<string | null>(null)
+    const requisicao = useRef(0)
     const carregar = useCallback(async () => {
-        try { setCarregando(true); setErro(null); setItens(await httpGet<AgendamentoOperacional[]>('/gestao/agendamentos/futuros')) }
-        catch (error) { setErro(mensagemDoErro(error)) }
-        finally { setCarregando(false) }
+        const atual = ++requisicao.current
+        try {
+            setCarregando(true)
+            const permissoes = await httpGet<PermissaoEquipe[]>('/equipe/minhas-permissoes')
+            if (atual !== requisicao.current) return false
+            if (!permissoes.includes('AGENDA_GERENCIAR')) {
+                setItens([]); throw new Error('Você não tem permissão para consultar a agenda.')
+            }
+            const lista = await httpGet<AgendamentoOperacional[]>('/gestao/atendimentos/home')
+            if (atual !== requisicao.current) return false
+            setItens(Array.from(new Map(lista.map((item) => [item.id, item])).values())); setErro(null)
+            return true
+        } catch (error) { if (atual === requisicao.current) { if (error instanceof ErroAPI && [401, 403].includes(error.status)) setItens([]); setErro(mensagemDoErro(error)) } return false }
+        finally { if (atual === requisicao.current) setCarregando(false) }
     }, [httpGet])
-    useEffect(() => { carregar() }, [carregar])
+    useEffect(() => { setItens([]); return () => { requisicao.current++ } }, [carregar, usuario?.estabelecimentoId, usuario?.id])
+    const agora = useSincronizacaoAtendimentos(carregar)
     return <ScrollView contentContainerStyle={styles.conteudo} refreshControl={<RefreshControl refreshing={carregando} onRefresh={carregar} />}>
         {cabecalho}
-        <Text style={styles.sobretitulo}>SEU ESTABELECIMENTO</Text>
         <Text style={[styles.titulo, { color: cores.texto }]}>Próximos agendamentos</Text>
-        <Text style={[styles.descricao, { color: cores.textoSecundario }]}>Acompanhe os próximos clientes em ordem de atendimento.</Text>
+        <Text style={{ color: cores.textoSecundario }}>Atendimentos da unidade e finalizados nas últimas 24 horas.</Text>
         {erro ? <EstadoErro mensagem={erro} tentarNovamente={carregar} /> : null}
-        {!carregando && !erro && !itens.length ? <EstadoVazio titulo="Nenhum agendamento futuro" descricao="Novos horários aparecerão aqui assim que forem reservados." /> : null}
-        {itens.map((item) => <View key={item.id} style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
-            <View style={styles.linha}><View style={styles.textos}><Text style={[styles.nome, { color: cores.texto }]}>{item.usuario?.nome ?? 'Cliente'}</Text>
-                <Text style={[styles.meta, { color: cores.textoSecundario }]}>{item.profissional?.nome ?? 'Profissional'} · {item.servicos?.map((servico) => servico.nome).join(', ')}</Text></View>
-                <Text style={[styles.status, { color: cores.destaque }]}>{item.status}</Text></View>
-            <Text style={[styles.data, { color: cores.texto }]}>{new Date(item.data).toLocaleString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</Text>
-        </View>)}
+        {!carregando && !erro && !itens.length ? <EstadoVazio titulo="Nenhum atendimento" descricao="Novos horários aparecerão aqui assim que forem reservados." /> : null}
+        {itens.map((item) => <CartaoAtendimento key={item.id} item={item} agora={agora} abrirAgenda={() => navigation.navigate('Operacao', { agendamentoId: item.id, chave: Date.now() })} aoAtualizar={(atualizado) => setItens((atuais) => atuais.map((atual) => atual.id === atualizado.id ? atualizado : atual))} />)}
     </ScrollView>
 }
-
-const styles = StyleSheet.create({
-    conteudo: { padding: 18, paddingBottom: 40, gap: 12 }, sobretitulo: { color: '#E7B84B', fontSize: 12, fontWeight: '900', letterSpacing: 1.1 },
-    titulo: { fontSize: 29, fontWeight: '900' }, descricao: { lineHeight: 20, marginBottom: 4 },
-    cartao: { borderWidth: 1, borderRadius: 14, padding: 15, gap: 9 }, linha: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
-    textos: { flex: 1 }, nome: { fontSize: 17, fontWeight: '900' }, meta: { marginTop: 4, lineHeight: 18 }, status: { fontSize: 11, fontWeight: '900' },
-    data: { fontSize: 15, fontWeight: '800' },
-})
+const styles = StyleSheet.create({ conteudo: { padding: 18, paddingBottom: 40, gap: 12 }, titulo: { fontSize: 29, fontWeight: '900' } })

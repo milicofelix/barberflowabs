@@ -4,7 +4,7 @@ export type AbasParamList = {
     Descobrir: undefined
     Inicio: undefined
     Agendamento: { dataInicial?: string; origemAgenda?: boolean; chave?: number } | undefined
-    Operacao: undefined
+    Operacao: { agendamentoId?: number; chave?: number } | undefined
     Configuracoes: undefined
     Administracao: undefined
     Usuario: undefined

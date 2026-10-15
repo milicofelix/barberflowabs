@@ -208,6 +208,21 @@ Não há migration, nova dependência ou alteração de configuração nesta fas
 
 ### Aceite Manual Da Fase 3
 
+#### Tentativa De Execução — 15/10/2026
+
+**Resultado: aceite pendente, impedido pelo ambiente em execução.** Nenhum dos cenários abaixo foi homologado nesta tentativa.
+
+Verificações preliminares executadas mediante solicitação explícita do usuário:
+
+- O container `app` está em execução e a web (`http://localhost:3000`) responde HTTP 200.
+- `GET /gestao/atendimentos/home`, `GET /gestao/agendamentos/1` e `PUT /gestao/agendamentos/1/retomar-automacao`, sem token, retornam HTTP 404 (`Cannot GET/PUT`). O ID 1 foi usado somente para verificar o registro da rota, sem autenticação; não houve alteração de atendimento.
+- Para comparação, a rota existente `GET /gestao/agendamentos/futuros`, também sem token, responde HTTP 401 (`Token não informado`). Portanto, o backend está acessível, mas as novas rotas ainda não estão disponíveis no processo atual. O código-fonte contém essas rotas e não configura prefixo global.
+- Não há conexão de navegador de teste disponível nesta sessão nem Playwright/Puppeteer instalado no projeto para uma alternativa local. As respostas HTTP não validam apresentação, interação, permissões de uma sessão autenticada ou sincronização entre dispositivos.
+
+Próximo passo operacional: executar `docker compose restart app`, já catalogado em `docs/COMANDOS.md`, para carregar o backend atualizado (`nest start` sem watch). Depois, conferir novamente as rotas e executar os cenários com contas e reservas de teste, em navegador disponível. Um HTTP 401 sem token confirma somente que a rota exige autenticação; não comprova `AGENDA_GERENCIAR` nem isolamento entre unidades.
+
+Não foram executados restart, build, migration, seed ou testes automatizados. Não foram criadas reservas, alteradas configurações, modificados status nem interrompida a API. As caixas permanecem desmarcadas até haver evidência de cada cenário.
+
 - [ ] Abrir Home e Gestão → Agenda com permissão de agenda, nos temas claro e escuro; conferir os rótulos e a identificação da unidade/profissional.
 - [ ] Criar reserva para daqui a até dez minutos e conferir o destaque sem recarregar a página.
 - [ ] Marcar atraso e conferir modo Manual, nome do operador e horário do controle; aguardar e confirmar que o worker não inicia/finaliza esse atendimento sozinho.
@@ -222,11 +237,41 @@ Não há migration, nova dependência ou alteração de configuração nesta fas
 
 ## Fase 4 — Paridade Mobile
 
-- [ ] Replicar estados, cores, ações, confirmação e indicador de controle.
-- [ ] Abrir o detalhe correto a partir da notificação.
-- [ ] Atualizar cards e calendário pela revisão leve já existente.
-- [ ] Garantir botões acessíveis, tema claro/escuro e telas pequenas.
+- [x] Replicar estados, cores, ações, confirmação e indicador de controle.
+- [x] Abrir o detalhe correto a partir da notificação.
+- [x] Atualizar cards e calendário pela revisão leve já existente.
+- [x] Garantir botões acessíveis, tema claro/escuro e telas pequenas (implementação; validação nos aparelhos pendente).
 - [ ] Validar Android e iOS com o app em primeiro plano, segundo plano e após retomada.
+
+### Implementação Da Fase 4 — 15/10/2026
+
+Implementação entregue; **aceite em Android/iOS pendente**. Não foram executados testes, builds, typecheck, lint, verificações de API, migrations, instalações ou reinícios. O impedimento registrado no aceite da Fase 3 não foi considerado resolvido implicitamente.
+
+- As regras de ações, rótulos, destaque de dez minutos e conversão de datas por fuso foram extraídas para `packages/core/src/agendamento/operacao-atendimento.ts`. Web e mobile consomem a mesma regra, sem copiar a máquina de estados.
+- `CartaoAtendimento` é compartilhado pela Home, pelo detalhe do calendário e pelo detalhe aberto pelo sino. Exibe status, automático/manual, operador, horário de controle, início e finalização efetivos, profissional, serviços e valor. As ações incluem atraso, início, conclusão, ausência, cancelamento e retomada, conforme o estado e a configuração da unidade.
+- A confirmação é expandida dentro do cartão, inclusive nos detalhes em modal, evitando abrir um segundo modal para confirmar a ação. Há motivo opcional, proteção contra clique repetido e apresentação de erros no próprio contexto. Falhas não aplicam um novo status fictício; o servidor continua responsável pela autorização, disponibilidade e idempotência.
+- A Home usa `GET /gestao/atendimentos/home`, incluindo finalizados recentes por até 24 horas e o atalho **Abrir na agenda**. A permissão de agenda é consultada antes dos registros e os dados são separados por conta/unidade.
+- O sino interpreta apenas o destino operacional local `/gestao?...agendamentoId=...`, valida o ID positivo e navega com parâmetros tipados para Gestão → Agenda. O detalhe é consultado pelo ID exato, independentemente de filtros/período, e ajusta inicialmente o dia no fuso da unidade. Não há fallback para outro atendimento em caso de recusa/ID inexistente.
+- `useSincronizacaoAtendimentos` consulta a revisão leve a cada cinco segundos com a aba focada e o app ativo. Reconsulta ao retornar do segundo plano, recuperar foco, receber uma alteração local ou completar um minuto. Datas, filtros e motivo da ação em andamento não são reinicializados por essas atualizações. O sino também atualiza a cada cinco segundos em primeiro plano.
+- A agenda carrega todas as páginas do período e deduplica IDs. A consulta usa o fuso retornado pela unidade; a grade existente e suas visualizações/tela cheia foram preservadas. O filtro inclui **Em atraso** e os eventos usam os rótulos canônicos.
+- Detalhes têm conteúdo rolável para telas pequenas; ações usam alvos de pelo menos 44 pontos, nomes acessíveis e cores do tema para texto/superfície. Cores de status seguem a semântica da web (azul em atendimento, âmbar em atraso, verde finalizado) e sempre acompanham rótulos textuais.
+
+A sincronização nova foi extraída para um hook próprio. `useOperacao`, já extenso, foi alterado apenas para integrar esse hook, paginação e proteção de respostas antigas; não houve refatoração geral dos demais fluxos. A apresentação antiga e sem consumidores de `AgendaOperacao` foi removida para não manter duas implementações de ações.
+
+Não há mudança de schema, migration ou dependência nativa nesta fase. O app depende das rotas da Fase 3 carregadas no backend. Se ainda retornarem 404, executar o `docker compose restart app` já catalogado em `docs/COMANDOS.md`. Não é necessário um novo build nativo somente por estas alterações.
+
+### Aceite Manual Da Fase 4
+
+- [ ] Android e iOS: abrir Home e Gestão → Agenda nos temas claro/escuro; conferir rótulos, cores, unidade/profissional e legibilidade em tela pequena/com fonte ampliada.
+- [ ] Criar reserva em até dez minutos e conferir destaque na Home/calendário sem refresh; iniciar/finalizar e conferir horários efetivos e finalizado recente na Home.
+- [ ] Marcar atraso, conferir operador/horário e modo Manual; aguardar e confirmar que o worker não altera o atendimento. Retomar explicitamente e conferir duração/novo término.
+- [ ] Em conflito ou fora do funcionamento, confirmar retomada e verificar erro dentro do detalhe, sem fechar a confirmação nem perder o motivo. Repetir ação e conferir ausência de auditoria/receita duplicada.
+- [ ] Conferir automação desativada: aviso, modo Manual e nenhuma ação implícita de retomada.
+- [ ] Abrir no sino um atendimento de outro dia e repetir estando em outra aba da gestão; conferir ID, data e abertura do detalhe correto. Conferir também o atalho da Home.
+- [ ] Alterar status pela web/outro aparelho; conferir atualização de Home, calendário, detalhe e sino sem perder filtros/data/motivo em edição.
+- [ ] Colocar o app em segundo plano e retomar; conferir reconciliação. Repetir após trocar de aba e após indisponibilidade temporária da API, preservando registros na falha de rede.
+- [ ] Conferir conta sem `AGENDA_GERENCIAR`, sessão expirada e ID de outra unidade; nenhuma consulta/ação deve expor dados indevidos. Trocar de conta e conferir ausência de dados em cache da anterior.
+- [ ] Conferir calendário em Dia, 3 dias, Semana, Lista e tela cheia; filtros, reagendamento e toque em célula livre devem permanecer funcionais.
 
 ## Fase 5 — Configuração, Observabilidade E Aceite
 

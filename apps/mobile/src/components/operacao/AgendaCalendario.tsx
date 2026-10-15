@@ -1,9 +1,13 @@
+import { rotuloStatus, comecaEmDezMinutos } from '@uniflowabs/core'
+import CartaoAtendimento, { corStatusAtendimento } from './CartaoAtendimento'
 import useTema from '@/src/data/contexts/ContextoTema'
 import type {
     AgendamentoOperacional, FiltrosAgendaOperacional, ProfissionalOperacional,
     RecursoOperacional, RestricaoAgendaOperacional, VisualizacaoAgenda,
 } from '@/src/data/operacao/tipos'
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import useAPI, { mensagemDoErro } from '@/src/data/hooks/useAPI'
+import useSincronizacaoAtendimentos from '@/src/data/hooks/useSincronizacaoAtendimentos'
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native'
 import { Calendar, type ICalendarEventBase } from 'react-native-big-calendar'
 import 'dayjs/locale/pt-br'
@@ -19,13 +23,7 @@ const visualizacoes: Array<{ id: VisualizacaoAgenda; nome: string }> = [
     { id: 'day', nome: 'Dia' }, { id: '3days', nome: '3 dias' },
     { id: 'week', nome: 'Semana' }, { id: 'schedule', nome: 'Lista' },
 ]
-const statusAgenda = ['AGENDADO', 'CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW']
-const transicoes: Record<string, string[]> = {
-    AGENDADO: ['CONFIRMADO', 'CANCELADO', 'NO_SHOW'],
-    CONFIRMADO: ['CHECKIN', 'CANCELADO', 'NO_SHOW'],
-    CHECKIN: ['CONCLUIDO', 'CANCELADO', 'NO_SHOW'],
-    CONCLUIDO: [], CANCELADO: [], NO_SHOW: [],
-}
+const statusAgenda = ['AGENDADO', 'CONFIRMADO', 'ATRASADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW']
 
 interface Props {
     telaCheia?: boolean
@@ -40,7 +38,6 @@ interface Props {
     alterarVisualizacao: (visualizacao: VisualizacaoAgenda) => void
     alterarData: (data: string) => void
     aoPressionarCelula: (data: Date) => void
-    alterarStatus: (id: number, status: string) => Promise<boolean>
     reagendar: (item: AgendamentoOperacional, data: string, motivo?: string) => Promise<boolean>
     fusoHorario: string
 }
@@ -51,6 +48,24 @@ export default function AgendaCalendario(props: Props) {
     const [alturaHora, setAlturaHora] = useState(64)
     const [filtrosVisiveis, setFiltrosVisiveis] = useState(false)
     const [selecionado, setSelecionado] = useState<AgendamentoOperacional | null>(null)
+    const { httpGet } = useAPI()
+    useEffect(() => { setSelecionado(null) }, [httpGet])
+    const [erroDetalhe, setErroDetalhe] = useState('')
+    const consultaDetalhe = useRef(0)
+    const selecionadoId = selecionado?.id
+    const atualizarDetalhe = useCallback(async () => {
+        if (!selecionadoId) return false
+        const ticket = ++consultaDetalhe.current
+        try {
+            const item = await httpGet<AgendamentoOperacional>(`/gestao/agendamentos/${selecionadoId}`)
+            if (ticket !== consultaDetalhe.current) return false
+            setSelecionado((atual) => atual?.id === item.id ? item : atual); setErroDetalhe('')
+            return true
+        } catch (e) { if (ticket === consultaDetalhe.current) setErroDetalhe(mensagemDoErro(e)); return false }
+    }, [selecionadoId, httpGet])
+    useEffect(() => { setErroDetalhe(''); return () => { consultaDetalhe.current++ } }, [atualizarDetalhe])
+    const agora = useSincronizacaoAtendimentos(atualizarDetalhe, !!selecionadoId)
+    useEffect(() => { setSelecionado((atual) => atual ? props.itens.find((item) => item.id === atual.id) ?? atual : null) }, [props.itens])
     const [reagendando, setReagendando] = useState(false)
     const [novaData, setNovaData] = useState('')
     const [novoHorario, setNovoHorario] = useState('')
@@ -92,18 +107,6 @@ export default function AgendaCalendario(props: Props) {
         setSalvando(false)
         if (sucesso) { setReagendando(false); setSelecionado(null) }
     }
-    const solicitarStatus = (status: string) => {
-        if (!selecionado || salvando) return
-        Alert.alert('Confirmar alteração', `Alterar o agendamento para ${rotuloStatus(status)}?`, [
-            { text: 'Voltar', style: 'cancel' },
-            { text: 'Confirmar', style: status === 'CANCELADO' || status === 'NO_SHOW' ? 'destructive' : 'default', onPress: async () => {
-                setSalvando(true)
-                const sucesso = await props.alterarStatus(selecionado.id, status)
-                setSalvando(false)
-                if (sucesso) setSelecionado((atual) => atual ? { ...atual, status } : atual)
-            } },
-        ])
-    }
     const pressionarCelula = (data: Date) => {
         // A biblioteca devolve o início da célula horária. Verificamos toda a
         // célula para que pequenas áreas visuais ao redor de um evento não
@@ -144,7 +147,7 @@ export default function AgendaCalendario(props: Props) {
             <Calendar<EventoAgenda> events={eventos} height={alturaCalendario}
                 date={new Date(`${props.data}T12:00:00`)} mode={props.visualizacao} locale="pt-br" weekStartsOn={1} ampm={false}
                 hourRowHeight={alturaHora} minHour={6} maxHour={23} scrollOffsetMinutes={7 * 60} swipeEnabled showTime eventsAreSorted
-                theme={tema} eventCellStyle={(evento) => estiloEvento(evento, cores)} eventCellAccessibilityProps={{ accessibilityRole: 'button' }}
+                theme={tema} eventCellStyle={(evento) => estiloEvento(evento, cores, agora)} eventCellAccessibilityProps={{ accessibilityRole: 'button' }}
                 onPressCell={pressionarCelula}
                 onPressEvent={(evento) => evento.agendamento ? setSelecionado(evento.agendamento) : evento.restricao && Alert.alert('Período indisponível', evento.restricao.motivo)}
                 onSwipeEnd={(data) => props.alterarData(formatarData(data))} moreLabel="{moreCount} mais"
@@ -152,28 +155,20 @@ export default function AgendaCalendario(props: Props) {
         </View>
         <View style={styles.legenda}>
             <Legenda cor={cores.destaque} texto="Agendado" /><Legenda cor={cores.sucesso} texto="Confirmado" />
-            <Legenda cor="#7C3AED" texto="Em atendimento" />
+            <Legenda cor="#1E40AF" texto="Em atendimento" /><Legenda cor="#92400E" texto="Em atraso" /><Legenda cor="#065F46" texto="Finalizado" />
             <Legenda cor="#F97316" texto="Deslocamento" /><Legenda cor={cores.perigo} texto="Bloqueado/ausente" />
         </View>
         <Modal visible={Boolean(selecionado)} transparent animationType="fade" onRequestClose={() => setSelecionado(null)}>
-            <Pressable style={styles.modalFundo} onPress={() => setSelecionado(null)}>
-                {selecionado ? <Pressable onPress={() => undefined} style={[styles.detalhes, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
-                    <View style={styles.detalhesCabecalho}><View style={styles.detalhesTexto}>
-                        <Text style={[styles.detalhesTitulo, { color: cores.texto }]}>{selecionado.usuario?.nome ?? 'Cliente'}</Text>
-                        <Text style={[styles.detalhesMeta, { color: cores.textoSecundario }]}>{selecionado.profissional?.nome ?? 'Profissional'} · {dataHora(selecionado.data)}</Text>
-                        <Text style={[styles.detalhesMeta, { color: cores.textoSecundario }]}>{selecionado.servicos?.map((servico) => servico.nome).join(' · ')}</Text>
-                        {selecionado.unidade?.nome ? <Text style={[styles.detalhesMeta, { color: cores.textoSecundario }]}>Unidade: {selecionado.unidade.nome}</Text> : null}
-                        {selecionado.origem ? <Text style={[styles.detalhesMeta, { color: cores.textoSecundario }]}>Origem: {selecionado.origem.replace('_', ' ')}{selecionado.criadoPor?.nome ? ` · registrado por ${selecionado.criadoPor.nome}` : ''}</Text> : null}
-                        {selecionado.observacoes ? <Text style={[styles.detalhesMeta, { color: cores.texto }]}>Observação: {selecionado.observacoes}</Text> : null}
-                        {selecionado.modeloAtendimento === 'DOMICILIAR' ? <Text style={[styles.alerta, { color: '#F97316' }]}>⌂ Atendimento domiciliar · deslocamento {selecionado.deslocamentoMinutos ?? 0} min</Text> : null}
-                    </View><Pressable accessibilityRole="button" accessibilityLabel="Fechar detalhes" onPress={() => setSelecionado(null)} style={[styles.fechar, { borderColor: cores.borda }]}><Text style={{ color: cores.texto }}>×</Text></Pressable></View>
-                    <Text style={[styles.statusAtual, { color: cores.destaque }]}>Status: {rotuloStatus(selecionado.status)}</Text>
-                    <View style={styles.acoes}>{acoesDisponiveis(selecionado).map((status) => <Pressable key={status} disabled={salvando} onPress={() => solicitarStatus(status)}
-                        style={[styles.acao, { borderColor: status === 'CANCELADO' || status === 'NO_SHOW' ? cores.perigo : cores.borda }]}>
-                        <Text style={[styles.acaoTexto, { color: status === 'CANCELADO' || status === 'NO_SHOW' ? cores.perigo : cores.texto }]}>{rotuloStatus(status)}</Text></Pressable>)}</View>
-                    {['AGENDADO', 'CONFIRMADO'].includes(selecionado.status) ? <Pressable onPress={abrirReagendamento} style={[styles.reagendar, { backgroundColor: cores.destaque }]}><Text style={{ color: cores.destaqueTexto, fontWeight: '900' }}>Reagendar</Text></Pressable> : null}
-                </Pressable> : null}
-            </Pressable>
+            <View style={styles.modalFundo}>
+                <View style={{ maxHeight: '90%', backgroundColor: cores.superficie, borderRadius: 14, padding: 12, gap: 12 }}>
+                <ScrollView keyboardShouldPersistTaps="handled" style={{ flexShrink: 1 }} contentContainerStyle={{ gap: 10 }}>
+                    {erroDetalhe ? <Text accessibilityRole="alert" style={{ color: cores.perigo }}>{erroDetalhe}</Text> : null}
+                    {selecionado ? <CartaoAtendimento item={selecionado} agora={agora} aoAtualizar={setSelecionado} /> : null}
+                    {selecionado && ['AGENDADO', 'CONFIRMADO'].includes(selecionado.status) ? <Pressable accessibilityRole="button" onPress={abrirReagendamento} style={[styles.reagendar, { backgroundColor: cores.destaque }]}><Text style={{ color: cores.destaqueTexto, fontWeight: '900' }}>Reagendar</Text></Pressable> : null}
+                </ScrollView>
+                <Pressable accessibilityRole="button" accessibilityLabel="Fechar detalhes sem alterar atendimento" onPress={() => setSelecionado(null)} style={[styles.reagendar, { backgroundColor: cores.destaque }]}><Text style={{ color: cores.destaqueTexto, fontWeight: '800' }}>Fechar</Text></Pressable>
+                </View>
+            </View>
         </Modal>
         <Modal visible={reagendando} transparent animationType="slide" onRequestClose={() => setReagendando(false)}>
             <View style={styles.modalFundo}><View style={[styles.detalhes, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
@@ -219,8 +214,8 @@ function Chip({ texto, ativo, onPress }: { texto: string; ativo: boolean; onPres
 function criarEventos(itens: AgendamentoOperacional[], restricoes: RestricaoAgendaOperacional[]): EventoAgenda[] {
     const eventos: EventoAgenda[] = []
     itens.forEach((item) => {
-        const titulo = `${item.usuario?.nome ?? 'Cliente'} · ${item.servicos?.map((servico) => servico.nome).join(', ') || 'Atendimento'}`
-        eventos.push({ title: titulo, start: new Date(item.periodos?.atendimento.inicio ?? item.data), end: new Date(item.periodos?.atendimento.fim ?? item.data), categoria: 'ATENDIMENTO', agendamento: item })
+        const titulo = `${rotuloStatus(item.status)} · ${item.usuario?.nome ?? 'Cliente'} · ${item.servicos?.map((servico) => servico.nome).join(', ') || 'Atendimento'}`
+        eventos.push({ title: titulo, start: new Date(item.periodos?.atendimento.inicio ?? item.data), end: new Date(item.periodos?.atendimento.fim ?? item.dataFim ?? item.data), categoria: 'ATENDIMENTO', agendamento: item })
         const preparacoes = [item.periodos?.preparacaoAntes, item.periodos?.preparacaoDepois].filter(Boolean)
         preparacoes.forEach((periodo) => periodo && eventos.push({ title: `Preparação · ${item.profissional?.nome ?? ''}`, start: new Date(periodo.inicio), end: new Date(periodo.fim), categoria: 'PREPARACAO', agendamento: item }))
         const deslocamentos = [item.periodos?.deslocamentoAntes, item.periodos?.deslocamentoDepois].filter(Boolean)
@@ -230,25 +225,20 @@ function criarEventos(itens: AgendamentoOperacional[], restricoes: RestricaoAgen
     return eventos
 }
 
-function estiloEvento(evento: EventoAgenda, cores: ReturnType<typeof useTema>['cores']) {
+function estiloEvento(evento: EventoAgenda, cores: ReturnType<typeof useTema>['cores'], agora: number) {
     if (evento.categoria === 'RESTRICAO') return { backgroundColor: cores.perigo, borderColor: cores.perigo, borderRadius: 4, opacity: 0.72 }
     if (evento.categoria === 'PREPARACAO') return { backgroundColor: '#0EA5E9', borderColor: '#0EA5E9', borderRadius: 4 }
     if (evento.categoria === 'DESLOCAMENTO') return { backgroundColor: '#F97316', borderColor: '#F97316', borderRadius: 4 }
     const status = evento.agendamento?.status
-    const cor = status === 'CONFIRMADO' ? cores.sucesso : status === 'CHECKIN' ? '#7C3AED' : status === 'CONCLUIDO' ? cores.textoSecundario : ['CANCELADO', 'NO_SHOW'].includes(status ?? '') ? cores.perigo : cores.destaque
-    return { backgroundColor: cor, borderColor: cor, borderRadius: 7 }
+    const cor = corStatusAtendimento(status ?? '')
+    const iminente = evento.agendamento && comecaEmDezMinutos(evento.agendamento, agora)
+    return { backgroundColor: cor, borderColor: iminente ? '#FDBA74' : cor, borderWidth: iminente ? 3 : 1, borderRadius: 7 }
 }
 
 function Legenda({ cor, texto }: { cor: string; texto: string }) {
     return <View style={styles.legendaItem}><View style={[styles.legendaCor, { backgroundColor: cor }]} /><Text style={styles.legendaTexto}>{texto}</Text></View>
 }
 function formatarData(data: Date) { return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}` }
-function dataHora(valor: string) { return new Date(valor).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) }
-function rotuloStatus(status: string) { return ({ AGENDADO: 'Agendado', CONFIRMADO: 'Confirmado', CHECKIN: 'Check-in', CONCLUIDO: 'Concluído', CANCELADO: 'Cancelado', NO_SHOW: 'Ausência' } as Record<string, string>)[status] ?? status }
-function acoesDisponiveis(item: AgendamentoOperacional) {
-    return (transicoes[item.status] ?? []).filter((status) => status !== 'NO_SHOW' || new Date(item.data).getTime() <= Date.now())
-}
-
 const styles = StyleSheet.create({
     raiz: { gap: 9 }, barra: { gap: 7 }, visualizacoes: { flexDirection: 'row', gap: 7, flexWrap: 'wrap' }, fuso: { fontSize: 11, fontWeight: '700' },
     chip: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, minHeight: 36, alignItems: 'center', justifyContent: 'center' }, chipTexto: { fontSize: 11, fontWeight: '800' },

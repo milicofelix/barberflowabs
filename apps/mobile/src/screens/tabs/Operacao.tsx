@@ -4,7 +4,8 @@ import { SeletorOperacao } from '@/src/components/operacao/ComponentesOperacao'
 import { AtalhoCentralFinanceira, EquipeOperacao, ResumoOperacao } from '@/src/components/operacao/SecoesOperacao'
 import useOperacao from '@/src/data/hooks/useOperacao'
 import type { SecaoOperacao, VisualizacaoAgenda } from '@/src/data/operacao/tipos'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import DetalheAtendimentoNotificacao from '@/src/components/operacao/DetalheAtendimentoNotificacao'
 import { Alert, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
@@ -21,12 +22,14 @@ import CabecalhoIdentidadeUnidade from '@/src/components/shared/CabecalhoIdentid
 
 type Props = BottomTabScreenProps<AbasParamList, 'Operacao'>
 
-export default function Operacao({ navigation }: Props) {
+export default function Operacao({ navigation, route }: Props) {
     const { cores } = useTema()
     const [secao, setSecao] = useState<SecaoOperacao>('RESUMO')
     const [visualizacaoAgenda, setVisualizacaoAgenda] = useState<VisualizacaoAgenda>('day')
     const [agendaTelaCheia, setAgendaTelaCheia] = useState(false)
     const dados = useOperacao(visualizacaoAgenda)
+    const agendamentoId = route.params?.agendamentoId
+    useEffect(() => { if (agendamentoId) { setSecao('AGENDA'); setAgendaTelaCheia(false) } }, [agendamentoId, route.params?.chave])
     const gestaoServicos = useGestaoServicos(secao === 'SERVICOS')
     const iniciarAgendamento = (dataSelecionada: Date) => {
         const data = new Date(dataSelecionada)
@@ -42,12 +45,14 @@ export default function Operacao({ navigation }: Props) {
         navigation.navigate('Agendamento', { dataInicial: data.toISOString(), origemAgenda: true, chave: Date.now() })
     }
     const cabecalho = <>
+        {agendamentoId && Number.isSafeInteger(agendamentoId) && agendamentoId > 0 ? <DetalheAtendimentoNotificacao key={`${agendamentoId}:${route.params?.chave}`} id={agendamentoId} alterarData={dados.setData} fechar={() => navigation.setParams({ agendamentoId: undefined })} /> : null}
         <CabecalhoIdentidadeUnidade />
         <Text style={styles.sobretitulo}>OPERAÇÃO DO ESTABELECIMENTO</Text><Text style={[styles.titulo, { color: cores.texto }]}>Gestão diária</Text>
         <SeletorOperacao atual={secao} selecionar={setSecao} permissoes={dados.permissoes} />
     </>
 
     if (secao === 'AGENDA') {
+        if (!dados.carregando && !dados.permissoes.includes('AGENDA_GERENCIAR')) return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}><ScrollView contentContainerStyle={styles.conteudo}>{cabecalho}<Text accessibilityRole="alert" style={{ color: cores.texto }}>Você não tem permissão para consultar a agenda.</Text></ScrollView></SafeAreaView>
         const agenda = <>
             {cabecalho}
             <NavegacaoData data={dados.data} alterar={dados.setData} visualizacao={visualizacaoAgenda} />
@@ -60,7 +65,7 @@ export default function Operacao({ navigation }: Props) {
                 profissionais={dados.profissionais} recursos={dados.recursos} filtros={dados.filtrosAgenda} alterarFiltros={dados.setFiltrosAgenda} data={dados.data}
                 visualizacao={visualizacaoAgenda} alterarVisualizacao={setVisualizacaoAgenda} alterarData={dados.setData}
                 aoPressionarCelula={iniciarAgendamento}
-                alterarStatus={dados.alterarStatus} reagendar={dados.reagendar} fusoHorario={dados.fusoHorario} /></> : null}
+                reagendar={dados.reagendar} fusoHorario={dados.fusoHorario} /></> : null}
         </>
         return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}>
             {visualizacaoAgenda === 'schedule'
@@ -81,7 +86,7 @@ export default function Operacao({ navigation }: Props) {
                         profissionais={dados.profissionais} recursos={dados.recursos} filtros={dados.filtrosAgenda} alterarFiltros={dados.setFiltrosAgenda} data={dados.data}
                         visualizacao={visualizacaoAgenda} alterarVisualizacao={setVisualizacaoAgenda} alterarData={dados.setData}
                         aoPressionarCelula={iniciarAgendamento}
-                        alterarStatus={dados.alterarStatus} reagendar={dados.reagendar} fusoHorario={dados.fusoHorario} />
+                        reagendar={dados.reagendar} fusoHorario={dados.fusoHorario} />
                 </SafeAreaView>
             </Modal>
         </SafeAreaView>

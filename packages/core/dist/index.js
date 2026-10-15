@@ -34,20 +34,28 @@ __export(src_exports, {
   NovoAgendamento: () => NovoAgendamento,
   ORIGENS_TRANSICAO_ATENDIMENTO: () => ORIGENS_TRANSICAO_ATENDIMENTO,
   ObterHorariosOcupados: () => ObterHorariosOcupados,
+  ROTULOS_ACOES: () => ROTULOS_ACOES,
   ROTULOS_STATUS_AGENDAMENTO: () => ROTULOS_STATUS_AGENDAMENTO,
   RegistrarUsuario: () => RegistrarUsuario,
   STATUS_AGENDAMENTO: () => STATUS_AGENDAMENTO,
   STATUS_TRANSICAO_ATENDIMENTO: () => STATUS_TRANSICAO_ATENDIMENTO,
   TEMPO_SLOT: () => TEMPO_SLOT,
   TIPOS_TRANSICAO_ATENDIMENTO: () => TIPOS_TRANSICAO_ATENDIMENTO,
+  acoesAtendimento: () => acoesAtendimento,
+  atendimentoTerminal: () => atendimentoTerminal,
   capaPersonalizada: () => capaPersonalizada,
   categoriaIdentidade: () => categoriaIdentidade,
   clientes: () => clientes_default,
+  comecaEmDezMinutos: () => comecaEmDezMinutos,
+  dataAtendimento: () => dataAtendimento,
+  horarioAtendimento: () => horarioAtendimento,
   imagemPadraoProfissional: () => imagemPadraoProfissional,
   imagemProfissionalLegada: () => imagemProfissionalLegada,
   iniciaisUsuario: () => iniciaisUsuario,
+  intervaloDiaAtendimento: () => intervaloDiaAtendimento,
   profissionais: () => profissionais_default,
   resolverURLMidia: () => resolverURLMidia,
+  rotuloStatus: () => rotuloStatus,
   servicos: () => servicos_default,
   statusAgendamentoValido: () => statusAgendamentoValido,
   urlImagemProfissional: () => urlImagemProfissional
@@ -449,6 +457,62 @@ function statusAgendamentoValido(status) {
   return typeof status === "string" && STATUS_AGENDAMENTO.includes(status);
 }
 
+// src/agendamento/operacao-atendimento.ts
+var ROTULOS_ACOES = {
+  CONFIRMADO: "Confirmar",
+  ATRASADO: "Marcar atraso",
+  CHECKIN: "Iniciar atendimento",
+  CONCLUIDO: "Finalizar",
+  CANCELADO: "Cancelar",
+  NO_SHOW: "Registrar aus\xEAncia",
+  RETOMAR_AUTOMACAO: "Retomar automa\xE7\xE3o"
+};
+var rotuloStatus = (status) => statusAgendamentoValido(status) ? ROTULOS_STATUS_AGENDAMENTO[status] : status;
+var atendimentoTerminal = (status) => ["CONCLUIDO", "CANCELADO", "NO_SHOW"].includes(status);
+function acoesAtendimento(item, agora) {
+  if (!statusAgendamentoValido(item.status)) return [];
+  const acoes = [];
+  if (item.status === "AGENDADO") acoes.push("CONFIRMADO");
+  if (["AGENDADO", "CONFIRMADO", "CHECKIN"].includes(item.status)) acoes.push("ATRASADO");
+  if (["AGENDADO", "CONFIRMADO", "ATRASADO"].includes(item.status)) acoes.push("CHECKIN");
+  if (["ATRASADO", "CHECKIN"].includes(item.status)) acoes.push("CONCLUIDO");
+  if (!atendimentoTerminal(item.status)) {
+    if (new Date(item.data).getTime() <= agora) acoes.push("NO_SHOW");
+    acoes.push("CANCELADO");
+    if (item.estabelecimento?.fluxoAtendimentoAutomaticoAtivo && (item.controleManualEm || !item.automacaoAtendimentoAtiva || item.status === "ATRASADO")) acoes.push("RETOMAR_AUTOMACAO");
+  }
+  return acoes;
+}
+function comecaEmDezMinutos(item, agora) {
+  const faltam = new Date(item.data).getTime() - agora;
+  return ["AGENDADO", "CONFIRMADO", "ATRASADO"].includes(item.status) && faltam >= 0 && faltam <= 6e5;
+}
+function dataAtendimento(item) {
+  const partes = new Intl.DateTimeFormat("en-CA", { timeZone: item.estabelecimento?.fusoHorario ?? "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(item.data));
+  const parte = (tipo) => partes.find((p) => p.type === tipo)?.value;
+  return `${parte("year")}-${parte("month")}-${parte("day")}`;
+}
+function horarioAtendimento(valor, item) {
+  return new Intl.DateTimeFormat("pt-BR", { timeZone: item.estabelecimento?.fusoHorario ?? "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" }).format(new Date(valor));
+}
+function intervaloDiaAtendimento(data, fusoHorario) {
+  const [ano, mes, dia] = data.split("-").map(Number);
+  const converter = (diaUTC) => {
+    const alvo = Date.UTC(ano, mes - 1, diaUTC);
+    let instante = alvo;
+    for (let tentativa = 0; tentativa < 3; tentativa++) {
+      const partes = new Intl.DateTimeFormat("en-US", { timeZone: fusoHorario, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(new Date(instante));
+      const valor = (tipo) => Number(partes.find((p) => p.type === tipo)?.value);
+      const local = Date.UTC(valor("year"), valor("month") - 1, valor("day"), valor("hour"), valor("minute"), valor("second"));
+      const diferenca = alvo - local;
+      instante += diferenca;
+      if (!diferenca) break;
+    }
+    return new Date(instante).toISOString();
+  };
+  return { inicio: converter(dia), fim: converter(dia + 1) };
+}
+
 // src/profissional/service/BuscarProfissionais.ts
 var BuscarProfissionais = class {
   constructor(repo) {
@@ -578,20 +642,28 @@ function urlImagemProfissional(url, sexo) {
   NovoAgendamento,
   ORIGENS_TRANSICAO_ATENDIMENTO,
   ObterHorariosOcupados,
+  ROTULOS_ACOES,
   ROTULOS_STATUS_AGENDAMENTO,
   RegistrarUsuario,
   STATUS_AGENDAMENTO,
   STATUS_TRANSICAO_ATENDIMENTO,
   TEMPO_SLOT,
   TIPOS_TRANSICAO_ATENDIMENTO,
+  acoesAtendimento,
+  atendimentoTerminal,
   capaPersonalizada,
   categoriaIdentidade,
   clientes,
+  comecaEmDezMinutos,
+  dataAtendimento,
+  horarioAtendimento,
   imagemPadraoProfissional,
   imagemProfissionalLegada,
   iniciaisUsuario,
+  intervaloDiaAtendimento,
   profissionais,
   resolverURLMidia,
+  rotuloStatus,
   servicos,
   statusAgendamentoValido,
   urlImagemProfissional

@@ -1,3 +1,5 @@
+import type { AtendimentoOperacional } from '@uniflowabs/core'
+
 export interface DashboardOperacional {
     data: string
     agendamentosHoje: number
@@ -8,7 +10,7 @@ export interface DashboardOperacional {
     saldoMes: number
 }
 
-export interface AgendamentoOperacional {
+export interface AgendamentoOperacional extends AtendimentoOperacional {
     id: number
     data: string
     dataFim?: string | null

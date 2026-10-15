@@ -23,7 +23,7 @@ export default function CartaoAtendimentoOperacional({ item, agora, ocupado, esc
             </div>
         </div>
         <p className="mt-2 text-sm">{horarioAtendimento(item.data, item)}{item.dataFim ? ` → ${horarioAtendimento(item.dataFim, item)}` : ''}</p>
-        <p className="mt-1 text-sm text-muted-foreground">{item.profissional?.nome ?? 'Profissional'} · {item.servicos.map((servico) => servico.nome).join(', ')}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{item.profissional?.nome ?? 'Profissional'} · {item.servicos?.map((servico) => servico.nome).join(', ')}</p>
         <p className="mt-1 text-sm font-semibold">{Number(item.valorTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
         {iminente ? <p role="status" className="mt-3 font-semibold text-amber-800 dark:text-amber-300">Começa em até 10 minutos</p> : null}
         {!item.estabelecimento?.fluxoAtendimentoAutomaticoAtivo ? <p className="mt-2 text-xs text-muted-foreground">Fluxo automático desativado na unidade.</p> : null}

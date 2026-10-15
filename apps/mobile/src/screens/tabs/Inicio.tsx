@@ -14,7 +14,7 @@ export default function Inicio() {
     if (operacional) {
         return <SafeAreaView style={[styles.container, { backgroundColor: modo === 'light' ? '#FFFFFF' : '#081426' }]} edges={['top']}>
             {modo === 'light' ? <DecoracaoClara /> : null}
-            <ProximosAgendamentos cabecalho={<CabecalhoIdentidadeUnidade destaque />} />
+            <ProximosAgendamentos key={`${usuario?.id}:${usuario?.estabelecimentoId}`} cabecalho={<CabecalhoIdentidadeUnidade destaque />} />
         </SafeAreaView>
     }
 

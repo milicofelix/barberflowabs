@@ -152,6 +152,54 @@ type StatusTransicaoAtendimento = (typeof STATUS_TRANSICAO_ATENDIMENTO)[number];
 declare const ROTULOS_STATUS_AGENDAMENTO: Record<StatusAgendamento, string>;
 declare function statusAgendamentoValido(status: unknown): status is StatusAgendamento;
 
+interface AtendimentoOperacional {
+    id: number;
+    status: string;
+    data: string;
+    dataFim?: string | null;
+    valorTotal: number;
+    iniciadoEm?: string | null;
+    finalizadoEm?: string | null;
+    controleManualEm?: string | null;
+    controleManualPorId?: number | null;
+    controleManualPor?: {
+        id: number;
+        nome: string;
+    } | null;
+    automacaoAtendimentoAtiva?: boolean;
+    revisaoFluxo?: number;
+    usuario?: {
+        id?: number;
+        nome: string;
+    };
+    profissional?: {
+        id: number;
+        nome: string;
+    };
+    servicos?: Array<{
+        id: number;
+        nome: string;
+    }>;
+    estabelecimento?: {
+        fluxoAtendimentoAutomaticoAtivo: boolean;
+        fusoHorario: string;
+        inicioAtendimentoAutomaticoAtivo?: boolean;
+        finalizacaoAtendimentoAutomaticaAtiva?: boolean;
+    };
+}
+type AcaoAtendimento = StatusAgendamento | 'RETOMAR_AUTOMACAO';
+declare const ROTULOS_ACOES: Partial<Record<AcaoAtendimento, string>>;
+declare const rotuloStatus: (status: string) => string;
+declare const atendimentoTerminal: (status: string) => boolean;
+declare function acoesAtendimento(item: AtendimentoOperacional, agora: number): AcaoAtendimento[];
+declare function comecaEmDezMinutos(item: AtendimentoOperacional, agora: number): boolean;
+declare function dataAtendimento(item: AtendimentoOperacional): string;
+declare function horarioAtendimento(valor: string, item: AtendimentoOperacional): string;
+declare function intervaloDiaAtendimento(data: string, fusoHorario: string): {
+    inicio: string;
+    fim: string;
+};
+
 declare const clientes: {
     id: number;
     imagemURL: string;
@@ -294,4 +342,4 @@ declare function imagemProfissionalLegada(url?: string | null): boolean;
 declare function imagemPadraoProfissional(sexo?: string | null): string;
 declare function urlImagemProfissional(url?: string | null, sexo?: string | null): string;
 
-export { AgendaUtils, type Agendamento, type AssociacaoMidia, BuscarAgendaProfissionalPorDia, BuscarAgendamentosCliente, BuscarProfissionais, BuscarServicos, CHAVES_FOTOS_PROFISSIONAIS_LEGADAS, DateUtils, type EntidadeMidia, ExcluirAgendamento, type FinalidadeMidia, Horarios, type IdentidadeEstabelecimento, type ImagemGaleria, LoginUsuario, MoedaUtils, NovoAgendamento, ORIGENS_TRANSICAO_ATENDIMENTO, ObterHorariosOcupados, type OrigemTransicaoAtendimento, type Profissional, type ProvedorCriptografia, ROTULOS_STATUS_AGENDAMENTO, RegistrarUsuario, type RepositorioAgendamento, type RepositorioProfissional, type RepositorioServico, type RepositorioUsuario, type ResultadoAssociacaoMidia, STATUS_AGENDAMENTO, STATUS_TRANSICAO_ATENDIMENTO, type Servico, type SexoProfissional, type StatusAgendamento, type StatusTransicaoAtendimento, TEMPO_SLOT, TIPOS_TRANSICAO_ATENDIMENTO, type TipoTransicaoAtendimento, type Usuario, type VersaoMidia, capaPersonalizada, categoriaIdentidade, clientes, imagemPadraoProfissional, imagemProfissionalLegada, iniciaisUsuario, profissionais, resolverURLMidia, servicos, statusAgendamentoValido, urlImagemProfissional };
+export { type AcaoAtendimento, AgendaUtils, type Agendamento, type AssociacaoMidia, type AtendimentoOperacional, BuscarAgendaProfissionalPorDia, BuscarAgendamentosCliente, BuscarProfissionais, BuscarServicos, CHAVES_FOTOS_PROFISSIONAIS_LEGADAS, DateUtils, type EntidadeMidia, ExcluirAgendamento, type FinalidadeMidia, Horarios, type IdentidadeEstabelecimento, type ImagemGaleria, LoginUsuario, MoedaUtils, NovoAgendamento, ORIGENS_TRANSICAO_ATENDIMENTO, ObterHorariosOcupados, type OrigemTransicaoAtendimento, type Profissional, type ProvedorCriptografia, ROTULOS_ACOES, ROTULOS_STATUS_AGENDAMENTO, RegistrarUsuario, type RepositorioAgendamento, type RepositorioProfissional, type RepositorioServico, type RepositorioUsuario, type ResultadoAssociacaoMidia, STATUS_AGENDAMENTO, STATUS_TRANSICAO_ATENDIMENTO, type Servico, type SexoProfissional, type StatusAgendamento, type StatusTransicaoAtendimento, TEMPO_SLOT, TIPOS_TRANSICAO_ATENDIMENTO, type TipoTransicaoAtendimento, type Usuario, type VersaoMidia, acoesAtendimento, atendimentoTerminal, capaPersonalizada, categoriaIdentidade, clientes, comecaEmDezMinutos, dataAtendimento, horarioAtendimento, imagemPadraoProfissional, imagemProfissionalLegada, iniciaisUsuario, intervaloDiaAtendimento, profissionais, resolverURLMidia, rotuloStatus, servicos, statusAgendamentoValido, urlImagemProfissional };

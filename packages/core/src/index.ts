@@ -1,4 +1,5 @@
 export * from './agendamento'
+export * from './agendamento/operacao-atendimento'
 export * from './constants'
 export * from './profissional'
 export * from './servico'
