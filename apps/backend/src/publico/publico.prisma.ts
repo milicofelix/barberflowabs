@@ -10,6 +10,30 @@ const TIME_ZONE_PADRAO = 'America/Sao_Paulo';
 export class PublicoPrisma {
   constructor(private readonly prisma: PrismaService) {}
 
+  async listarServicosPublicos() {
+    const servicos = await this.prisma.servico.findMany({
+      where: {
+        estabelecimento: this.criteriosPublicacao(),
+        profissionaisHabilitados: { some: { ativo: true } },
+      },
+      orderBy: [{ nome: 'asc' }, { estabelecimentoId: 'asc' }, { id: 'asc' }],
+      select: {
+        id: true, estabelecimentoId: true, nome: true, descricao: true, preco: true,
+        imagemURL: true, qtdeSlots: true, duracaoMinutos: true,
+        estabelecimento: { select: { id: true, slug: true, nome: true, nomePublico: true } },
+      },
+    });
+    return servicos.map((servico) => ({
+      ...servico,
+      preco: Number(servico.preco),
+      estabelecimento: {
+        id: servico.estabelecimento.id,
+        slug: servico.estabelecimento.slug,
+        nome: servico.estabelecimento.nomePublico ?? servico.estabelecimento.nome,
+      },
+    }));
+  }
+
   async listarProfissionaisPublicos() {
     const profissionais = await this.prisma.profissional.findMany({
       where: {
