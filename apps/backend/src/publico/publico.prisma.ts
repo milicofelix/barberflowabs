@@ -436,7 +436,7 @@ export class PublicoPrisma {
     return { status: 'FECHADA', label: 'Fechada agora' };
   }
 
-  private criteriosPublicacao(): Prisma.EstabelecimentoWhereInput {
+  criteriosPublicacao(): Prisma.EstabelecimentoWhereInput {
     return {
       reviewStatus: 'APPROVED',
       status: { notIn: ['PAST_DUE', 'SUSPENDED', 'CANCELED'] },
