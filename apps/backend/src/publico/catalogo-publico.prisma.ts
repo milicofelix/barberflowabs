@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { randomInt } from 'crypto';
 import { urlImagemProfissional } from '@uniflowabs/core';
 import { PrismaService } from 'src/db/prisma.service';
 import { PublicoPrisma } from './publico.prisma';
@@ -24,7 +25,7 @@ export class CatalogoPublicoPrisma {
     return this.prisma.segmento.findMany({ where: { ativo: true }, select: { slug: true, nome: true }, orderBy: { nome: 'asc' }, take: 100 });
   }
 
-  async listar(tipo: TipoCatalogoPublico, query: Record<string, unknown>, agora = new Date()) {
+  async listar(tipo: TipoCatalogoPublico, query: Record<string, unknown>, sortear: (maximo: number) => number = randomInt) {
     const filtro = filtrosCatalogoPublico(query);
     const classificacao = filtro.segmento ? { segmentos: { some: { segmento: { slug: filtro.segmento, ativo: true } } } } : {};
     const estabelecimento = { AND: [this.publico.criteriosPublicacao(), classificacao] };
@@ -43,10 +44,18 @@ export class CatalogoPublicoPrisma {
       const relacao = tipo === 'servicos' ? 'servicos' : 'profissionais';
       const unidadesWhere = { AND: [estabelecimento, { [relacao]: { some: { ...habilitacao, ...busca } } }] };
       const unidadesTotal = await this.prisma.estabelecimento.count({ where: unidadesWhere });
-      const inicio = unidadesTotal ? (Math.floor(agora.getTime() / 86400000) * 6) % unidadesTotal : 0;
+      const inicio = unidadesTotal ? sortear(unidadesTotal) : 0;
       const unidades = await this.prisma.estabelecimento.findMany({ where: unidadesWhere, orderBy: { id: 'asc' }, skip: inicio, take: 6, select: { id: true } });
       if (unidades.length < Math.min(6, unidadesTotal)) unidades.push(...await this.prisma.estabelecimento.findMany({ where: unidadesWhere, orderBy: { id: 'asc' }, take: Math.min(6, unidadesTotal) - unidades.length, select: { id: true } }));
-      const grupos = await Promise.all(unidades.map((unidade) => modelo.findMany({ where: { ...where, estabelecimentoId: unidade.id }, orderBy: [{ nome: 'asc' }, { id: 'asc' }], take: 6, select })));
+      const unidadesUnicas = Array.from(new Map(unidades.map((unidade) => [unidade.id, unidade])).values());
+      const grupos = await Promise.all(unidadesUnicas.map(async (unidade) => {
+        const filtroUnidade = { ...where, estabelecimentoId: unidade.id };
+        const quantidade = await modelo.count({ where: filtroUnidade });
+        const deslocamento = quantidade ? sortear(quantidade) : 0;
+        const candidatos = await modelo.findMany({ where: filtroUnidade, orderBy: [{ nome: 'asc' }, { id: 'asc' }], skip: deslocamento, take: 6, select });
+        if (candidatos.length < Math.min(6, quantidade)) candidatos.push(...await modelo.findMany({ where: filtroUnidade, orderBy: [{ nome: 'asc' }, { id: 'asc' }], take: Math.min(6, quantidade) - candidatos.length, select }));
+        return Array.from(new Map(candidatos.map((item: any) => [item.id, item])).values()) as any[];
+      }));
       itens = [];
       for (let posicao = 0; posicao < 6 && itens.length < 6; posicao++) for (const grupo of grupos) if (grupo[posicao] && itens.length < 6) itens.push(grupo[posicao]);
       total = itens.length;
