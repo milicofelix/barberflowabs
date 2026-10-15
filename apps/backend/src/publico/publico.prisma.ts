@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/db/prisma.service';
 import { mapearClassificacaoEstabelecimento } from 'src/estabelecimento/classificacao-estabelecimento.mapper';
 
@@ -188,14 +189,13 @@ export class PublicoPrisma {
       where: {
         slug,
         ...this.criteriosPublicacao(),
-      } as any,
+      },
       include: {
         servicos: {
           orderBy: { nome: 'asc' },
           select: {
             id: true,
             nome: true,
-            sexo: true,
             descricao: true,
             preco: true,
             qtdeSlots: true,
@@ -226,6 +226,7 @@ export class PublicoPrisma {
           select: {
             id: true,
             nome: true,
+            sexo: true,
             descricao: true,
             imagemURL: true,
             avaliacao: true,
@@ -283,7 +284,7 @@ export class PublicoPrisma {
           },
         },
       },
-    } as any);
+    });
 
     if (!estabelecimento) return null;
 
@@ -409,7 +410,7 @@ export class PublicoPrisma {
     return { status: 'FECHADA', label: 'Fechada agora' };
   }
 
-  private criteriosPublicacao() {
+  private criteriosPublicacao(): Prisma.EstabelecimentoWhereInput {
     return {
       reviewStatus: 'APPROVED',
       status: { notIn: ['PAST_DUE', 'SUSPENDED', 'CANCELED'] },
