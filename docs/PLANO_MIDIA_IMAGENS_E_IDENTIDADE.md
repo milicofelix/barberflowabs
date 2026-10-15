@@ -263,6 +263,8 @@ Roteiro para aceite pelo usuário no mobile:
 
 ## Sequência E Estado
 
+Correção posterior em 15/10/2026: as fotos demonstrativas antigas de profissionais foram retiradas dos padrões, seeds e seleção na galeria. A compatibilidade com registros antigos e a migration de correção estão descritas em [CORRECAO_AVATARES_PROFISSIONAIS.md](CORRECAO_AVATARES_PROFISSIONAIS.md). Aceite e aplicação da migration permanecem com o usuário.
+
 A seção “Clientes Que Agendam Online” da Home web está temporariamente sem fotos/depoimentos demonstrativos. O fluxo futuro de participação voluntária, revisão e retirada foi separado em `docs/PLANO_CLIENTES_DEPOIMENTOS_E_AUTORIZACAO.md`. Foto pessoal não será reutilizada automaticamente como autorização de divulgação.
 
 Executar as fases na ordem 1 → 2 → 3 → 4 → 5 → 6. A fundação de upload e entrega persistente precede os seletores. A galeria inicial reutiliza os arquivos pertinentes já disponíveis; novas artes poderão ser criadas durante a curadoria, quando necessárias.

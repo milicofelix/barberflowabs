@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { estabelecimentosMarketplaceTatuape } from './marketplace-tatuape.data';
+import { imagemPadraoProfissional } from '@uniflowabs/core';
 
 export async function seedMarketplaceTatuape(prisma: PrismaClient) {
   for (const item of estabelecimentosMarketplaceTatuape) {
@@ -44,10 +45,10 @@ async function seedEstruturaDoEstabelecimento(
 
   const profissional = await prisma.profissional.upsert({
     where: { estabelecimentoId_nome: { estabelecimentoId, nome: item.profissional } },
-    update: { descricao: `Especialista da ${item.nome}.`, sexo: sexoPeloNome(item.profissional), imagemURL: '/profissionais/profissional-1.jpg' },
+    update: { descricao: `Especialista da ${item.nome}.`, sexo: sexoPeloNome(item.profissional) },
     create: {
       estabelecimentoId, nome: item.profissional, descricao: `Especialista da ${item.nome}.`,
-      sexo: sexoPeloNome(item.profissional), imagemURL: '/profissionais/profissional-1.jpg', avaliacao: 5, quantidadeAvaliacoes: 0,
+      sexo: sexoPeloNome(item.profissional), imagemURL: imagemPadraoProfissional(sexoPeloNome(item.profissional)), avaliacao: 5, quantidadeAvaliacoes: 0,
     },
   });
 

@@ -1,4 +1,4 @@
-import { Profissional } from '@uniflowabs/core'
+import { Profissional, urlImagemProfissional } from '@uniflowabs/core'
 import {
     IconBrandInstagram,
     IconBrandLinkedin,
@@ -18,7 +18,7 @@ export default function ItemProfissional(props: ItemProfissionalProps) {
         <div className="flex flex-col rounded-xl bg-zinc-800 overflow-hidden">
             <div className="relative h-72 w-full">
                 <Image
-                    src={profissional.imagemURL}
+                    src={urlImagemProfissional(profissional.imagemURL, profissional.sexo)}
                     fill
                     alt={profissional.nome}
                     className="object-cover object-top"

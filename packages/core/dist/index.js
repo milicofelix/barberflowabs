@@ -25,6 +25,7 @@ __export(src_exports, {
   BuscarAgendamentosCliente: () => BuscarAgendamentosCliente,
   BuscarProfissionais: () => BuscarProfissionais,
   BuscarServicos: () => BuscarServicos,
+  CHAVES_FOTOS_PROFISSIONAIS_LEGADAS: () => CHAVES_FOTOS_PROFISSIONAIS_LEGADAS,
   DateUtils: () => DateUtils,
   ExcluirAgendamento: () => ExcluirAgendamento,
   Horarios: () => Horarios,
@@ -42,11 +43,14 @@ __export(src_exports, {
   capaPersonalizada: () => capaPersonalizada,
   categoriaIdentidade: () => categoriaIdentidade,
   clientes: () => clientes_default,
+  imagemPadraoProfissional: () => imagemPadraoProfissional,
+  imagemProfissionalLegada: () => imagemProfissionalLegada,
   iniciaisUsuario: () => iniciaisUsuario,
   profissionais: () => profissionais_default,
   resolverURLMidia: () => resolverURLMidia,
   servicos: () => servicos_default,
-  statusAgendamentoValido: () => statusAgendamentoValido
+  statusAgendamentoValido: () => statusAgendamentoValido,
+  urlImagemProfissional: () => urlImagemProfissional
 });
 module.exports = __toCommonJS(src_exports);
 
@@ -129,7 +133,7 @@ var profissionais = [
     nome: "Marcos Almeida",
     sexo: "MASCULINO",
     descricao: "Especialista em cortes masculinos cl\xE1ssicos, acabamento com m\xE1quina e atendimento consultivo.",
-    imagemURL: "/profissionais/profissional-1.jpg",
+    imagemURL: "/profissionais/avatar-masculino.png",
     avaliacao: 5,
     quantidadeAvaliacoes: 87
   },
@@ -138,7 +142,7 @@ var profissionais = [
     nome: "Roberto Lima",
     sexo: "MASCULINO",
     descricao: "Profissional focado em barba, desenho, aparo e finaliza\xE7\xE3o para diferentes estilos.",
-    imagemURL: "/profissionais/profissional-2.jpg",
+    imagemURL: "/profissionais/avatar-masculino.png",
     avaliacao: 4.5,
     quantidadeAvaliacoes: 39
   },
@@ -147,7 +151,7 @@ var profissionais = [
     nome: "Kathya Martins",
     sexo: "FEMININO",
     descricao: "Atendimento preciso em cortes modernos, visagismo e finaliza\xE7\xF5es personalizadas.",
-    imagemURL: "/profissionais/profissional-3.jpg",
+    imagemURL: "/profissionais/avatar-feminino.png",
     avaliacao: 5,
     quantidadeAvaliacoes: 91
   },
@@ -156,7 +160,7 @@ var profissionais = [
     nome: "S\xE9rgio Rocha",
     sexo: "MASCULINO",
     descricao: "Experi\xEAncia em cortes degrad\xEA, barba alinhada e acabamento detalhado.",
-    imagemURL: "/profissionais/profissional-4.jpg",
+    imagemURL: "/profissionais/avatar-masculino.png",
     avaliacao: 4.5,
     quantidadeAvaliacoes: 29
   },
@@ -165,7 +169,7 @@ var profissionais = [
     nome: "Rafael Souza",
     sexo: "MASCULINO",
     descricao: "Especialista em m\xE1quina, cortes baixos e manuten\xE7\xE3o r\xE1pida com acabamento limpo.",
-    imagemURL: "/profissionais/profissional-5.jpg",
+    imagemURL: "/profissionais/avatar-masculino.png",
     avaliacao: 4.5,
     quantidadeAvaliacoes: 44
   },
@@ -174,7 +178,7 @@ var profissionais = [
     nome: "Fernanda Costa",
     sexo: "FEMININO",
     descricao: "Profissional com foco em atendimento personalizado, cortes vers\xE1teis e finaliza\xE7\xE3o cuidadosa.",
-    imagemURL: "/profissionais/profissional-6.jpg",
+    imagemURL: "/profissionais/avatar-feminino.png",
     avaliacao: 5,
     quantidadeAvaliacoes: 46
   }
@@ -539,6 +543,25 @@ function iniciaisUsuario(nome) {
 function resolverURLMidia(url, api) {
   return url.startsWith("/midias/") ? `${api.replace(/\/$/, "")}${url}` : url;
 }
+
+// src/midia/imagem-profissional.ts
+var CHAVES_FOTOS_PROFISSIONAIS_LEGADAS = Array.from({ length: 6 }, (_, indice) => `profissional-${indice + 1}`);
+function imagemProfissionalLegada(url) {
+  const caminho = url?.trim().replace(/^https?:\/\/[^/]+/i, "").split(/[?#]/)[0];
+  return !!caminho && /^\/profissionais\/profissional-[1-6]\.jpg$/i.test(caminho);
+}
+function imagemPadraoProfissional(sexo) {
+  return sexo === "FEMININO" ? "/profissionais/avatar-feminino.png" : "/profissionais/avatar-masculino.png";
+}
+function urlImagemProfissional(url, sexo) {
+  const imagem = url?.trim();
+  const caminho = imagem?.replace(/^https?:\/\/[^/]+/i, "").split(/[?#]/)[0];
+  if (!imagem || imagemProfissionalLegada(imagem) || /^\/profissionais\/avatar-(masculino|feminino)\.png$/i.test(caminho ?? "")) {
+    if (sexo !== "FEMININO" && sexo !== "MASCULINO" && caminho?.endsWith("avatar-feminino.png")) return "/profissionais/avatar-feminino.png";
+    return imagemPadraoProfissional(sexo);
+  }
+  return imagem;
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   AgendaUtils,
@@ -546,6 +569,7 @@ function resolverURLMidia(url, api) {
   BuscarAgendamentosCliente,
   BuscarProfissionais,
   BuscarServicos,
+  CHAVES_FOTOS_PROFISSIONAIS_LEGADAS,
   DateUtils,
   ExcluirAgendamento,
   Horarios,
@@ -563,9 +587,12 @@ function resolverURLMidia(url, api) {
   capaPersonalizada,
   categoriaIdentidade,
   clientes,
+  imagemPadraoProfissional,
+  imagemProfissionalLegada,
   iniciaisUsuario,
   profissionais,
   resolverURLMidia,
   servicos,
-  statusAgendamentoValido
+  statusAgendamentoValido,
+  urlImagemProfissional
 });

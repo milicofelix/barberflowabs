@@ -519,7 +519,7 @@ async function seedEstabelecimentosZonaLeste() {
         estabelecimentoId: estabelecimento.id,
         nome: nomesProfissionais[(indice + offset) % nomesProfissionais.length],
         descricao: `Profissional especializado em corte, barba e acabamento na unidade ${item.bairro}.`,
-        imagemURL: `/profissionais/profissional-${(offset % 6) + 1}.jpg`,
+        imagemURL: '/profissionais/avatar-masculino.png',
         avaliacao: 0,
         quantidadeAvaliacoes: 0,
       })),

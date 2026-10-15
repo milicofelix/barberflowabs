@@ -4,6 +4,7 @@ import { PrismaService } from 'src/db/prisma.service';
 import { EquipePolicy } from 'src/equipe/equipe.policy';
 import { AssociarMidiaDto, FINALIDADES_MIDIA, FinalidadeMidia } from './midia.dto';
 import { MidiaStorageService } from './midia-storage.service';
+import { CHAVES_FOTOS_PROFISSIONAIS_LEGADAS, imagemPadraoProfissional } from '@uniflowabs/core';
 
 @Injectable()
 export class MidiaService {
@@ -22,7 +23,7 @@ export class MidiaService {
     this.superadmin(usuario);
     const p = this.prisma as any;
     return {
-      itens: await p.midia.findMany({ where: { escopo: 'GLOBAL', status: 'DISPONIVEL' }, orderBy: { titulo: 'asc' }, take: 200 }),
+      itens: await p.midia.findMany({ where: { escopo: 'GLOBAL', status: 'DISPONIVEL', OR: [{ chaveCatalogo: null }, { chaveCatalogo: { notIn: CHAVES_FOTOS_PROFISSIONAIS_LEGADAS } }] }, orderBy: { titulo: 'asc' }, take: 200 }),
       segmentos: await p.segmento.findMany({ where: { ativo: true }, select: { slug: true, nome: true }, orderBy: { nome: 'asc' } }),
       auditoria: await p.logAuditoria.findMany({ where: { entidade: 'MIDIA', acao: { in: ['UPLOAD_GLOBAL', 'CURADORIA'] } }, select: { id: true, usuarioId: true, acao: true, entidadeId: true, createdAt: true }, orderBy: { id: 'desc' }, take: 30 }),
     };
@@ -36,6 +37,7 @@ export class MidiaService {
       await tx.$queryRawUnsafe('SELECT id FROM midias WHERE id = ? FOR UPDATE', id);
       const atual = await tx.midia.findFirst({ where: { id, escopo: 'GLOBAL', status: 'DISPONIVEL' } });
       if (!atual) throw new NotFoundException('Imagem global não encontrada');
+      if (CHAVES_FOTOS_PROFISSIONAIS_LEGADAS.includes(atual.chaveCatalogo) && dados.ativo) throw new BadRequestException('Esta foto demonstrativa foi aposentada. Use uma silhueta ou envie uma foto.');
       if (dados.segmentoSlug && !await tx.segmento.findFirst({ where: { slug: dados.segmentoSlug, ativo: true } })) throw new BadRequestException('Segmento inválido');
       const novo = { titulo: dados.titulo.trim(), ativo: dados.ativo, segmentoSlug: dados.segmentoSlug || null };
       const resultado = await tx.midia.update({ where: { id }, data: novo });
@@ -49,7 +51,8 @@ export class MidiaService {
     this.finalidade(finalidade);
     return (this.prisma as any).midia.findMany({
       where: { status: 'DISPONIVEL', ativo: true, finalidade, ...(segmentoSlug ? { OR: [{ segmentoSlug }, { segmentoSlug: null }] } : {}),
-        AND: [{ OR: [{ escopo: 'GLOBAL' }, { escopo: 'USUARIO', usuarioId: usuario.id }, ...(usuario.estabelecimentoId ? [{ escopo: 'ESTABELECIMENTO', estabelecimentoId: usuario.estabelecimentoId }] : [])] }] },
+        AND: [{ OR: [{ escopo: 'GLOBAL' }, { escopo: 'USUARIO', usuarioId: usuario.id }, ...(usuario.estabelecimentoId ? [{ escopo: 'ESTABELECIMENTO', estabelecimentoId: usuario.estabelecimentoId }] : [])] },
+          { OR: [{ chaveCatalogo: null }, { chaveCatalogo: { notIn: CHAVES_FOTOS_PROFISSIONAIS_LEGADAS } }] }] },
       select: { id: true, titulo: true, finalidade: true, segmentoSlug: true, versoes: true }, orderBy: { titulo: 'asc' }, take: 200,
     });
   }
@@ -91,11 +94,10 @@ export class MidiaService {
         await tx.$queryRawUnsafe('SELECT id FROM midias WHERE id = ? FOR UPDATE', dados.midiaId);
         midia = await tx.midia.findUnique({ where: { id: dados.midiaId } });
         if (!midia || !midia.ativo || midia.status !== 'DISPONIVEL' || midia.finalidade !== config[2]) throw new BadRequestException('Imagem indisponível para esta finalidade');
+        if (CHAVES_FOTOS_PROFISSIONAIS_LEGADAS.includes(midia.chaveCatalogo)) throw new BadRequestException('Esta foto demonstrativa foi aposentada. Use uma silhueta ou envie uma foto.');
         if (midia.escopo !== 'GLOBAL' && (pessoal ? midia.escopo !== 'USUARIO' || midia.usuarioId !== usuario.id : midia.escopo !== 'ESTABELECIMENTO' || midia.estabelecimentoId !== usuario.estabelecimentoId)) throw new ForbiddenException('Esta imagem pertence a outra conta/unidade');
       }
-      const avatarProfissional = registro.sexo === 'FEMININO'
-        ? '/profissionais/avatar-feminino.png'
-        : '/profissionais/avatar-masculino.png';
+      const avatarProfissional = imagemPadraoProfissional(registro.sexo);
       const padrao = pessoal || dados.entidade === 'ESTABELECIMENTO' ? null : dados.entidade === 'SERVICO' ? '/servicos/combo.jpg' : avatarProfissional;
       const url = midia ? midia.versoes.principal.url : padrao;
       await tx[config[0]].update({ where: { id }, data: { [config[1]]: url } });

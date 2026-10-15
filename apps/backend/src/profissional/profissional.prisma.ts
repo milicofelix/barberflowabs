@@ -1,4 +1,4 @@
-import { Profissional, RepositorioProfissional } from '@uniflowabs/core';
+import { Profissional, RepositorioProfissional, urlImagemProfissional } from '@uniflowabs/core';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/db/prisma.service';
 import { DEFAULT_ESTABELECIMENTO_ID } from 'src/shared/tenant';
@@ -8,14 +8,15 @@ import { CriarProfissionalDto } from './profissional.dto';
 export class ProfissionalPrisma implements RepositorioProfissional {
   constructor(private readonly prisma: PrismaService) {}
 
-  buscarTodos(estabelecimentoId = DEFAULT_ESTABELECIMENTO_ID): Promise<Profissional[]> {
-    return this.prisma.profissional.findMany({
+  async buscarTodos(estabelecimentoId = DEFAULT_ESTABELECIMENTO_ID): Promise<Profissional[]> {
+    const profissionais = await this.prisma.profissional.findMany({
       where: { estabelecimentoId },
     });
+    return profissionais.map((profissional) => ({ ...profissional, imagemURL: urlImagemProfissional(profissional.imagemURL, profissional.sexo) }));
   }
 
   criar(estabelecimentoId: number, dados: CriarProfissionalDto): Promise<Profissional> {
-    const imagemURL = dados.imagemURL?.trim() || this.imagemPadrao(dados.sexo);
+    const imagemURL = urlImagemProfissional(dados.imagemURL, dados.sexo);
     return this.prisma.profissional.create({
       data: {
         ...dados,
@@ -32,7 +33,7 @@ export class ProfissionalPrisma implements RepositorioProfissional {
     estabelecimentoId: number,
     dados: CriarProfissionalDto,
   ): Promise<Profissional> {
-    const imagemURL = dados.imagemURL?.trim() || this.imagemPadrao(dados.sexo);
+    const imagemURL = urlImagemProfissional(dados.imagemURL, dados.sexo);
     return this.prisma.profissional.update({
       where: { id, estabelecimentoId },
       data: {
@@ -50,9 +51,4 @@ export class ProfissionalPrisma implements RepositorioProfissional {
     });
   }
 
-  private imagemPadrao(sexo: CriarProfissionalDto['sexo']) {
-    return sexo === 'FEMININO'
-      ? '/profissionais/avatar-feminino.png'
-      : '/profissionais/avatar-masculino.png';
-  }
 }

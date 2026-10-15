@@ -1,7 +1,7 @@
 import type { ImageSourcePropType } from 'react-native'
+import { urlImagemProfissional } from '@uniflowabs/core'
 
 const URL_BASE = process.env.API_URL?.replace(/\/$/, '')
-const PROFISSIONAL_PADRAO = require('@/assets/images/avatar.png')
 const PROFISSIONAL_MASCULINO = require('@/assets/images/profissionais/avatar-masculino.png')
 const PROFISSIONAL_FEMININO = require('@/assets/images/profissionais/avatar-feminino.png')
 const SERVICO_PADRAO = require('@/assets/images/servicos/corte-de-cabelo.jpg')
@@ -9,12 +9,6 @@ const SERVICO_PADRAO = require('@/assets/images/servicos/corte-de-cabelo.jpg')
 const PROFISSIONAIS_POR_ARQUIVO: Record<string, ImageSourcePropType> = {
     'avatar-masculino.png': PROFISSIONAL_MASCULINO,
     'avatar-feminino.png': PROFISSIONAL_FEMININO,
-    'profissional-1.jpg': require('@/assets/images/profissionais/profissional-1.jpg'),
-    'profissional-2.jpg': require('@/assets/images/profissionais/profissional-2.jpg'),
-    'profissional-3.jpg': require('@/assets/images/profissionais/profissional-3.jpg'),
-    'profissional-4.jpg': require('@/assets/images/profissionais/profissional-4.jpg'),
-    'profissional-5.jpg': require('@/assets/images/profissionais/profissional-5.jpg'),
-    'profissional-6.jpg': require('@/assets/images/profissionais/profissional-6.jpg'),
 }
 
 const SERVICOS_POR_ARQUIVO: Record<string, ImageSourcePropType> = {
@@ -27,8 +21,8 @@ const SERVICOS_POR_ARQUIVO: Record<string, ImageSourcePropType> = {
 }
 
 export function imagemDoProfissional(imagemURL?: string | null, sexo?: string | null): ImageSourcePropType {
-    const padrao = sexo === 'FEMININO' ? PROFISSIONAL_FEMININO : sexo === 'MASCULINO' ? PROFISSIONAL_MASCULINO : PROFISSIONAL_PADRAO
-    return resolverImagem(imagemURL, PROFISSIONAIS_POR_ARQUIVO, padrao)!
+    const padrao = sexo === 'FEMININO' ? PROFISSIONAL_FEMININO : PROFISSIONAL_MASCULINO
+    return resolverImagem(urlImagemProfissional(imagemURL, sexo), PROFISSIONAIS_POR_ARQUIVO, padrao)!
 }
 
 export function imagemDoServico(nome: string, imagemURL?: string | null): ImageSourcePropType {

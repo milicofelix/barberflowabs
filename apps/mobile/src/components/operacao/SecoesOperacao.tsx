@@ -9,6 +9,7 @@ import { useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { CartaoMetrica, moeda } from './ComponentesOperacao'
 import useTema from '@/src/data/contexts/ContextoTema'
+import { urlImagemProfissional } from '@uniflowabs/core'
 
 export function ResumoOperacao({ dados }: { dados: DashboardOperacional | null }) {
     if (!dados) return null
@@ -51,8 +52,8 @@ export function EquipeOperacao({ itens, criar, recarregar, erro }: {
     const [resultado, setResultado] = useState<'sucesso' | 'erro' | null>(null)
     const imagemPadrao = `/profissionais/avatar-${sexo === 'FEMININO' ? 'feminino' : 'masculino'}.png`
     function selecionarSexo(novoSexo: 'MASCULINO' | 'FEMININO') {
-        const padroes = ['/profissionais/avatar-masculino.png', '/profissionais/avatar-feminino.png', '/profissionais/profissional-1.jpg']
-        if (!imagemURL || padroes.includes(imagemURL)) { setImagemURL(`/profissionais/avatar-${novoSexo === 'FEMININO' ? 'feminino' : 'masculino'}.png`); setMidiaId(null) }
+        const imagem = urlImagemProfissional(imagemURL, novoSexo)
+        if (imagem !== imagemURL) { setImagemURL(imagem); setMidiaId(null) }
         setSexo(novoSexo)
     }
     async function submeter() {

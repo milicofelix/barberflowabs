@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
+import { urlImagemProfissional } from '@uniflowabs/core';
 import { PrismaService } from 'src/db/prisma.service';
 import { mapearClassificacaoEstabelecimento } from 'src/estabelecimento/classificacao-estabelecimento.mapper';
 
@@ -9,8 +10,8 @@ const TIME_ZONE_PADRAO = 'America/Sao_Paulo';
 export class PublicoPrisma {
   constructor(private readonly prisma: PrismaService) {}
 
-  listarProfissionaisPublicos() {
-    return this.prisma.profissional.findMany({
+  async listarProfissionaisPublicos() {
+    const profissionais = await this.prisma.profissional.findMany({
       where: {
         estabelecimento: this.criteriosPublicacao(),
         servicosHabilitados: { some: { ativo: true } },
@@ -38,6 +39,7 @@ export class PublicoPrisma {
         },
       },
     });
+    return profissionais.map((profissional) => ({ ...profissional, imagemURL: urlImagemProfissional(profissional.imagemURL, profissional.sexo) }));
   }
 
   async listarEstabelecimentos(filtros: any = {}) {
@@ -508,6 +510,7 @@ export class PublicoPrisma {
     const { especialidades = [], ...dadosProfissional } = profissional;
     return {
       ...dadosProfissional,
+      imagemURL: urlImagemProfissional(profissional.imagemURL, profissional.sexo),
       especialidades: especialidades.map(({ especialidade, principal }) => ({
         ...especialidade,
         principal,

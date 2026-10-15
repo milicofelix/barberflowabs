@@ -15,7 +15,10 @@ export async function seedGaleriaMidias(prisma: PrismaClient) {
     ['infantil', 'Corte infantil', 'SERVICO', 'barbearia', 'servicos/corte-infantil.jpg'],
     ['unhas', 'Manicure e pedicure', 'SERVICO', 'manicure-pedicure', 'servicos/manicure-pedicure.jpg'],
   ];
-  for (let indice = 1; indice <= 6; indice += 1) imagens.push([`profissional-${indice}`, `Profissional ${indice}`, 'PROFISSIONAL', null, `profissionais/profissional-${indice}.jpg`]);
+  imagens.push(
+    ['avatar-profissional-masculino', 'Silhueta masculina', 'PROFISSIONAL', null, 'profissionais/avatar-masculino.png'],
+    ['avatar-profissional-feminino', 'Silhueta feminina', 'PROFISSIONAL', null, 'profissionais/avatar-feminino.png'],
+  );
   for (const [slug, titulo, arquivo] of [
     ['barbearia', 'Barbearia', 'barbearia'], ['salao-beleza', 'Salão de cabelo', 'salao-cabelo'],
     ['manicure-pedicure', 'Manicure e pedicure', 'manicure-pedicure'], ['clinica-estetica', 'Clínica de estética', 'clinica-estetica'],

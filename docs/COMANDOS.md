@@ -316,6 +316,8 @@ docker compose exec -T app sh -lc 'cd apps/backend && npx prisma migrate deploy'
 
 Aplica, em ordem, somente as migrations versionadas que ainda estao pendentes. Altera a estrutura e possivelmente os dados do banco.
 
+A migration de dados `20261015030000_retire_legacy_professional_photos` substitui apenas fotos demonstrativas conhecidas por silhuetas de acordo com o sexo cadastrado, desativa os antigos itens globais e retira seus vinculos profissionais. Preserva uploads reais e nao muda o schema; mantenha backup antes de aplicar. Procedimento e aceite em [CORRECAO_AVATARES_PROFISSIONAIS.md](CORRECAO_AVATARES_PROFISSIONAIS.md).
+
 Na canonicalizacao da Etapa 7, esse comando aplica primeiro a capacidade operacional da Etapa 6 e depois renomeia tabelas, colunas e papeis para o vocabulario de `estabelecimento`. Faça backup antes: essa mudanca remove os aliases tecnicos antigos e exige que backend, web e mobile sejam atualizados juntos.
 
 ### Recuperar especificamente a migration de importacao de contatos

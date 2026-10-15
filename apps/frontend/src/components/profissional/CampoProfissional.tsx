@@ -1,7 +1,7 @@
 'use client'
 
 import useProfissionais from '@/data/hooks/useProfissionais'
-import { Profissional } from '@uniflowabs/core'
+import { Profissional, urlImagemProfissional } from '@uniflowabs/core'
 import Image from 'next/image'
 
 export interface CampoProfissionalProps
@@ -25,7 +25,7 @@ function Opcao(props: {
             onClick={() => props.profissionalMudou(props.profissional)}
         >
             <Image
-                src={props.profissional.imagemURL}
+                src={urlImagemProfissional(props.profissional.imagemURL, props.profissional.sexo)}
                 height={150}
                 width={150}
                 alt={props.profissional.nome}

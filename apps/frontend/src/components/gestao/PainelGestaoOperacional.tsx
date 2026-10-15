@@ -3,7 +3,7 @@
 import useAPI from '@/data/hooks/useAPI'
 import useSessao from '@/data/hooks/useSessao'
 import SeletorImagem from '@/components/midia/SeletorImagem'
-import { Profissional, Servico } from '@uniflowabs/core'
+import { Profissional, Servico, urlImagemProfissional } from '@uniflowabs/core'
 import { IconPencil, IconPlus, IconSparkles, IconTrash, IconX } from '@tabler/icons-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
@@ -973,10 +973,7 @@ function FormularioServico(props: any) {
 
 function FormularioProfissional(props: any) {
     const selecionarSexo = (sexo: 'MASCULINO' | 'FEMININO') => {
-        const padroes = ['/profissionais/avatar-masculino.png', '/profissionais/avatar-feminino.png', '/profissionais/profissional-1.jpg']
-        const imagemURL = !props.profissional.imagemURL || padroes.includes(props.profissional.imagemURL)
-            ? `/profissionais/avatar-${sexo === 'FEMININO' ? 'feminino' : 'masculino'}.png`
-            : props.profissional.imagemURL
+        const imagemURL = urlImagemProfissional(props.profissional.imagemURL, sexo)
         props.onChange({ ...props.profissional, sexo, imagemURL, midiaId: imagemURL === props.profissional.imagemURL ? props.profissional.midiaId : null })
     }
     const imagemPadrao = props.profissional.sexo

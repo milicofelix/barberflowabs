@@ -7,7 +7,7 @@ const profissionais: Profissional[] = [
     sexo: "MASCULINO",
     descricao:
       "Especialista em cortes masculinos clássicos, acabamento com máquina e atendimento consultivo.",
-    imagemURL: "/profissionais/profissional-1.jpg",
+    imagemURL: "/profissionais/avatar-masculino.png",
     avaliacao: 5,
     quantidadeAvaliacoes: 87,
   },
@@ -17,7 +17,7 @@ const profissionais: Profissional[] = [
     sexo: "MASCULINO",
     descricao:
       "Profissional focado em barba, desenho, aparo e finalização para diferentes estilos.",
-    imagemURL: "/profissionais/profissional-2.jpg",
+    imagemURL: "/profissionais/avatar-masculino.png",
     avaliacao: 4.5,
     quantidadeAvaliacoes: 39,
   },
@@ -27,7 +27,7 @@ const profissionais: Profissional[] = [
     sexo: "FEMININO",
     descricao:
       "Atendimento preciso em cortes modernos, visagismo e finalizações personalizadas.",
-    imagemURL: "/profissionais/profissional-3.jpg",
+    imagemURL: "/profissionais/avatar-feminino.png",
     avaliacao: 5,
     quantidadeAvaliacoes: 91,
   },
@@ -37,7 +37,7 @@ const profissionais: Profissional[] = [
     sexo: "MASCULINO",
     descricao:
       "Experiência em cortes degradê, barba alinhada e acabamento detalhado.",
-    imagemURL: "/profissionais/profissional-4.jpg",
+    imagemURL: "/profissionais/avatar-masculino.png",
     avaliacao: 4.5,
     quantidadeAvaliacoes: 29,
   },
@@ -47,7 +47,7 @@ const profissionais: Profissional[] = [
     sexo: "MASCULINO",
     descricao:
       "Especialista em máquina, cortes baixos e manutenção rápida com acabamento limpo.",
-    imagemURL: "/profissionais/profissional-5.jpg",
+    imagemURL: "/profissionais/avatar-masculino.png",
     avaliacao: 4.5,
     quantidadeAvaliacoes: 44,
   },
@@ -57,7 +57,7 @@ const profissionais: Profissional[] = [
     sexo: "FEMININO",
     descricao:
       "Profissional com foco em atendimento personalizado, cortes versáteis e finalização cuidadosa.",
-    imagemURL: "/profissionais/profissional-6.jpg",
+    imagemURL: "/profissionais/avatar-feminino.png",
     avaliacao: 5,
     quantidadeAvaliacoes: 46,
   },
