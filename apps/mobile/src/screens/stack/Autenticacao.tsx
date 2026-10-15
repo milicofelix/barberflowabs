@@ -22,6 +22,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
 import useSessao from '@/src/data/hooks/useSessao'
+import { perfilAdmin, resolverPerfil } from '@/src/data/auth/perfis'
 
 type Props = NativeStackScreenProps<StackParamList, 'Autenticacao'>
 
@@ -40,6 +41,10 @@ export default function Autenticacao({ navigation, route }: Props) {
 
     useEffect(() => {
         if (!usuario) return
+        if (perfilAdmin(resolverPerfil(usuario))) {
+            navigation.reset({ index: 0, routes: [{ name: 'Abas', params: { screen: 'Administracao' } }] })
+            return
+        }
         if (route.params?.destino === 'OnboardingEstabelecimento') {
             navigation.reset({
                 index: 1,

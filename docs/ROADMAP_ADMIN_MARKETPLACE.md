@@ -2,6 +2,16 @@
 
 Este plano organiza a evolucao do Barber Flow ABS para um SaaS com dono do app, aprovacao de estabelecimentos e uma area publica de descoberta por mapa.
 
+## Separação Da Navegação Administrativa — 15/10/2026
+
+- `SUPER_ADMIN` e `APP_OWNER` utilizam a experiência administrativa, não a descoberta de cliente. Para agendar como cliente, devem sair e entrar com uma conta comum separada.
+- Web: a Home pública, `/estabelecimentos` (incluindo detalhes), `/servicos`, `/profissionais` e `/agendamento` redirecionam esses perfis para `/admin`. O componente compartilhado `SeparacaoPerfilPlataforma` aguarda a resolução da sessão antes de montar as telas públicas, evitando carregar mapa, filtros e consultas de descoberta para administradores.
+- Mobile: aba Descobrir removida para administradores; o navegador não registra perfil público da unidade, cadastro de estabelecimento nem confirmação de agendamento nesse perfil. Após login administrativo, o destino é Administração, mesmo se o login tiver começado no fluxo de um cliente. A troca entre perfis recria as abas para não conservar a aba de busca anterior.
+- Administração, revisão/aprovação, listagem administrativa de estabelecimentos, notificações e perfil pessoal permanecem disponíveis. Clientes e visitantes mantêm a experiência pública; agendamento assistido da equipe não muda.
+- Esta separação é de navegação/experiência: não torna privadas as APIs públicas nem altera suas regras de visibilidade. Não há alteração de banco, migration ou dependência.
+
+Aceite manual (não executado): entrar como superadmin na web e no app; conferir Administração sem lupa/mapa/filtros; acessar diretamente as rotas web de descoberta e conferir redirecionamento; conferir listagem e revisão administrativas; sair e entrar com cliente/visitante e conferir descoberta restaurada; repetir com `APP_OWNER` e dono de unidade, preservando o agendamento assistido. Não foram executados testes, builds, typecheck, lint ou reinícios.
+
 ## Objetivos
 
 - Ter um usuario dono do app com acesso administrativo confiavel.

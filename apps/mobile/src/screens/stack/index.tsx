@@ -19,12 +19,14 @@ import { ProvedorTema } from '@/src/data/contexts/ContextoTema'
 import useTema from '@/src/data/contexts/ContextoTema'
 import SinoNotificacoesGlobal from '@/src/components/notificacoes/SinoNotificacoesGlobal'
 import TrocaSenhaObrigatoria from './TrocaSenhaObrigatoria'
+import { perfilAdmin, resolverPerfil } from '@/src/data/auth/perfis'
 
 const Stack = createNativeStackNavigator<StackParamList>()
 
 function Navegacao() {
     const { carregando, usuario } = useSessao()
     const { modo, cores } = useTema()
+    const admin = perfilAdmin(resolverPerfil(usuario))
 
     if (carregando) return <Carregando mensagem="Validando sua sessão..." />
     if (usuario?.trocarSenhaObrigatoria) return <TrocaSenhaObrigatoria />
@@ -33,21 +35,20 @@ function Navegacao() {
         <NavigationContainer theme={{ ...(modo === 'dark' ? DarkTheme : DefaultTheme), colors: { primary: cores.destaque, background: cores.fundo, card: cores.superficie, text: cores.texto, border: cores.borda, notification: cores.perigo } }}>
             <Stack.Navigator>
                 <Stack.Screen name="Abas" component={Abas} options={{ headerShown: false }} />
-                <Stack.Screen
-                    name="PerfilEstabelecimento"
-                    component={PerfilEstabelecimento}
-                    options={{
-                        title: 'Perfil do estabelecimento',
-                        headerBackTitle: 'Descobrir',
-                        headerStyle: { backgroundColor: cores.superficie },
-                        headerTintColor: cores.texto,
-                    }}
-                />
-                <Stack.Screen name="Autenticacao" component={Autenticacao} options={{ headerShown: false }} />
-                <Stack.Screen name="OnboardingEstabelecimento" component={OnboardingEstabelecimento}
-                    options={{ title: 'Cadastrar estabelecimento', headerStyle: { backgroundColor: cores.superficie }, headerTintColor: cores.texto }} />
-                {usuario ? (
-                    <>
+                {!admin ? <Stack.Group navigationKey="cliente">
+                    <Stack.Screen
+                        name="PerfilEstabelecimento"
+                        component={PerfilEstabelecimento}
+                        options={{
+                            title: 'Perfil do estabelecimento',
+                            headerBackTitle: 'Descobrir',
+                            headerStyle: { backgroundColor: cores.superficie },
+                            headerTintColor: cores.texto,
+                        }}
+                    />
+                    <Stack.Screen name="OnboardingEstabelecimento" component={OnboardingEstabelecimento}
+                        options={{ title: 'Cadastrar estabelecimento', headerStyle: { backgroundColor: cores.superficie }, headerTintColor: cores.texto }} />
+                    {usuario ? (
                         <Stack.Screen
                             name="Sumario"
                             component={Sumario}
@@ -58,6 +59,11 @@ function Navegacao() {
                                 headerTintColor: cores.texto,
                             }}
                         />
+                    ) : null}
+                </Stack.Group> : null}
+                <Stack.Screen name="Autenticacao" component={Autenticacao} options={{ headerShown: false }} />
+                {usuario ? (
+                    <>
                         <Stack.Screen
                             name="CentralFinanceira"
                             component={CentralFinanceira}

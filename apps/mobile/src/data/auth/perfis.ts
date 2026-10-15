@@ -10,10 +10,12 @@ export type PerfilUsuario =
 export function resolverPerfil(usuario: Usuario | null): PerfilUsuario | null {
     if (!usuario) return null
 
+    const papeis = [usuario.papel, usuario.role].map(valor => String(valor ?? '').toUpperCase())
+    if (papeis.includes('APP_OWNER')) return 'APP_OWNER'
+    if (papeis.includes('SUPER_ADMIN')) return 'SUPER_ADMIN'
+
     const perfil = String(usuario.papel ?? usuario.role ?? '').toUpperCase()
 
-    if (perfil === 'APP_OWNER') return 'APP_OWNER'
-    if (perfil === 'SUPER_ADMIN') return 'SUPER_ADMIN'
     if (perfil === 'ESTABLISHMENT_OWNER') return 'ESTABLISHMENT_OWNER'
     if (perfil === 'ESTABLISHMENT_MEMBER' || usuario.membroEstabelecimento) return 'ESTABLISHMENT_MEMBER'
     return 'CUSTOMER'

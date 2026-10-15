@@ -34,6 +34,7 @@ export default function Abas() {
 
     return (
         <Tab.Navigator
+            key={admin ? 'administracao' : operacional ? 'operacao' : 'cliente'}
             screenOptions={{
                 headerShown: false,
                 tabBarShowLabel: false,
@@ -42,7 +43,7 @@ export default function Abas() {
                 tabBarStyle: { backgroundColor: cores.tabBar, borderTopColor: cores.borda, height: 64, paddingTop: 7, paddingBottom: 7 },
             }}
         >
-            {!operacional ? (
+            {!operacional && !admin ? (
                 <Tab.Screen name="Descobrir" component={Descoberta} options={opcoesAba('Descobrir', 'search-outline', cores.destaque, cores.textoSecundario)} />
             ) : null}
             {cliente || operacional ? (
