@@ -1022,7 +1022,12 @@ var TOUR_MAPA = {
     { id: "localizacao", alvo: "descoberta.localizar", titulo: "Sua localiza\xE7\xE3o \xE9 opcional", descricao: "Se desejar, use Localizar e autorize sua localiza\xE7\xE3o. Avan\xE7ar neste tour n\xE3o solicita permiss\xE3o." },
     { id: "marcadores", alvo: "descoberta.marcadores", titulo: "Conhe\xE7a os marcadores", descricao: "Cada \xEDcone representa o segmento do estabelecimento. Sem resultados, voc\xEA pode continuar normalmente." },
     { id: "perfil", alvo: "descoberta.selecionado", titulo: "Veja os detalhes", descricao: "Toque em um marcador ou cart\xE3o para consultar servi\xE7os, pre\xE7os, hor\xE1rios e iniciar um agendamento." }
-  ].map((passo) => ({ ...passo, posicao: "AUTOMATICA", indisponivel: "EXPLICAR" }))
+  ].map((passo) => ({
+    ...passo,
+    posicao: "AUTOMATICA",
+    indisponivel: "EXPLICAR",
+    ...["marcadores", "perfil"].includes(passo.id) ? { interacao: "SELECIONAR_MARCADOR" } : {}
+  }))
 };
 
 // src/tour/ControladorTour.ts

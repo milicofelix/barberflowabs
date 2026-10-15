@@ -1,7 +1,7 @@
 import type { NavigatorScreenParams } from '@react-navigation/native'
 
 export type AbasParamList = {
-    Descobrir: undefined
+    Descobrir: { tourMapa?: number } | undefined
     Inicio: undefined
     Agendamento: { dataInicial?: string; origemAgenda?: boolean; chave?: number } | undefined
     Operacao: { agendamentoId?: number; chave?: number } | undefined

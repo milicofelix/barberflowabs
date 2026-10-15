@@ -7,7 +7,9 @@ import { useTour } from './ContextoTour'
 import useMedidaAlvoTour from './useMedidaAlvoTour'
 import useReducaoMovimentoTour from './useReducaoMovimentoTour'
 
-export default function SobreposicaoTour() {
+export interface AcaoContextualTour { texto: string; executar: () => void }
+
+export default function SobreposicaoTour({ acaoContextual }: { acaoContextual?: AcaoContextualTour } = {}) {
     const { controlador, alvos, estado, aberto, erro } = useTour()
     const { cores } = useTema()
     const reduzirMovimento = useReducaoMovimentoTour()
@@ -60,6 +62,7 @@ export default function SobreposicaoTour() {
                     <Text style={{ color: cores.texto, fontSize: 16, lineHeight: 24 }}>{passo.descricao}</Text>
                     {!destaque ? <Text style={{ color: cores.textoSecundario }}>O elemento não está visível ou não há espaço para destacá-lo. Você pode continuar normalmente.</Text> : null}
                     {erro ? <Text accessibilityRole="alert" style={{ color: cores.perigo }}>{erro}</Text> : null}
+                    {acaoContextual ? <AcaoTour texto={acaoContextual.texto} acao={acaoContextual.executar} /> : null}
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                         <AcaoTour texto="Voltar" acao={controlador.voltar} desabilitado={estado.passoAtual === 0} />
                         <AcaoTour texto="Pular" acao={controlador.pular} />

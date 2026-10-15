@@ -1,6 +1,8 @@
 import { ControladorTour } from '../../../../packages/core/src/tour/ControladorTour';
 import { TOUR_MAPA, lerEstadoTour, type DefinicaoTour, type PersistenciaTour, type EventoTour } from '../../../../packages/core/src/tour/contratos';
 import { RegistroAlvosTour, alvoVisivelTour } from '../../../mobile/src/data/tour/alvos';
+import { possuiCoordenadasMapa, retanguloMarcadorMapa } from '../../../mobile/src/data/tour/pontos-mapa';
+import { obterLocalizacaoMarketplace, type PortaLocalizacaoMarketplace } from '../../../mobile/src/data/estabelecimentos/localizacao';
 
 const agora = () => '2026-10-15T18:00:00.000Z';
 function memoria(inicial: string | null = null) {
@@ -129,6 +131,75 @@ describe('Fundação do tour do mapa', () => {
     expect(lerEstadoTour(estadoSalvo('EM_ANDAMENTO', -1))).toBeNull();
     expect(lerEstadoTour(estadoSalvo('EM_ANDAMENTO', 0, 0))).toBeNull();
     expect(lerEstadoTour('{"versao":1}')).toBeNull();
+  });
+});
+
+describe('Integração do tour com descoberta real', () => {
+  it('libera seleção apenas nos passos de marcador/perfil', () => {
+    expect(TOUR_MAPA.passos.filter(p => p.interacao === 'SELECIONAR_MARCADOR').map(p => p.id)).toEqual(['marcadores', 'perfil']);
+    expect(TOUR_MAPA.passos.find(p => p.id === 'localizacao')?.interacao).toBeUndefined();
+  });
+  it('pausa para interação sem perder o passo ou gravar conclusão antecipada', async () => {
+    const dados = memoria(estadoSalvo('EM_ANDAMENTO', 6));
+    const controlador = new ControladorTour(TOUR_MAPA, dados.adapter, agora);
+    await controlador.carregar(); controlador.iniciar(true); controlador.suspender();
+    expect(controlador.obterSnapshot()).toMatchObject({ aberto: false, estado: { passoAtual: 6, status: 'EM_ANDAMENTO' } });
+    controlador.iniciar();
+    expect(controlador.obterSnapshot().estado.passoAtual).toBe(6);
+    controlador.avancar();
+    expect(controlador.obterSnapshot().estado).toMatchObject({ passoAtual: 7, status: 'EM_ANDAMENTO' });
+    await controlador.aguardarPersistencia();
+    expect(lerEstadoTour(dados.valor()!)?.passoAtual).toBe(7);
+  });
+  it('não fabrica coordenadas de marcadores ausentes ou inválidos', () => {
+    const item = (latitude: number | null, longitude: number | null) => ({ endereco: { latitude, longitude } });
+    expect(possuiCoordenadasMapa(item(null, null))).toBe(false);
+    expect(possuiCoordenadasMapa(item(NaN, 1))).toBe(false);
+    expect(possuiCoordenadasMapa(item(91, 1))).toBe(false);
+    expect(possuiCoordenadasMapa(item(1, -181))).toBe(false);
+    expect(possuiCoordenadasMapa(item(0, 0))).toBe(true);
+  });
+  it('só destaca projeção real completamente dentro do mapa', () => {
+    expect(retanguloMarcadorMapa({ x: 100, y: 100 }, 300, 330)).toMatchObject({ x: 73, largura: 54, altura: 54 });
+    expect(retanguloMarcadorMapa({ x: 100, y: 100 }, 300, 330)?.y).toBeCloseTo(48.7);
+    expect(retanguloMarcadorMapa({ x: 10, y: 100 }, 300, 330)).toBeNull();
+    expect(retanguloMarcadorMapa({ x: 100, y: 20 }, 300, 330)).toBeNull();
+    expect(retanguloMarcadorMapa({ x: NaN, y: 100 }, 300, 330)).toBeNull();
+    expect(retanguloMarcadorMapa({ x: 100, y: 100 }, NaN, 330)).toBeNull();
+  });
+});
+
+describe('Localização opcional na descoberta', () => {
+  function porta(status = 'undetermined', granted = false): PortaLocalizacaoMarketplace {
+    return { lerPermissao: jest.fn(async () => ({ status, granted })), explicar: jest.fn(async () => true),
+      solicitarPermissao: jest.fn(async () => ({ status: 'granted', granted: true })), obterPosicao: jest.fn(async () => ({ lat: 0, lng: 0 })) };
+  }
+  it('explica antes da permissão e não solicita nada se o usuário cancelar', async () => {
+    const adapter = porta(); (adapter.explicar as jest.Mock).mockResolvedValue(false);
+    expect(await obterLocalizacaoMarketplace(adapter)).toEqual({ tipo: 'CANCELADA' });
+    expect(adapter.solicitarPermissao).not.toHaveBeenCalled(); expect(adapter.obterPosicao).not.toHaveBeenCalled();
+  });
+  it('não insiste quando já existe recusa', async () => {
+    const adapter = porta('denied');
+    expect(await obterLocalizacaoMarketplace(adapter)).toEqual({ tipo: 'NEGADA' });
+    expect(adapter.explicar).not.toHaveBeenCalled(); expect(adapter.solicitarPermissao).not.toHaveBeenCalled();
+    expect(adapter.obterPosicao).not.toHaveBeenCalled();
+  });
+  it('só obtém coordenadas depois da autorização', async () => {
+    const adapter = porta();
+    expect(await obterLocalizacaoMarketplace(adapter)).toEqual({ tipo: 'APLICADA', posicao: { lat: 0, lng: 0 } });
+    expect((adapter.explicar as jest.Mock).mock.invocationCallOrder[0]).toBeLessThan((adapter.solicitarPermissao as jest.Mock).mock.invocationCallOrder[0]);
+    expect((adapter.solicitarPermissao as jest.Mock).mock.invocationCallOrder[0]).toBeLessThan((adapter.obterPosicao as jest.Mock).mock.invocationCallOrder[0]);
+  });
+  it('nova recusa não inicia obtenção de posição', async () => {
+    const adapter = porta(); (adapter.solicitarPermissao as jest.Mock).mockResolvedValue({ status: 'denied', granted: false });
+    expect(await obterLocalizacaoMarketplace(adapter)).toEqual({ tipo: 'NEGADA' });
+    expect(adapter.obterPosicao).not.toHaveBeenCalled();
+  });
+  it('permissão já concedida não abre outro pedido nativo', async () => {
+    const adapter = porta('granted', true); await obterLocalizacaoMarketplace(adapter);
+    expect(adapter.explicar).not.toHaveBeenCalled(); expect(adapter.solicitarPermissao).not.toHaveBeenCalled();
+    expect(adapter.obterPosicao).toHaveBeenCalledTimes(1);
   });
 });
 

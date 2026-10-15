@@ -813,13 +813,13 @@ docker compose exec -T app sh -lc 'cd apps/backend && yarn test "logo-estabeleci
 
 Comando opcional para os testes isolados de modos de logo, titularidade, associação de mídia e armazenamento. Não executado pelo agente; não substitui conferência visual na web e em Android/iOS. Não aplica migrations.
 
-## Testes opcionais da fundação do tour do mapa
+## Testes opcionais da fundação e integração do tour do mapa
 
 ```bash
 docker compose exec -T app sh -lc 'cd apps/backend && yarn test tour/tour-mapa.spec.ts --runInBand'
 ```
 
-Executa os testes isolados do contrato/controlador compartilhado, persistência simulada, versionamento e registro de alvos mobile. Requer o serviço `app` em execução e dependências existentes. Não aplica migrations, não acessa dados de clientes e não substitui homologação da sobreposição em Android/iOS. Comando não executado pelo agente. A demonstração visual está em Perfil → Demonstração do tour, somente em desenvolvimento para clientes/visitantes.
+Executa os testes isolados do contrato/controlador compartilhado, persistência simulada, versionamento, registro de alvos mobile, interação de marcadores, coordenadas/projeção e fluxo de consentimento da localização. Requer o serviço `app` em execução e dependências existentes. Não aplica migrations, não acessa dados de clientes e não substitui homologação da sobreposição em Android/iOS. Comando não executado pelo agente. O tour real pode ser reaberto em Perfil → Ver tour do mapa novamente, para clientes/visitantes; a demonstração independente continua restrita a desenvolvimento. Roteiro manual em `docs/PLANO_TOUR_GUIADO_MAPA.md`, Fase 2.
 
 ## Limpezas Destrutivas
 

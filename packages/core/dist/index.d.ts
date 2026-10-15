@@ -530,6 +530,7 @@ interface PassoTour {
     descricao: string;
     posicao: PosicaoPassoTour;
     indisponivel: 'EXPLICAR' | 'PULAR';
+    interacao?: 'SELECIONAR_MARCADOR';
 }
 interface DefinicaoTour {
     id: string;

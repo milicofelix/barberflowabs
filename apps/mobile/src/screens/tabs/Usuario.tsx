@@ -21,6 +21,11 @@ export default function Usuario({ navigation }: Props) {
         await encerrarSessao()
     }
     const abrirCadastroEstabelecimento = () => navigation.getParent<NativeStackNavigationProp<StackParamList>>()?.navigate('OnboardingEstabelecimento')
+    const ajudaTourMapa = !operacional && !perfilAdmin(resolverPerfil(usuario)) ? <Pressable accessibilityRole="button"
+        onPress={() => navigation.navigate('Descobrir', { tourMapa: Date.now() })}
+        style={{ minHeight: 48, margin: 18, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: cores.borda }}>
+        <Text style={{ color: cores.texto, fontWeight: '700' }}>Ver tour do mapa novamente</Text>
+    </Pressable> : null
     const demonstracaoTour = __DEV__ && !operacional && !perfilAdmin(resolverPerfil(usuario)) ? <Pressable accessibilityRole="button"
         onPress={() => navigation.getParent<NativeStackNavigationProp<StackParamList>>()?.navigate('TourMapaDemonstracao')}
         style={{ minHeight: 48, margin: 18, padding: 14, borderRadius: 12, borderWidth: 1, borderColor: cores.borda }}>
@@ -37,6 +42,7 @@ export default function Usuario({ navigation }: Props) {
                 <Pressable onPress={entrar} style={[styles.entrar, { backgroundColor: cores.destaque }]}>
                     <Text style={[styles.entrarTexto, { color: cores.destaqueTexto }]}>Entrar ou criar conta</Text>
                 </Pressable>
+                {ajudaTourMapa}
                 {demonstracaoTour}
             </SafeAreaView>
         )
@@ -47,6 +53,7 @@ export default function Usuario({ navigation }: Props) {
             <ScrollView contentContainerStyle={operacional ? styles.conteudoOperacional : styles.conteudoUsuario} keyboardShouldPersistTaps="handled">
                 {operacional ? <CabecalhoIdentidadeUnidade /> : null}
                 <PerfilUsuario usuario={usuario!} logout={logout} cadastrarEstabelecimento={abrirCadastroEstabelecimento} />
+                {ajudaTourMapa}
                 {demonstracaoTour}
             </ScrollView>
         </SafeAreaView>

@@ -15,6 +15,7 @@ export interface PassoTour {
     descricao: string
     posicao: PosicaoPassoTour
     indisponivel: 'EXPLICAR' | 'PULAR'
+    interacao?: 'SELECIONAR_MARCADOR'
 }
 
 export interface DefinicaoTour {
@@ -66,5 +67,7 @@ export const TOUR_MAPA: DefinicaoTour = {
         { id: 'localizacao', alvo: 'descoberta.localizar', titulo: 'Sua localização é opcional', descricao: 'Se desejar, use Localizar e autorize sua localização. Avançar neste tour não solicita permissão.' },
         { id: 'marcadores', alvo: 'descoberta.marcadores', titulo: 'Conheça os marcadores', descricao: 'Cada ícone representa o segmento do estabelecimento. Sem resultados, você pode continuar normalmente.' },
         { id: 'perfil', alvo: 'descoberta.selecionado', titulo: 'Veja os detalhes', descricao: 'Toque em um marcador ou cartão para consultar serviços, preços, horários e iniciar um agendamento.' },
-    ].map<PassoTour>(passo => ({ ...passo, posicao: 'AUTOMATICA', indisponivel: 'EXPLICAR' })),
+    ].map<PassoTour>(passo => ({ ...passo, posicao: 'AUTOMATICA', indisponivel: 'EXPLICAR',
+        ...(['marcadores', 'perfil'].includes(passo.id) ? { interacao: 'SELECIONAR_MARCADOR' as const } : {}),
+    })),
 }

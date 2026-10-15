@@ -10,46 +10,71 @@ import type { AbasParamList, StackParamList } from '@/src/navigation/types'
 import { Ionicons } from '@expo/vector-icons'
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import * as Location from 'expo-location'
-import { useState } from 'react'
-import { ActivityIndicator, FlatList, ImageBackground, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
+import { useRef, useState } from 'react'
+import { ActivityIndicator, FlatList, ImageBackground, Keyboard, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
 import MarcaUniFlow from '@/src/components/shared/MarcaUniFlow'
 import { tituloDaCategoria, visualDaCategoria } from '@/src/data/estabelecimentos/categorias-visuais'
-import type { CategoriaMarketplace } from '@/src/data/estabelecimentos/tipos'
+import type { CategoriaMarketplace, EstabelecimentoResumo } from '@/src/data/estabelecimentos/tipos'
 import type { ComponentProps } from 'react'
+import { TOUR_MAPA } from '@uniflowabs/core'
+import { ProvedorTour } from '@/src/components/tour/ContextoTour'
+import AlvoTour from '@/src/components/tour/AlvoTour'
+import ControlesTourDescoberta from '@/src/components/tour/ControlesTourDescoberta'
+import useTourDescoberta from '@/src/data/hooks/useTourDescoberta'
+import useLocalizacaoMarketplace from '@/src/data/hooks/useLocalizacaoMarketplace'
+import useSessao from '@/src/data/hooks/useSessao'
+import { perfilAdmin, perfilOperacional, resolverPerfil } from '@/src/data/auth/perfis'
+import { possuiCoordenadasMapa } from '@/src/data/tour/pontos-mapa'
+import type { Region } from 'react-native-maps'
 
 type Props = BottomTabScreenProps<AbasParamList, 'Descobrir'>
 const RAIOS = [2, 5, 10, 25]
 
-export default function Descoberta({ navigation }: Props) {
+export default function Descoberta(props: Props) {
+    const { usuario } = useSessao()
+    const perfil = resolverPerfil(usuario)
+    if (perfilAdmin(perfil) || perfilOperacional(perfil)) return null
+    return <ProvedorTour definicao={TOUR_MAPA}><ConteudoDescoberta {...props} /></ProvedorTour>
+}
+
+function ConteudoDescoberta({ navigation, route }: Props) {
     const { cores } = useTema()
     const { estabelecimento: selecionado } = useEstabelecimento()
     const [filtros, setFiltros] = useState<FiltrosMarketplace>(FILTROS_INICIAIS)
     const [mostrarFiltros, setMostrarFiltros] = useState(false)
     const [mostrarMapa, setMostrarMapa] = useState(false)
-    const [localizando, setLocalizando] = useState(false)
+    const [mapaPronto, setMapaPronto] = useState(false)
+    const [marcado, setMarcado] = useState<EstabelecimentoResumo | null>(null)
+    const lista = useRef<FlatList<EstabelecimentoResumo>>(null)
+    const viewport = useRef<View>(null)
+    const deslocamento = useRef(0)
+    const regiaoMapa = useRef<Region | undefined>(undefined)
     const marketplace = useMarketplace(filtros)
+    const selecionadoMapa = marketplace.itens.find(item => item.id === marcado?.id) ?? null
     const categoriaSelecionada = marketplace.categorias.find((categoria) => categoria.slug === filtros.segmento)
     const visualSelecionado = visualDaCategoria(categoriaSelecionada?.slug, categoriaSelecionada?.nome)
     const atualizar = <K extends keyof FiltrosMarketplace>(campo: K, valor: FiltrosMarketplace[K]) =>
         setFiltros((atuais) => ({ ...atuais, [campo]: valor }))
-    const abrir = (slug: string) => navigation.getParent<NativeStackNavigationProp<StackParamList>>()
+    const navegarPerfil = (slug: string) => navigation.getParent<NativeStackNavigationProp<StackParamList>>()
         ?.navigate('PerfilEstabelecimento', { slug })
-
-    async function localizar(raioKm = filtros.raioKm) {
-        try {
-            setLocalizando(true)
-            const permissao = await Location.requestForegroundPermissionsAsync()
-            if (!permissao.granted) return
-            const local = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })
-            setFiltros((atuais) => ({
-                ...atuais,
-                posicao: { lat: local.coords.latitude, lng: local.coords.longitude },
-                raioKm,
-            }))
-        } finally { setLocalizando(false) }
+    const localizacao = useLocalizacaoMarketplace((posicao, raioKm) => setFiltros(atuais => ({ ...atuais, posicao, raioKm })))
+    const tour = useTourDescoberta({
+        mapaVisivel: mostrarMapa, mapaPronto, carregandoResultados: marketplace.carregando || localizacao.localizando,
+        pedidoManual: route.params?.tourMapa, filtrosAbertos: mostrarFiltros,
+        temMarcadores: marketplace.itens.some(possuiCoordenadasMapa), temSelecionado: !!selecionadoMapa,
+        abrirMapa: () => { if (!mostrarMapa) setMapaPronto(false); setMostrarMapa(true) },
+        alterarMapaVisivel: setMostrarMapa, consumirPedido: () => navigation.setParams({ tourMapa: undefined }),
+        alterarFiltrosAbertos: setMostrarFiltros, obterDeslocamento: () => deslocamento.current,
+        rolar: offset => lista.current?.scrollToOffset({ offset, animated: false }),
+        abrirSelecionado: () => { if (selecionadoMapa) navegarPerfil(selecionadoMapa.slug) },
+    })
+    const abrir = (slug: string) => { if (!tour.sessaoAtiva) navegarPerfil(slug) }
+    const selecionarMarcador = (item: EstabelecimentoResumo) => {
+        if (tour.sessaoAtiva && !tour.interagindo) return
+        setMarcado(item)
+        tour.selecionouMarcador()
     }
 
     function selecionarRaio(raioKm: number | null) {
@@ -57,13 +82,19 @@ export default function Descoberta({ navigation }: Props) {
             atualizar('raioKm', raioKm)
             return
         }
-        void localizar(raioKm)
+        void localizacao.localizar(raioKm)
     }
 
     return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}>
-        <FlatList data={mostrarMapa ? [] : marketplace.itens} keyExtractor={(item) => String(item.id)}
+        <View ref={viewport} collapsable={false} style={{ flex: 1 }}>
+        <FlatList ref={lista} data={mostrarMapa ? [] : marketplace.itens} keyExtractor={(item) => String(item.id)}
+            onLayout={tour.layoutPronto} removeClippedSubviews={false}
+            onScroll={evento => { deslocamento.current = evento.nativeEvent.contentOffset.y; tour.invalidar() }} scrollEventThrottle={32}
+            onContentSizeChange={tour.conteudoAlterado} onScrollBeginDrag={tour.iniciouRolagem}
             contentContainerStyle={styles.lista} keyboardShouldPersistTaps="handled"
             ListHeaderComponent={<View>
+                <View pointerEvents={tour.interagindo ? 'none' : 'auto'}>
+                <AlvoTour chave="descoberta.cabecalho">
                 <ImageBackground source={visualSelecionado.imagem} style={styles.hero} imageStyle={styles.heroImagem} resizeMode="cover">
                     <View style={styles.heroSobreposicao}>
                         <View style={styles.marca}><MarcaUniFlow horizontal contraste /></View>
@@ -74,35 +105,46 @@ export default function Descoberta({ navigation }: Props) {
                         </View>
                     </View>
                 </ImageBackground>
+                </AlvoTour>
                 <View style={[styles.busca, { backgroundColor: cores.campo, borderColor: cores.borda, borderWidth: 1 }]}><Ionicons name="search-outline" size={21} color={cores.textoSecundario} />
                     <TextInput value={filtros.busca} onChangeText={(v) => atualizar('busca', v)}
                         placeholder="Estabelecimento, bairro ou cidade" placeholderTextColor={cores.textoSecundario} style={[styles.buscaInput, { color: cores.campoTexto }]} /></View>
                 <View style={styles.acoes}>
-                    <Botao icone="options-outline" texto="Filtros" acao={() => setMostrarFiltros(!mostrarFiltros)} />
-                    <Botao icone="map-outline" texto={mostrarMapa ? 'Lista' : 'Mapa'} acao={() => setMostrarMapa(!mostrarMapa)} />
-                    <Botao icone="locate-outline" texto={localizando ? '...' : 'Localizar'} acao={() => void localizar()} />
+                    <AlvoTour chave="descoberta.filtros" style={{ flex: 1 }}><Botao icone="options-outline" texto="Filtros" acao={() => setMostrarFiltros(!mostrarFiltros)} /></AlvoTour>
+                    <AlvoTour chave="descoberta.visualizacao" style={{ flex: 1 }}><Botao icone="map-outline" texto={mostrarMapa ? 'Lista' : 'Mapa'} acao={() => { Keyboard.dismiss(); setMostrarMapa(!mostrarMapa); if (!mostrarMapa) setMapaPronto(false) }} /></AlvoTour>
+                    <AlvoTour chave="descoberta.localizar" style={{ flex: 1 }}><Botao icone="locate-outline" texto={localizacao.localizando ? '...' : 'Localizar'} acao={() => void localizacao.localizar(filtros.raioKm)} /></AlvoTour>
                 </View>
+                {localizacao.aviso ? <Text accessibilityRole="alert" style={{ color: cores.texto, marginTop: 12 }}>{localizacao.aviso}</Text> : null}
+                {localizacao.negada ? <Pressable accessibilityRole="button" style={{ paddingVertical: 14 }} onPress={localizacao.abrirConfiguracoes}><Text style={{ color: cores.destaque }}>Abrir configurações de localização</Text></Pressable> : null}
+                <AlvoTour chave="descoberta.categorias">
                 <Categorias categorias={marketplace.categorias} selecionada={filtros.segmento}
                     selecionar={(segmento: string) => atualizar('segmento', segmento)} />
+                </AlvoTour>
                 {mostrarFiltros ? <Filtros filtros={filtros} atualizar={atualizar} selecionarRaio={selecionarRaio} /> : null}
                 {selecionado ? <Text style={styles.selecao}>✓ Selecionado: {selecionado.nome}</Text> : null}
                 <Text style={[styles.contagem, { color: cores.textoSecundario }]}>{marketplace.carregando ? 'Buscando...' : `${marketplace.paginacao.total} resultado(s)`}</Text>
                 {marketplace.erro ? <EstadoErro mensagem={marketplace.erro} tentarNovamente={marketplace.recarregar} /> : null}
                 {marketplace.carregando && !mostrarMapa ? <Carregando mensagem="Consultando o marketplace..." /> : null}
-                {mostrarMapa && marketplace.itens.length ? <View style={styles.mapaArea}>
-                    <MapaMarketplace estabelecimentos={marketplace.itens} abrir={abrir} />
+                </View>
+                {mostrarMapa ? <AlvoTour chave="descoberta.mapa" style={styles.mapaArea}>
+                    <MapaMarketplace viewport={viewport} estabelecimentos={marketplace.itens} abrir={abrir} selecionar={selecionarMarcador}
+                        selecionadoId={selecionadoMapa?.id} regiaoInicial={regiaoMapa.current}
+                        alterarRegiao={regiao => { regiaoMapa.current = regiao }} aoPronto={() => setMapaPronto(true)} />
                     {marketplace.carregando ? <View style={[styles.mapaAtualizando, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
                         <ActivityIndicator size="small" color={cores.destaque} />
                         <Text style={[styles.mapaAtualizandoTexto, { color: cores.texto }]}>Atualizando locais...</Text>
                     </View> : null}
-                </View> : null}
+                </AlvoTour> : null}
+                {mostrarMapa && selecionadoMapa ? <AlvoTour chave="descoberta.selecionado"><CartaoEstabelecimento item={selecionadoMapa} selecionado={selecionado?.id === selecionadoMapa.id} abrir={() => abrir(selecionadoMapa.slug)} /></AlvoTour> : null}
                 {mostrarMapa && marketplace.carregando && !marketplace.itens.length ? <Carregando mensagem="Carregando o mapa..." /> : null}
-                {mostrarMapa && !marketplace.carregando && !marketplace.itens.length && !marketplace.erro
+                {mostrarMapa && !marketplace.carregando && !marketplace.itens.some(possuiCoordenadasMapa) && !marketplace.erro
                     ? <EstadoVazio titulo="Nenhum local encontrado no mapa" descricao="Escolha outra categoria ou altere os filtros." /> : null}
             </View>}
             renderItem={({ item }) => <CartaoEstabelecimento item={item} selecionado={selecionado?.id === item.id} abrir={() => abrir(item.slug)} />}
             ListEmptyComponent={!marketplace.carregando && !marketplace.erro && !mostrarMapa
                 ? <EstadoVazio titulo="Nenhum estabelecimento encontrado" descricao="Altere os filtros ou amplie a distância." /> : null} />
+        </View>
+        <ControlesTourDescoberta tour={tour} />
     </SafeAreaView>
 }
 
@@ -170,7 +212,7 @@ function Filtros({ filtros, atualizar, selecionarRaio }: {
             : filtros.posicao ? `· até ${filtros.raioKm} km` : '· use sua localização'}</Text>
         <View style={styles.chips}>
             {RAIOS.map((raio) => <Chip key={raio} texto={`${raio} km`} ativo={filtros.raioKm === raio} acao={() => selecionarRaio(raio)} />)}
-            <Chip texto="Sem limite" ativo={filtros.raioKm === null} acao={() => selecionarRaio(null)} />
+            <AlvoTour chave="descoberta.sem-limite"><Chip texto="Sem limite" ativo={filtros.raioKm === null} acao={() => selecionarRaio(null)} /></AlvoTour>
         </View>
     </View>
 }
