@@ -92,6 +92,7 @@ model Usuario {
   itensImportacaoContato               ImportacaoContatoItem[]
   agendamentosControladosManualmente   Agendamento[]                @relation("ControleManualAgendamento")
   transicoesAtendimentoDestinadas      TransicaoAgendamento[]       @relation("DestinatarioTransicaoAgendamento")
+  supressoesComunicacao                SupressaoComunicacao[]
 
   @@index([estabelecimentoId])
   @@index([telefoneNormalizado])
@@ -292,6 +293,8 @@ model Estabelecimento {
   notificacoes                          NotificacaoUsuario[]
   importacoesContatos                   ImportacaoContatoLote[]
   transicoesAtendimento                 TransicaoAgendamento[]
+  campanhasComunicacao                  CampanhaComunicacao[]
+  supressoesComunicacao                 SupressaoComunicacao[]
   solicitacaoOrigem                     SolicitacaoEstabelecimento?    @relation("EstabelecimentoGeradoSolicitacao")
 
   @@map("estabelecimentos")
@@ -742,6 +745,7 @@ model ClienteEstabelecimento {
 
   estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
   usuario         Usuario         @relation(fields: [usuarioId], references: [id])
+  audienciasCampanhas CampanhaDestinatario[]
 
   @@unique([estabelecimentoId, usuarioId])
   @@index([usuarioId])
@@ -824,6 +828,7 @@ model TemplateComunicacao {
   updatedAt         DateTime           @updatedAt
   estabelecimento   Estabelecimento    @relation(fields: [estabelecimentoId], references: [id])
   envios            EnvioComunicacao[]
+  campanhas         CampanhaComunicacao[]
 
   @@unique([estabelecimentoId, nome, canal])
   @@index([estabelecimentoId, evento, canal, ativo])
@@ -836,6 +841,7 @@ model EnvioComunicacao {
   usuarioId            Int?
   agendamentoId        Int?
   templateId           Int?
+  campanhaId           Int?
   canal                String
   tipo                 String
   destinatario         String
@@ -862,6 +868,8 @@ model EnvioComunicacao {
   template             TemplateComunicacao?        @relation(fields: [templateId], references: [id])
   tentativas           TentativaEnvioComunicacao[]
   callbacks            CallbackEnvioComunicacao[]
+  campanha             CampanhaComunicacao? @relation(fields: [campanhaId], references: [id])
+  destinatarioCampanha  CampanhaDestinatario?
 
   @@unique([estabelecimentoId, chaveIdempotencia])
   @@index([estabelecimentoId, status, agendadoPara])
@@ -869,7 +877,69 @@ model EnvioComunicacao {
   @@index([provedor, referenciaExterna])
   @@index([usuarioId, createdAt])
   @@index([agendamentoId])
+  @@index([campanhaId, status])
+  @@index([estabelecimentoId, usuarioId, canal, createdAt], map: "envios_marketing_frequencia_idx")
   @@map("envios_comunicacao")
+}
+
+model CampanhaComunicacao {
+  id Int @id @default(autoincrement())
+  estabelecimentoId Int
+  templateId Int
+  nome String @db.VarChar(191)
+  status String @default("RASCUNHO")
+  filtros Json
+  templateSnapshot Json?
+  intervaloMinimoHoras Int @default(168)
+  audienciaCongeladaEm DateTime?
+  agendadoPara DateTime?
+  concluidaEm DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  template TemplateComunicacao @relation(fields: [templateId], references: [id])
+  destinatarios CampanhaDestinatario[]
+  envios EnvioComunicacao[]
+  @@index([estabelecimentoId, status, createdAt])
+  @@index([status, agendadoPara])
+  @@map("campanhas_comunicacao")
+}
+
+model CampanhaDestinatario {
+  id Int @id @default(autoincrement())
+  campanhaId Int
+  clienteId Int?
+  usuarioId Int
+  envioId Int? @unique
+  status String @default("PENDENTE")
+  motivo String? @db.VarChar(191)
+  evidencia Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  campanha CampanhaComunicacao @relation(fields: [campanhaId], references: [id])
+  cliente ClienteEstabelecimento? @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  envio EnvioComunicacao? @relation(fields: [envioId], references: [id], onDelete: SetNull)
+  @@unique([campanhaId, usuarioId])
+  @@index([campanhaId, status, id])
+  @@map("campanhas_destinatarios")
+}
+
+model SupressaoComunicacao {
+  id Int @id @default(autoincrement())
+  estabelecimentoId Int
+  usuarioId Int
+  canal String
+  ativa Boolean @default(true)
+  motivo String @db.VarChar(300)
+  ultimoDisparoEm DateTime?
+  ultimoEnvioId Int?
+  intervaloReservadoHoras Int @default(168)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+  @@unique([estabelecimentoId, usuarioId, canal])
+  @@map("supressoes_comunicacao")
 }
 
 model TentativaEnvioComunicacao {

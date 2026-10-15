@@ -52,6 +52,7 @@ export class RelacionamentoService {
     const maximoTentativas = dados.maximoTentativas === undefined ? 3 : Number(dados.maximoTentativas);
     if (!Number.isInteger(maximoTentativas) || maximoTentativas < 1 || maximoTentativas > 10) throw new BadRequestException('Máximo de tentativas deve ficar entre 1 e 10');
     const { cliente, template, preferencia } = await this.repository.prepararEnvio(estabelecimentoId, dados);
+    if (template.evento === 'CAMPANHA' || dados.tipo?.trim().toUpperCase() === 'CAMPANHA') throw new ConflictException('Use o fluxo de campanhas com audiência congelada para envios promocionais');
     if (!preferencia?.consentido) throw new ConflictException(`Cliente não consentiu comunicações por ${template.canal}`);
     const destinatario = template.canal === 'EMAIL'
       ? cliente.usuario.email

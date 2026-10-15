@@ -150,6 +150,7 @@ export class RelacionamentoRepository {
 
   async reprocessarEnvio(id: number, estabelecimentoId: number, tentativasAdicionais: number) {
     const envio = await this.obterEnvio(id, estabelecimentoId);
+    if (envio.campanhaId || envio.tipo === 'CAMPANHA') throw new ConflictException('Campanha encerrada/falha exige nova campanha; não reprocessar fora do controle de frequência e audiência');
     if (!['FILA_MORTA', 'FALHA_PERMANENTE'].includes(envio.status)) {
       throw new ConflictException('Somente envios na fila morta ou com falha permanente podem ser reprocessados');
     }

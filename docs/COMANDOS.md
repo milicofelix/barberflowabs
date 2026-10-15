@@ -771,6 +771,16 @@ docker compose exec -T app sh -lc 'cd apps/backend && yarn test "operacao-fluxo|
 
 Execução opcional pelo usuário, com dependências e core atualizados. Cobre configuração, tenant/permissões, reprocessamento, regras de transição, aviso, receita idempotente e prioridade de comissões com repositórios simulados. Não altera dados reais, não aplica migrations e não substitui a homologação de concorrência no MySQL ou o aceite em dois dispositivos. Não foi executado automaticamente.
 
+### Testes Isolados De Campanhas Segmentadas — Etapa 10, Fase 4
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && yarn test relacionamento/campanhas/campanha.spec.ts --runInBand'
+```
+
+Execução opcional pelo usuário após atualizar dependências/client Prisma. Usa mocks para validação, permissões, segmentação, congelamento, consentimento, frequência, pausa e token de descadastro; não altera dados reais nem substitui teste de concorrência no MySQL. Não foi executado automaticamente.
+
+A migration `20261015170000_add_segmented_campaigns` usa a rotina já catalogada de **Aplicar migrations pendentes**, **Gerar Prisma Client** e **Reiniciar depois de alterar o backend**, nessa ordem. Fazer backup antes de aplicar em banco com dados. Não executar reset ou seed para habilitar campanhas. Manter provedores simulados até configurar/homologar os canais reais.
+
 ## Limpezas Destrutivas
 
 Comandos de remocao de `node_modules`, lockfiles, volumes ou dados nao ficam prontos para copiar nesta secao. A necessidade e o alvo devem ser diagnosticados primeiro para evitar apagar dependencias ou dados de outros projetos que compartilham a infraestrutura.

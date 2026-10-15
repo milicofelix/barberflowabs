@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import { randomUUID } from 'crypto';
 import { ComunicacaoProviderRegistry, FalhaProvedorComunicacao } from './comunicacao.provider';
 import { RelacionamentoRepository } from './relacionamento.repository';
+import { CampanhaExecucaoRepository } from './campanhas/campanha-execucao.repository';
 
 @Injectable()
 export class ComunicacaoWorker implements OnModuleInit, OnModuleDestroy {
@@ -10,7 +11,7 @@ export class ComunicacaoWorker implements OnModuleInit, OnModuleDestroy {
   private timer?: NodeJS.Timeout;
   private processando = false;
 
-  constructor(private readonly repository: RelacionamentoRepository, private readonly providers: ComunicacaoProviderRegistry) {}
+  constructor(private readonly repository: RelacionamentoRepository, private readonly providers: ComunicacaoProviderRegistry, private readonly campanhas: CampanhaExecucaoRepository) {}
 
   onModuleInit() {
     if (process.env.NOTIFICACOES_WORKER_ATIVO === 'false') return;
@@ -52,6 +53,7 @@ export class ComunicacaoWorker implements OnModuleInit, OnModuleDestroy {
     const provedorNome = `${String(envio.canal).toLowerCase()}-simulado`;
     let tentativa: any;
     try {
+      if (!await this.campanhas.autorizar(envio)) return;
       tentativa = await this.repository.iniciarTentativa(envio.id, provedorNome);
       const resultado = await this.providers.obter(envio.canal).enviar({
         envioId: envio.id, chaveIdempotencia: envio.chaveIdempotencia,

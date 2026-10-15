@@ -1,6 +1,6 @@
 # Etapa 10 — Relacionamento, Fidelizacao E Notificacoes
 
-Status: Fases 1 e 2 implementadas; migrations, Prisma Client, reinicio e validacao manual pendentes.
+Status: Fases 1 a 4 implementadas (domínio e APIs). A Fase 4 exige aplicar sua migration, gerar o Prisma Client e reiniciar o backend. Telas completas de relacionamento/campanhas seguem previstas na Fase 7; aceite manual permanece separado da implementação.
 
 ## Principios
 
@@ -103,7 +103,7 @@ Crie um template e anote seu `id`:
 curl -sS -X POST "$API_BASE/relacionamento/templates" \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"nome":"Validacao manual Fase 2","evento":"CAMPANHA","canal":"EMAIL","assunto":"Ola, {{nome}}","conteudo":"Mensagem simulada para {{nome}}.","ativo":true}'
+  -d '{"nome":"Validacao manual Fase 2","evento":"LEMBRETE_AGENDAMENTO","canal":"EMAIL","assunto":"Ola, {{nome}}","conteudo":"Mensagem simulada para {{nome}}.","ativo":true}'
 ```
 
 Enfileire a mensagem usando uma chave exclusiva e substituindo `CLIENTE_ID` e `TEMPLATE_ID`:
@@ -203,10 +203,84 @@ Implementado em 13/10/2026:
 
 ## Fase 4 — Campanhas Segmentadas
 
-- [ ] Criar campanhas em rascunho, agendadas, em execucao, pausadas e concluidas.
-- [ ] Segmentar por tags, unidade, servico, profissional, recorrencia e inatividade.
-- [ ] Gerar audiencia congelada para auditoria antes do disparo.
-- [ ] Aplicar limites de frequencia, descadastro e supressao.
+- [x] Criar campanhas em rascunho, agendadas, em execucao, pausadas e concluidas.
+- [x] Segmentar por tags, unidade, servico, profissional, recorrencia e inatividade.
+- [x] Gerar audiencia congelada para auditoria antes do disparo.
+- [x] Aplicar limites de frequencia, descadastro e supressao.
+
+### Implementação Da Fase 4 — 15/10/2026
+
+A entrega desta fase é de **domínio, persistência e API**, sem antecipar as centrais de gestão web/mobile da Fase 7. Foi adicionada a página pública `/comunicacoes/descadastro` para confirmar a retirada de campanhas sem login. Nenhum teste, build, typecheck, lint, migration, seed, restart, chamada de API ou disparo foi executado nesta entrega.
+
+Migration nova: `20261015170000_add_segmented_campaigns`. Cria `campanhas_comunicacao`, `campanhas_destinatarios` e `supressoes_comunicacao`, relaciona os envios à campanha e adiciona índice de frequência. Aplicar os comandos já catalogados de **migrate deploy**, **prisma generate** e **restart app**, nessa ordem. Não usar reset do banco.
+
+#### Contratos Autenticados
+
+Todas as rotas abaixo ficam em `/relacionamento/campanhas`, usam o estabelecimento da sessão e não aceitam tenant escolhido pelo corpo:
+
+| Método e rota | Finalidade | Permissão |
+| --- | --- | --- |
+| `GET /` | Listar campanhas, `pagina`/`limite`, padrão 25 e máximo 100 | `RELACIONAMENTO_VISUALIZAR` |
+| `POST /` | Criar rascunho | `RELACIONAMENTO_GERENCIAR` |
+| `GET /:id` | Configuração e contadores da audiência/envios por estado | `RELACIONAMENTO_VISUALIZAR` |
+| `PUT /:id` | Editar rascunho ainda não congelado | `RELACIONAMENTO_GERENCIAR` |
+| `POST /:id/congelar` | Fixar audiência e conteúdo do template, sem enviar | `RELACIONAMENTO_GERENCIAR` |
+| `GET /:id/audiencia` | Conferir audiência paginada, evidência, supressões e estado do envio | `RELACIONAMENTO_VISUALIZAR` |
+| `POST /:id/agendar` | Agendar audiência congelada; sem data significa início assim que processado | `RELACIONAMENTO_GERENCIAR` |
+| `POST /:id/pausar` | Pausar campanha agendada/em execução | `RELACIONAMENTO_GERENCIAR` |
+| `POST /:id/retomar` | Voltar campanha pausada à fila, sem congelar outra audiência | `RELACIONAMENTO_GERENCIAR` |
+| `POST /supressoes` | Ativar/desativar bloqueio de marketing por cliente e canal, com motivo | `RELACIONAMENTO_GERENCIAR` |
+
+Exemplo de corpo para criar/editar (os IDs devem pertencer ao estabelecimento):
+
+```json
+{
+  "nome": "Retorno de clientes VIP",
+  "templateId": 1,
+  "intervaloMinimoHoras": 168,
+  "filtros": {
+    "tags": ["VIP"],
+    "unidadeId": 1,
+    "servicoId": 2,
+    "profissionalId": 3,
+    "recorrenciaMinima": 2,
+    "inatividadeDias": 30
+  }
+}
+```
+
+Filtros são opcionais e combinados por **E**; dentro de `tags`, basta corresponder a uma tag exata. Unidade significa a filial física (`Unidade`) do histórico. Serviço/profissional/unidade/recorrência consideram agendamentos **CONCLUIDO**, da própria unidade SaaS, ocorridos até o instante do congelamento; recorrência é a contagem histórica que corresponde aos filtros, não previsão ou análise por período. Inatividade usa o último atendimento concluído em todo o estabelecimento; quem nunca concluiu atendimento não entra nesse filtro. Sem filtros, os candidatos são todos os clientes ativos do estabelecimento.
+
+A seleção lê clientes em lotes de 250 e agrega o histórico por usuário, sem fazer uma consulta por atendimento. O limite é 5.000 candidatos por campanha; excedê-lo recusa o congelamento inteiro e exige filtros mais específicos. A audiência congela **candidatos correspondentes ao segmento**, não uma promessa de entrega: consentimento, status, destino, supressão e frequência podem excluir destinatários na execução. Evidências guardam contagem/data, não nome, telefone ou procedimento. Alterar tags, cadastrar novos clientes ou editar o template posteriormente não muda essa audiência/conteúdo. Repetir o congelamento conserva os mesmos registros. Para mudar uma campanha congelada, criar outro rascunho.
+
+Somente template ativo, do evento `CAMPANHA` e do próprio estabelecimento pode ser usado. O snapshot admite `{{nome}}`, `{{estabelecimento}}` e `{{descadastroUrl}}`; variáveis desconhecidas recusam o congelamento. Dados de contato são consultados na preparação do envio, não copiados para a evidência da audiência. Alterar o destino depois do enfileiramento cancela o envio e requer nova campanha, evitando encaminhar conteúdo para contato não conferido.
+
+Agendamento recebe `{ "agendadoPara": "2026-10-20T14:00:00-03:00" }`, sempre com fuso explícito, e é persistido como instante UTC. A Fase 4 não aplica a janela silenciosa transacional às campanhas: o operador deve escolher o horário apropriado de disparo; adequações por canal/provedor ficam para a operação real. O worker reutiliza `NOTIFICACOES_WORKER_ATIVO` e `NOTIFICACOES_WORKER_INTERVALO_MS`, consulta até cinco campanhas por ciclo e prepara até 25 destinatários de cada uma. Os envios seguem pelo worker/provedores da Fase 2, ainda simulados.
+
+Transições e preparação são protegidas por transação/lock da campanha; destinatário é único por campanha/usuário e envio usa chave `campanha:ID:usuario:ID`. Pausar impede novas preparações e o gate antes do provedor adia mensagens já na fila por um minuto, sem consumir tentativa; ao retomar, pode haver essa latência. Mensagens cuja chamada ao provedor já começou não podem ser recolhidas. `CONCLUIDA` significa que não há mais destinatário pendente nem envio em processamento/retentativa; falhas e supressões continuam nos contadores, sem fingir entrega bem-sucedida.
+
+#### Frequência, Consentimento E Descadastro
+
+- Frequência por estabelecimento/usuário/canal, entre **24 e 720 horas**, padrão 168. Preparação considera reservas/envios de outras campanhas. Antes do provedor, um marcador persistente sob lock impede que campanhas concorrentes autorizem dois disparos no intervalo. Uma tentativa autorizada reserva a janela mesmo se houver falha posterior; retries do mesmo envio podem continuar, respeitando o limite de tentativas. É uma política conservadora contra excesso de marketing, não uma garantia de entrega.
+- Consentimento explícito e cliente ativo são exigidos na preparação e imediatamente antes de entregar ao provedor; supressão tem precedência. Contatos importados não ganham consentimento por participar da audiência.
+- Supressão recebe `{ "clienteId": 10, "canal": "EMAIL", "ativa": true, "motivo": "Solicitação do cliente" }`. Desativá-la não concede consentimento nem reabre mensagens canceladas. A tabela também conserva os marcadores de frequência com `ativa=false`.
+- Toda mensagem acrescenta link de descadastro. Token assinado, expiração de 180 dias, chave derivada e escopo exclusivo: não serve como token de login ou link de agendamento. Não registrar tokens/conteúdo em logs/analytics; configurar `PUBLIC_APP_URL` com o endereço público correto antes de usar provedores reais.
+- `GET /public/comunicacoes/descadastro?token=...` somente consulta o canal; não altera preferências. `POST /public/comunicacoes/descadastro` com `{ "token": "..." }` revoga consentimento do canal/unidade, ativa supressão e cancela campanhas ainda agendadas/em retentativa. A página web exige botão explícito para não executar a retirada por scanner de links. Token expirado exige novo link ou alteração autenticada das preferências.
+- O endpoint genérico `POST /relacionamento/envios` não aceita mais template/evento `CAMPANHA`; usar a audiência congelada. Reprocessamento genérico de envios de campanha é recusado para não reabrir campanhas encerradas por fora do fluxo. Mensagens antigas rotuladas `CAMPANHA` sem associação são canceladas pelo gate. Comunicação transacional continua no contrato existente.
+
+Foram escritos testes isolados de validação, permissões, segmentação, congelamento repetido, pausa, consentimento, gate do worker e escopo do token. Não foram executados. Concorrência real, índices/FKs e a aplicação da migration precisam ser conferidos no ambiente de destino; os testes com mocks não homologam a infraestrutura.
+
+#### Aceite Manual Da Fase 4
+
+1. Aplicar migration, gerar client e reiniciar `app`; manter os adaptadores simulados. Usar exclusivamente contas e contatos de teste.
+2. Criar template ativo `CAMPANHA`, clientes com/sem consentimento e histórico concluído em filiais/serviços/profissionais diferentes; criar o rascunho pelo contrato acima.
+3. Congelar, consultar audiência e repetir congelamento: mesmos IDs, sem duplicação. Alterar tags/template depois e confirmar que o snapshot permanece intacto.
+4. Agendar e conferir transições/contadores; clientes sem consentimento, bloqueados, sem destino, suprimidos ou dentro da frequência não devem chegar ao provedor.
+5. Pausar antes do horário e durante a fila; confirmar ausência de novas chamadas após o gate e preservação do envio. Retomar e conferir continuidade sem outra audiência.
+6. Revogar consentimento após enfileirar; conferir cancelamento antes do provedor. Executar campanhas concorrentes para o mesmo cliente/canal e conferir um único disparo autorizado na janela.
+7. Abrir link sem confirmar: nada muda. Confirmar descadastro e repetir: consentimento permanece revogado, supressão ativa e auditoria de mudança não duplica. Conferir outro canal/estabelecimento preservado.
+8. Tentar IDs de outro tenant, perfis sem permissão, template transacional e filtros inválidos; nenhuma gravação parcial ou exposição cruzada.
+9. Interromper/reiniciar durante a preparação e repetir ciclos; conferir chave única de envio, audiência fixa, tentativas e conclusão com contadores coerentes.
 
 ## Fase 5 — Fidelizacao
 
