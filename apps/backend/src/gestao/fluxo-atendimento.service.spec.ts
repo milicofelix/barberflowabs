@@ -39,9 +39,10 @@ function criarCenario(atual = agendamento(), depois?: any) {
   } as any;
   const financeiro = { registrarReceitaAgendamento: jest.fn() } as any;
   const atualizacoes = { publicar: jest.fn() } as any;
+  const fidelidade = { aplicar: jest.fn() } as any;
   return {
-    tx, prisma, financeiro, atualizacoes,
-    service: new FluxoAtendimentoService(prisma, financeiro, atualizacoes),
+    tx, prisma, financeiro, atualizacoes, fidelidade,
+    service: new FluxoAtendimentoService(prisma, financeiro, atualizacoes, fidelidade),
   };
 }
 
@@ -150,6 +151,7 @@ describe('FluxoAtendimentoService', () => {
     expect(cenario.financeiro.registrarReceitaAgendamento)
       .toHaveBeenCalledWith(3, 11, finalizado);
     expect(cenario.tx.agendamento.updateMany).toHaveBeenCalledTimes(1);
+    expect(cenario.fidelidade.aplicar).toHaveBeenCalledWith(cenario.tx, finalizado, 11, expect.any(Date));
   });
 
   it('repete somente o efeito idempotente quando a conclusão já foi persistida', async () => {
@@ -162,6 +164,7 @@ describe('FluxoAtendimentoService', () => {
     expect(cenario.tx.logAuditoria.create).not.toHaveBeenCalled();
     expect(cenario.financeiro.registrarReceitaAgendamento)
       .toHaveBeenCalledWith(3, 11, finalizado);
+    expect(cenario.fidelidade.aplicar).not.toHaveBeenCalled();
   });
 
   it('não permite registrar ausência antes do horário', async () => {

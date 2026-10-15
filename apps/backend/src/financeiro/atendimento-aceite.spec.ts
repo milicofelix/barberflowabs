@@ -5,7 +5,7 @@ import { chaveComissao } from './financeiro.constants';
 describe('Aceite financeiro do fluxo de atendimento (isolado)', () => {
   it('repetição da conclusão reaproveita a conta sem repetir receita ou auditoria', async () => {
     let conta: any = null;
-    const tx = { contaFinanceira: { findUnique: jest.fn(async () => conta), create: jest.fn(async ({ data }) => (conta = { id: 12, ...data })) }, logAuditoria: { create: jest.fn() } };
+    const tx = { $queryRaw: jest.fn(), liquidacaoFidelidade: { findUnique: jest.fn().mockResolvedValue(null) }, contaFinanceira: { findUnique: jest.fn(async () => conta), create: jest.fn(async ({ data }) => (conta = { id: 12, ...data })) }, logAuditoria: { create: jest.fn() } };
     const repo = new FinanceiroRepository({ $transaction: jest.fn((cb) => cb(tx)) } as any);
     const reserva = { id: 6, valorTotal: 150, data: new Date('2026-10-15T13:00:00Z'), servicos: [] };
     await repo.registrarReceitaAgendamento(3, null, reserva);

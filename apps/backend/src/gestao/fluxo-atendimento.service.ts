@@ -3,6 +3,7 @@ import { OrigemTransicaoAtendimento, StatusAgendamento } from '@uniflowabs/core'
 import { PrismaService } from 'src/db/prisma.service';
 import { FinanceiroService } from 'src/financeiro/financeiro.service';
 import { AgendaAtualizacaoService } from 'src/motor-agenda/agenda-atualizacao.service';
+import { LiquidacaoFidelidadeService } from 'src/relacionamento/fidelidade/liquidacao-fidelidade.service';
 
 const TRANSICOES: Record<StatusAgendamento, StatusAgendamento[]> = {
   AGENDADO: ['CONFIRMADO', 'ATRASADO', 'CHECKIN', 'CANCELADO', 'NO_SHOW'],
@@ -22,6 +23,7 @@ const INCLUDE_AGENDAMENTO = {
   usuario: { select: { id: true, nome: true, email: true, telefone: true } },
   profissional: { select: { id: true, nome: true } },
   servicos: { select: { id: true, nome: true, preco: true, qtdeSlots: true } },
+  itens: { select: { preco: true } },
 } as const;
 
 export interface AlterarStatusAtendimento {
@@ -40,6 +42,7 @@ export class FluxoAtendimentoService {
     private readonly prisma: PrismaService,
     private readonly financeiro: FinanceiroService,
     private readonly atualizacoesAgenda: AgendaAtualizacaoService,
+    private readonly fidelidade: LiquidacaoFidelidadeService,
   ) {}
 
   alterarManual(
@@ -68,10 +71,13 @@ export class FluxoAtendimentoService {
   async alterar(comando: AlterarStatusAtendimento) {
     const agora = comando.agora ?? new Date();
     const resultado = await this.prisma.$transaction(async (tx: any) => {
+      // Ordem comum à fidelidade/financeiro e ao worker, inclusive em operações manuais.
+      await tx.$queryRaw`SELECT id FROM estabelecimentos WHERE id = ${comando.estabelecimentoId} FOR UPDATE`;
       if (comando.origem === 'AUTOMATICA') {
         const [config] = await tx.$queryRaw`SELECT fluxoAtendimentoAutomaticoAtivo, inicioAtendimentoAutomaticoAtivo, finalizacaoAtendimentoAutomaticaAtiva FROM estabelecimentos WHERE id = ${comando.estabelecimentoId} FOR UPDATE`;
         if (!config?.fluxoAtendimentoAutomaticoAtivo || (comando.status === 'CHECKIN' && !config.inicioAtendimentoAutomaticoAtivo) || (comando.status === 'CONCLUIDO' && !config.finalizacaoAtendimentoAutomaticaAtiva)) throw new ConflictException('Automação desativada nas configurações da unidade');
       }
+      await tx.$queryRaw`SELECT id FROM agendamentos WHERE id = ${comando.agendamentoId} AND estabelecimentoId = ${comando.estabelecimentoId} FOR UPDATE`;
       const atual = await tx.agendamento.findFirst({
         where: { id: comando.agendamentoId, estabelecimentoId: comando.estabelecimentoId },
         include: INCLUDE_AGENDAMENTO,
@@ -136,8 +142,9 @@ export class FluxoAtendimentoService {
       const agendamento = await tx.agendamento.findUnique({
         where: { id: atual.id }, include: INCLUDE_AGENDAMENTO,
       });
+      await this.fidelidade.aplicar(tx, agendamento, comando.usuarioId ?? null, agora);
       return { agendamento, alterado: true };
-    });
+    }, { isolationLevel: 'ReadCommitted' });
 
     await this.aplicarEfeitosIdempotentes(resultado.agendamento, comando);
     if (resultado.alterado) this.atualizacoesAgenda.publicar(comando.estabelecimentoId);

@@ -13,9 +13,10 @@ import { OrquestradorAtendimentoService } from './orquestrador-atendimento.servi
 import { RetomarAutomacaoService } from './retomar-automacao.service';
 import { MotorAgendaConsultaPrisma } from 'src/motor-agenda/motor-agenda.consulta.prisma';
 import { MotorAgendaDisponibilidadePrisma } from 'src/motor-agenda/motor-agenda.disponibilidade.prisma';
+import { FidelidadeModule } from 'src/relacionamento/fidelidade/fidelidade.module';
 
 @Module({
-  imports: [DbModule, FinanceiroModule, AuthModule, EquipeModule],
+  imports: [DbModule, FinanceiroModule, AuthModule, EquipeModule, FidelidadeModule],
   controllers: [OperacaoFluxoController],
   providers: [
     OperacaoFluxoService,

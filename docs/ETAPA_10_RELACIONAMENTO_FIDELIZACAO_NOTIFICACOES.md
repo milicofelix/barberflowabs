@@ -1,6 +1,6 @@
 # Etapa 10 — Relacionamento, Fidelizacao E Notificacoes
 
-Status: Fases 1 a 4 implementadas (domínio e APIs). A Fase 4 exige aplicar sua migration, gerar o Prisma Client e reiniciar o backend. Telas completas de relacionamento/campanhas seguem previstas na Fase 7; aceite manual permanece separado da implementação.
+Status: Fases 1 a 5 implementadas (domínio e APIs). As Fases 4 e 5 exigem aplicar suas migrations, gerar o Prisma Client e reiniciar o backend. Telas completas de relacionamento/campanhas/fidelização seguem previstas na Fase 7; aceite manual permanece separado da implementação.
 
 ## Principios
 
@@ -284,11 +284,113 @@ Foram escritos testes isolados de validação, permissões, segmentação, conge
 
 ## Fase 5 — Fidelizacao
 
-- [ ] Configurar programa, validade e regras de pontuacao por estabelecimento.
-- [ ] Implementar saldo, extrato imutavel, niveis e recompensas.
-- [ ] Criar cupons com periodo, limites e elegibilidade.
-- [ ] Criar indicacoes com atribuição e prevencao de autofraude.
-- [ ] Integrar ganho e resgate ao agendamento e financeiro.
+- [x] Configurar programa, validade e regras de pontuacao por estabelecimento.
+- [x] Implementar saldo, extrato imutavel, niveis e recompensas.
+- [x] Criar cupons com periodo, limites e elegibilidade.
+- [x] Criar indicacoes com atribuição e prevencao de autofraude.
+- [x] Integrar ganho e resgate ao agendamento e financeiro.
+
+### Implementação Da Fase 5 — 15/10/2026
+
+Entrega de **domínio, persistência e APIs autenticadas de gestão**. Não adiciona telas ou botões de fidelização: a central web/mobile permanece na Fase 7. O módulo independente de fidelidade é integrado ao fluxo de atendimento sem criar dependência circular entre agenda, financeiro e relacionamento.
+
+Migration: `20261015190000_add_loyalty_program`. Adiciona oito tabelas para programa, carteiras, movimentos, recompensas, cupons, benefícios, indicações e liquidações. Não concede pontos retroativos, não cria programas ativos, não altera preços dos serviços nem dados históricos. Não exige seed ou novas variáveis de ambiente.
+
+Aplicar **migrate deploy**, **prisma generate** e **restart app**, nessa ordem, pelos comandos de `docs/COMANDOS.md`. Fazer backup antes. Nenhum teste, build, typecheck, lint, migration, seed, restart ou chamada de API foi executado nesta entrega. A implementação ainda depende da homologação no ambiente de destino.
+
+#### Regras De Pontos E Financeiro
+
+- Programa desativado por padrão. Configuração exige pontuação, validade de 1 a 3.650 dias e de um a dez níveis, começando em zero.
+- Cada conclusão nova calcula `floor(valorLiquidoCentavos / centavosPorPonto)`. O evento é o atendimento concluído, **não o pagamento da conta**; pontos não representam dinheiro ou confirmação de recebimento. Frações monetárias não acumulam entre atendimentos. Cada crédito é limitado ao inteiro máximo do banco.
+- Saldo considera apenas lotes não expirados, menos resgates e mais estornos desses lotes. A expiração é calculada na consulta, sem depender de worker. O extrato conserva os eventos originais; lotes e `calculadoEm` explicam a validade do saldo.
+- Resgates consomem primeiro os lotes que vencem antes. Não existe endpoint de edição/exclusão de movimentos ou concessão arbitrária de saldo. Níveis usam os pontos ganhos ao longo da vida no estabelecimento, sem cair ao resgatar ou expirar pontos; a configuração atual determina os limiares.
+- Recompensas concedem desconto fixo em centavos mediante custo em pontos; cupons concedem desconto fixo sem pontos. Um agendamento aceita **um benefício por vez**, com desconto limitado ao valor bruto, sem troco ou saldo monetário residual. Se o valor for menor que a recompensa, o custo integral em pontos continua necessário.
+- Aplicação somente em `AGENDADO`, `CONFIRMADO` ou `ATRASADO`, antes de iniciar atendimento ou gerar conta. Chave de idempotência é obrigatória e vinculada ao payload. Uma tentativa repetida devolve o registro original, inclusive se já cancelado, sem reaplicá-lo; novo resgate após cancelamento exige nova chave.
+- Cupom verifica período de aplicação (início inclusivo, fim exclusivo), gasto mínimo bruto, limite global, limite por cliente, tags (qualquer uma), serviços (qualquer um) e primeira visita, quando configurados. IDs de serviços são validados no tenant. Reservas `APLICADO` já consomem os limites; canceladas liberam a cota. Impede reservar dois cupons de primeira visita simultâneos para o mesmo cliente.
+- Elegibilidade e valor são congelados ao aplicar. Reagendamento preserva o benefício reservado; não exige que o atendimento aconteça antes do fim do período promocional. Editar/desativar uma oferta não recalcula benefícios já reservados. Desativar o programa impede novos resgates/ganhos, mas honra descontos reservados e permite estornos.
+- Cancelar o benefício antes do atendimento, cancelar o agendamento ou marcar ausência cria estorno compensatório uma única vez. A validade original é preservada: pontos já vencidos não são reativados pelo estorno. Não há exclusão do histórico nem estorno de atendimento concluído nesta fase.
+- Conclusão, consumo do benefício, pontos, indicação e snapshot líquido são persistidos **na mesma transação** da mudança de status. A liquidação tem chave única por agendamento; repetir conclusão não duplica ganho. Não concede pontos de conclusões antigas por simples consulta/repetição.
+- Operações concorrentes usam bloqueios na ordem estabelecimento → agendamento (quando necessário) → programa → carteira e isolamento `ReadCommitted` para consultar contadores atualizados após espera. A ordem acompanha o worker e as FKs da auditoria. A serialização inicial por estabelecimento prioriza segurança; particionamento de locks para maior escala pode ser avaliado após medir demanda.
+- Financeiro reaproveita a conta única por agendamento e usa o líquido congelado. Desconto integral resulta em zero a receber, sem recriar o preço bruto e sem falsa divergência no monitor. Conta manual vinculada a atendimento com benefício é recusada: deve ser gerada pela conclusão.
+- **Comissões e repasses preservam a regra existente sobre os preços brutos dos itens.** O custo promocional fica com o estabelecimento; esta fase não reduz remuneração de profissionais nem muda repasses já pagos. Relatórios operacionais de venda bruta continuam distintos das contas líquidas a receber.
+
+#### Indicações E Proteções
+
+- Indicador e indicado precisam ser clientes ativos do mesmo estabelecimento, com papel `CUSTOMER` e telefones brasileiros completos; nomes não determinam identidade.
+- Atribuição única e não transferível antes do primeiro atendimento concluído; bloqueia mesma conta, e-mail igual, telefone igual após normalização e ciclos de indicação, inclusive indiretos. Não aceita cadeias acima de cem elos.
+- A indicação começa `PENDENTE`. Operador com `RELACIONAMENTO_GERENCIAR` revisa a identidade fora do sistema e aprova antes da primeira conclusão. O bônus é congelado nessa aprovação.
+- Primeira conclusão elegível concede bônus ao indicador, não ao indicado. Exige valor líquido mínimo e programa ativo; cancelamento/ausência não premia. Identidades e vínculo ativo do indicador são conferidos novamente. O resultado fica `PREMIADA` ou `INELEGIVEL`, com auditoria e referência ao atendimento.
+- Telefone/e-mail declarados **não são prova de titularidade**. As proteções reduzem autofraude evidente, mas não substituem OTP ou investigação antifraude; sem provedor de verificação nesta fase, a revisão humana é obrigatória. A autorização para comunicação continua independente da fidelidade: não inscreve ninguém em marketing.
+
+#### Contratos Da Fidelização
+
+Base: `/relacionamento/fidelidade`. Todos os dados são resolvidos pelo estabelecimento da sessão; não se aceita tenant escolhido no corpo. IDs de clientes são de `ClienteEstabelecimento`, não de `Usuario`.
+
+| Método e rota | Finalidade | Permissão |
+| --- | --- | --- |
+| `GET /programa` | Configuração, até cem recompensas e cem cupons mais recentes | `RELACIONAMENTO_VISUALIZAR` |
+| `PUT /programa` | Configurar/ativar/desativar programa | `RELACIONAMENTO_GERENCIAR` |
+| `POST /recompensas`, `PUT /recompensas/:id` | Criar/editar/desativar recompensa | `RELACIONAMENTO_GERENCIAR` |
+| `POST /cupons`, `PUT /cupons/:id` | Criar/editar/desativar cupom | `RELACIONAMENTO_GERENCIAR` |
+| `GET /clientes/:id?pagina=1` | Saldo, lotes válidos, nível e extrato de cinquenta eventos por página | `RELACIONAMENTO_VISUALIZAR` |
+| `GET /agendamentos/:id/beneficio` | Histórico de benefícios, bruto, desconto, líquido e liquidação | Leitura de relacionamento + `AGENDA_GERENCIAR` |
+| `POST /agendamentos/:id/beneficio` | Reservar cupom ou resgatar pontos | Gestão de relacionamento + `AGENDA_GERENCIAR` |
+| `POST /agendamentos/:id/beneficio/cancelar` | Cancelar reserva e estornar pontos | Gestão de relacionamento + `AGENDA_GERENCIAR` |
+| `GET /indicacoes?pagina=1` | Listar atribuições, cinquenta por página | `RELACIONAMENTO_VISUALIZAR` |
+| `POST /indicacoes` | Atribuir indicador/indicado | `RELACIONAMENTO_GERENCIAR` |
+| `POST /indicacoes/:id/aprovar` | Registrar revisão administrativa de identidade | `RELACIONAMENTO_GERENCIAR` |
+
+Exemplo de `PUT /programa` (valores comerciais ilustrativos, não ativados automaticamente):
+
+```json
+{
+  "ativo": true,
+  "centavosPorPonto": 100,
+  "validadeDias": 365,
+  "bonusIndicacao": 50,
+  "minimoIndicacaoCentavos": 5000,
+  "niveis": [{ "nome": "Inicial", "pontos": 0 }, { "nome": "Prata", "pontos": 500 }]
+}
+```
+
+Exemplo de recompensa (`POST /recompensas`):
+
+```json
+{ "nome": "Desconto de R$ 20", "pontos": 200, "descontoCentavos": 2000, "ativo": true }
+```
+
+Exemplo de cupom (`POST /cupons`):
+
+```json
+{
+  "codigo": "BEMVINDO20",
+  "descontoCentavos": 2000,
+  "inicio": "2026-10-15T00:00:00-03:00",
+  "fim": "2026-11-01T00:00:00-03:00",
+  "limiteTotal": 100,
+  "limitePorCliente": 1,
+  "minimoCentavos": 5000,
+  "elegibilidade": { "primeiraVisita": true },
+  "ativo": true
+}
+```
+
+Resgate: `{"chaveIdempotencia":"resgate-001","recompensaId":1}`. Alternativamente, cupom: `{"chaveIdempotencia":"cupom-001","codigoCupom":"BEMVINDO20"}`. Indicação: `{"indicadorId":10,"indicadoId":11}`. Não enviar cupom e recompensa juntos. Use IDs reais retornados pelo seu ambiente.
+
+### Aceite Manual Da Fase 5
+
+1. Fazer backup, aplicar migration, gerar Client e reiniciar. Conferir programa inicialmente inativo e ausência de crédito sobre atendimentos históricos.
+2. Configurar programa de teste e concluir um novo atendimento de R$ 150, sem desconto, com regra de um ponto por real: esperar 150 pontos e uma conta de R$ 150. Repetir conclusão: mesmos saldo/conta.
+3. Acumular saldo, resgatar recompensa e repetir a chave: apenas um débito. Outra chave no mesmo atendimento deve ser recusada; outro agendamento com saldo insuficiente também.
+4. Cancelar benefício/atendimento e marcar ausência em casos separados. Conferir lançamento compensatório, validade original, liberação da cota de cupom e ausência de ganho.
+5. Aplicar R$ 20 de desconto num atendimento de R$ 150 e concluir: conta de R$ 130 e 130 pontos, sem alterar comissão bruta. Conferir desconto integral: zero pontos/recebível e nenhuma divergência financeira indevida.
+6. Conferir período, mínimo, tags, serviços e primeira visita dos cupons; tentar consumir a última cota em dois dispositivos simultâneos: apenas uma reserva. Repetir resgates simultâneos sobre a mesma carteira sem permitir saldo negativo.
+7. Conferir expiração com relógio controlado no ambiente de homologação: saldo reduz sem apagar extrato; estornar lote vencido não reativa validade. Conferir limites dos níveis.
+8. Atribuir indicação, aprovar após revisão e concluir primeiro atendimento elegível. Repetir: bônus único. Recusar autoindicação, telefone equivalente, ciclo, troca de indicador e IDs de outro tenant. Indicação sem aprovação não gera bônus.
+9. Desativar o programa com reserva existente: sem novos resgates/ganhos, preservando desconto e possibilidade de cancelamento. Reagendar: preservar reserva e não cobrar pontos de novo.
+10. Tentar conta manual vinculada ao atendimento com benefício, alterações após início/conclusão e acesso sem as permissões: recusar sem gravação parcial. Interromper a receita após conclusão e repetir a conclusão: reaproveitar a liquidação e gerar uma única conta líquida.
+
+Foram escritos testes isolados de contratos, saldo/lotes, estorno, isolamento, idempotência, limite de cupom, liquidação, valor financeiro líquido e autorização. Também foram adaptados os mocks do fluxo/financeiro existentes. Não executados; mocks não substituem aceite de concorrência e integridade no MySQL.
 
 ## Fase 6 — Metricas E Governanca
 

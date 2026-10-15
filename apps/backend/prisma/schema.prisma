@@ -201,6 +201,8 @@ model Agendamento {
   contasFinanceiras       ContaFinanceira[]
   enviosComunicacao       EnvioComunicacao[]
   transicoesAtendimento   TransicaoAgendamento[]
+  beneficiosFidelidade    BeneficioFidelidade[]
+  liquidacaoFidelidade    LiquidacaoFidelidade?
 
   @@index([estabelecimentoId])
   @@index([profissionalId, data])
@@ -214,6 +216,7 @@ model Agendamento {
 }
 
 model Estabelecimento {
+  programaFidelidade ProgramaFidelidade?
   id                                    Int                            @id @default(autoincrement())
   nome                                  String
   slug                                  String                         @unique
@@ -730,6 +733,7 @@ model ServicoRequisito {
 }
 
 model ClienteEstabelecimento {
+  carteiraFidelidade CarteiraFidelidade?
   id                    Int       @id @default(autoincrement())
   estabelecimentoId     Int
   usuarioId             Int
@@ -1392,4 +1396,126 @@ model DenunciaPerfilPublico {
   @@index([estabelecimentoId, status, createdAt])
   @@index([revisadoPorId])
   @@map("denuncias_perfil_publico")
+}
+
+model ProgramaFidelidade {
+  estabelecimentoId Int @id
+  ativo Boolean @default(false)
+  centavosPorPonto Int @default(100)
+  validadeDias Int @default(365)
+  bonusIndicacao Int @default(0)
+  minimoIndicacaoCentavos Int @default(0)
+  niveis Json
+  updatedAt DateTime @updatedAt
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  recompensas RecompensaFidelidade[]
+  cupons CupomFidelidade[]
+  @@map("programas_fidelidade")
+}
+
+model CarteiraFidelidade {
+  clienteId Int @id
+  createdAt DateTime @default(now())
+  cliente ClienteEstabelecimento @relation(fields: [clienteId], references: [id])
+  movimentos MovimentoFidelidade[]
+  beneficios BeneficioFidelidade[]
+  indicacoesFeitas IndicacaoFidelidade[] @relation("IndicadorFidelidade")
+  indicacaoRecebida IndicacaoFidelidade? @relation("IndicadoFidelidade")
+  @@map("carteiras_fidelidade")
+}
+
+model MovimentoFidelidade {
+  id Int @id @default(autoincrement())
+  clienteId Int
+  chave String @unique @db.VarChar(191)
+  tipo String
+  pontos Int
+  creditoId Int?
+  beneficioId Int?
+  expiraEm DateTime?
+  detalhes Json
+  createdAt DateTime @default(now())
+  carteira CarteiraFidelidade @relation(fields: [clienteId], references: [clienteId])
+  credito MovimentoFidelidade? @relation("LotePontos", fields: [creditoId], references: [id], onDelete: Restrict)
+  consumos MovimentoFidelidade[] @relation("LotePontos")
+  beneficio BeneficioFidelidade? @relation(fields: [beneficioId], references: [id], onDelete: Restrict)
+  @@index([clienteId, creditoId, expiraEm])
+  @@map("movimentos_fidelidade")
+}
+
+model RecompensaFidelidade {
+  id Int @id @default(autoincrement())
+  estabelecimentoId Int
+  nome String @db.VarChar(120)
+  pontos Int
+  descontoCentavos Int
+  ativo Boolean @default(true)
+  programa ProgramaFidelidade @relation(fields: [estabelecimentoId], references: [estabelecimentoId])
+  beneficios BeneficioFidelidade[]
+  @@index([estabelecimentoId, ativo])
+  @@map("recompensas_fidelidade")
+}
+
+model CupomFidelidade {
+  id Int @id @default(autoincrement())
+  estabelecimentoId Int
+  codigo String @db.VarChar(40)
+  descontoCentavos Int
+  inicio DateTime
+  fim DateTime
+  limiteTotal Int
+  limitePorCliente Int @default(1)
+  minimoCentavos Int @default(0)
+  elegibilidade Json
+  ativo Boolean @default(true)
+  programa ProgramaFidelidade @relation(fields: [estabelecimentoId], references: [estabelecimentoId])
+  beneficios BeneficioFidelidade[]
+  @@unique([estabelecimentoId, codigo])
+  @@map("cupons_fidelidade")
+}
+
+model BeneficioFidelidade {
+  id Int @id @default(autoincrement())
+  agendamentoId Int
+  clienteId Int
+  recompensaId Int?
+  cupomId Int?
+  chaveAtiva String? @unique
+  chave String @unique @db.VarChar(191)
+  status String @default("APLICADO")
+  descontoCentavos Int
+  pontos Int @default(0)
+  snapshot Json
+  createdAt DateTime @default(now())
+  agendamento Agendamento @relation(fields: [agendamentoId], references: [id])
+  carteira CarteiraFidelidade @relation(fields: [clienteId], references: [clienteId])
+  recompensa RecompensaFidelidade? @relation(fields: [recompensaId], references: [id], onDelete: Restrict)
+  cupom CupomFidelidade? @relation(fields: [cupomId], references: [id], onDelete: Restrict)
+  movimentos MovimentoFidelidade[]
+  @@index([agendamentoId, status])
+  @@index([cupomId, status, clienteId])
+  @@map("beneficios_fidelidade")
+}
+
+model IndicacaoFidelidade {
+  id Int @id @default(autoincrement())
+  indicadorId Int
+  indicadoId Int @unique
+  status String @default("PENDENTE")
+  aprovadoPorId Int?
+  bonusPontos Int @default(0)
+  createdAt DateTime @default(now())
+  indicador CarteiraFidelidade @relation("IndicadorFidelidade", fields: [indicadorId], references: [clienteId])
+  indicado CarteiraFidelidade @relation("IndicadoFidelidade", fields: [indicadoId], references: [clienteId])
+  @@index([indicadorId, status])
+  @@map("indicacoes_fidelidade")
+}
+
+model LiquidacaoFidelidade {
+  agendamentoId Int @id
+  liquidoCentavos Decimal @db.Decimal(12, 0)
+  pontos Int
+  createdAt DateTime @default(now())
+  agendamento Agendamento @relation(fields: [agendamentoId], references: [id])
+  @@map("liquidacoes_fidelidade")
 }

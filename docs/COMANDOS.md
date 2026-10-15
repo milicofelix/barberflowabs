@@ -316,6 +316,8 @@ docker compose exec -T app sh -lc 'cd apps/backend && npx prisma migrate deploy'
 
 Aplica, em ordem, somente as migrations versionadas que ainda estao pendentes. Altera a estrutura e possivelmente os dados do banco.
 
+Para a Etapa 10 — Fase 5, aplica `20261015190000_add_loyalty_program` (oito tabelas novas, sem crédito retroativo ou ativação automática). Fazer backup e executar depois a geração do Prisma Client e o reinício de `app`, ambos já catalogados abaixo. Não executar reset ou seed. A API de atendimentos passa a depender dessas tabelas, mesmo com programa inativo: aplicar antes de utilizar a nova versão. Contratos e aceite em [ETAPA_10_RELACIONAMENTO_FIDELIZACAO_NOTIFICACOES.md](ETAPA_10_RELACIONAMENTO_FIDELIZACAO_NOTIFICACOES.md).
+
 A migration de dados `20261015030000_retire_legacy_professional_photos` substitui apenas fotos demonstrativas conhecidas por silhuetas de acordo com o sexo cadastrado, desativa os antigos itens globais e retira seus vinculos profissionais. Preserva uploads reais e nao muda o schema; mantenha backup antes de aplicar. Procedimento e aceite em [CORRECAO_AVATARES_PROFISSIONAIS.md](CORRECAO_AVATARES_PROFISSIONAIS.md).
 
 Na canonicalizacao da Etapa 7, esse comando aplica primeiro a capacidade operacional da Etapa 6 e depois renomeia tabelas, colunas e papeis para o vocabulario de `estabelecimento`. Faça backup antes: essa mudanca remove os aliases tecnicos antigos e exige que backend, web e mobile sejam atualizados juntos.
@@ -336,6 +338,14 @@ docker compose exec -T app sh -lc 'cd apps/backend && npx prisma generate'
 ```
 
 Regenera o cliente a partir do `schema.prisma`. Execute depois de migrations que alterem modelos usados pelo codigo.
+
+### Testes opcionais da fidelizacao — Etapa 10, Fase 5
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && yarn test "fidelidade.spec.ts|fluxo-atendimento.service.spec.ts|atendimento-aceite.spec.ts" --runInBand'
+```
+
+Executa somente os testes isolados de fidelidade e os contratos de fluxo/receita relacionados. Nao aplica migrations, nao ativa programas e nao substitui homologacao de concorrencia no MySQL. Comando disponibilizado para execucao manual; nao foi executado pelo agente.
 
 Para o cadastro de membros com senha temporaria, aplicar a migration `20261014230000_add_member_temporary_password` com o comando acima de migrations e depois gerar o Prisma Client. A coluna nova `usuarios.trocarSenhaObrigatoria` preserva as contas existentes com valor `false`. O procedimento e o aceite manual estao em [CADASTRO_MEMBROS_E_SENHA_TEMPORARIA.md](CADASTRO_MEMBROS_E_SENHA_TEMPORARIA.md). Nao e necessario resetar a base nem executar seed.
 

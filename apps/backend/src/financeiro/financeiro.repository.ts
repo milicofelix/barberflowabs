@@ -77,20 +77,28 @@ export class FinanceiroRepository {
 
   criarConta(estabelecimentoId: number, usuarioId: number, dados: any) {
     return this.db.$transaction(async (tx: any) => {
+      if (dados.agendamentoId && dados.tipo === 'RECEBER') {
+        await tx.$queryRaw`SELECT id FROM estabelecimentos WHERE id = ${estabelecimentoId} FOR UPDATE`;
+        await tx.$queryRaw`SELECT id FROM agendamentos WHERE id = ${dados.agendamentoId} AND estabelecimentoId = ${estabelecimentoId} FOR UPDATE`;
+        const beneficio = await tx.beneficioFidelidade.findFirst({ where: { agendamentoId: dados.agendamentoId, agendamento: { estabelecimentoId }, status: { in: ['APLICADO', 'CONSUMIDO'] } } });
+        if (beneficio) throw new ConflictException('Atendimento com benefício deve gerar a conta pela conclusão, respeitando o desconto');
+      }
       const conta = await tx.contaFinanceira.create({ data: { estabelecimentoId, ...dados } });
       await auditarFinanceiro(tx, estabelecimentoId, usuarioId, 'FINANCIAL_ACCOUNT_CREATED', 'ContaFinanceira', conta.id, dados);
       return conta;
-    });
+    }, { isolationLevel: 'ReadCommitted' });
   }
 
   async registrarReceitaAgendamento(estabelecimentoId: number, usuarioId: number | null, agendamento: any) {
     try {
       return await this.db.$transaction(async (tx: any) => {
+        await tx.$queryRaw`SELECT id FROM estabelecimentos WHERE id = ${estabelecimentoId} FOR UPDATE`;
         const existente = await tx.contaFinanceira.findUnique({ where: { agendamentoId: agendamento.id } });
         if (existente) return existente;
         const valorInformado = Number(agendamento.valorTotal ?? 0);
         const valorServicos = (agendamento.servicos ?? []).reduce((total: number, servico: any) => total + Number(servico.preco), 0);
-        const valorTotal = valorInformado > 0 ? valorInformado : valorServicos;
+        const liquidacao = await tx.liquidacaoFidelidade.findUnique({ where: { agendamentoId: agendamento.id } });
+        const valorTotal = liquidacao ? Number(liquidacao.liquidoCentavos) / 100 : valorInformado > 0 ? valorInformado : valorServicos;
         if (valorTotal <= 0) return null;
         const conta = await tx.contaFinanceira.create({
           data: {

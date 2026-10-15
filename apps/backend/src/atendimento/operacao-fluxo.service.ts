@@ -67,7 +67,7 @@ export class OperacaoFluxoService {
       this.prisma.logAuditoria.count({ where: { ...log, detalhes: { path: '$.novo', equals: 'ATRASADO' } } }),
       this.prisma.transicaoAgendamento.count({ where: pendentes }),
       this.prisma.transicaoAgendamento.count({ where: { estabelecimentoId, status: 'FALHOU' } }),
-      this.prisma.agendamento.count({ where: { estabelecimentoId, status: 'CONCLUIDO', finalizadoEm: { gte: desde }, OR: [{ valorTotal: { gt: 0 } }, { servicos: { some: { preco: { gt: 0 } } } }], contasFinanceiras: { none: { tipo: 'RECEBER' } } } }),
+      this.prisma.agendamento.count({ where: { estabelecimentoId, status: 'CONCLUIDO', finalizadoEm: { gte: desde }, OR: [{ valorTotal: { gt: 0 } }, { servicos: { some: { preco: { gt: 0 } } } }], NOT: { liquidacaoFidelidade: { is: { liquidoCentavos: 0 } } }, contasFinanceiras: { none: { tipo: 'RECEBER' } } } }),
       this.prisma.transicaoAgendamento.findMany({ where: { estabelecimentoId, OR: [{ status: 'FALHOU' }, { status: 'AGENDADA', dataPrevista: { lt: agora } }, { status: 'PROCESSANDO', bloqueadoEm: { lt: new Date(agora.getTime() - Math.max(10000, Number(process.env.ATENDIMENTOS_WORKER_LOCK_MS) || 60000)) } }] }, orderBy: [{ dataPrevista: 'asc' }, { id: 'asc' }], take: 50, select: { id: true, agendamentoId: true, tipo: true, status: true, dataPrevista: true, tentativas: true, proximaTentativaEm: true } }),
     ]);
     return { geradoEm: agora, periodoDesde: desde, workerHabilitado: process.env.ATENDIMENTOS_WORKER_ATIVO !== 'false', metricas: { automaticas, manuais, atrasos, tarefasAtrasadas, falhas, divergencias }, tarefas };
