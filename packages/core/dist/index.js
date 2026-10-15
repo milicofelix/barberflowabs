@@ -26,6 +26,7 @@ __export(src_exports, {
   BuscarProfissionais: () => BuscarProfissionais,
   BuscarServicos: () => BuscarServicos,
   CHAVES_FOTOS_PROFISSIONAIS_LEGADAS: () => CHAVES_FOTOS_PROFISSIONAIS_LEGADAS,
+  CentralRelacionamentoStore: () => CentralRelacionamentoStore,
   DateUtils: () => DateUtils,
   ExcluirAgendamento: () => ExcluirAgendamento,
   Horarios: () => Horarios,
@@ -45,23 +46,42 @@ __export(src_exports, {
   TEMPO_SLOT: () => TEMPO_SLOT,
   TIPOS_TRANSICAO_ATENDIMENTO: () => TIPOS_TRANSICAO_ATENDIMENTO,
   acoesAtendimento: () => acoesAtendimento,
+  acoesRegistroRelacionamento: () => acoesRegistroRelacionamento,
   atendimentoTerminal: () => atendimentoTerminal,
+  camposProgramaRelacionamento: () => camposProgramaRelacionamento,
+  canaisRelacionamento: () => canaisRelacionamento,
   capaPersonalizada: () => capaPersonalizada,
   categoriaIdentidade: () => categoriaIdentidade,
   clientes: () => clientes_default,
   comecaEmDezMinutos: () => comecaEmDezMinutos,
   dataAtendimento: () => dataAtendimento,
+  formularioClienteRelacionamento: () => formularioClienteRelacionamento,
+  formularioPreferenciaRelacionamento: () => formularioPreferenciaRelacionamento,
+  formularioSupressaoRelacionamento: () => formularioSupressaoRelacionamento,
+  formulariosBeneficioRelacionamento: () => formulariosBeneficioRelacionamento,
+  formulariosRelacionamento: () => formulariosRelacionamento,
   horarioAtendimento: () => horarioAtendimento,
   imagemPadraoProfissional: () => imagemPadraoProfissional,
   imagemProfissionalLegada: () => imagemProfissionalLegada,
   iniciaisUsuario: () => iniciaisUsuario,
+  instanteLocalRelacionamento: () => instanteLocalRelacionamento,
   intervaloDiaAtendimento: () => intervaloDiaAtendimento,
+  limitePaginaRelacionamento: () => limitePaginaRelacionamento,
+  linhasRelacionamento: () => linhasRelacionamento,
+  objetoRelacionamento: () => objetoRelacionamento,
+  prepararFormularioRelacionamento: () => prepararFormularioRelacionamento,
   profissionais: () => profissionais_default,
+  registrosRelacionamento: () => registrosRelacionamento,
   resolverURLMidia: () => resolverURLMidia,
+  rotuloRelacionamento: () => rotuloRelacionamento,
   rotuloStatus: () => rotuloStatus,
+  secoesRelacionamento: () => secoesRelacionamento,
   servicos: () => servicos_default,
   statusAgendamentoValido: () => statusAgendamentoValido,
-  urlImagemProfissional: () => urlImagemProfissional
+  tituloRegistroRelacionamento: () => tituloRegistroRelacionamento,
+  urlImagemProfissional: () => urlImagemProfissional,
+  valorRelacionamento: () => valorRelacionamento,
+  valoresFormularioRelacionamento: () => valoresFormularioRelacionamento
 });
 module.exports = __toCommonJS(src_exports);
 
@@ -651,6 +671,325 @@ function urlImagemProfissional(url, sexo) {
   }
   return imagem;
 }
+
+// src/relacionamento/central.ts
+var secoesRelacionamento = [
+  { id: "clientes", titulo: "Clientes" },
+  { id: "templates", titulo: "Templates" },
+  { id: "campanhas", titulo: "Campanhas" },
+  { id: "fidelidade", titulo: "Fideliza\xE7\xE3o" },
+  { id: "envios", titulo: "Envios" },
+  { id: "metricas", titulo: "M\xE9tricas" }
+];
+var canaisRelacionamento = ["PUSH", "EMAIL", "WHATSAPP"];
+function objetoRelacionamento(valor) {
+  return valor && typeof valor === "object" && !Array.isArray(valor) ? valor : {};
+}
+function registrosRelacionamento(valor) {
+  const lista = Array.isArray(valor) ? valor : objetoRelacionamento(valor).itens;
+  return Array.isArray(lista) ? lista.map(objetoRelacionamento) : [];
+}
+function valorRelacionamento(dados, caminho) {
+  return caminho.split(".").reduce((valor, chave) => objetoRelacionamento(valor)[chave], dados);
+}
+var base = "/relacionamento";
+var fidelidade = `${base}/fidelidade`;
+var campo = (chave, titulo, tipo = "texto", padrao, opcional = false) => ({ chave, titulo, tipo, padrao, opcional });
+var escolha = (chave, titulo, valores) => ({ chave, titulo, opcoes: valores.map((valor) => ({ valor, titulo: valor.replace(/_/g, " ") })) });
+var ativo = campo("ativo", "Ativo", "booleano", "false");
+var camposProgramaRelacionamento = [ativo, campo("centavosPorPonto", "Centavos gastos por ponto", "numero", "100"), campo("validadeDias", "Validade dos pontos (dias)", "numero", "365"), campo("bonusIndicacao", "B\xF4nus por indica\xE7\xE3o (pontos)", "numero", "0"), campo("minimoIndicacaoCentavos", "Valor m\xEDnimo da indica\xE7\xE3o (centavos)", "numero", "0"), campo("niveis", "N\xEDveis: um por linha, no formato Nome;Pontos", "niveis", "Inicial;0")];
+var camposTemplate = [campo("nome", "Nome"), escolha("evento", "Evento", ["CONFIRMACAO_AGENDAMENTO", "LEMBRETE_AGENDAMENTO", "CAMPANHA", "FIDELIDADE"]), escolha("canal", "Canal", canaisRelacionamento), campo("assunto", "Assunto", "texto", "", true), campo("conteudo", "Conte\xFAdo", "longo"), ativo];
+var camposRecompensa = [campo("nome", "Nome"), campo("pontos", "Custo em pontos", "numero"), campo("descontoCentavos", "Desconto (centavos)", "numero"), ativo];
+var camposCupom = [campo("codigo", "C\xF3digo"), campo("descontoCentavos", "Desconto (centavos)", "numero"), campo("inicio", "In\xEDcio (data e hora locais)", "data"), campo("fim", "Fim exclusivo (data e hora locais)", "data"), campo("limiteTotal", "Limite total", "numero", "100"), campo("limitePorCliente", "Limite por cliente", "numero", "1"), campo("minimoCentavos", "Gasto m\xEDnimo (centavos)", "numero", "0"), campo("elegibilidade.tags", "Tags eleg\xEDveis (separadas por v\xEDrgula)", "lista", "", true), campo("elegibilidade.servicoIds", "IDs dos servi\xE7os eleg\xEDveis (separados por v\xEDrgula)", "lista", "", true), campo("elegibilidade.primeiraVisita", "Somente primeira visita", "booleano", "false"), ativo];
+function formulariosRelacionamento(secao, clientes2, templates) {
+  const selecionarCliente = (chave, titulo) => ({ chave, titulo, opcoes: clientes2.map((c) => ({ valor: String(c.id), titulo: `${String(objetoRelacionamento(c.usuario).nome ?? "Cliente")} \xB7 #${c.id}` })) });
+  if (secao === "templates") return [{ titulo: "Novo template", caminho: `${base}/templates`, metodo: "POST", campos: camposTemplate, aviso: "Vari\xE1veis de campanha: {{nome}}, {{estabelecimento}} e {{descadastroUrl}}. O canal s\xF3 enviar\xE1 com consentimento." }];
+  if (secao === "campanhas") return [{ titulo: "Nova campanha", caminho: `${base}/campanhas`, metodo: "POST", campos: [campo("nome", "Nome"), { chave: "templateId", titulo: "Template de campanha ativo", opcoes: templates.filter((t) => t.ativo && t.evento === "CAMPANHA").map((t) => ({ valor: String(t.id), titulo: `${t.nome} \xB7 ${t.canal}` })) }, campo("filtros.tags", "Tags (qualquer uma, separadas por v\xEDrgula)", "lista", "", true), ...["unidadeId", "servicoId", "profissionalId"].map((chave) => campo(`filtros.${chave}`, `Filtro por ${chave.replace("Id", "")} (ID opcional)`, "numero", "", true)), campo("filtros.recorrenciaMinima", "M\xEDnimo de visitas conclu\xEDdas", "numero", "", true), campo("filtros.inatividadeDias", "Inatividade m\xEDnima em dias", "numero", "", true), campo("intervaloMinimoHoras", "Intervalo m\xEDnimo entre campanhas (24 a 720 horas)", "numero", "168")] }];
+  if (secao === "fidelidade") return [
+    { titulo: "Nova recompensa", caminho: `${fidelidade}/recompensas`, metodo: "POST", campos: camposRecompensa },
+    { titulo: "Novo cupom", caminho: `${fidelidade}/cupons`, metodo: "POST", campos: camposCupom },
+    { titulo: "Registrar indica\xE7\xE3o", caminho: `${fidelidade}/indicacoes`, metodo: "POST", campos: [selecionarCliente("indicadorId", "Quem indicou"), selecionarCliente("indicadoId", "Cliente indicado")], aviso: "A indica\xE7\xE3o exige revis\xE3o humana de identidade antes da aprova\xE7\xE3o. N\xE3o concede consentimento de marketing." }
+  ];
+  return [];
+}
+function formulariosBeneficioRelacionamento() {
+  const agendamento = campo("_agendamentoId", "N\xFAmero do agendamento (consulte na agenda)", "numero");
+  const chave = { ...campo("chaveIdempotencia", "Chave da opera\xE7\xE3o", "texto", `central-${Date.now()}-${Math.random().toString(36).slice(2)}`), oculto: true };
+  const caminho = `${fidelidade}/agendamentos/:agendamentoId/beneficio`;
+  return [
+    { titulo: "Consultar benef\xEDcio do agendamento", caminho, metodo: "GET", campos: [agendamento] },
+    { titulo: "Aplicar cupom no agendamento", caminho, metodo: "POST", campos: [agendamento, campo("codigoCupom", "C\xF3digo do cupom"), chave], confirmar: "Confirma a reserva do desconto neste atendimento?" },
+    { titulo: "Resgatar recompensa no agendamento", caminho, metodo: "POST", campos: [agendamento, campo("recompensaId", "N\xFAmero da recompensa", "numero"), chave], confirmar: "Confirma o consumo dos pontos do cliente e a reserva do desconto?" },
+    { titulo: "Cancelar benef\xEDcio do agendamento", caminho: `${caminho}/cancelar`, metodo: "POST", campos: [agendamento], confirmar: "Cancelar o benef\xEDcio reservado? O estorno seguir\xE1 a validade original dos pontos." }
+  ];
+}
+function formularioSupressaoRelacionamento(clienteId) {
+  return { titulo: "Supress\xE3o de campanhas", caminho: `${base}/campanhas/supressoes`, metodo: "POST", campos: [{ ...campo("clienteId", "Cliente", "numero", String(clienteId)), oculto: true }, escolha("canal", "Canal", canaisRelacionamento), campo("ativa", "Bloquear campanhas neste canal", "booleano", "true"), campo("motivo", "Motivo")], confirmar: "Confirmo a altera\xE7\xE3o. Remover bloqueio n\xE3o concede consentimento de comunica\xE7\xE3o." };
+}
+function formularioClienteRelacionamento(cliente) {
+  return { titulo: "Editar relacionamento", caminho: `${base}/clientes/${cliente.id}`, metodo: "PUT", campos: [escolha("status", "Status", ["ATIVO", "INATIVO", "BLOQUEADO"]), campo("tags", "Tags (separadas por v\xEDrgula)", "lista", "", true), campo("observacoes", "Observa\xE7\xF5es", "longo", "", true)] };
+}
+function formularioPreferenciaRelacionamento(clienteId, canal) {
+  return { titulo: `Prefer\xEAncia ${canal}`, caminho: `${base}/clientes/${clienteId}/preferencias`, metodo: "PUT", campos: [campo("consentido", "Cliente autorizou este canal", "booleano", "false"), campo("versaoTermos", "Vers\xE3o dos termos apresentados")], aviso: "Registre somente autoriza\xE7\xE3o expl\xEDcita do cliente. Importa\xE7\xE3o de contato n\xE3o \xE9 consentimento.", confirmar: "Confirmo que esta prefer\xEAncia corresponde \xE0 manifesta\xE7\xE3o do cliente." };
+}
+function acoesRegistroRelacionamento(secao, registro) {
+  const id = Number(registro.id);
+  if (!id) return [];
+  if (secao === "templates") return [{ titulo: "Editar template", caminho: "", formulario: { titulo: "Editar template", caminho: `${base}/templates/${id}`, metodo: "PUT", campos: camposTemplate } }];
+  if (secao === "campanhas") {
+    const caminho = `${base}/campanhas/${id}`;
+    if (registro.status === "RASCUNHO" && !registro.audienciaCongeladaEm) return [{ titulo: "Congelar audi\xEAncia", caminho: `${caminho}/congelar`, confirmar: "Congelar p\xFAblico e conte\xFAdo? Ap\xF3s esta a\xE7\xE3o, eles n\xE3o poder\xE3o ser editados." }];
+    if (registro.status === "RASCUNHO") return [{ titulo: "Agendar disparo", caminho: "", formulario: { titulo: "Agendar disparo", caminho: `${caminho}/agendar`, metodo: "POST", campos: [campo("agendadoPara", "Data e hora locais do disparo", "data")], confirmar: "Confirma o agendamento do envio para a audi\xEAncia congelada?" } }];
+    if (["AGENDADA", "EM_EXECUCAO"].includes(String(registro.status))) return [{ titulo: "Pausar campanha", caminho: `${caminho}/pausar`, confirmar: "Pausar novos envios? Mensagens j\xE1 entregues ao provedor n\xE3o podem ser recolhidas." }];
+    if (registro.status === "PAUSADA") return [{ titulo: "Retomar campanha", caminho: `${caminho}/retomar`, confirmar: "Retomar os envios desta campanha agora?" }];
+  }
+  if (secao === "envios" && !registro.campanhaId && ["FILA_MORTA", "FALHA_PERMANENTE"].includes(String(registro.status))) return [{ titulo: "Reprocessar envio", caminho: "", formulario: { titulo: "Reprocessar envio", caminho: `${base}/envios/${id}/reprocessar`, metodo: "POST", campos: [campo("tentativasAdicionais", "Tentativas adicionais", "numero", "3")], confirmar: "Autorizar novas tentativas desta mensagem?" } }];
+  if (secao === "fidelidade") {
+    if (registro.tipoRegistro === "recompensa" || registro.tipoRegistro === "cupom") return [{ titulo: "Editar oferta", caminho: "", formulario: { titulo: "Editar oferta", caminho: `${fidelidade}/${registro.tipoRegistro === "cupom" ? "cupons" : "recompensas"}/${id}`, metodo: "PUT", campos: registro.tipoRegistro === "cupom" ? camposCupom : camposRecompensa } }];
+    if (registro.tipoRegistro === "indicacao" && registro.status === "PENDENTE") return [{ titulo: "Aprovar indica\xE7\xE3o", caminho: `${fidelidade}/indicacoes/${id}/aprovar`, confirmar: "Confirma a revis\xE3o da identidade dos clientes e aus\xEAncia de autoindica\xE7\xE3o?" }];
+  }
+  return [];
+}
+function prepararFormularioRelacionamento(form, valores, canal) {
+  const resultado = {};
+  for (const c of form.campos) {
+    const texto = (valores[c.chave] ?? "").trim();
+    if (!texto && c.opcional) {
+      if (c.tipo === "lista") definir(resultado, c.chave, []);
+      else if (c.chave === "observacoes" || c.chave === "assunto") definir(resultado, c.chave, null);
+      continue;
+    }
+    if (!texto) throw new Error(`Preencha: ${c.titulo}`);
+    let valor = texto;
+    if (c.opcoes && !c.opcoes.some((o) => o.valor === texto)) throw new Error(`Selecione: ${c.titulo}`);
+    if (c.tipo === "numero" || /Id$/.test(c.chave)) {
+      const numero = Number(texto);
+      if (!Number.isSafeInteger(numero) || numero < 0) throw new Error(`N\xFAmero inv\xE1lido: ${c.titulo}`);
+      valor = numero;
+    }
+    if (c.tipo === "booleano") valor = texto === "true";
+    if (c.tipo === "lista") {
+      valor = texto.split(",").map((v) => v.trim()).filter(Boolean);
+      if (c.chave.endsWith("servicoIds")) {
+        valor = valor.map(Number);
+        if (valor.some((n) => !Number.isSafeInteger(n) || n <= 0)) throw new Error("IDs de servi\xE7os inv\xE1lidos");
+      }
+    }
+    if (c.tipo === "data") valor = instanteLocalRelacionamento(texto);
+    if (c.tipo === "niveis") valor = texto.split("\n").filter((v) => v.trim()).map((linha) => {
+      const [nome, pontos] = linha.split(";");
+      if (!nome?.trim() || !pontos?.trim() || !Number.isSafeInteger(Number(pontos))) throw new Error("Use um n\xEDvel por linha: Nome;Pontos");
+      return { nome: nome.trim(), pontos: Number(pontos) };
+    });
+    definir(resultado, c.chave, valor);
+  }
+  if (canal) return { preferencias: [{ ...resultado, canal, origem: "ESTABELECIMENTO" }] };
+  return resultado;
+}
+function instanteLocalRelacionamento(texto) {
+  const partes = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(texto);
+  if (!partes) throw new Error("Informe data e hora locais no formato AAAA-MM-DDTHH:mm");
+  const [, ano, mes, dia, hora, minuto] = partes.map(Number);
+  const data = new Date(ano, mes - 1, dia, hora, minuto);
+  if (data.getFullYear() !== ano || data.getMonth() !== mes - 1 || data.getDate() !== dia || data.getHours() !== hora || data.getMinutes() !== minuto) throw new Error("Data ou hora inexistente");
+  return data.toISOString();
+}
+function definir(objeto, caminho, valor) {
+  const partes = caminho.split(".");
+  const chave = partes.pop();
+  let atual = objeto;
+  for (const parte of partes) {
+    if (!atual[parte]) atual[parte] = {};
+    atual = objetoRelacionamento(atual[parte]);
+  }
+  atual[chave] = valor;
+}
+function valoresFormularioRelacionamento(form, registro = {}) {
+  return Object.fromEntries(form.campos.map((c) => {
+    const valor = valorRelacionamento(registro, c.chave);
+    if (valor == null) return [c.chave, c.padrao ?? c.opcoes?.[0]?.valor ?? ""];
+    if (c.tipo === "niveis" && Array.isArray(valor)) return [c.chave, valor.map((n) => `${objetoRelacionamento(n).nome};${objetoRelacionamento(n).pontos}`).join("\n")];
+    if (c.tipo === "data") {
+      const data = new Date(String(valor));
+      return [c.chave, new Date(data.getTime() - data.getTimezoneOffset() * 6e4).toISOString().slice(0, 16)];
+    }
+    return [c.chave, Array.isArray(valor) ? valor.join(", ") : String(valor)];
+  }));
+}
+
+// src/relacionamento/central-store.ts
+var CentralRelacionamentoStore = class {
+  constructor(api) {
+    this.api = api;
+    this.ouvintes = /* @__PURE__ */ new Set();
+    this.revisao = 0;
+    this.ativo = true;
+    this.snapshot = () => this.estado;
+    this.subscribe = (ouvinte) => {
+      this.ouvintes.add(ouvinte);
+      return () => {
+        this.ouvintes.delete(ouvinte);
+      };
+    };
+    this.encerrar = () => {
+      this.ativo = false;
+      this.revisao++;
+      this.ouvintes.clear();
+    };
+    const agora = /* @__PURE__ */ new Date();
+    const inicio = new Date(agora.getFullYear(), agora.getMonth(), 1);
+    this.estado = { grupoFidelidade: "recompensas", secao: "clientes", permissoes: [], carregando: true, salvando: false, erro: "", mensagem: "", itens: [], total: 0, pagina: 1, busca: "", inicio: inicio.toISOString(), fim: agora.toISOString(), clientes: [], templates: [], programa: {}, selecionado: null, detalhe: null, paginaDetalhe: 1, totalDetalhe: 0 };
+  }
+  atualizar(dados) {
+    if (!this.ativo) return;
+    this.estado = { ...this.estado, ...dados };
+    this.ouvintes.forEach((o) => o());
+  }
+  async iniciar() {
+    this.ativo = true;
+    try {
+      const resposta = await this.api.get("/equipe/minhas-permissoes");
+      this.atualizar({ permissoes: Array.isArray(resposta) ? resposta : [] });
+      await this.carregar();
+    } catch (e) {
+      this.atualizar({ carregando: false, erro: mensagem(e) });
+    }
+  }
+  async recarregar() {
+    if (this.estado.salvando || !this.ativo) return;
+    await this.iniciar();
+    if (this.ativo && !this.estado.erro && this.estado.selecionado) await this.selecionar(this.estado.selecionado, this.estado.paginaDetalhe);
+  }
+  async carregar(alteracoes = {}) {
+    const mudar = alteracoes.secao !== void 0 && alteracoes.secao !== this.estado.secao || alteracoes.grupoFidelidade !== void 0 && alteracoes.grupoFidelidade !== this.estado.grupoFidelidade;
+    this.atualizar({ ...alteracoes, ...mudar ? { pagina: 1, selecionado: null, detalhe: null, itens: [], total: 0, mensagem: "" } : {}, carregando: true, erro: "" });
+    const versao = ++this.revisao;
+    const e = this.estado;
+    if (!e.permissoes.includes("RELACIONAMENTO_VISUALIZAR")) {
+      this.atualizar({ carregando: false, itens: [], selecionado: null, detalhe: null, clientes: [], templates: [], programa: {}, erro: "Voc\xEA n\xE3o tem permiss\xE3o para visualizar relacionamento." });
+      return;
+    }
+    try {
+      let itens = [];
+      let total = 0;
+      const extras = {};
+      if (e.secao === "clientes") {
+        const todos = registrosRelacionamento(await this.api.get(`/relacionamento/clientes?q=${encodeURIComponent(e.busca)}`));
+        total = todos.length;
+        itens = todos.slice((e.pagina - 1) * 25, e.pagina * 25);
+      } else if (e.secao === "templates") {
+        const todos = registrosRelacionamento(await this.api.get("/relacionamento/templates"));
+        total = todos.length;
+        itens = todos.slice((e.pagina - 1) * 25, e.pagina * 25);
+        extras.templates = todos;
+      } else if (e.secao === "fidelidade") {
+        const [programa, indicacoes, clientes2] = await Promise.all([this.api.get("/relacionamento/fidelidade/programa"), e.grupoFidelidade === "indicacoes" ? this.api.get(`/relacionamento/fidelidade/indicacoes?pagina=${e.pagina}`) : Promise.resolve([]), e.grupoFidelidade === "indicacoes" ? this.api.get("/relacionamento/clientes") : Promise.resolve([])]);
+        extras.programa = objetoRelacionamento(programa);
+        extras.clientes = registrosRelacionamento(clientes2);
+        const indicados = registrosRelacionamento(indicacoes).map((i) => ({ ...i, tipoRegistro: "indicacao", chaveRegistro: `indicacao:${i.id}` }));
+        const ofertas = registrosRelacionamento(extras.programa[e.grupoFidelidade]).map((i) => ({ ...i, tipoRegistro: e.grupoFidelidade === "cupons" ? "cupom" : "recompensa", chaveRegistro: `${e.grupoFidelidade}:${i.id}` }));
+        itens = e.grupoFidelidade === "indicacoes" ? indicados : ofertas.slice((e.pagina - 1) * 25, e.pagina * 25);
+        total = e.grupoFidelidade === "indicacoes" ? (e.pagina - 1) * 50 + indicados.length + (indicados.length === 50 ? 1 : 0) : ofertas.length;
+      } else if (e.secao === "metricas") {
+        if (!e.permissoes.includes("FINANCEIRO_VISUALIZAR")) throw new Error("M\xE9tricas exigem tamb\xE9m permiss\xE3o de visualizar financeiro.");
+        const dados = objetoRelacionamento(await this.api.get(`/relacionamento/governanca/metricas?inicio=${encodeURIComponent(e.inicio)}&fim=${encodeURIComponent(e.fim)}`));
+        itens = ["funil", "atribuicao", "clientes", "regras", "periodo"].map((chave) => ({ ...objetoRelacionamento(dados[chave]), nome: chave, chaveRegistro: chave }));
+        total = itens.length;
+      } else {
+        const resposta = objetoRelacionamento(await this.api.get(`/relacionamento/${e.secao}?pagina=${e.pagina}&limite=25`));
+        itens = registrosRelacionamento(resposta);
+        total = Number(resposta.total ?? itens.length);
+        if (e.secao === "campanhas") extras.templates = registrosRelacionamento(await this.api.get("/relacionamento/templates"));
+      }
+      if (this.ativo && versao === this.revisao) this.atualizar({ ...extras, itens, total, carregando: false });
+    } catch (erro) {
+      if (versao === this.revisao) this.atualizar({ carregando: false, erro: mensagem(erro) });
+    }
+  }
+  async selecionar(item, pagina = 1) {
+    const versao = ++this.revisao;
+    this.atualizar({ selecionado: item, detalhe: null, erro: "", paginaDetalhe: pagina, totalDetalhe: 0, carregando: !!item });
+    if (!item) {
+      this.atualizar({ carregando: false });
+      return;
+    }
+    const secao = this.estado.secao;
+    try {
+      let detalhe = item;
+      let total = 0;
+      if (secao === "clientes") {
+        const [cliente, preferencias, carteira] = await Promise.all([this.api.get(`/relacionamento/clientes/${item.id}`), this.api.get(`/relacionamento/clientes/${item.id}/preferencias`), this.api.get(`/relacionamento/fidelidade/clientes/${item.id}?pagina=${pagina}`)]);
+        detalhe = { ...objetoRelacionamento(cliente), preferencias, carteira };
+        total = Number(objetoRelacionamento(carteira).total ?? 0);
+      } else if (secao === "campanhas") {
+        const [campanha, audiencia] = await Promise.all([this.api.get(`/relacionamento/campanhas/${item.id}`), this.api.get(`/relacionamento/campanhas/${item.id}/audiencia?pagina=${pagina}&limite=25`)]);
+        detalhe = { ...objetoRelacionamento(campanha), audiencia };
+        total = Number(objetoRelacionamento(audiencia).total ?? 0);
+      } else if (secao === "envios") detalhe = objetoRelacionamento(await this.api.get(`/relacionamento/envios/${item.id}`));
+      if (this.ativo && versao === this.revisao) this.atualizar({ detalhe, selecionado: { ...item, ...detalhe }, totalDetalhe: total, carregando: false });
+    } catch (erro) {
+      if (versao === this.revisao) this.atualizar({ erro: mensagem(erro), carregando: false });
+    }
+  }
+  async salvar(form, valores, canal) {
+    if (this.estado.salvando || !this.estado.permissoes.includes(form.metodo === "GET" ? "RELACIONAMENTO_VISUALIZAR" : "RELACIONAMENTO_GERENCIAR")) return false;
+    this.atualizar({ salvando: true, erro: "", mensagem: "" });
+    try {
+      const payload = prepararFormularioRelacionamento(form, valores, canal);
+      let caminho = form.caminho;
+      if (caminho.includes(":agendamentoId")) {
+        if (!this.estado.permissoes.includes("AGENDA_GERENCIAR")) throw new Error("Benef\xEDcios exigem tamb\xE9m permiss\xE3o de gerenciar agenda.");
+        if (typeof payload._agendamentoId !== "number" || !Number.isSafeInteger(payload._agendamentoId) || payload._agendamentoId <= 0) throw new Error("N\xFAmero do agendamento inv\xE1lido");
+        caminho = caminho.replace(":agendamentoId", String(payload._agendamentoId));
+        delete payload._agendamentoId;
+      }
+      const resposta = await (form.metodo === "GET" ? this.api.get(caminho) : form.metodo === "PUT" ? this.api.put(caminho, payload) : this.api.post(caminho, payload));
+      if (caminho.includes("/agendamentos/")) {
+        const detalhe = objetoRelacionamento(form.metodo === "GET" ? resposta : await this.api.get(caminho.replace(/\/cancelar$/, "")));
+        this.atualizar({ selecionado: { nome: "Benef\xEDcios do agendamento", ...detalhe }, detalhe, mensagem: form.metodo === "GET" ? "" : "Benef\xEDcio atualizado com sucesso." });
+        return true;
+      }
+      await this.carregar();
+      if (this.estado.selecionado) await this.selecionar(this.estado.selecionado, this.estado.paginaDetalhe);
+      this.atualizar({ mensagem: "Altera\xE7\xE3o registrada com sucesso." });
+      return true;
+    } catch (erro) {
+      this.atualizar({ erro: mensagem(erro) });
+      return false;
+    } finally {
+      this.atualizar({ salvando: false });
+    }
+  }
+};
+function limitePaginaRelacionamento(estado) {
+  return estado.secao === "fidelidade" && estado.grupoFidelidade === "indicacoes" ? 50 : 25;
+}
+function mensagem(erro) {
+  return erro instanceof Error ? erro.message : "N\xE3o foi poss\xEDvel carregar relacionamento.";
+}
+
+// src/relacionamento/apresentacao.ts
+function tituloRegistroRelacionamento(item) {
+  const usuario = objetoRelacionamento(item.usuario);
+  return String(usuario.nome ?? item.nome ?? item.codigo ?? (item.tipoRegistro === "indicacao" ? `Indica\xE7\xE3o #${item.id}` : `Registro #${item.id}`));
+}
+var rotulos = { id: "Identificador", usuario: "Cliente", nome: "Nome", status: "Status", ativo: "Ativo", codigo: "C\xF3digo", telefone: "Telefone", email: "E-mail", tags: "Tags", observacoes: "Observa\xE7\xF5es", ultimoAgendamentoEm: "\xDAltimo agendamento", ultimaInteracaoEm: "\xDAltima intera\xE7\xE3o", canal: "Canal", evento: "Evento", assunto: "Assunto", conteudo: "Conte\xFAdo", consentido: "Consentimento", consentidoEm: "Autorizado em", revogadoEm: "Revogado em", origem: "Origem", versaoTermos: "Vers\xE3o dos termos", saldo: "Saldo de pontos", pontos: "Pontos", nivel: "N\xEDvel", pontosAcumulados: "Pontos acumulados", calculadoEm: "Calculado em", expiraEm: "Validade", extrato: "Extrato", lotes: "Lotes v\xE1lidos", carteira: "Fideliza\xE7\xE3o", preferencias: "Prefer\xEAncias", tipo: "Tipo", createdAt: "Criado em", enviadoEm: "Enviado em", agendadoPara: "Agendado para", audienciaCongeladaEm: "Audi\xEAncia congelada em", tentativas: "Tentativas", callbacks: "Eventos do provedor", erro: "Erro", numero: "Tentativa", indicadorId: "Cliente indicador (ID)", indicadoId: "Cliente indicado (ID)", descontoCentavos: "Desconto em centavos", minimoCentavos: "M\xEDnimo em centavos", limiteTotal: "Limite total", limitePorCliente: "Limite por cliente", inicio: "In\xEDcio", fim: "Fim exclusivo", filtros: "Filtros", elegibilidade: "Elegibilidade", itens: "Registros", total: "Total", audiencia: "Audi\xEAncia", envios: "Envios", usuarioId: "ID do usu\xE1rio", motivo: "Motivo", evidencia: "Evid\xEAncia", proximaTentativaEm: "Pr\xF3xima tentativa", maximoTentativas: "M\xE1ximo de tentativas", provedor: "Provedor" };
+var ocultos = /* @__PURE__ */ new Set(["chaveIdempotencia", "chave", "metadados", "payload", "templateSnapshot", "referenciaExterna", "referenciaVerificacao", "chaveRegistro", "tipoRegistro", "estabelecimentoId", "lockToken", "lockAte", "destino", "dadosExpurgadosEm"]);
+function rotuloRelacionamento(chave) {
+  return rotulos[chave] ?? chave.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/_/g, " ");
+}
+function linhasRelacionamento(dados, prefixo = "", profundidade = 0) {
+  if (profundidade > 5 || dados == null) return [];
+  if (Array.isArray(dados)) return dados.flatMap((valor, i) => typeof valor === "object" ? linhasRelacionamento(valor, `${prefixo} ${i + 1}`, profundidade + 1) : [{ titulo: prefixo, valor: String(valor) }]);
+  return Object.entries(objetoRelacionamento(dados)).filter(([chave]) => !ocultos.has(chave)).flatMap(([chave, valor]) => {
+    const titulo = `${prefixo ? `${prefixo} \xB7 ` : ""}${rotuloRelacionamento(chave)}`;
+    if (valor == null) return [{ titulo, valor: "N\xE3o informado" }];
+    if (typeof valor === "object") return linhasRelacionamento(valor, titulo, profundidade + 1);
+    const texto = typeof valor === "boolean" ? valor ? "Sim" : "N\xE3o" : String(valor);
+    const formatado = /^\d{4}-\d{2}-\d{2}T/.test(texto) && Number.isFinite(new Date(texto).getTime()) ? new Date(texto).toLocaleString("pt-BR") : texto;
+    return [{ titulo, valor: formatado }];
+  });
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   AgendaUtils,
@@ -659,6 +998,7 @@ function urlImagemProfissional(url, sexo) {
   BuscarProfissionais,
   BuscarServicos,
   CHAVES_FOTOS_PROFISSIONAIS_LEGADAS,
+  CentralRelacionamentoStore,
   DateUtils,
   ExcluirAgendamento,
   Horarios,
@@ -678,21 +1018,40 @@ function urlImagemProfissional(url, sexo) {
   TEMPO_SLOT,
   TIPOS_TRANSICAO_ATENDIMENTO,
   acoesAtendimento,
+  acoesRegistroRelacionamento,
   atendimentoTerminal,
+  camposProgramaRelacionamento,
+  canaisRelacionamento,
   capaPersonalizada,
   categoriaIdentidade,
   clientes,
   comecaEmDezMinutos,
   dataAtendimento,
+  formularioClienteRelacionamento,
+  formularioPreferenciaRelacionamento,
+  formularioSupressaoRelacionamento,
+  formulariosBeneficioRelacionamento,
+  formulariosRelacionamento,
   horarioAtendimento,
   imagemPadraoProfissional,
   imagemProfissionalLegada,
   iniciaisUsuario,
+  instanteLocalRelacionamento,
   intervaloDiaAtendimento,
+  limitePaginaRelacionamento,
+  linhasRelacionamento,
+  objetoRelacionamento,
+  prepararFormularioRelacionamento,
   profissionais,
+  registrosRelacionamento,
   resolverURLMidia,
+  rotuloRelacionamento,
   rotuloStatus,
+  secoesRelacionamento,
   servicos,
   statusAgendamentoValido,
-  urlImagemProfissional
+  tituloRegistroRelacionamento,
+  urlImagemProfissional,
+  valorRelacionamento,
+  valoresFormularioRelacionamento
 });

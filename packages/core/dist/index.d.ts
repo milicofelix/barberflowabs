@@ -411,4 +411,108 @@ declare function imagemProfissionalLegada(url?: string | null): boolean;
 declare function imagemPadraoProfissional(sexo?: string | null): string;
 declare function urlImagemProfissional(url?: string | null, sexo?: string | null): string;
 
-export { type AcaoAtendimento, AgendaUtils, type Agendamento, type AssociacaoMidia, type AtendimentoOperacional, BuscarAgendaProfissionalPorDia, BuscarAgendamentosCliente, BuscarProfissionais, BuscarServicos, CHAVES_FOTOS_PROFISSIONAIS_LEGADAS, type ConfiguracaoFluxoAtendimento, type ConfiguracaoLogoEstabelecimento, DateUtils, type EntidadeMidia, ExcluirAgendamento, type FinalidadeMidia, Horarios, type IdentidadeEstabelecimento, type ImagemGaleria, LoginUsuario, METRICAS_FLUXO_ATENDIMENTO, type ModoLogoEstabelecimento, MoedaUtils, type MonitoramentoAtendimento, NovoAgendamento, OPCOES_FLUXO_ATENDIMENTO, OPCOES_LOGO_ESTABELECIMENTO, ORIGENS_TRANSICAO_ATENDIMENTO, ObterHorariosOcupados, type OrigemTransicaoAtendimento, type Profissional, type ProvedorCriptografia, ROTULOS_ACOES, ROTULOS_STATUS_AGENDAMENTO, RegistrarUsuario, type RepositorioAgendamento, type RepositorioProfissional, type RepositorioServico, type RepositorioUsuario, type ResultadoAssociacaoMidia, STATUS_AGENDAMENTO, STATUS_TRANSICAO_ATENDIMENTO, type Servico, type SexoProfissional, type StatusAgendamento, type StatusTransicaoAtendimento, TEMPO_SLOT, TIPOS_TRANSICAO_ATENDIMENTO, type TipoTransicaoAtendimento, type Usuario, type VersaoMidia, acoesAtendimento, atendimentoTerminal, capaPersonalizada, categoriaIdentidade, clientes, comecaEmDezMinutos, dataAtendimento, horarioAtendimento, imagemPadraoProfissional, imagemProfissionalLegada, iniciaisUsuario, intervaloDiaAtendimento, profissionais, resolverURLMidia, rotuloStatus, servicos, statusAgendamentoValido, urlImagemProfissional };
+/** Contrato de apresentação compartilhado por web e React Native. Sem dependência de UI. */
+type DadosRelacionamento = Record<string, unknown>;
+type SecaoRelacionamento = 'clientes' | 'templates' | 'campanhas' | 'fidelidade' | 'envios' | 'metricas';
+interface CampoRelacionamento {
+    chave: string;
+    titulo: string;
+    tipo?: 'numero' | 'booleano' | 'texto' | 'longo' | 'data' | 'lista' | 'niveis';
+    opcoes?: Array<{
+        valor: string;
+        titulo: string;
+    }>;
+    padrao?: string;
+    opcional?: boolean;
+    oculto?: boolean;
+}
+interface FormularioRelacionamento {
+    titulo: string;
+    caminho: string;
+    metodo: 'GET' | 'POST' | 'PUT';
+    campos: CampoRelacionamento[];
+    aviso?: string;
+    confirmar?: string;
+}
+interface AcaoRelacionamento {
+    titulo: string;
+    caminho: string;
+    confirmar?: string;
+    formulario?: FormularioRelacionamento;
+}
+interface APIClienteRelacionamento {
+    get: (caminho: string) => Promise<unknown>;
+    post: (caminho: string, dados: unknown) => Promise<unknown>;
+    put: (caminho: string, dados: unknown) => Promise<unknown>;
+}
+declare const secoesRelacionamento: Array<{
+    id: SecaoRelacionamento;
+    titulo: string;
+}>;
+declare const canaisRelacionamento: string[];
+declare function objetoRelacionamento(valor: unknown): DadosRelacionamento;
+declare function registrosRelacionamento(valor: unknown): DadosRelacionamento[];
+declare function valorRelacionamento(dados: DadosRelacionamento, caminho: string): unknown;
+declare const camposProgramaRelacionamento: CampoRelacionamento[];
+declare function formulariosRelacionamento(secao: SecaoRelacionamento, clientes: DadosRelacionamento[], templates: DadosRelacionamento[]): FormularioRelacionamento[];
+declare function formulariosBeneficioRelacionamento(): FormularioRelacionamento[];
+declare function formularioSupressaoRelacionamento(clienteId: number): FormularioRelacionamento;
+declare function formularioClienteRelacionamento(cliente: DadosRelacionamento): FormularioRelacionamento;
+declare function formularioPreferenciaRelacionamento(clienteId: number, canal: string): FormularioRelacionamento;
+declare function acoesRegistroRelacionamento(secao: SecaoRelacionamento, registro: DadosRelacionamento): AcaoRelacionamento[];
+/** Valores locais de formulário viram instantes ISO; a API continua sendo autoridade das regras. */
+declare function prepararFormularioRelacionamento(form: FormularioRelacionamento, valores: Record<string, string>, canal?: string): DadosRelacionamento;
+declare function instanteLocalRelacionamento(texto: string): string;
+declare function valoresFormularioRelacionamento(form: FormularioRelacionamento, registro?: DadosRelacionamento): Record<string, string>;
+
+interface EstadoCentralRelacionamento {
+    grupoFidelidade: 'recompensas' | 'cupons' | 'indicacoes';
+    secao: SecaoRelacionamento;
+    permissoes: string[];
+    carregando: boolean;
+    salvando: boolean;
+    erro: string;
+    mensagem: string;
+    itens: DadosRelacionamento[];
+    total: number;
+    pagina: number;
+    busca: string;
+    inicio: string;
+    fim: string;
+    clientes: DadosRelacionamento[];
+    templates: DadosRelacionamento[];
+    programa: DadosRelacionamento;
+    selecionado: DadosRelacionamento | null;
+    detalhe: DadosRelacionamento | null;
+    paginaDetalhe: number;
+    totalDetalhe: number;
+}
+/** Estado por sessão/tenant, não persistido. Uma resposta antiga nunca substitui uma consulta mais recente. */
+declare class CentralRelacionamentoStore {
+    private api;
+    private ouvintes;
+    private revisao;
+    private ativo;
+    private estado;
+    constructor(api: APIClienteRelacionamento);
+    snapshot: () => EstadoCentralRelacionamento;
+    subscribe: (ouvinte: () => void) => () => void;
+    private atualizar;
+    encerrar: () => void;
+    iniciar(): Promise<void>;
+    recarregar(): Promise<void>;
+    carregar(alteracoes?: Partial<Pick<EstadoCentralRelacionamento, 'grupoFidelidade' | 'secao' | 'pagina' | 'busca' | 'inicio' | 'fim'>>): Promise<void>;
+    selecionar(item: DadosRelacionamento | null, pagina?: number): Promise<void>;
+    salvar(form: FormularioRelacionamento, valores: Record<string, string>, canal?: string): Promise<boolean>;
+}
+declare function limitePaginaRelacionamento(estado: EstadoCentralRelacionamento): 25 | 50;
+
+declare function tituloRegistroRelacionamento(item: DadosRelacionamento): string;
+declare function rotuloRelacionamento(chave: string): string;
+/** Sem JSON bruto: conserva estrutura de leitura e oculta dados técnicos/tokens do transporte. */
+declare function linhasRelacionamento(dados: unknown, prefixo?: string, profundidade?: number): Array<{
+    titulo: string;
+    valor: string;
+}>;
+
+export { type APIClienteRelacionamento, type AcaoAtendimento, type AcaoRelacionamento, AgendaUtils, type Agendamento, type AssociacaoMidia, type AtendimentoOperacional, BuscarAgendaProfissionalPorDia, BuscarAgendamentosCliente, BuscarProfissionais, BuscarServicos, CHAVES_FOTOS_PROFISSIONAIS_LEGADAS, type CampoRelacionamento, CentralRelacionamentoStore, type ConfiguracaoFluxoAtendimento, type ConfiguracaoLogoEstabelecimento, type DadosRelacionamento, DateUtils, type EntidadeMidia, type EstadoCentralRelacionamento, ExcluirAgendamento, type FinalidadeMidia, type FormularioRelacionamento, Horarios, type IdentidadeEstabelecimento, type ImagemGaleria, LoginUsuario, METRICAS_FLUXO_ATENDIMENTO, type ModoLogoEstabelecimento, MoedaUtils, type MonitoramentoAtendimento, NovoAgendamento, OPCOES_FLUXO_ATENDIMENTO, OPCOES_LOGO_ESTABELECIMENTO, ORIGENS_TRANSICAO_ATENDIMENTO, ObterHorariosOcupados, type OrigemTransicaoAtendimento, type Profissional, type ProvedorCriptografia, ROTULOS_ACOES, ROTULOS_STATUS_AGENDAMENTO, RegistrarUsuario, type RepositorioAgendamento, type RepositorioProfissional, type RepositorioServico, type RepositorioUsuario, type ResultadoAssociacaoMidia, STATUS_AGENDAMENTO, STATUS_TRANSICAO_ATENDIMENTO, type SecaoRelacionamento, type Servico, type SexoProfissional, type StatusAgendamento, type StatusTransicaoAtendimento, TEMPO_SLOT, TIPOS_TRANSICAO_ATENDIMENTO, type TipoTransicaoAtendimento, type Usuario, type VersaoMidia, acoesAtendimento, acoesRegistroRelacionamento, atendimentoTerminal, camposProgramaRelacionamento, canaisRelacionamento, capaPersonalizada, categoriaIdentidade, clientes, comecaEmDezMinutos, dataAtendimento, formularioClienteRelacionamento, formularioPreferenciaRelacionamento, formularioSupressaoRelacionamento, formulariosBeneficioRelacionamento, formulariosRelacionamento, horarioAtendimento, imagemPadraoProfissional, imagemProfissionalLegada, iniciaisUsuario, instanteLocalRelacionamento, intervaloDiaAtendimento, limitePaginaRelacionamento, linhasRelacionamento, objetoRelacionamento, prepararFormularioRelacionamento, profissionais, registrosRelacionamento, resolverURLMidia, rotuloRelacionamento, rotuloStatus, secoesRelacionamento, servicos, statusAgendamentoValido, tituloRegistroRelacionamento, urlImagemProfissional, valorRelacionamento, valoresFormularioRelacionamento };

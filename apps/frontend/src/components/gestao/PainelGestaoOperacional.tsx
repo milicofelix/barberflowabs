@@ -8,6 +8,7 @@ import { IconPencil, IconPlus, IconSparkles, IconTrash, IconX } from '@tabler/ic
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import AtendimentosOperacionais from './AtendimentosOperacionais'
+import CentralRelacionamento from '@/components/relacionamento/CentralRelacionamento'
 import { rotuloStatus } from '@/data/atendimentos/operacao'
 
 type Aba =
@@ -371,14 +372,7 @@ export default function PainelGestaoOperacional() {
             )}
 
             {aba === 'relacionamento' && (
-                <PainelRelacionamento
-                    dados={relacionamento}
-                    clientes={clientes}
-                    lembrete={lembrete}
-                    onChange={setLembrete}
-                    onSalvar={salvarLembrete}
-                    onStatus={alterarStatusLembrete}
-                />
+                <CentralRelacionamento />
             )}
 
             {aba === 'servicos' && (

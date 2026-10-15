@@ -18,6 +18,7 @@ import useGestaoServicos from '@/src/data/hooks/useGestaoServicos'
 import AgendaCalendario from '@/src/components/operacao/AgendaCalendario'
 import ImportadorContatos from '@/src/components/clientes/ImportadorContatos'
 import CabecalhoIdentidadeUnidade from '@/src/components/shared/CabecalhoIdentidadeUnidade'
+import CentralRelacionamento from '@/src/components/relacionamento/CentralRelacionamento'
 
 type Props = BottomTabScreenProps<AbasParamList, 'Operacao'>
 
@@ -27,6 +28,9 @@ export default function Operacao({ navigation, route }: Props) {
     const [visualizacaoAgenda, setVisualizacaoAgenda] = useState<VisualizacaoAgenda>('day')
     const [agendaTelaCheia, setAgendaTelaCheia] = useState(false)
     const dados = useOperacao(visualizacaoAgenda)
+    useEffect(() => {
+        if (!dados.carregando && secao === 'RESUMO' && !dados.permissoes.includes('AGENDA_GERENCIAR') && dados.permissoes.includes('RELACIONAMENTO_VISUALIZAR')) setSecao('RELACIONAMENTO')
+    }, [dados.carregando, dados.permissoes, secao])
     const agendamentoId = route.params?.agendamentoId
     useEffect(() => { if (agendamentoId) { setSecao('AGENDA'); setAgendaTelaCheia(false) } }, [agendamentoId, route.params?.chave])
     const gestaoServicos = useGestaoServicos(secao === 'SERVICOS')
@@ -94,6 +98,7 @@ export default function Operacao({ navigation, route }: Props) {
     return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}><ScrollView contentContainerStyle={styles.conteudo} keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={dados.carregando} onRefresh={dados.recarregar} tintColor="#E7B84B" />}>
         {cabecalho}
+        {secao === 'RELACIONAMENTO' ? <CentralRelacionamento /> : null}
         {dados.erro ? <EstadoErro mensagem={dados.erro} tentarNovamente={dados.recarregar} /> : null}
         {dados.carregando && !dados.dashboard ? <Carregando mensagem="Carregando operação..." /> : null}
         {!dados.carregando && secao === 'RESUMO' ? <><ResumoOperacao dados={dados.dashboard} />

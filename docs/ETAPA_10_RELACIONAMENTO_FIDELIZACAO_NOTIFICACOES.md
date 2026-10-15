@@ -1,6 +1,6 @@
 # Etapa 10 — Relacionamento, Fidelizacao E Notificacoes
 
-Status: Fases 1 a 6 implementadas (domínio e APIs, com exclusão assistida restrita ao relacionamento da unidade). Aplicar migrations pendentes, gerar o Prisma Client e reiniciar o backend. Telas completas seguem previstas na Fase 7; homologação manual e revisão jurídica permanecem separadas da implementação. Exclusão integral da conta global não é automatizada.
+Status: Fases 1 a 7 implementadas, incluindo a central operacional web/mobile descrita abaixo. Aplicar migrations anteriores ainda pendentes, gerar o Prisma Client e reiniciar o backend quando necessário. A Fase 7 não adiciona migration ou dependência. Homologação manual e revisão jurídica permanecem separadas da implementação; exclusão integral da conta global não é automatizada.
 
 ## Principios
 
@@ -405,10 +405,71 @@ Contratos, fórmulas, exemplos de operação, limites da conservação e aceite:
 
 ## Fase 7 — Paridade Web E Mobile
 
-- [ ] Criar central de clientes e detalhe do relacionamento na web.
-- [ ] Criar preferencias, templates, campanhas e fidelizacao na web.
-- [ ] Replicar os mesmos recursos e permissoes no mobile.
+- [x] Criar central de clientes e detalhe do relacionamento na web.
+- [x] Criar preferencias, templates, campanhas e fidelizacao na web.
+- [x] Replicar os mesmos recursos e permissoes no mobile.
 - [ ] Validar paridade com o mesmo tenant, usuario e periodo.
+
+### Implementação Da Fase 7 — 15/10/2026
+
+Implementação entregue; a última caixa representa **homologação manual**, não desenvolvimento restante. Não foi marcada como concluída sem execução em dispositivos.
+
+Onde acessar:
+
+- **Web:** botão **Relacionamento** no banner, rota `/relacionamento`, ou **Gestão → Relacionamento**.
+- **Mobile:** **Gestão diária → Relacionamento**. Quem possui leitura de relacionamento, mas não de agenda, entra nessa seção ao abrir a gestão no lugar do resumo da agenda.
+
+Recursos equivalentes nas duas interfaces:
+
+| Área | Operação |
+| --- | --- |
+| Clientes | Buscar por nome/e-mail/telefone, consultar dados do vínculo, editar status/tags/observações, consultar saldo, nível, lotes e extrato paginado |
+| Preferências | Conceder/revogar por canal, informar versão dos termos e confirmar a manifestação do cliente; origem registrada como estabelecimento |
+| Supressão | Bloquear/desbloquear campanhas por cliente e canal com motivo e confirmação; desbloqueio não concede consentimento |
+| Templates | Criar, editar e ativar/desativar por evento e canal; assunto de e-mail é validado pela API |
+| Campanhas | Criar/editar rascunho, aplicar filtros, conferir detalhes e audiência paginada, congelar, agendar com data/hora, pausar e retomar |
+| Fidelização | Configurar programa/níveis, criar e editar recompensas/cupons, ativar/desativar ofertas, registrar e aprovar indicações após revisão humana |
+| Benefícios | Consultar por número do agendamento, aplicar cupom, resgatar recompensa e cancelar reserva; chave de idempotência mantida na tentativa do formulário |
+| Envios | Consultar fila e detalhes/tentativas/callbacks; reprocessar falhas elegíveis com confirmação, sem reabrir campanhas pelo fluxo avulso |
+| Métricas | Consultar funil, atribuição, retorno/retenção e regras de cálculo pelo mesmo intervalo explícito da API |
+
+Permissões e isolamento:
+
+- `RELACIONAMENTO_VISUALIZAR` para acessar a central e consultar dados; `RELACIONAMENTO_GERENCIAR` para alterações. Contas somente de leitura não recebem botões de escrita.
+- Benefícios exigem também `AGENDA_GERENCIAR`; métricas exigem também `FINANCEIRO_VISUALIZAR`.
+- Toda autorização definitiva permanece nas APIs existentes. Nenhum formulário aceita escolher outro estabelecimento; os IDs opcionais de unidade/serviço/profissional são filtros internos validados pelo backend.
+- Estado da central é recriado por usuário/unidade, não é salvo em storage e descarta respostas de consultas antigas/encerradas. Falha de atualização preserva registros já carregados e exibe mensagem; erro de gravação conserva o formulário preenchido.
+- As telas atualizam após operações, por botão Atualizar e ao recuperar foco/retomar o app. Não foi acrescentado polling ou socket próprio da central.
+
+Arquitetura: contratos de apresentação, serialização, transições disponíveis, paginação e estado assíncrono compartilhados em `packages/core/src/relacionamento`. Hooks locais adaptam autenticação/transporte e ciclo de vida; componentes separados renderizam HTML e React Native. Nenhuma regra financeira, de consentimento ou de autorização foi reimplementada no cliente.
+
+Limites explícitos:
+
+- Clientes/templates têm paginação visual de 25 registros sobre as listas atuais das APIs; não foi adicionada paginação de banco a esses endpoints nesta fase. Indicações usam páginas de cinquenta, campanhas/envios de 25. Ofertas respeitam o limite atual da API de cem recompensas/cem cupons e são paginadas visualmente por categoria.
+- O seletor de clientes no mobile pesquisa localmente e apresenta até vinte opções por vez. Filtros avançados por unidade/serviço/profissional e operação de benefício usam os números dos registros; não alteram o tenant da sessão.
+- Datas de formulários são informadas no horário local do dispositivo e convertidas em instantes ISO antes da API. O fim do período de métricas é exclusivo; comparar os mesmos instantes e fuso nas duas plataformas.
+- O painel não ativa programas/campanhas, não concede consentimentos automaticamente e não muda adaptadores simulados para provedores reais.
+- Exportação/exclusão assistida, retenção e auditoria administrativa continuam pelos contratos especializados da Fase 6. Esta entrega não cria uma interface de expurgo nem um botão de exclusão global de conta.
+- A antiga aba de relacionamento da gestão web passa a exibir a central nova; registros históricos de lembretes não são apagados ou migrados por esta mudança.
+
+Foi escrito `apps/backend/src/relacionamento/central-paridade.spec.ts`, cobrindo contratos comuns, consentimento por canal, limpeza de campos, elegibilidade de ações, datas locais, chave de benefício, permissões, falha de atualização e descarte de sessão encerrada. **Não executado.** Também não foram executados testes de browser/dispositivo/API, build, typecheck, lint, migrations ou reinícios.
+
+### Aceite Manual Da Fase 7
+
+Pré-condições: migrations das fases anteriores já aplicadas, Prisma Client correspondente, usuário vinculado à mesma unidade nas duas plataformas e provedores ainda simulados. Não há comando novo específico desta fase; os comandos de infraestrutura existentes continuam em `docs/COMANDOS.md`.
+
+1. Abrir **Relacionamento** na web e no mobile com o mesmo usuário/unidade. Pesquisar o mesmo cliente e comparar **ID do vínculo**, status, tags, observações, preferências e carteira; nomes não são identificadores únicos.
+2. Editar tags/observações, incluindo limpeza dos campos, e atualizar a outra plataforma. Conferir persistência sem mudar dados de outra unidade.
+3. Registrar autorização explícita de teste em um canal com versão de termos; revogar e conferir os horários. Confirmar que os demais canais não mudam. Bloquear campanhas por canal e conferir que desbloqueio não autoriza marketing.
+4. Criar template ativo de evento CAMPANHA, conferir na outra plataforma e editar/desativar. Apenas templates CAMPANHA ativos devem aparecer na criação de campanha.
+5. Criar campanha em rascunho, editar filtros, conferir a audiência, congelar e confirmar que edição deixa de aparecer. Agendar horário futuro; pausar/retomar e conferir os estados/contadores após Atualizar. Não disparar para contatos reais nesta homologação.
+6. Configurar programa de teste, criar recompensa e cupom, conferir edição/ativação nas duas plataformas. Consultar saldo/extrato e paginação do mesmo cliente; testar benefício no mesmo ID de agendamento e repetir a tentativa após falha de rede sem novo débito.
+7. Registrar indicação entre clientes distintos, revisar identidade antes de aprovar e conferir o estado na outra plataforma. Conferir recusa de autoindicação e de IDs de outra unidade.
+8. Consultar envios, abrir tentativas/callbacks e reprocessar somente falha avulsa elegível; campanha não deve oferecer reprocessamento avulso.
+9. Consultar métricas usando o mesmo início/fim exclusivo (até 93 dias), mesmo fuso e mesma unidade. Os números podem mudar entre consultas se workers/atendimentos continuarem operando; callbacks simulados não provam abertura real.
+10. Repetir com somente leitura, sem leitura, sem agenda e sem financeiro. Conferir ausência de botões/áreas não autorizados e recusa pelo backend ao tentar URLs/IDs diretamente.
+11. Alternar claro/escuro, usar tela estreita, teclado, rolagem dos formulários, Fechar detalhes e botão de voltar do Android. Conferir Android/iOS ao retomar do segundo plano e web ao recuperar foco.
+12. Interromper a conexão durante consulta/gravação: conferir mensagem, formulário preservado e recuperação com Atualizar. Trocar conta/unidade com consulta pendente e conferir ausência de dados/formulários da sessão anterior.
 
 ## Dependencias Externas Pendentes
 

@@ -123,5 +123,5 @@ export interface EscalaProfissional {
 export interface RecursoOperacional { id: number; nome: string; tipo: string; capacidade: number; ativo: boolean }
 export interface IndisponibilidadeRecurso { id: number; inicio: string; fim: string; motivo?: string | null }
 
-export type SecaoOperacao = 'RESUMO' | 'AGENDA' | 'SERVICOS' | 'EQUIPE' | 'FINANCEIRO'
+export type SecaoOperacao = 'RESUMO' | 'AGENDA' | 'SERVICOS' | 'EQUIPE' | 'FINANCEIRO' | 'RELACIONAMENTO'
 export type VisualizacaoAgenda = 'day' | '3days' | 'week' | 'schedule'
