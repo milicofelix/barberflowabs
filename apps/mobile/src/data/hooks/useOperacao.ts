@@ -1,6 +1,6 @@
 import type {
-    AgendamentoOperacional, DashboardOperacional, EscalaProfissional, IndisponibilidadeRecurso, MembroEquipe,
-    PermissaoEquipe, ProfissionalOperacional, RecursoOperacional, UsuarioEquipe,
+    AgendamentoOperacional, DashboardOperacional, EscalaProfissional, MembroEquipe,
+    PermissaoEquipe, ProfissionalOperacional, UsuarioEquipe,
     NovaContaMembro,
     RespostaAgendaOperacional, VisualizacaoAgenda,
     FiltrosAgendaOperacional, RestricaoAgendaOperacional,
@@ -50,7 +50,6 @@ export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'da
     const [profissionais, setProfissionais] = useState<ProfissionalOperacional[]>([])
     const [membros, setMembros] = useState<MembroEquipe[]>([])
     const [usuariosDisponiveis, setUsuariosDisponiveis] = useState<UsuarioEquipe[]>([])
-    const [recursos, setRecursos] = useState<RecursoOperacional[]>([])
     const [permissoes, setPermissoes] = useState<PermissaoEquipe[]>([])
     const [data, setData] = useState(hoje())
     const [fusoHorario, setFusoHorario] = useState('America/Sao_Paulo')
@@ -95,7 +94,7 @@ export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'da
             if (ticket !== cargaAtual.current) return
             setPermissoes(acessos)
             const pode = (permissao: PermissaoEquipe) => acessos.includes(permissao)
-            const [resumo, agenda, equipe, membrosEquipe, usuarios, recursosEquipe] = await Promise.all([
+            const [resumo, agenda, equipe, membrosEquipe, usuarios] = await Promise.all([
                 pode('AGENDA_GERENCIAR') ? httpGet<DashboardOperacional>('/gestao/dashboard') : Promise.resolve(null),
                 pode('AGENDA_GERENCIAR')
                     ? consultarAgenda()
@@ -103,14 +102,13 @@ export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'da
                 httpGet<ProfissionalOperacional[]>('/profissionais'),
                 pode('EQUIPE_GERENCIAR') ? httpGet<MembroEquipe[]>('/equipe') : Promise.resolve([]),
                 pode('EQUIPE_GERENCIAR') ? httpGet<UsuarioEquipe[]>('/equipe/usuarios-disponiveis') : Promise.resolve([]),
-                pode('RECURSOS_GERENCIAR') ? httpGet<RecursoOperacional[]>('/recursos') : Promise.resolve([]),
             ])
             if (ticket !== cargaAtual.current) return
             setDashboard(resumo); setProfissionais(equipe)
             if (ticketAgenda === consultaAtual.current) {
                 setAgendamentos(agenda?.itens ?? []); setRestricoesAgenda(agenda?.restricoes ?? []); setFusoHorario(agenda?.periodo.fusoHorario ?? 'America/Sao_Paulo')
             }
-            setMembros(membrosEquipe); setUsuariosDisponiveis(usuarios); setRecursos(recursosEquipe)
+            setMembros(membrosEquipe); setUsuariosDisponiveis(usuarios)
         } catch (e) { if (ticket === cargaAtual.current) setErro(mensagemDoErro(e)) } finally { if (ticket === cargaAtual.current) { inicializado.current = true; setCarregando(false) } }
     }, [consultarAgenda, httpGet])
 
@@ -229,15 +227,11 @@ export default function useOperacao(visualizacaoAgenda: VisualizacaoAgenda = 'da
             ativo: ativo ?? true,
         })),
     }))
-    const criarRecurso = (dados: Omit<RecursoOperacional, 'id'>) => executarAcao(() => httpPost('/recursos', dados))
-    const indisponibilizarRecurso = (id: number, dados: { inicio: string; fim: string; motivo?: string }) => executarAcao(() => httpPost(`/recursos/${id}/indisponibilidades`, dados))
-    const buscarIndisponibilidades = (id: number) => httpGet<IndisponibilidadeRecurso[]>(`/recursos/${id}/indisponibilidades`)
-    const removerIndisponibilidade = (recursoId: number, id: number) => executarAcao(() => httpDelete(`/recursos/${recursoId}/indisponibilidades/${id}`))
 
     return {
-        dashboard, agendamentos, restricoesAgenda, filtrosAgenda, setFiltrosAgenda, profissionais, membros, usuariosDisponiveis, recursos, permissoes, data, setData, fusoHorario, carregando, erro,
+        dashboard, agendamentos, restricoesAgenda, filtrosAgenda, setFiltrosAgenda, profissionais, membros, usuariosDisponiveis, permissoes, data, setData, fusoHorario, carregando, erro,
         recarregar: carregar, reagendar, criarProfissional, salvarMembro, criarContaMembro, criarPerfilParaMembro, removerMembro,
-        buscarEscalas, salvarEscalas, criarRecurso, buscarIndisponibilidades, indisponibilizarRecurso, removerIndisponibilidade,
+        buscarEscalas, salvarEscalas,
     }
 }
 

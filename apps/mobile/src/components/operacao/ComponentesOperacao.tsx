@@ -6,7 +6,6 @@ const SECOES: Array<{ id: SecaoOperacao; nome: string; permissao: PermissaoEquip
     { id: 'RESUMO', nome: 'Resumo', permissao: 'AGENDA_GERENCIAR' }, { id: 'AGENDA', nome: 'Agenda', permissao: 'AGENDA_GERENCIAR' },
     { id: 'SERVICOS', nome: 'Serviços', permissao: 'CONFIGURACOES_GERENCIAR' },
     { id: 'EQUIPE', nome: 'Equipe', permissao: 'EQUIPE_GERENCIAR' }, { id: 'FINANCEIRO', nome: 'Financeiro', permissao: 'FINANCEIRO_VISUALIZAR' },
-    { id: 'CAPACIDADE', nome: 'Recursos', permissao: 'RECURSOS_GERENCIAR' },
 ]
 
 export function SeletorOperacao({ atual, selecionar, permissoes }: { atual: SecaoOperacao; selecionar: (secao: SecaoOperacao) => void; permissoes: PermissaoEquipe[] }) {

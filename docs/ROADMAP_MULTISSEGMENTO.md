@@ -2,6 +2,12 @@
 
 Este roadmap substitui, para novas funcionalidades, a sequencia mobile orientada exclusivamente a barbearias. O sistema existente sera migrado progressivamente, sem reescrita integral.
 
+## Ajuste De Escopo — Recursos (2026-10-15)
+
+O cadastro de recursos fisicos (salas, macas e equipamentos) foi retirado da navegacao da Gestao mobile, assim como o filtro correspondente na agenda e a consulta automatica da lista de recursos. A Gestao web atual ja nao expoe essa aba. Sua retomada depende de demanda confirmada com os estabelecimentos.
+
+Dados, permissoes existentes e validacoes internas de disponibilidade foram preservados para manter a compatibilidade com agendamentos vinculados. Esta entrega nao altera o banco. Testes e builds nao foram executados, conforme diretriz do projeto.
+
 ## Etapa 0 - Decisao E Protecao Do Estado Atual
 
 Status: concluida em 2026-10-09.

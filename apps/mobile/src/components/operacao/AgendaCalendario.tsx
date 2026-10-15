@@ -3,7 +3,7 @@ import CartaoAtendimento, { corStatusAtendimento } from './CartaoAtendimento'
 import useTema from '@/src/data/contexts/ContextoTema'
 import type {
     AgendamentoOperacional, FiltrosAgendaOperacional, ProfissionalOperacional,
-    RecursoOperacional, RestricaoAgendaOperacional, VisualizacaoAgenda,
+    RestricaoAgendaOperacional, VisualizacaoAgenda,
 } from '@/src/data/operacao/tipos'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useAPI, { mensagemDoErro } from '@/src/data/hooks/useAPI'
@@ -30,7 +30,6 @@ interface Props {
     itens: AgendamentoOperacional[]
     restricoes: RestricaoAgendaOperacional[]
     profissionais: ProfissionalOperacional[]
-    recursos: RecursoOperacional[]
     filtros: FiltrosAgendaOperacional
     alterarFiltros: (filtros: FiltrosAgendaOperacional) => void
     data: string
@@ -137,7 +136,7 @@ export default function AgendaCalendario(props: Props) {
                 <Pressable accessibilityRole="button" accessibilityLabel="Aumentar escala da agenda" onPress={() => setAlturaHora((atual) => Math.min(100, atual + 10))} style={[styles.zoomBotao, { borderColor: cores.borda }]}><Text style={{ color: cores.texto }}>＋</Text></Pressable>
             </View> : null}
             <Pressable onPress={() => setFiltrosVisiveis((atual) => !atual)} style={[styles.abrirFiltros, { borderColor: cores.borda }]}>
-                <Text style={{ color: cores.texto, fontSize: 11, fontWeight: '900' }}>{filtrosVisiveis ? 'Ocultar filtros' : 'Filtrar colunas, recursos e status'}</Text>
+                <Text style={{ color: cores.texto, fontSize: 11, fontWeight: '900' }}>{filtrosVisiveis ? 'Ocultar filtros' : 'Filtrar profissionais e status'}</Text>
                 <Text style={{ color: cores.destaque }}>{filtrosVisiveis ? '⌃' : '⌄'}</Text>
             </Pressable>
             {filtrosVisiveis ? <FiltrosAgenda {...props} /> : null}
@@ -194,10 +193,6 @@ function FiltrosAgenda(props: Props) {
             <Chip texto="Todos" ativo={!props.filtros.profissionalId} onPress={() => definir({ profissionalId: null })} />
             {props.profissionais.map((item) => <Chip key={item.id} texto={item.nome} ativo={props.filtros.profissionalId === item.id} onPress={() => definir({ profissionalId: item.id })} />)}
         </ScrollView>
-        {props.recursos.length ? <><Text style={[styles.filtroTitulo, { color: cores.texto }]}>Recurso</Text><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtroLinha}>
-            <Chip texto="Todos" ativo={!props.filtros.recursoId} onPress={() => definir({ recursoId: null })} />
-            {props.recursos.map((item) => <Chip key={item.id} texto={item.nome} ativo={props.filtros.recursoId === item.id} onPress={() => definir({ recursoId: item.id })} />)}
-        </ScrollView></> : null}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filtroLinha}>
             <Chip texto="Todos os status" ativo={!props.filtros.status} onPress={() => definir({ status: null })} />
             {statusAgenda.map((status) => <Chip key={status} texto={rotuloStatus(status)} ativo={props.filtros.status === status} onPress={() => definir({ status })} />)}

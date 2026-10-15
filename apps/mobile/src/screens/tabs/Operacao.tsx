@@ -10,7 +10,6 @@ import { Alert, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, 
 import { SafeAreaView } from 'react-native-safe-area-context'
 import useTema from '@/src/data/contexts/ContextoTema'
 import { EscalasEquipe, MembrosEquipe } from '@/src/components/operacao/GestaoEquipe'
-import GestaoRecursos from '@/src/components/operacao/GestaoRecursos'
 import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import type { AbasParamList, StackParamList } from '@/src/navigation/types'
@@ -62,7 +61,7 @@ export default function Operacao({ navigation, route }: Props) {
                 style={[styles.telaCheiaBotao, { borderColor: cores.borda, backgroundColor: cores.superficie }]}>
                 <Text style={[styles.telaCheiaTexto, { color: cores.texto }]}>⛶ Tela cheia</Text>
             </Pressable><AgendaCalendario itens={dados.agendamentos} restricoes={dados.restricoesAgenda}
-                profissionais={dados.profissionais} recursos={dados.recursos} filtros={dados.filtrosAgenda} alterarFiltros={dados.setFiltrosAgenda} data={dados.data}
+                profissionais={dados.profissionais} filtros={dados.filtrosAgenda} alterarFiltros={dados.setFiltrosAgenda} data={dados.data}
                 visualizacao={visualizacaoAgenda} alterarVisualizacao={setVisualizacaoAgenda} alterarData={dados.setData}
                 aoPressionarCelula={iniciarAgendamento}
                 reagendar={dados.reagendar} fusoHorario={dados.fusoHorario} /></> : null}
@@ -83,7 +82,7 @@ export default function Operacao({ navigation, route }: Props) {
                     </View>
                     <NavegacaoData data={dados.data} alterar={dados.setData} visualizacao={visualizacaoAgenda} />
                     <AgendaCalendario telaCheia itens={dados.agendamentos} restricoes={dados.restricoesAgenda}
-                        profissionais={dados.profissionais} recursos={dados.recursos} filtros={dados.filtrosAgenda} alterarFiltros={dados.setFiltrosAgenda} data={dados.data}
+                        profissionais={dados.profissionais} filtros={dados.filtrosAgenda} alterarFiltros={dados.setFiltrosAgenda} data={dados.data}
                         visualizacao={visualizacaoAgenda} alterarVisualizacao={setVisualizacaoAgenda} alterarData={dados.setData}
                         aoPressionarCelula={iniciarAgendamento}
                         reagendar={dados.reagendar} fusoHorario={dados.fusoHorario} />
@@ -106,7 +105,6 @@ export default function Operacao({ navigation, route }: Props) {
         {secao === 'SERVICOS' ? <GestaoServicos itens={gestaoServicos.servicos} profissionais={dados.profissionais} carregando={gestaoServicos.carregando}
             erro={gestaoServicos.erro} recarregar={async () => { await Promise.all([gestaoServicos.carregar(), dados.recarregar()]) }} salvar={gestaoServicos.salvar} excluir={gestaoServicos.excluir} /> : null}
         {!dados.carregando && secao === 'EQUIPE' ? <><EquipeOperacao itens={dados.profissionais} criar={dados.criarProfissional} recarregar={dados.recarregar} erro={dados.erro} /><EscalasEquipe profissionais={dados.profissionais} buscar={dados.buscarEscalas} salvar={dados.salvarEscalas} erro={dados.erro} /><MembrosEquipe membros={dados.membros} usuarios={dados.usuariosDisponiveis} profissionais={dados.profissionais} salvar={dados.salvarMembro} criarConta={dados.criarContaMembro} criarPerfil={dados.criarPerfilParaMembro} remover={dados.removerMembro} erro={dados.erro} /></> : null}
-        {!dados.carregando && secao === 'CAPACIDADE' ? <GestaoRecursos itens={dados.recursos} criar={dados.criarRecurso} buscarIndisponibilidades={dados.buscarIndisponibilidades} indisponibilizar={dados.indisponibilizarRecurso} removerIndisponibilidade={dados.removerIndisponibilidade} /> : null}
         {!dados.carregando && secao === 'FINANCEIRO' ? <AtalhoCentralFinanceira
             abrir={() => navigation.getParent<NativeStackNavigationProp<StackParamList>>()?.navigate('CentralFinanceira')} /> : null}
     </ScrollView></SafeAreaView>
