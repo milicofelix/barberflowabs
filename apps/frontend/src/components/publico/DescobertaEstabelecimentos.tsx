@@ -4,12 +4,14 @@ import Link from 'next/link'
 import { ListFilter, LocateFixed, Search, Star } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import MapaLeafletEstabelecimentos from './MapaLeafletEstabelecimentos'
-import { capaDoEstabelecimento } from '@/data/estabelecimentos/capas'
+import { capaDoEstabelecimento, fundoDaPlataforma } from '@/data/estabelecimentos/capas'
+import useTema from '@/data/contexts/ContextoTema'
 
 const URL_BASE = process.env.NEXT_PUBLIC_API_URL
 const RAIOS = [2, 5, 10, 25]
 
 export default function DescobertaEstabelecimentos() {
+    const { tema } = useTema()
     const [estabelecimentos, setEstabelecimentos] = useState<any[]>([])
     const [carregando, setCarregando] = useState(true)
     const [erro, setErro] = useState('')
@@ -91,7 +93,7 @@ export default function DescobertaEstabelecimentos() {
         <main className="min-h-screen bg-zinc-950 text-zinc-100">
             <section
                 className="sobre-imagem bg-cover bg-center"
-                style={{ backgroundImage: 'linear-gradient(90deg, rgba(0,0,0,.92), rgba(0,0,0,.58)), url(/banners/principal.png)' }}
+                style={{ backgroundImage: `linear-gradient(90deg, rgba(0,0,0,.92), rgba(0,0,0,.58)), url(${fundoDaPlataforma(tema)})` }}
             >
                 <div className="container flex min-h-[340px] flex-col justify-end gap-5 py-10">
                     <span className="w-fit rounded border border-yellow-400/50 px-3 py-2 text-sm font-bold text-yellow-300">

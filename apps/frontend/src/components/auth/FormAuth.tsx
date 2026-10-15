@@ -1,5 +1,5 @@
 'use client'
-import Image from 'next/image'
+import ImagemFundoPlataforma from '../shared/ImagemFundoPlataforma'
 import Logo from '../shared/Logo'
 import Link from 'next/link'
 import useFormAuth from '../../data/hooks/useFormAuth'
@@ -26,7 +26,7 @@ export default function FormAuth() {
 
     return (
         <div className="h-screen">
-            <Image src="/banners/principal.png" fill alt="Banner" />
+            <ImagemFundoPlataforma />
             <div className="absolute right-5 top-5 z-10">
                 <AlternadorTema />
             </div>

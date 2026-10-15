@@ -1,10 +1,10 @@
-import Image from 'next/image'
+import ImagemFundoPlataforma from './ImagemFundoPlataforma'
 import Logo from './Logo'
 
 export default function Processando() {
     return (
         <div className="h-screen">
-            <Image src="/banners/principal.png" fill alt="Banner" />
+            <ImagemFundoPlataforma />
             <div
                 className="
                     flex flex-col justify-center items-center

@@ -1,5 +1,9 @@
 # Plano — Imagens, Upload E Identidade Multissegmento
 
+## Ajuste Web — Fundo Por Tema (15/10/2026)
+
+O fundo geral da plataforma usa `/banners/principal-dia.png` no tema claro e mantém `/banners/principal.png` no escuro. A seleção acompanha o tema ativo, tanto por horário quanto por escolha manual, na Home, páginas com identidade compartilhada, busca pública, autenticação e carregamento. Capas personalizadas e imagens específicas por segmento continuam prioritárias. Mobile não foi alterado. Sem mudanças no banco; testes e builds não executados.
+
 ## Objetivo
 
 Permitir que clientes e responsáveis escolham imagens visualmente ou enviem fotos do aparelho, eliminando a necessidade de digitar caminhos como `/servicos/combo.jpg`. Dar ao perfil uma apresentação neutra e profissional e adaptar o fundo da Home ao segmento do estabelecimento.
