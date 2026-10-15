@@ -54,6 +54,7 @@ export class ComunicacaoWorker implements OnModuleInit, OnModuleDestroy {
     let tentativa: any;
     try {
       if (!await this.campanhas.autorizar(envio)) return;
+      if (!await this.repository.autorizarPrivacidade(envio)) return;
       tentativa = await this.repository.iniciarTentativa(envio.id, provedorNome);
       const resultado = await this.providers.obter(envio.canal).enviar({
         envioId: envio.id, chaveIdempotencia: envio.chaveIdempotencia,

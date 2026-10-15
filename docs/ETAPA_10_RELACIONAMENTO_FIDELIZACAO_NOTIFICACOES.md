@@ -1,6 +1,6 @@
 # Etapa 10 — Relacionamento, Fidelizacao E Notificacoes
 
-Status: Fases 1 a 5 implementadas (domínio e APIs). As Fases 4 e 5 exigem aplicar suas migrations, gerar o Prisma Client e reiniciar o backend. Telas completas de relacionamento/campanhas/fidelização seguem previstas na Fase 7; aceite manual permanece separado da implementação.
+Status: Fases 1 a 6 implementadas (domínio e APIs, com exclusão assistida restrita ao relacionamento da unidade). Aplicar migrations pendentes, gerar o Prisma Client e reiniciar o backend. Telas completas seguem previstas na Fase 7; homologação manual e revisão jurídica permanecem separadas da implementação. Exclusão integral da conta global não é automatizada.
 
 ## Principios
 
@@ -394,10 +394,14 @@ Foram escritos testes isolados de contratos, saldo/lotes, estorno, isolamento, i
 
 ## Fase 6 — Metricas E Governanca
 
-- [ ] Medir entrega, abertura quando suportada, clique, conversao e cancelamento.
-- [ ] Medir retorno, retencao, reativacao e receita atribuida.
-- [ ] Criar trilha de auditoria funcional e politica de retencao de dados.
-- [ ] Implementar exportacao e exclusao conforme LGPD.
+- [x] Medir entrega, abertura quando suportada, clique, conversao e cancelamento.
+- [x] Medir retorno, retencao, reativacao e receita atribuida.
+- [x] Criar trilha de auditoria funcional e politica de retencao de dados.
+- [x] Implementar exportação paginada e exclusão assistida dos dados de relacionamento, com identidade validada, conservação justificada e resultado explicitamente parcial.
+
+Implementação em 15/10/2026. Migration `20261015210000_add_relationship_governance`; política inicialmente inativa, sem execução automática sobre dados. APIs autenticadas em `/relacionamento/governanca`, com permissões específicas para acesso financeiro, gestão e configurações. As métricas não inventam aberturas/conversões para provedores simulados. A exclusão não apaga conta global, histórico operacional ou registros de outras unidades e não certifica conformidade jurídica integral.
+
+Contratos, fórmulas, exemplos de operação, limites da conservação e aceite: [ETAPA_10_FASE_6_METRICAS_GOVERNANCA.md](ETAPA_10_FASE_6_METRICAS_GOVERNANCA.md). Nenhum teste, build, migration, exportação, expurgo ou exclusão real foi executado pelo agente.
 
 ## Fase 7 — Paridade Web E Mobile
 

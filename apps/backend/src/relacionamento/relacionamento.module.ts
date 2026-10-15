@@ -19,20 +19,29 @@ import { CampanhaWorker } from './campanhas/campanha.worker';
 import { DescadastroCampanhaController } from './campanhas/descadastro-campanha.controller';
 import { DescadastroCampanhaService } from './campanhas/descadastro-campanha.service';
 import { SupressaoCampanhaRepository } from './campanhas/supressao-campanha.repository';
+import { GovernancaController } from './governanca/governanca.controller';
+import { MetricasRelacionamentoRepository } from './governanca/metricas-relacionamento.repository';
+import { RetencaoRelacionamentoRepository } from './governanca/retencao-relacionamento.repository';
+import { PrivacidadeSolicitacaoRepository } from './governanca/privacidade-solicitacao.repository';
+import { PrivacidadeExclusaoRepository } from './governanca/privacidade-exclusao.repository';
+import { PrivacidadeExportacaoRepository } from './governanca/privacidade-exportacao.repository';
+import { AuditoriaRelacionamentoRepository } from './governanca/auditoria-relacionamento.repository';
 
 @Module({
   imports: [AuthModule, DbModule, EquipeModule, AtendimentoModule],
-  controllers: [RelacionamentoController, ComunicacaoCallbackController, CampanhaController, DescadastroCampanhaController],
+  controllers: [RelacionamentoController, ComunicacaoCallbackController, CampanhaController, DescadastroCampanhaController, GovernancaController],
   providers: [
     RelacionamentoRepository, RelacionamentoService, ComunicacaoWorker,
     ComunicacaoProviderRegistry, PushSimuladoProvider, EmailSimuladoProvider, WhatsappSimuladoProvider,
     JornadaAgendamentoService,
     CampanhaRepository, AudienciaCampanhaRepository, CampanhaExecucaoRepository, CampanhaWorker, DescadastroCampanhaService, SupressaoCampanhaRepository,
+    MetricasRelacionamentoRepository, RetencaoRelacionamentoRepository, PrivacidadeSolicitacaoRepository,
+    PrivacidadeExclusaoRepository, PrivacidadeExportacaoRepository, AuditoriaRelacionamentoRepository,
   ],
   exports: [RelacionamentoService, JornadaAgendamentoService],
 })
 export class RelacionamentoModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuthMiddleware).forRoutes(RelacionamentoController, CampanhaController);
+    consumer.apply(AuthMiddleware).forRoutes(RelacionamentoController, CampanhaController, GovernancaController);
   }
 }

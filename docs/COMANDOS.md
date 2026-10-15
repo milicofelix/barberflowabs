@@ -791,6 +791,16 @@ Execução opcional pelo usuário após atualizar dependências/client Prisma. U
 
 A migration `20261015170000_add_segmented_campaigns` usa a rotina já catalogada de **Aplicar migrations pendentes**, **Gerar Prisma Client** e **Reiniciar depois de alterar o backend**, nessa ordem. Fazer backup antes de aplicar em banco com dados. Não executar reset ou seed para habilitar campanhas. Manter provedores simulados até configurar/homologar os canais reais.
 
+## Etapa 10 — Fase 6: ativação e testes opcionais
+
+A migration `20261015210000_add_relationship_governance` cria políticas/protocolos e marcadores de restrição/expurgo; não elimina dados nem ativa políticas. Fazer backup e usar as rotinas já catalogadas de **Aplicar migrations pendentes**, **Gerar Prisma Client** e **Reiniciar depois de alterar o backend**, nessa ordem. Não executar reset ou seed. As novas consultas exigem schema/client atualizados.
+
+```bash
+docker compose exec -T app sh -lc 'cd apps/backend && yarn test "governanca.spec.ts|campanha.spec.ts|fidelidade.spec.ts" --runInBand'
+```
+
+Testes isolados opcionais, não executados pelo agente. Não substituem conferência do SQL/concorrência no MySQL ou revisão jurídica. Expurgo/exclusão não possuem comando genérico pronto: exigem identidade, permissões e confirmações pelos contratos em [ETAPA_10_FASE_6_METRICAS_GOVERNANCA.md](ETAPA_10_FASE_6_METRICAS_GOVERNANCA.md). Nenhuma exportação, exclusão ou limpeza real foi executada automaticamente.
+
 ## Limpezas Destrutivas
 
 Comandos de remocao de `node_modules`, lockfiles, volumes ou dados nao ficam prontos para copiar nesta secao. A necessidade e o alvo devem ser diagnosticados primeiro para evitar apagar dependencias ou dados de outros projetos que compartilham a infraestrutura.

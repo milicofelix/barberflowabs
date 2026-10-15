@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, Logger, NotFoundException, Unauthorize
 import { sign, verify } from 'jsonwebtoken';
 import { PrismaService } from 'src/db/prisma.service';
 import { FluxoAtendimentoService } from 'src/gestao/fluxo-atendimento.service';
+import { bloquearClienteComunicacao } from './governanca/privacidade-comunicacao';
 
 type AcaoAgendamento = 'CONFIRMAR' | 'CANCELAR' | 'REAGENDAR';
 
@@ -147,7 +148,9 @@ export class JornadaAgendamentoService {
       const destinatario = this.destinatario(template.canal, agendamento.usuario);
       if (!destinatario) continue;
       try {
-        await this.prisma.envioComunicacao.create({
+        await this.prisma.$transaction(async (tx: any) => {
+        await bloquearClienteComunicacao(tx, agendamento.estabelecimentoId, agendamento.usuarioId);
+        await tx.envioComunicacao.create({
           data: {
             estabelecimentoId: agendamento.estabelecimentoId,
             usuarioId: agendamento.usuarioId,
@@ -163,6 +166,7 @@ export class JornadaAgendamentoService {
             metadados: { origem: 'JORNADA_AGENDAMENTO', evento, fusoHorario: agendamento.estabelecimento.fusoHorario },
           },
         });
+        }, { isolationLevel: 'ReadCommitted' });
       } catch (erro: any) {
         if (erro?.code !== 'P2002') throw erro;
       }

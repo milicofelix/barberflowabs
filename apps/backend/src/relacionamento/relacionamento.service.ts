@@ -11,17 +11,17 @@ export class RelacionamentoService {
   listarClientes(estabelecimentoId: number, busca?: string) { return this.repository.listarClientes(estabelecimentoId, busca); }
   obterCliente(id: number, estabelecimentoId: number) { return this.repository.obterCliente(id, estabelecimentoId); }
 
-  atualizarCliente(id: number, estabelecimentoId: number, dados: AtualizarClienteDto) {
+  atualizarCliente(id: number, estabelecimentoId: number, dados: AtualizarClienteDto, operadorId?: number) {
     if (dados.status && !['ATIVO', 'INATIVO', 'BLOQUEADO'].includes(dados.status)) throw new BadRequestException('Status do cliente inválido');
     if (dados.tags && (!Array.isArray(dados.tags) || dados.tags.some((tag) => typeof tag !== 'string' || !tag.trim()))) {
       throw new BadRequestException('Tags inválidas');
     }
-    return this.repository.atualizarCliente(id, estabelecimentoId, { ...dados, tags: dados.tags?.map((tag) => tag.trim()) });
+    return this.repository.atualizarCliente(id, estabelecimentoId, { ...dados, tags: dados.tags?.map((tag) => tag.trim()) }, operadorId);
   }
 
   listarPreferencias(clienteId: number, estabelecimentoId: number) { return this.repository.listarPreferencias(clienteId, estabelecimentoId); }
 
-  salvarPreferencias(clienteId: number, estabelecimentoId: number, dados: SalvarPreferenciasDto) {
+  salvarPreferencias(clienteId: number, estabelecimentoId: number, dados: SalvarPreferenciasDto, operadorId?: number) {
     if (!Array.isArray(dados?.preferencias) || !dados.preferencias.length) throw new BadRequestException('Preferências são obrigatórias');
     if (dados.preferencias.some((item) => !CANAIS_COMUNICACAO.includes(item.canal) || typeof item.consentido !== 'boolean')) {
       throw new BadRequestException('Preferência de comunicação inválida');
@@ -29,20 +29,21 @@ export class RelacionamentoService {
     if (new Set(dados.preferencias.map((item) => item.canal)).size !== dados.preferencias.length) {
       throw new BadRequestException('Canal de comunicação duplicado');
     }
-    return this.repository.salvarPreferencias(clienteId, estabelecimentoId, dados.preferencias);
+    return this.repository.salvarPreferencias(clienteId, estabelecimentoId, dados.preferencias, operadorId);
   }
 
   listarTemplates(estabelecimentoId: number) { return this.repository.listarTemplates(estabelecimentoId); }
 
-  salvarTemplate(estabelecimentoId: number, dados: SalvarTemplateDto, id?: number) {
+  salvarTemplate(estabelecimentoId: number, dados: SalvarTemplateDto, id?: number, operadorId?: number) {
+    if (dados?.ativo !== undefined && typeof dados.ativo !== 'boolean') throw new BadRequestException('Ativação do template inválida');
     validarTextoObrigatorio(dados?.nome, 'Nome'); validarTextoObrigatorio(dados?.conteudo, 'Conteúdo');
     if (!CANAIS_COMUNICACAO.includes(dados?.canal as any)) throw new BadRequestException('Canal inválido');
     if (!EVENTOS_TEMPLATE.includes(dados?.evento as any)) throw new BadRequestException('Evento inválido');
     if (dados.canal === 'EMAIL') validarTextoObrigatorio(dados?.assunto, 'Assunto');
-    return this.repository.salvarTemplate(estabelecimentoId, dados, id);
+    return this.repository.salvarTemplate(estabelecimentoId, dados, id, operadorId);
   }
 
-  async enfileirar(estabelecimentoId: number, dados: EnfileirarComunicacaoDto) {
+  async enfileirar(estabelecimentoId: number, dados: EnfileirarComunicacaoDto, operadorId?: number) {
     if (!Number.isInteger(Number(dados?.clienteId)) || Number(dados.clienteId) <= 0) throw new BadRequestException('Cliente inválido');
     if (!Number.isInteger(Number(dados?.templateId)) || Number(dados.templateId) <= 0) throw new BadRequestException('Template inválido');
     validarTextoObrigatorio(dados?.chaveIdempotencia, 'Chave de idempotência');
@@ -67,7 +68,7 @@ export class RelacionamentoService {
         destinatario, assunto: renderizar(template.assunto), conteudo: renderizar(template.conteudo),
         status: 'AGENDADO', chaveIdempotencia: dados.chaveIdempotencia.trim(), agendadoPara,
         maximoTentativas, metadados: { variaveis, origem: 'API_MANUAL' },
-      });
+      }, operadorId);
     } catch (error: any) {
       if (error?.code === 'P2002') throw new ConflictException('Já existe um envio com esta chave de idempotência');
       throw error;
@@ -82,10 +83,10 @@ export class RelacionamentoService {
 
   obterEnvio(id: number, estabelecimentoId: number) { return this.repository.obterEnvio(id, estabelecimentoId); }
 
-  reprocessarEnvio(id: number, estabelecimentoId: number, dados: ReprocessarEnvioDto) {
+  reprocessarEnvio(id: number, estabelecimentoId: number, dados: ReprocessarEnvioDto, operadorId?: number) {
     const adicionais = dados?.tentativasAdicionais === undefined ? 3 : Number(dados.tentativasAdicionais);
     if (!Number.isInteger(adicionais) || adicionais < 1 || adicionais > 10) throw new BadRequestException('Tentativas adicionais devem ficar entre 1 e 10');
-    return this.repository.reprocessarEnvio(id, estabelecimentoId, adicionais);
+    return this.repository.reprocessarEnvio(id, estabelecimentoId, adicionais, operadorId);
   }
 
   registrarCallback(provedor: string, dados: CallbackComunicacaoDto) {

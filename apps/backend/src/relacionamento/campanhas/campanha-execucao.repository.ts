@@ -13,7 +13,10 @@ export class CampanhaExecucaoRepository {
     return { verificadas: campanhas.length };
   }
   private async processar(id: number, agora: Date) {
+    const origem = await this.db.campanhaComunicacao.findUnique({ where: { id }, select: { estabelecimentoId: true } });
+    if (!origem) return;
     return this.db.$transaction(async (tx: any) => {
+      await tx.$queryRaw`SELECT id FROM estabelecimentos WHERE id=${origem.estabelecimentoId} FOR UPDATE`;
       await tx.$queryRaw`SELECT id FROM campanhas_comunicacao WHERE id = ${id} FOR UPDATE`;
       const campanha = await tx.campanhaComunicacao.findUnique({ where: { id }, include: { estabelecimento: { select: { nome: true, nomePublico: true } } } });
       if (!campanha || !['AGENDADA', 'EM_EXECUCAO'].includes(campanha.status) || campanha.agendadoPara > agora) return;
@@ -50,12 +53,13 @@ export class CampanhaExecucaoRepository {
         await tx.campanhaComunicacao.update({ where: { id }, data: { status: 'CONCLUIDA', concluidaEm: agora } });
         await this.auditar(tx, campanha, 'CAMPANHA_CONCLUIDA');
       }
-    }, { timeout: 20000 });
+    }, { timeout: 20000, isolationLevel: 'ReadCommitted' });
   }
   /** Última verificação antes da chamada ao provedor; não concede consentimento. */
   async autorizar(envio: any, agora = new Date()) {
     if (!envio.campanhaId && envio.tipo !== 'CAMPANHA') return true;
     return this.db.$transaction(async (tx: any) => {
+      await tx.$queryRaw`SELECT id FROM estabelecimentos WHERE id=${envio.estabelecimentoId} FOR UPDATE`;
       if (envio.campanhaId) await tx.$queryRaw`SELECT id FROM campanhas_comunicacao WHERE id = ${envio.campanhaId} AND estabelecimentoId = ${envio.estabelecimentoId} FOR UPDATE`;
       const campanha = envio.campanhaId ? await tx.campanhaComunicacao.findFirst({ where: { id: envio.campanhaId, estabelecimentoId: envio.estabelecimentoId } }) : null;
       const where = { id: envio.id, status: 'PROCESSANDO', bloqueadoPor: envio.bloqueadoPor };
@@ -85,7 +89,7 @@ export class CampanhaExecucaoRepository {
       }
       if (motivo) await tx.envioComunicacao.updateMany({ where, data: { status: 'CANCELADO', erro: motivo, bloqueadoEm: null, bloqueadoPor: null } });
       return !motivo;
-    });
+    }, { isolationLevel: 'ReadCommitted' });
   }
   private async contexto(tx: any, campanha: any, usuarioId: number) {
     const canal = campanha.templateSnapshot?.canal;

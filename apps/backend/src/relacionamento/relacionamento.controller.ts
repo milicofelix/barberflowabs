@@ -24,7 +24,7 @@ export class RelacionamentoController {
   @Put('clientes/:id')
   async atualizarCliente(@Param('id') id: string, @Body() dados: AtualizarClienteDto, @UsuarioLogado() usuario: Usuario) {
     await this.gerenciar(usuario); validarNumeroInteiroPositivo(id, 'Cliente');
-    return this.service.atualizarCliente(Number(id), usuario.estabelecimentoId!, dados);
+    return this.service.atualizarCliente(Number(id), usuario.estabelecimentoId!, dados, usuario.id);
   }
 
   @Get('clientes/:id/preferencias')
@@ -36,7 +36,7 @@ export class RelacionamentoController {
   @Put('clientes/:id/preferencias')
   async salvarPreferencias(@Param('id') id: string, @Body() dados: SalvarPreferenciasDto, @UsuarioLogado() usuario: Usuario) {
     await this.gerenciar(usuario); validarNumeroInteiroPositivo(id, 'Cliente');
-    return this.service.salvarPreferencias(Number(id), usuario.estabelecimentoId!, dados);
+    return this.service.salvarPreferencias(Number(id), usuario.estabelecimentoId!, dados, usuario.id);
   }
 
   @Get('templates')
@@ -46,18 +46,18 @@ export class RelacionamentoController {
 
   @Post('templates')
   async criarTemplate(@Body() dados: SalvarTemplateDto, @UsuarioLogado() usuario: Usuario) {
-    await this.gerenciar(usuario); return this.service.salvarTemplate(usuario.estabelecimentoId!, dados);
+    await this.gerenciar(usuario); return this.service.salvarTemplate(usuario.estabelecimentoId!, dados, undefined, usuario.id);
   }
 
   @Put('templates/:id')
   async atualizarTemplate(@Param('id') id: string, @Body() dados: SalvarTemplateDto, @UsuarioLogado() usuario: Usuario) {
     await this.gerenciar(usuario); validarNumeroInteiroPositivo(id, 'Template');
-    return this.service.salvarTemplate(usuario.estabelecimentoId!, dados, Number(id));
+    return this.service.salvarTemplate(usuario.estabelecimentoId!, dados, Number(id), usuario.id);
   }
 
   @Post('envios')
   async enfileirar(@Body() dados: EnfileirarComunicacaoDto, @UsuarioLogado() usuario: Usuario) {
-    await this.gerenciar(usuario); return this.service.enfileirar(usuario.estabelecimentoId!, dados);
+    await this.gerenciar(usuario); return this.service.enfileirar(usuario.estabelecimentoId!, dados, usuario.id);
   }
 
   @Get('envios')
@@ -74,7 +74,7 @@ export class RelacionamentoController {
   @Post('envios/:id/reprocessar')
   async reprocessar(@Param('id') id: string, @Body() dados: ReprocessarEnvioDto, @UsuarioLogado() usuario: Usuario) {
     await this.gerenciar(usuario); validarNumeroInteiroPositivo(id, 'Envio');
-    return this.service.reprocessarEnvio(Number(id), usuario.estabelecimentoId!, dados);
+    return this.service.reprocessarEnvio(Number(id), usuario.estabelecimentoId!, dados, usuario.id);
   }
 
   private visualizar(usuario: Usuario) { return this.policy.validarPermissao(usuario, 'RELACIONAMENTO_VISUALIZAR'); }

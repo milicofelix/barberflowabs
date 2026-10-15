@@ -216,6 +216,8 @@ model Agendamento {
 }
 
 model Estabelecimento {
+  politicaRelacionamento PoliticaRetencaoRelacionamento?
+  solicitacoesPrivacidade SolicitacaoPrivacidade[]
   programaFidelidade ProgramaFidelidade?
   id                                    Int                            @id @default(autoincrement())
   nome                                  String
@@ -733,6 +735,8 @@ model ServicoRequisito {
 }
 
 model ClienteEstabelecimento {
+  privacidadeRestritaEm DateTime?
+  solicitacoesPrivacidade SolicitacaoPrivacidade[]
   carteiraFidelidade CarteiraFidelidade?
   id                    Int       @id @default(autoincrement())
   estabelecimentoId     Int
@@ -840,6 +844,7 @@ model TemplateComunicacao {
 }
 
 model EnvioComunicacao {
+  dadosExpurgadosEm DateTime?
   id                   Int                         @id @default(autoincrement())
   estabelecimentoId    Int
   usuarioId            Int?
@@ -883,6 +888,7 @@ model EnvioComunicacao {
   @@index([agendamentoId])
   @@index([campanhaId, status])
   @@index([estabelecimentoId, usuarioId, canal, createdAt], map: "envios_marketing_frequencia_idx")
+  @@index([estabelecimentoId, dadosExpurgadosEm, createdAt], map: "envios_retencao_idx")
   @@map("envios_comunicacao")
 }
 
@@ -980,6 +986,7 @@ model CallbackEnvioComunicacao {
   @@unique([provedor, eventoExternoId])
   @@index([referenciaExterna])
   @@index([processadoEm, recebidoEm])
+  @@index([envioId, tipo, recebidoEm], map: "callbacks_metricas_idx")
   @@map("callbacks_envios_comunicacao")
 }
 
@@ -1518,4 +1525,37 @@ model LiquidacaoFidelidade {
   createdAt DateTime @default(now())
   agendamento Agendamento @relation(fields: [agendamentoId], references: [id])
   @@map("liquidacoes_fidelidade")
+}
+
+model PoliticaRetencaoRelacionamento {
+  estabelecimentoId Int @id
+  ativa Boolean @default(false)
+  conteudoDias Int @default(90)
+  fundamento String @db.VarChar(500)
+  aprovadaPorId Int
+  updatedAt DateTime @updatedAt
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id], map: "politicas_retencao_estabelecimento_fkey")
+  @@map("politicas_retencao_relacionamento")
+}
+
+model SolicitacaoPrivacidade {
+  id Int @id @default(autoincrement())
+  estabelecimentoId Int
+  clienteId Int
+  tipo String
+  status String @default("ABERTA")
+  chave String @db.VarChar(100)
+  solicitadoPorId Int
+  validadoPorId Int?
+  identidadeValidadaEm DateTime?
+  referenciaVerificacao String? @db.VarChar(150)
+  motivoConservacao String? @db.VarChar(500)
+  resultado Json?
+  concluidaEm DateTime?
+  createdAt DateTime @default(now())
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  cliente ClienteEstabelecimento @relation(fields: [clienteId], references: [id])
+  @@unique([estabelecimentoId, chave])
+  @@index([estabelecimentoId, status, id])
+  @@map("solicitacoes_privacidade")
 }

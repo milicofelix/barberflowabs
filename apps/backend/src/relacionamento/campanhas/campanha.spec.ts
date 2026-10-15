@@ -59,7 +59,7 @@ describe('Campanhas segmentadas', () => {
     const agora = new Date('2026-10-15T12:00:00Z');
     const envio = { id: 5, campanhaId: 8, estabelecimentoId: 7, usuarioId: 10, canal: 'EMAIL', destinatario: 'teste@example.test', bloqueadoPor: 'worker' };
     const tx = {
-      $queryRaw: jest.fn().mockResolvedValueOnce([{ id: 8 }]).mockResolvedValueOnce([{ consentido: true, revogadoEm: null }]).mockResolvedValueOnce([{ ativa: false, ultimoDisparoEm: new Date('2026-10-15T11:00:00Z'), ultimoEnvioId, intervaloReservadoHoras: 168 }]),
+      $queryRaw: jest.fn().mockResolvedValueOnce([{ id: 7 }]).mockResolvedValueOnce([{ id: 8 }]).mockResolvedValueOnce([{ consentido: true, revogadoEm: null }]).mockResolvedValueOnce([{ ativa: false, ultimoDisparoEm: new Date('2026-10-15T11:00:00Z'), ultimoEnvioId, intervaloReservadoHoras: 168 }]),
       campanhaComunicacao: { findFirst: jest.fn().mockResolvedValue({ id: 8, estabelecimentoId: 7, status: 'EM_EXECUCAO', intervaloMinimoHoras: 24, templateSnapshot: { canal: 'EMAIL' } }) },
       envioComunicacao: { findFirst: jest.fn().mockResolvedValueOnce(envio).mockResolvedValueOnce(null), updateMany: jest.fn() },
       clienteEstabelecimento: { findFirst: jest.fn().mockResolvedValue({ usuario: { email: 'teste@example.test' } }) },

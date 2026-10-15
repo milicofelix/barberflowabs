@@ -129,7 +129,7 @@ Status: implementacao funcional web e paridade financeira mobile concluidas em 2
 
 ## Etapa 10 - Relacionamento, Fidelizacao E Notificacoes
 
-Status: Fases 1 a 5 implementadas no domínio/APIs; migrations, Prisma Client, reinício e aceite permanecem operacionais. Interfaces completas da central seguem na Fase 7.
+Status: Fases 1 a 6 implementadas no domínio/APIs; migrations, Prisma Client, reinício e aceite permanecem operacionais. Interfaces completas da central seguem na Fase 7. Governança inclui limpeza assistida de relacionamento, não exclusão integral automática da conta global ou certificação LGPD.
 
 - [x] Fundacao da central de clientes, consentimentos, templates e auditoria de envios.
 - [x] Prioridade: cadastro e aprovacao de estabelecimentos, endereco via CEP, mascaras e central de notificacoes. Fases A–D concluidas; aceite manual permanece na Fase E.
@@ -137,7 +137,7 @@ Status: Fases 1 a 5 implementadas no domínio/APIs; migrations, Prisma Client, r
 - [x] Confirmacao e lembrete automatico de agendamentos.
 - [x] Campanhas segmentadas: audiência congelada, agendamento/pausa, frequência, supressão e descadastro; gestão por API nesta fase.
 - [x] Pontos, niveis, recompensas, cupons e indicacoes; APIs, extrato imutável e integração à conclusão/financeiro, com programa inicialmente desativado.
-- [ ] Metricas de retorno, retencao e conversao.
+- [x] Métricas de retorno, retenção e conversão; auditoria, política de retenção e exportação/exclusão assistida de relacionamento por tenant.
 - [ ] Paridade funcional web e mobile.
 
 Plano detalhado: `docs/ETAPA_10_RELACIONAMENTO_FIDELIZACAO_NOTIFICACOES.md`.
