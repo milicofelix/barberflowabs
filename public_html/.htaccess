@@ -1,0 +1,19 @@
+# Entrada pública SOMENTE. Requer Apache 2.4, mod_rewrite e mod_proxy_http
+# liberado pelo provedor para .htaccess. Não funciona em hospedagem somente PHP.
+Options -Indexes
+DirectoryIndex disabled
+
+<FilesMatch "(?i)(^\.|\.(env|sql|log|bak|map|ya?ml)$|^(package|composer)(-lock)?\.json$|^yarn\.lock$)">
+    Require all denied
+</FilesMatch>
+
+RewriteEngine On
+# Preserva validação HTTPS administrada pelo provedor, sem expor outras pastas ocultas.
+RewriteRule ^\.well-known/acme-challenge/[A-Za-z0-9_-]+$ - [L]
+RewriteRule (^|/)\. - [F,L]
+
+# Não coloque apps/, node_modules/, uploads ou .env.prod nesta pasta.
+# HTTPS e cabeçalhos do proxy devem ser configurados no painel/vhost do provedor.
+# /api é removido no encaminhamento: a API mantém suas rotas atuais.
+RewriteRule ^api(?:/(.*))?$ http://127.0.0.1:4000/$1 [P,L]
+RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]

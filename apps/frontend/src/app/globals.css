@@ -4,31 +4,53 @@
 
 @layer base {
     :root {
-        --background: 240 10% 3.9%;
-        --foreground: 0 0% 98%;
-        --card: 240 10% 3.9%;
-        --card-foreground: 0 0% 98%;
-        --popover: 240 10% 3.9%;
-        --popover-foreground: 0 0% 98%;
-        --primary: 0 0% 98%;
-        --primary-foreground: 240 5.9% 10%;
-        --secondary: 240 3.7% 15.9%;
-        --secondary-foreground: 0 0% 98%;
-        --muted: 240 3.7% 15.9%;
-        --muted-foreground: 240 5% 64.9%;
-        --accent: 240 3.7% 15.9%;
-        --accent-foreground: 0 0% 98%;
-        --destructive: 0 62.8% 30.6%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 240 3.7% 15.9%;
-        --input: 240 3.7% 15.9%;
-        --ring: 240 4.9% 83.9%;
+        --background: 220 60% 98%;
+        --foreground: 229 58% 14%;
+        --card: 0 0% 100%;
+        --card-foreground: 229 58% 14%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 229 58% 14%;
+        --primary: 226 78% 48%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 226 72% 95%;
+        --secondary-foreground: 229 58% 18%;
+        --muted: 220 45% 95%;
+        --muted-foreground: 220 18% 42%;
+        --accent: 277 75% 93%;
+        --accent-foreground: 268 64% 35%;
+        --destructive: 0 72% 51%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 222 38% 86%;
+        --input: 222 38% 90%;
+        --ring: 238 78% 62%;
         --chart-1: 220 70% 50%;
         --chart-2: 160 60% 45%;
         --chart-3: 30 80% 55%;
         --chart-4: 280 65% 60%;
         --chart-5: 340 75% 55%;
         --radius: 0.25rem;
+    }
+
+    .dark {
+        --background: 226 58% 7%;
+        --foreground: 0 0% 98%;
+        --card: 225 45% 11%;
+        --card-foreground: 0 0% 98%;
+        --popover: 225 45% 11%;
+        --popover-foreground: 0 0% 98%;
+        --primary: 205 92% 62%;
+        --primary-foreground: 226 58% 7%;
+        --secondary: 225 30% 18%;
+        --secondary-foreground: 0 0% 98%;
+        --muted: 225 30% 18%;
+        --muted-foreground: 220 16% 68%;
+        --accent: 268 45% 24%;
+        --accent-foreground: 0 0% 98%;
+        --destructive: 0 62.8% 30.6%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 225 28% 23%;
+        --input: 225 28% 20%;
+        --ring: 210 90% 68%;
     }
 }
 
@@ -38,6 +60,18 @@
     }
     body {
         @apply bg-background text-foreground;
+        min-height: 100vh;
+        background-image:
+            radial-gradient(circle at 8% 4%, rgba(56, 189, 248, .1), transparent 25rem),
+            radial-gradient(circle at 92% 8%, rgba(168, 85, 247, .09), transparent 28rem);
+        background-attachment: fixed;
+        transition: background-color .2s ease, color .2s ease;
+    }
+
+    .dark body {
+        background-image:
+            radial-gradient(circle at 8% 4%, rgba(37, 99, 235, .14), transparent 26rem),
+            radial-gradient(circle at 92% 8%, rgba(147, 51, 234, .12), transparent 30rem);
     }
 }
 
@@ -47,20 +81,205 @@
     }
 
     .text-gradient {
-        @apply bg-gradient-to-r from-white to-zinc-400;
-        @apply bg-clip-text text-transparent;
+        background: linear-gradient(110deg, #111a42, #2563eb 48%, #9333ea 88%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
     }
 
     .input {
-        @apply bg-zinc-800 px-4 py-2 rounded;
-        color-scheme: dark;
+        @apply px-4 py-2 rounded border border-input bg-card text-foreground;
+        color-scheme: light;
     }
 
     .button {
-        @apply px-4 py-2 text-white bg-zinc-700 rounded;
+        @apply px-4 py-2 rounded bg-primary text-primary-foreground;
     }
 
     .button-outline {
-        @apply border border-zinc-500 text-white px-4 py-2 rounded;
+        @apply border border-border bg-transparent px-4 py-2 text-foreground rounded;
+    }
+
+    .alternador-tema {
+        @apply relative inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm transition hover:-translate-y-0.5;
+    }
+
+    .cabecalho-home {
+        background: linear-gradient(to bottom, rgba(4, 8, 28, .82), rgba(4, 8, 28, .38) 72%, transparent);
+    }
+
+    .slogan-conteudo {
+        width: min(92%, 70rem);
+        margin: auto;
+        padding: clamp(1.5rem, 4vw, 3rem);
+        border: 1px solid rgba(255, 255, 255, .14);
+        border-radius: 1.5rem;
+        background: radial-gradient(ellipse at center, rgba(4, 8, 28, .52), rgba(4, 8, 28, .18) 68%, transparent 100%);
+        box-shadow: 0 22px 70px rgba(2, 6, 23, .24);
+        backdrop-filter: blur(1.5px);
+    }
+
+    .home-identidade .home-sobre-imagem { background: rgb(4 10 26 / 24%); }
+    .home-identidade.home-operacional .home-sobre-imagem { background: transparent; }
+    .home-identidade .slogan-titulo span,
+    .home-identidade .slogan-descricao { color: #fff !important; }
+
+    .slogan-titulo,
+    .slogan-descricao {
+        text-shadow: 0 2px 5px rgba(0, 0, 0, .95), 0 0 22px rgba(0, 0, 0, .72);
+    }
+
+    .logo-uniflow {
+        @apply flex items-center gap-3;
+    }
+
+    .logo-conteudo {
+        @apply flex min-w-0 flex-col leading-none;
+    }
+
+    .brand {
+        @apply flex items-center;
+        gap: clamp(.4rem, 1vw, .85rem);
+    }
+
+    .brand-name {
+        color: #101827;
+        font-size: clamp(1.25rem, 2.5vw, 2rem);
+        font-weight: 800;
+        letter-spacing: -.055em;
+        white-space: nowrap;
+    }
+
+    .brand-flow {
+        background: linear-gradient(110deg, #00d4ff, #60a5fa 45%, #c084fc 85%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+    }
+
+    .brand-abs {
+        padding: .25rem clamp(.55rem, 1.2vw, 1rem);
+        border: 2px solid transparent;
+        border-radius: .8rem;
+        background:
+            linear-gradient(#f8faff, #f8faff) padding-box,
+            linear-gradient(110deg, #00d4ff, #a78bfa, #e879f9) border-box;
+        color: #101827;
+        font-size: clamp(.72rem, 1.5vw, 1.1rem);
+        font-weight: 900;
+        letter-spacing: .045em;
+        line-height: 1.25;
+        box-shadow: 0 0 18px rgb(124 58 237 / 18%);
+    }
+
+    .brand-tagline {
+        @apply mt-2 hidden font-semibold uppercase sm:block;
+        color: hsl(var(--muted-foreground));
+        font-size: .625rem;
+        letter-spacing: .18em;
+        white-space: nowrap;
+    }
+
+    .auth-overlay {
+        background: rgba(248, 250, 255, .9);
+        backdrop-filter: blur(5px);
+    }
+
+    .rodape-uniflow {
+        color: hsl(var(--muted-foreground));
+        background:
+            radial-gradient(circle at 15% 0%, rgba(56, 189, 248, .16), transparent 28%),
+            radial-gradient(circle at 85% 15%, rgba(192, 38, 211, .13), transparent 30%),
+            hsl(var(--card));
+        border-top: 1px solid hsl(var(--border));
+    }
+
+    .segmento-rodape, .beneficio-rodape {
+        @apply flex items-center gap-3 rounded-xl border border-border bg-background/70 p-3;
+    }
+
+    .segmento-rodape strong, .segmento-rodape small,
+    .beneficio-rodape strong, .beneficio-rodape small { @apply block; }
+
+    .segmento-rodape strong, .beneficio-rodape strong {
+        color: hsl(var(--foreground));
+        @apply text-sm;
+    }
+
+    .segmento-rodape small, .beneficio-rodape small { @apply mt-0.5 text-xs; }
+
+    .icone-segmento { @apply inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full; }
+    .icone-azul { @apply bg-sky-100 text-blue-700; }
+    .icone-violeta { @apply bg-violet-100 text-violet-700; }
+    .icone-rosa { @apply bg-pink-100 text-pink-700; }
+    .icone-turquesa { @apply bg-cyan-100 text-teal-700; }
+
+    .dark .input { color-scheme: dark; }
+    .dark .auth-overlay { background: rgba(0, 0, 0, .8); }
+    .dark .text-gradient,
+    .sobre-imagem .text-gradient {
+        background: linear-gradient(110deg, #fff, #dbeafe 52%, #d8b4fe 92%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+    }
+    .dark .brand-name { color: #fff; }
+    .dark .brand-abs,
+    .cabecalho-hero .brand-abs,
+    .sobre-imagem .brand-abs {
+        background:
+            linear-gradient(#101827, #101827) padding-box,
+            linear-gradient(110deg, #00d4ff, #a78bfa, #e879f9) border-box;
+        color: #f8fafc;
+    }
+    .cabecalho-hero .brand-name,
+    .sobre-imagem .brand-name { color: #fff; }
+    .cabecalho-hero .brand-tagline,
+    .sobre-imagem .brand-tagline { color: #d9e1f2; }
+    .dark .icone-azul { @apply bg-blue-950 text-sky-300; }
+    .dark .icone-violeta { @apply bg-violet-950 text-violet-300; }
+    .dark .icone-rosa { @apply bg-pink-950 text-pink-300; }
+    .dark .icone-turquesa { @apply bg-cyan-950 text-cyan-300; }
+}
+
+/* Compatibilidade visual para telas ainda baseadas diretamente na paleta zinc. */
+html:not(.dark) .bg-zinc-950 { background-color: #f6f8ff !important; }
+html:not(.dark) .bg-zinc-900 { background-color: #ffffff !important; }
+html:not(.dark) .bg-zinc-800 { background-color: #edf1fb !important; }
+html:not(.dark) .bg-zinc-700 { background-color: #dfe6f7 !important; }
+html:not(.dark) .text-zinc-100,
+html:not(.dark) .text-zinc-200 { color: #111a42 !important; }
+html:not(.dark) .text-zinc-300 { color: #33426b !important; }
+html:not(.dark) .text-zinc-400 { color: #53617f !important; }
+html:not(.dark) .text-zinc-500 { color: #68748f !important; }
+html:not(.dark) .border-zinc-600,
+html:not(.dark) .border-zinc-700,
+html:not(.dark) .border-zinc-800 { border-color: #d4dcf0 !important; }
+html:not(.dark) .hover\:bg-zinc-800:hover { background-color: #e7ecfa !important; }
+
+html:not(.dark) .pagina-tema-overlay { background: rgba(246, 248, 255, .94) !important; }
+html:not(.dark) .navegacao-publica {
+    background: rgba(255, 255, 255, .92) !important;
+    box-shadow: 0 10px 30px rgba(30, 41, 89, .08);
+}
+
+html:not(.dark) .sobre-imagem .text-zinc-100,
+html:not(.dark) .sobre-imagem .text-zinc-200,
+html:not(.dark) .sobre-imagem .text-zinc-300,
+html:not(.dark) .cabecalho-hero .text-zinc-100,
+html:not(.dark) .cabecalho-hero .text-zinc-200,
+html:not(.dark) .cabecalho-hero .text-zinc-300 { color: #ffffff !important; }
+html:not(.dark) .sobre-imagem .text-zinc-400,
+html:not(.dark) .cabecalho-hero .text-zinc-400 { color: #d9e1f2 !important; }
+
+@media (max-width: 480px) {
+    .logo-uniflow { gap: .4rem; }
+    .logo-uniflow img { width: 3.25rem; height: 3.25rem; }
+    .brand { gap: .3rem; }
+    .brand-name { font-size: 1.05rem; }
+    .brand-abs {
+        padding: .18rem .42rem;
+        border-radius: .55rem;
+        font-size: .6rem;
     }
 }

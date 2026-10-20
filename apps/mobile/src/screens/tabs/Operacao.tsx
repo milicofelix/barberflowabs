@@ -1,0 +1,153 @@
+import Carregando from '@/src/components/shared/Carregando'
+import EstadoErro from '@/src/components/shared/EstadoErro'
+import { SeletorOperacao } from '@/src/components/operacao/ComponentesOperacao'
+import { AtalhoCentralFinanceira, EquipeOperacao, ResumoOperacao } from '@/src/components/operacao/SecoesOperacao'
+import useOperacao from '@/src/data/hooks/useOperacao'
+import type { SecaoOperacao, VisualizacaoAgenda } from '@/src/data/operacao/tipos'
+import { useEffect, useState } from 'react'
+import DetalheAtendimentoNotificacao from '@/src/components/operacao/DetalheAtendimentoNotificacao'
+import { Alert, Modal, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import useTema from '@/src/data/contexts/ContextoTema'
+import { EscalasEquipe, MembrosEquipe } from '@/src/components/operacao/GestaoEquipe'
+import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs'
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import type { AbasParamList, StackParamList } from '@/src/navigation/types'
+import GestaoServicos from '@/src/components/operacao/GestaoServicos'
+import useGestaoServicos from '@/src/data/hooks/useGestaoServicos'
+import AgendaCalendario from '@/src/components/operacao/AgendaCalendario'
+import ImportadorContatos from '@/src/components/clientes/ImportadorContatos'
+import CabecalhoIdentidadeUnidade from '@/src/components/shared/CabecalhoIdentidadeUnidade'
+import CentralRelacionamento from '@/src/components/relacionamento/CentralRelacionamento'
+
+type Props = BottomTabScreenProps<AbasParamList, 'Operacao'>
+
+export default function Operacao({ navigation, route }: Props) {
+    const { cores } = useTema()
+    const [secao, setSecao] = useState<SecaoOperacao>('RESUMO')
+    const [visualizacaoAgenda, setVisualizacaoAgenda] = useState<VisualizacaoAgenda>('day')
+    const [agendaTelaCheia, setAgendaTelaCheia] = useState(false)
+    const dados = useOperacao(visualizacaoAgenda)
+    useEffect(() => {
+        if (!dados.carregando && secao === 'RESUMO' && !dados.permissoes.includes('AGENDA_GERENCIAR') && dados.permissoes.includes('RELACIONAMENTO_VISUALIZAR')) setSecao('RELACIONAMENTO')
+    }, [dados.carregando, dados.permissoes, secao])
+    const agendamentoId = route.params?.agendamentoId
+    useEffect(() => { if (agendamentoId) { setSecao('AGENDA'); setAgendaTelaCheia(false) } }, [agendamentoId, route.params?.chave])
+    const gestaoServicos = useGestaoServicos(secao === 'SERVICOS')
+    const iniciarAgendamento = (dataSelecionada: Date) => {
+        const data = new Date(dataSelecionada)
+        // Preserva o dia e a hora da célula tocada. O arredondamento só atua
+        // caso uma visualização futura forneça minutos fora da grade de 15 min.
+        data.setSeconds(0, 0)
+        data.setMinutes(Math.ceil(data.getMinutes() / 15) * 15)
+        if (data.getTime() <= Date.now()) {
+            Alert.alert('Horário indisponível', 'Selecione um horário futuro para criar o agendamento.')
+            return
+        }
+        setAgendaTelaCheia(false)
+        navigation.navigate('Agendamento', { dataInicial: data.toISOString(), origemAgenda: true, chave: Date.now() })
+    }
+    const cabecalho = <>
+        {agendamentoId && Number.isSafeInteger(agendamentoId) && agendamentoId > 0 ? <DetalheAtendimentoNotificacao key={`${agendamentoId}:${route.params?.chave}`} id={agendamentoId} alterarData={dados.setData} fechar={() => navigation.setParams({ agendamentoId: undefined })} /> : null}
+        <CabecalhoIdentidadeUnidade />
+        <Text style={styles.sobretitulo}>OPERAÇÃO DO ESTABELECIMENTO</Text><Text style={[styles.titulo, { color: cores.texto }]}>Gestão diária</Text>
+        <SeletorOperacao atual={secao} selecionar={setSecao} permissoes={dados.permissoes} />
+    </>
+
+    if (secao === 'AGENDA') {
+        if (!dados.carregando && !dados.permissoes.includes('AGENDA_GERENCIAR')) return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}><ScrollView contentContainerStyle={styles.conteudo}>{cabecalho}<Text accessibilityRole="alert" style={{ color: cores.texto }}>Você não tem permissão para consultar a agenda.</Text></ScrollView></SafeAreaView>
+        const agenda = <>
+            {cabecalho}
+            <NavegacaoData data={dados.data} alterar={dados.setData} visualizacao={visualizacaoAgenda} />
+            {dados.erro ? <EstadoErro mensagem={dados.erro} tentarNovamente={dados.recarregar} /> : null}
+            {dados.carregando && !dados.dashboard ? <Carregando mensagem="Carregando operação..." /> : null}
+            {!dados.carregando ? <><Pressable accessibilityRole="button" accessibilityLabel="Abrir agenda em tela cheia" onPress={() => setAgendaTelaCheia(true)}
+                style={[styles.telaCheiaBotao, { borderColor: cores.borda, backgroundColor: cores.superficie }]}>
+                <Text style={[styles.telaCheiaTexto, { color: cores.texto }]}>⛶ Tela cheia</Text>
+            </Pressable><AgendaCalendario itens={dados.agendamentos} restricoes={dados.restricoesAgenda}
+                profissionais={dados.profissionais} filtros={dados.filtrosAgenda} alterarFiltros={dados.setFiltrosAgenda} data={dados.data}
+                visualizacao={visualizacaoAgenda} alterarVisualizacao={setVisualizacaoAgenda} alterarData={dados.setData}
+                aoPressionarCelula={iniciarAgendamento}
+                reagendar={dados.reagendar} fusoHorario={dados.fusoHorario} /></> : null}
+        </>
+        return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}>
+            {visualizacaoAgenda === 'schedule'
+                ? <View style={[styles.conteudoAgenda, styles.conteudoAgendaLista]}>{agenda}</View>
+                : <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled" contentContainerStyle={styles.conteudoAgenda}
+                    refreshControl={<RefreshControl refreshing={dados.carregando} onRefresh={dados.recarregar} tintColor="#E7B84B" />}>
+                    {agenda}
+                </ScrollView>}
+            <Modal visible={agendaTelaCheia} animationType="slide" presentationStyle="fullScreen" statusBarTranslucent onRequestClose={() => setAgendaTelaCheia(false)}>
+                <SafeAreaView style={[styles.telaCheia, { backgroundColor: cores.fundo }]} edges={['top', 'bottom']}>
+                    <View style={styles.telaCheiaCabecalho}>
+                        <View><Text style={styles.sobretitulo}>AGENDA OPERACIONAL</Text><Text style={[styles.telaCheiaTitulo, { color: cores.texto }]}>Visão ampliada</Text></View>
+                        <Pressable accessibilityRole="button" accessibilityLabel="Sair da tela cheia" onPress={() => setAgendaTelaCheia(false)}
+                            style={[styles.fecharTelaCheia, { borderColor: cores.borda, backgroundColor: cores.superficie }]}><Text style={{ color: cores.texto, fontSize: 22 }}>×</Text></Pressable>
+                    </View>
+                    <NavegacaoData data={dados.data} alterar={dados.setData} visualizacao={visualizacaoAgenda} />
+                    <AgendaCalendario telaCheia itens={dados.agendamentos} restricoes={dados.restricoesAgenda}
+                        profissionais={dados.profissionais} filtros={dados.filtrosAgenda} alterarFiltros={dados.setFiltrosAgenda} data={dados.data}
+                        visualizacao={visualizacaoAgenda} alterarVisualizacao={setVisualizacaoAgenda} alterarData={dados.setData}
+                        aoPressionarCelula={iniciarAgendamento}
+                        reagendar={dados.reagendar} fusoHorario={dados.fusoHorario} />
+                </SafeAreaView>
+            </Modal>
+        </SafeAreaView>
+    }
+
+    return <SafeAreaView style={[styles.safeArea, { backgroundColor: cores.fundo }]} edges={['top']}><ScrollView contentContainerStyle={styles.conteudo} keyboardShouldPersistTaps="handled"
+        refreshControl={<RefreshControl refreshing={dados.carregando} onRefresh={dados.recarregar} tintColor="#E7B84B" />}>
+        {cabecalho}
+        {secao === 'RELACIONAMENTO' ? <CentralRelacionamento /> : null}
+        {dados.erro ? <EstadoErro mensagem={dados.erro} tentarNovamente={dados.recarregar} /> : null}
+        {dados.carregando && !dados.dashboard ? <Carregando mensagem="Carregando operação..." /> : null}
+        {!dados.carregando && secao === 'RESUMO' ? <><ResumoOperacao dados={dados.dashboard} />
+            <View style={[styles.clientesCartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
+                <Text style={[styles.clientesTitulo, { color: cores.texto }]}>Clientes</Text>
+                <Text style={[styles.clientesAjuda, { color: cores.textoSecundario }]}>Selecione contatos do aparelho, revise os dados e importe somente os clientes desejados.</Text>
+                <ImportadorContatos aoConcluir={() => dados.recarregar()} />
+            </View></> : null}
+        {secao === 'SERVICOS' ? <GestaoServicos itens={gestaoServicos.servicos} profissionais={dados.profissionais} carregando={gestaoServicos.carregando}
+            erro={gestaoServicos.erro} recarregar={async () => { await Promise.all([gestaoServicos.carregar(), dados.recarregar()]) }} salvar={gestaoServicos.salvar} excluir={gestaoServicos.excluir} /> : null}
+        {!dados.carregando && secao === 'EQUIPE' ? <><EquipeOperacao itens={dados.profissionais} criar={dados.criarProfissional} recarregar={dados.recarregar} erro={dados.erro} /><EscalasEquipe profissionais={dados.profissionais} buscar={dados.buscarEscalas} salvar={dados.salvarEscalas} erro={dados.erro} /><MembrosEquipe membros={dados.membros} usuarios={dados.usuariosDisponiveis} profissionais={dados.profissionais} salvar={dados.salvarMembro} criarConta={dados.criarContaMembro} criarPerfil={dados.criarPerfilParaMembro} remover={dados.removerMembro} erro={dados.erro} /></> : null}
+        {!dados.carregando && secao === 'FINANCEIRO' ? <AtalhoCentralFinanceira
+            abrir={() => navigation.getParent<NativeStackNavigationProp<StackParamList>>()?.navigate('CentralFinanceira')} /> : null}
+    </ScrollView></SafeAreaView>
+}
+
+function NavegacaoData({ data, alterar, visualizacao }: { data: string; alterar: (data: string) => void; visualizacao: VisualizacaoAgenda }) {
+    const { cores } = useTema()
+    const mover = (dias: number) => {
+        const atual = new Date(`${data}T12:00:00`)
+        atual.setDate(atual.getDate() + dias)
+        alterar(`${atual.getFullYear()}-${String(atual.getMonth() + 1).padStart(2, '0')}-${String(atual.getDate()).padStart(2, '0')}`)
+    }
+    const hoje = () => {
+        const atual = new Date()
+        alterar(`${atual.getFullYear()}-${String(atual.getMonth() + 1).padStart(2, '0')}-${String(atual.getDate()).padStart(2, '0')}`)
+    }
+    return <View style={styles.navegacaoData}>
+        <View style={styles.acoesData}>
+            <Pressable onPress={() => mover(-passoVisualizacao(visualizacao))} style={[styles.botaoData, { borderColor: cores.borda }]}><Text style={[styles.botaoDataTexto, { color: cores.texto }]}>‹ Anterior</Text></Pressable>
+            <Pressable onPress={hoje} style={[styles.botaoData, { borderColor: cores.destaque }]}><Text style={[styles.botaoDataTexto, { color: cores.destaque }]}>Hoje</Text></Pressable>
+            <Pressable onPress={() => mover(passoVisualizacao(visualizacao))} style={[styles.botaoData, { borderColor: cores.borda }]}><Text style={[styles.botaoDataTexto, { color: cores.texto }]}>Próximo ›</Text></Pressable>
+        </View>
+        <TextInput style={[styles.data, { backgroundColor: cores.campo, color: cores.campoTexto, borderColor: cores.borda }]} value={data} onChangeText={alterar} placeholder="AAAA-MM-DD" placeholderTextColor={cores.textoSecundario} />
+    </View>
+}
+
+function passoVisualizacao(visualizacao: VisualizacaoAgenda) {
+    return visualizacao === 'day' ? 1 : visualizacao === '3days' ? 3 : visualizacao === 'week' ? 7 : 31
+}
+
+const styles = StyleSheet.create({
+    safeArea: { flex: 1, backgroundColor: '#081426' }, conteudo: { padding: 18, paddingBottom: 40 }, conteudoAgenda: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 40 }, conteudoAgendaLista: { flex: 1 },
+    sobretitulo: { color: '#E7B84B', fontSize: 12, fontWeight: '800', letterSpacing: 1.2 }, titulo: { color: '#FFF', fontSize: 29, fontWeight: '900', marginTop: 6 },
+    data: { backgroundColor: '#101E33', color: '#FFF', borderRadius: 11, padding: 13, borderWidth: 1, borderColor: '#31415A', marginBottom: 12 },
+    navegacaoData: { gap: 9, marginBottom: 2 }, acoesData: { flexDirection: 'row', gap: 8 },
+    botaoData: { flex: 1, minHeight: 42, borderWidth: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center' }, botaoDataTexto: { fontSize: 12, fontWeight: '800' },
+    telaCheiaBotao: { minHeight: 42, borderWidth: 1, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 9 }, telaCheiaTexto: { fontSize: 12, fontWeight: '900' },
+    telaCheia: { flex: 1, paddingHorizontal: 12, paddingTop: 8 }, telaCheiaCabecalho: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+    telaCheiaTitulo: { fontSize: 22, fontWeight: '900', marginTop: 2 }, fecharTelaCheia: { width: 44, height: 44, borderWidth: 1, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+    clientesCartao: { borderWidth: 1, borderRadius: 14, padding: 15, gap: 8, marginTop: 14 }, clientesTitulo: { fontSize: 19, fontWeight: '900' }, clientesAjuda: { fontSize: 12, lineHeight: 18 },
+})

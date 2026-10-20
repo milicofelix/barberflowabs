@@ -1,26 +1,29 @@
-import { Servico } from '@barbabrutal/core'
+import { Servico } from '@uniflowabs/core'
 import Image from 'next/image'
+import Link from 'next/link'
 
 export interface ItemServicoProps {
     servico: Servico
+    estabelecimento?: { nome: string; slug: string }
 }
 
 export default function ItemServico(props: ItemServicoProps) {
     const { servico } = props
     return (
-        <div className="flex rounded-xl bg-zinc-800 overflow-hidden">
+        <article className="flex min-w-0 rounded-xl border border-border bg-card text-foreground overflow-hidden">
             <Image
                 src={servico.imagemURL}
                 width={150}
                 height={150}
                 alt={servico.nome}
-                className="object-cover"
+                className="aspect-video w-24 shrink-0 self-center bg-card object-contain sm:w-[120px]"
             />
-            <div className="flex flex-col p-5 gap-2">
-                <span className="text-xl font-black">{servico.nome}</span>
-                <span className="text-xs text-zinc-400 flex-1">{servico.descricao}</span>
-                <span className="text-lg font-bold">R$ {servico.preco.toFixed(2)}</span>
+            <div className="flex min-w-0 flex-1 flex-col p-4 gap-2">
+                <h3 className="line-clamp-2 break-words text-lg font-bold">{servico.nome}</h3>
+                {props.estabelecimento ? <Link href={`/estabelecimentos/${props.estabelecimento.slug}`} className="text-sm text-muted-foreground underline underline-offset-2">{props.estabelecimento.nome}</Link> : null}
+                <p className="line-clamp-3 break-words text-sm text-muted-foreground">{servico.descricao}</p>
+                <span className="text-lg font-bold">{servico.preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
             </div>
-        </div>
+        </article>
     )
 }

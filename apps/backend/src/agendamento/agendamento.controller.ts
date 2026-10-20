@@ -1,10 +1,7 @@
 import {
   Usuario,
-  Agendamento,
-  NovoAgendamento,
-  ExcluirAgendamento,
   TEMPO_SLOT,
-} from '@barbabrutal/core';
+} from '@uniflowabs/core';
 import {
   BadRequestException,
   Body,
@@ -15,45 +12,90 @@ import {
   NotFoundException,
   Param,
   Post,
+  Put,
+  Req,
+  HttpException,
 } from '@nestjs/common';
 
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import { AgendamentoPrisma } from './agendamento.prisma';
-import { AvaliarAgendamentoDto, CriarAgendamentoDto } from './agendamento.dto';
+import { AvaliarAgendamentoDto } from './agendamento.dto';
 import {
   validarData,
   validarNumeroInteiroPositivo,
 } from 'src/shared/validacao';
 import { PlanoLimitesService } from 'src/saas/plano-limites.service';
+import { TenantService } from 'src/shared/tenant.service';
+import { MotorAgendaService } from 'src/motor-agenda/motor-agenda.service';
+import {
+  CriarAgendamentoUniversalDto,
+  ReagendarAgendamentoDto,
+} from 'src/motor-agenda/motor-agenda.dto';
+import { ConflitoAgendaError } from 'src/motor-agenda/conflito-agenda.error';
+import { FluxoAtendimentoService } from 'src/gestao/fluxo-atendimento.service';
 
 @Controller('agendamentos')
 export class AgendamentoController {
   constructor(
     private readonly repo: AgendamentoPrisma,
     private readonly limites: PlanoLimitesService,
+    private readonly tenant: TenantService,
+    private readonly motor: MotorAgendaService,
+    private readonly fluxoAtendimento: FluxoAtendimentoService,
   ) {}
 
   @Post()
   async novoAgendamento(
-    @Body() dados: CriarAgendamentoDto,
+    @Body() dados: CriarAgendamentoUniversalDto,
     @UsuarioLogado() usuario: Usuario,
+    @Req() req: any,
   ) {
-    this.validarNovoAgendamento(dados);
-    await this.limites.validarBarbeariaOperacional(usuario.barbeariaId);
+    const estabelecimentoId = await this.resolverEstabelecimentoAgendamento(req, usuario);
+    await this.limites.validarEstabelecimentoOperacional(estabelecimentoId);
 
-    const agendamento: Agendamento = {
-      ...(dados as any),
-      barbeariaId: usuario.barbeariaId,
-      data: new Date(dados.data),
-      usuario,
-    };
-    const casoDeUso = new NovoAgendamento(this.repo);
-    await casoDeUso.executar({ agendamento, usuario });
+    try {
+      return await this.motor.criar(estabelecimentoId, dados, usuario);
+    } catch (error: any) {
+      if (error instanceof HttpException) throw error;
+      if (error instanceof ConflitoAgendaError) throw new ConflictException(error.message);
+      throw new ConflictException(error?.message ?? 'Não foi possível criar o agendamento');
+    }
+  }
+
+  @Put(':id/reagendar')
+  async reagendar(
+    @Param('id') id: string,
+    @Body() dados: ReagendarAgendamentoDto,
+    @UsuarioLogado() usuario: Usuario,
+    @Req() req: any,
+  ) {
+    validarNumeroInteiroPositivo(id, 'Agendamento');
+    const estabelecimentoId = await this.resolverEstabelecimentoAgendamento(req, usuario);
+    await this.limites.validarEstabelecimentoOperacional(estabelecimentoId);
+
+    try {
+      return await this.motor.reagendar(Number(id), estabelecimentoId, dados, usuario);
+    } catch (error: any) {
+      if (error instanceof HttpException) throw error;
+      if (error instanceof ConflitoAgendaError) throw new ConflictException(error.message);
+      throw new BadRequestException(error?.message ?? 'Não foi possível reagendar');
+    }
   }
 
   @Get()
-  buscarAgendamentosCliente(@UsuarioLogado() usuario: Usuario) {
-    return this.repo.buscarPorEmail(usuario.email, usuario.barbeariaId);
+  async buscarAgendamentosCliente(@UsuarioLogado() usuario: Usuario, @Req() req: any) {
+    const estabelecimentoId = await this.resolverEstabelecimentoAgendamento(req, usuario);
+    return this.repo.buscarPorEmail(usuario.email, estabelecimentoId);
+  }
+
+  @Get('ativos')
+  buscarAgendamentosAtivos(@UsuarioLogado() usuario: Usuario) {
+    return this.repo.buscarAtivosPorUsuario(usuario.id!);
+  }
+
+  @Get('meus')
+  buscarMeusAgendamentos(@UsuarioLogado() usuario: Usuario) {
+    return this.repo.buscarPorUsuario(usuario.id!);
   }
 
   @Post(':id/avaliacao')
@@ -85,18 +127,20 @@ export class AgendamentoController {
   }
 
   @Get(':profissional/:data')
-  buscarAgendaProfissionalPorDia(
+  async buscarAgendaProfissionalPorDia(
     @Param('profissional') profissional: string,
     @Param('data') data: string,
     @UsuarioLogado() usuario: Usuario,
+    @Req() req: any,
   ) {
     validarNumeroInteiroPositivo(profissional, 'Profissional');
     validarData(data);
+    const estabelecimentoId = await this.resolverEstabelecimentoAgendamento(req, usuario);
 
     return this.repo.buscarPorProfissionalEData(
       +profissional,
       new Date(data),
-      usuario.barbeariaId,
+      estabelecimentoId,
     );
   }
 
@@ -105,21 +149,32 @@ export class AgendamentoController {
     @Param('profissional') profissional: string,
     @Param('data') dataParam: string,
     @UsuarioLogado() usuario: Usuario,
+    @Req() req: any,
   ) {
     validarNumeroInteiroPositivo(profissional, 'Profissional');
     validarData(dataParam);
+    const estabelecimentoId = await this.resolverEstabelecimentoAgendamento(req, usuario);
 
     const agendamentos = await this.repo.buscarPorProfissionalEData(
       +profissional,
       new Date(dataParam),
-      usuario.barbeariaId,
+      estabelecimentoId,
     );
 
     return agendamentos
       .map((agendamento) => {
+        const inicio = agendamento.inicioOcupacao ?? agendamento.data;
+        const fim = agendamento.fimOcupacao
+          ?? new Date(
+            agendamento.data.getTime()
+              + agendamento.servicos.reduce(
+                (total, servico) => total + (servico.duracaoMinutos ?? servico.qtdeSlots! * TEMPO_SLOT),
+                0,
+              ) * 60_000,
+          );
         return {
-          data: agendamento.data,
-          slots: agendamento.servicos.reduce((total, s) => total + s.qtdeSlots, 0),
+          data: inicio,
+          slots: Math.ceil((fim.getTime() - inicio.getTime()) / (TEMPO_SLOT * 60_000)),
         };
       })
       .reduce((horariosOcupados: Date[], dados: any) => {
@@ -130,35 +185,73 @@ export class AgendamentoController {
         );
         return [...horariosOcupados, ...horarios];
       }, [])
-      .map((d) => d.toTimeString().slice(0, 5));
+      .map((data) => this.formatarHorarioLocal(data));
   }
 
   @Delete(':id')
   async excluirAgendamento(
     @Param('id') id: string,
     @UsuarioLogado() usuario: Usuario,
+    @Req() req: any,
+  ) {
+    validarNumeroInteiroPositivo(id, 'Agendamento');
+    const estabelecimentoId = await this.resolverEstabelecimentoAgendamento(req, usuario);
+    const podeCancelarComoMembro = !!usuario.membroEstabelecimento && usuario.estabelecimentoId === estabelecimentoId;
+
+    try {
+      const cancelavel = await this.repo.buscarParaCancelar(
+        Number(id), usuario.id!, estabelecimentoId, podeCancelarComoMembro,
+      );
+      if (!cancelavel) throw new NotFoundException('Agendamento não encontrado para cancelamento');
+      return await this.fluxoAtendimento.alterarManual(
+        cancelavel.id,
+        cancelavel.estabelecimentoId,
+        'CANCELADO',
+        usuario.id!,
+        'Cancelamento solicitado no aplicativo',
+      );
+    } catch (error: any) {
+      if (error instanceof NotFoundException) throw error;
+      throw new BadRequestException(error?.message ?? 'Não foi possível cancelar o agendamento');
+    }
+  }
+
+  @Delete('meus/:id')
+  async cancelarMeuAgendamento(
+    @Param('id') id: string,
+    @UsuarioLogado() usuario: Usuario,
   ) {
     validarNumeroInteiroPositivo(id, 'Agendamento');
 
-    const casoDeUso = new ExcluirAgendamento(this.repo);
-    await casoDeUso.executar({
-      id: +id,
-      usuario,
-    });
+    try {
+      const cancelavel = await this.repo.buscarParaCancelar(Number(id), usuario.id!, undefined, false);
+      if (!cancelavel) {
+        throw new NotFoundException('Agendamento não encontrado para cancelamento');
+      }
+      return await this.fluxoAtendimento.alterarManual(
+        cancelavel.id,
+        cancelavel.estabelecimentoId,
+        'CANCELADO',
+        usuario.id!,
+        'Cancelamento solicitado pelo cliente',
+      );
+    } catch (error: any) {
+      if (error instanceof NotFoundException) throw error;
+      throw new BadRequestException(error?.message ?? 'Não foi possível cancelar o agendamento');
+    }
   }
 
-  private validarNovoAgendamento(dados: CriarAgendamentoDto) {
-    validarData(dados.data);
-    validarNumeroInteiroPositivo(dados.usuario?.id, 'Usuário');
-    validarNumeroInteiroPositivo(dados.profissional?.id, 'Profissional');
+  private async resolverEstabelecimentoAgendamento(req: any, usuario: Usuario) {
+    return this.tenant.resolverEstabelecimentoId(req);
+  }
 
-    if (!Array.isArray(dados.servicos) || dados.servicos.length === 0) {
-      throw new BadRequestException('Informe pelo menos um serviço');
-    }
-
-    dados.servicos.forEach((servico) => {
-      validarNumeroInteiroPositivo(servico?.id, 'Serviço');
-    });
+  private formatarHorarioLocal(data: Date) {
+    return new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).format(data);
   }
 
   private validarAvaliacao(dados: AvaliarAgendamentoDto) {

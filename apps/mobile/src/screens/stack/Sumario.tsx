@@ -1,43 +1,104 @@
-import { StyleSheet, Text, Pressable, View } from 'react-native'
-import { DateUtils, MoedaUtils } from '@barbabrutal/core'
+import { ActivityIndicator, StyleSheet, Text, Pressable, View } from 'react-native'
+import { Agendamento, DateUtils, MoedaUtils } from '@uniflowabs/core'
 import useAgendamento from '../../data/hooks/useAgendamento'
+import type { NativeStackScreenProps } from '@react-navigation/native-stack'
+import type { StackParamList } from '@/src/navigation/types'
+import { useEffect, useState } from 'react'
+import EstadoErro from '@/src/components/shared/EstadoErro'
+import useAPI, { mensagemDoErro } from '@/src/data/hooks/useAPI'
+import useEstabelecimento from '@/src/data/hooks/useEstabelecimento'
+import useTema from '@/src/data/contexts/ContextoTema'
 
-export default function Sumario({ navigation }: any) {
+type Props = NativeStackScreenProps<StackParamList, 'Sumario'>
+
+export default function Sumario({ navigation }: Props) {
+    const { cores } = useTema()
     const { data, profissional, servicos, duracaoTotal, precoTotal, agendar } = useAgendamento()
+    const [processando, setProcessando] = useState(false)
+    const [erro, setErro] = useState<string | null>(null)
+    const [possuiOutroAgendamento, setPossuiOutroAgendamento] = useState(false)
+    const { estabelecimento } = useEstabelecimento()
+    const { httpGet } = useAPI()
+    const possuiAgendamentoAtivo = erro?.includes('agendamento ativo') ?? false
+
+    useEffect(() => {
+        httpGet<Agendamento[]>('/agendamentos/ativos', { escopoTenant: 'nenhum' })
+            .then((agendamentos) => setPossuiOutroAgendamento(agendamentos.length > 0))
+            .catch(() => setPossuiOutroAgendamento(false))
+    }, [httpGet])
+
+    async function finalizar() {
+        if (processando) return
+
+        try {
+            setProcessando(true)
+            setErro(null)
+            await agendar()
+            navigation.navigate('Abas', { screen: 'Inicio' })
+        } catch (erro) {
+            setErro(mensagemDoErro(erro))
+        } finally {
+            setProcessando(false)
+        }
+    }
 
     return (
-        <View style={styles.container}>
-            <View style={styles.card}>
-                <Text style={styles.titulo}>Resumo do Agendamento</Text>
-                <Text style={styles.subtitulo}>Será um prazer atendê-lo!</Text>
+        <View style={[styles.container, { backgroundColor: cores.fundo }]}>
+            <View style={[styles.card, { backgroundColor: cores.superficie, borderColor: cores.borda, borderWidth: 1 }]}>
+                <Text style={[styles.titulo, { color: cores.texto }]}>Resumo do Agendamento</Text>
+                <Text style={[styles.subtitulo, { color: cores.textoSecundario }]}>Será um prazer atendê-lo!</Text>
 
-                <Text style={styles.label}>PROFISSIONAL</Text>
-                <Text style={styles.valor}>{profissional?.nome}</Text>
+                <Text style={[styles.label, { color: cores.textoSecundario }]}>ESTABELECIMENTO</Text>
+                <Text style={[styles.valor, { color: cores.texto }]}>{estabelecimento?.nome ?? 'Não selecionada'}</Text>
 
-                <Text style={styles.label}>SERVIÇOS</Text>
+                <Text style={[styles.label, { color: cores.textoSecundario }]}>PROFISSIONAL</Text>
+                <Text style={[styles.valor, { color: cores.texto }]}>{profissional?.nome}</Text>
+
+                <Text style={[styles.label, { color: cores.textoSecundario }]}>SERVIÇOS</Text>
                 {servicos.map((s, index) => (
-                    <Text key={index} style={styles.servico}>
+                    <Text key={index} style={[styles.servico, { color: cores.texto }]}>
                         {index + 1}. {s.nome}
                     </Text>
                 ))}
 
-                <Text style={styles.label}>DURAÇÃO</Text>
-                <Text style={styles.valor}>{duracaoTotal()}</Text>
+                <Text style={[styles.label, { color: cores.textoSecundario }]}>DURAÇÃO</Text>
+                <Text style={[styles.valor, { color: cores.texto }]}>{duracaoTotal()}</Text>
 
-                <Text style={styles.label}>HORÁRIO</Text>
-                <Text style={styles.valor}>{data && DateUtils.formatarDataEHora(data)}</Text>
+                <Text style={[styles.label, { color: cores.textoSecundario }]}>HORÁRIO</Text>
+                <Text style={[styles.valor, { color: cores.texto }]}>{data && DateUtils.formatarDataEHora(data)}</Text>
 
-                <Text style={styles.valorTotalLabel}>VALOR TOTAL</Text>
-                <Text style={styles.valorTotal}>{MoedaUtils.formatar(precoTotal())}</Text>
+                <Text style={[styles.valorTotalLabel, { color: cores.textoSecundario }]}>VALOR TOTAL</Text>
+                <Text style={[styles.valorTotal, { color: cores.texto }]}>{MoedaUtils.formatar(precoTotal())}</Text>
+
+                {possuiOutroAgendamento ? (
+                    <View style={[styles.lembrete, { borderColor: cores.destaque }]}>
+                        <Text style={{ color: cores.textoSecundario }}>
+                            Você já possui outro agendamento ativo. Uma nova reserva é permitida em outra unidade, mas confira datas e horários para evitar conflito.
+                        </Text>
+                    </View>
+                ) : null}
+
+                {erro ? <EstadoErro mensagem={erro} /> : null}
+
+                {possuiAgendamentoAtivo ? (
+                    <Pressable
+                        style={[styles.botaoSecundario, { borderColor: cores.destaque }]}
+                        onPress={() => navigation.navigate('Abas', { screen: 'Inicio' })}
+                    >
+                        <Text style={[styles.textoBotaoSecundario, { color: cores.destaque }]}>Ver e cancelar meu agendamento</Text>
+                    </Pressable>
+                ) : null}
 
                 <Pressable
-                    style={styles.botao}
-                    onPress={async () => {
-                        await agendar()
-                        navigation.navigate('Inicio')
-                    }}
+                    style={[styles.botao, processando && styles.botaoDesabilitado]}
+                    onPress={finalizar}
+                    disabled={processando}
                 >
-                    <Text style={styles.textoBotao}>Finalizar Agendamento</Text>
+                    {processando ? (
+                        <ActivityIndicator color="#fff" />
+                    ) : (
+                        <Text style={styles.textoBotao}>Finalizar Agendamento</Text>
+                    )}
                 </Pressable>
             </View>
         </View>
@@ -98,6 +159,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         alignSelf: 'flex-start',
     },
+    lembrete: { width: '100%', borderWidth: 1, borderRadius: 8, marginTop: 12, padding: 12 },
     botao: {
         backgroundColor: '#16a34a',
         paddingVertical: 15,
@@ -110,4 +172,13 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
+    botaoDesabilitado: { opacity: 0.65 },
+    botaoSecundario: {
+        width: '100%',
+        borderWidth: 1,
+        borderRadius: 8,
+        alignItems: 'center',
+        padding: 12,
+    },
+    textoBotaoSecundario: { fontSize: 14, fontWeight: '700' },
 })

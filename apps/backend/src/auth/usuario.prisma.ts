@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { RepositorioUsuario, Usuario } from '@barbabrutal/core';
+import { RepositorioUsuario, Usuario } from '@uniflowabs/core';
 import { PrismaService } from 'src/db/prisma.service';
-import { DEFAULT_BARBEARIA_ID } from 'src/shared/tenant';
 
 @Injectable()
 export class UsuarioPrisma implements RepositorioUsuario {
@@ -10,7 +9,8 @@ export class UsuarioPrisma implements RepositorioUsuario {
   async salvar(usuario: Usuario): Promise<void> {
     const dados = {
       ...usuario,
-      barbeariaId: usuario.barbeariaId ?? DEFAULT_BARBEARIA_ID,
+      estabelecimentoId: usuario.estabelecimentoId ?? null,
+      papel: usuario.papel ?? 'CUSTOMER',
     };
 
     await this.prisma.usuario.upsert({
@@ -25,12 +25,14 @@ export class UsuarioPrisma implements RepositorioUsuario {
       where: { email },
       select: {
         id: true,
-        barbeariaId: true,
+        estabelecimentoId: true,
         nome: true,
         email: true,
         senha: true,
+        trocarSenhaObrigatoria: true,
         telefone: true,
-        barbeiro: true,
+        fotoURL: true,
+        membroEstabelecimento: true,
         papel: true,
       },
     });
@@ -39,15 +41,24 @@ export class UsuarioPrisma implements RepositorioUsuario {
 
     return {
       ...usuario,
-      papel: this.normalizarPapel(usuario.papel, usuario.barbeiro),
+      estabelecimentoId: usuario.estabelecimentoId ?? undefined,
+      papel: this.normalizarPapel(usuario.papel, usuario.membroEstabelecimento),
     };
   }
 
-  private normalizarPapel(papel: string | null | undefined, barbeiro: boolean): Usuario['papel'] {
-    if (papel === 'SUPER_ADMIN' || papel === 'BARBER' || papel === 'CUSTOMER') {
-      return papel;
+  private normalizarPapel(papel: string | null | undefined, membroEstabelecimento: boolean): Usuario['papel'] {
+    if (['SUPER_ADMIN', 'APP_OWNER', 'ESTABLISHMENT_OWNER', 'ESTABLISHMENT_MEMBER', 'CUSTOMER'].includes(String(papel))) {
+      return papel as Usuario['papel'];
     }
 
-    return barbeiro ? 'BARBER' : 'CUSTOMER';
+    return membroEstabelecimento ? 'ESTABLISHMENT_MEMBER' : 'CUSTOMER';
+  }
+
+  async alterarSenha(id: number, hashAtual: string, hashNovo: string) {
+    const resultado = await this.prisma.usuario.updateMany({
+      where: { id, senha: hashAtual },
+      data: { senha: hashNovo, trocarSenhaObrigatoria: false },
+    });
+    return resultado.count === 1;
   }
 }

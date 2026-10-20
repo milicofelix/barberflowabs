@@ -1,16 +1,21 @@
-import { profissionais, servicos, Usuario } from '@barbabrutal/core';
+import { profissionais, servicos, Usuario } from '@uniflowabs/core';
 import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
+import { seedMarketplaceTatuape } from './seeds/marketplace-tatuape.seed';
+import { seedHistoricoClientesOutubro } from './seeds/historico-clientes-outubro.seed';
+import { seedCatalogoMultissegmento } from './seeds/catalogo-multissegmento.seed';
+import { seedServicosSugeridos } from './seeds/servicos-sugeridos.seed';
 
 const prisma = new PrismaClient();
-const BARBEARIA_PADRAO_ID = 1;
-const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS ?? 'marcao@barberflowabs.app')
+const ESTABELECIMENTO_PADRAO_ID = 1;
+const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS ?? 'milicofelix@gmail.com')
   .split(',')
   .map((email) => email.trim().toLowerCase())
   .filter(Boolean);
 
 const senhaPadrao = '$2b$10$9LQTRK3LRzIddKYW2C4MTelydFzk5Ys4JoROPajNqvYshhrn1PRa6';
 
-const barbeariasZonaLeste = [
+const estabelecimentosZonaLeste = [
   {
     nome: 'Barber Flow Tatuape',
     slug: 'barber-flow-tatuape',
@@ -143,16 +148,71 @@ const nomesProfissionais = [
   'Lucas Pereira',
 ];
 
+const planosAssinatura = [
+  {
+    nome: 'Mensal',
+    slug: 'mensal',
+    descricao: 'Plano de entrada para validar a operação com baixo compromisso. Cobrança mensal via PIX a partir de R$ 49,90.',
+    precoMensal: 49.9,
+    limiteUsuarios: 3,
+    limiteUnidades: 1,
+    limiteServicos: 20,
+    recursos: ['agenda', 'clientes', 'caixa', 'pix', 'ciclo_mensal'],
+  },
+  {
+    nome: 'Trimestral',
+    slug: 'trimestral',
+    descricao: 'Ideal para manter a estabelecimento ativa por mais tempo, com desconto em relação ao pagamento mensal e cobrança via PIX a cada 3 meses.',
+    precoMensal: 134.7,
+    limiteUsuarios: 3,
+    limiteUnidades: 1,
+    limiteServicos: 20,
+    recursos: ['agenda', 'clientes', 'caixa', 'pix', 'ciclo_trimestral', 'desconto_10'],
+  },
+  {
+    nome: 'Anual',
+    slug: 'anual',
+    descricao: 'Melhor custo-benefício para quem já decidiu usar o Barber Flow ABS: maior desconto, previsibilidade anual e pagamento via PIX.',
+    precoMensal: 479.04,
+    limiteUsuarios: 3,
+    limiteUnidades: 1,
+    limiteServicos: 20,
+    recursos: ['agenda', 'clientes', 'caixa', 'pix', 'ciclo_anual', 'desconto_20'],
+  },
+];
+
 async function seed() {
-  await prisma.barbearia.upsert({
-    where: { id: BARBEARIA_PADRAO_ID },
+  await seedPlanosAssinatura();
+
+  const senhaSuperAdmin = await bcrypt.hash('password', 10);
+  await prisma.usuario.upsert({
+    where: { email: 'milicofelix@gmail.com' },
+    update: {
+      nome: 'Adriano Freitas',
+      senha: senhaSuperAdmin,
+      estabelecimentoId: null,
+      membroEstabelecimento: false,
+      papel: 'SUPER_ADMIN',
+    },
+    create: {
+      nome: 'Adriano Freitas',
+      email: 'milicofelix@gmail.com',
+      senha: senhaSuperAdmin,
+      estabelecimentoId: null,
+      membroEstabelecimento: false,
+      papel: 'SUPER_ADMIN',
+    },
+  });
+
+  await prisma.estabelecimento.upsert({
+    where: { id: ESTABELECIMENTO_PADRAO_ID },
     update: {
       nome: 'Barber Flow ABS',
       slug: 'barber-flow-abs',
       telefone: '(11) 99999-9999',
       email: 'contato@barberflowabs.app',
       nomePublico: 'Barber Flow ABS',
-      descricaoPublica: 'Agenda online, profissionais e servicos para uma experiencia completa de barbearia.',
+      descricaoPublica: 'Agenda online, profissionais e servicos para uma experiencia completa de estabelecimento.',
       imagemCapaURL: '/banner.png',
       endereco: 'Rua Principal, 100',
       bairro: 'Centro',
@@ -166,13 +226,13 @@ async function seed() {
       reviewReason: null,
     },
     create: {
-      id: BARBEARIA_PADRAO_ID,
+      id: ESTABELECIMENTO_PADRAO_ID,
       nome: 'Barber Flow ABS',
       slug: 'barber-flow-abs',
       telefone: '(11) 99999-9999',
       email: 'contato@barberflowabs.app',
       nomePublico: 'Barber Flow ABS',
-      descricaoPublica: 'Agenda online, profissionais e servicos para uma experiencia completa de barbearia.',
+      descricaoPublica: 'Agenda online, profissionais e servicos para uma experiencia completa de estabelecimento.',
       imagemCapaURL: '/banner.png',
       endereco: 'Rua Principal, 100',
       bairro: 'Centro',
@@ -188,14 +248,14 @@ async function seed() {
 
   await prisma.unidade.upsert({
     where: {
-      barbeariaId_nome: {
-        barbeariaId: BARBEARIA_PADRAO_ID,
+      estabelecimentoId_nome: {
+        estabelecimentoId: ESTABELECIMENTO_PADRAO_ID,
         nome: 'Unidade Principal',
       },
     },
     update: {},
     create: {
-      barbeariaId: BARBEARIA_PADRAO_ID,
+      estabelecimentoId: ESTABELECIMENTO_PADRAO_ID,
       nome: 'Unidade Principal',
       endereco: 'Rua Principal, 100',
       telefone: '(11) 99999-9999',
@@ -205,7 +265,7 @@ async function seed() {
   await prisma.profissional.createMany({
     data: profissionais.map((profissional) => ({
       ...profissional,
-      barbeariaId: BARBEARIA_PADRAO_ID,
+      estabelecimentoId: ESTABELECIMENTO_PADRAO_ID,
     })) as any,
     skipDuplicates: true,
   });
@@ -213,18 +273,18 @@ async function seed() {
   await prisma.servico.createMany({
     data: servicos.map((servico) => ({
       ...servico,
-      barbeariaId: BARBEARIA_PADRAO_ID,
+      estabelecimentoId: ESTABELECIMENTO_PADRAO_ID,
     })) as any,
     skipDuplicates: true,
   });
 
   await prisma.horarioFuncionamento.deleteMany({
-    where: { barbeariaId: BARBEARIA_PADRAO_ID },
+    where: { estabelecimentoId: ESTABELECIMENTO_PADRAO_ID },
   });
 
   await prisma.horarioFuncionamento.createMany({
     data: [1, 2, 3, 4, 5, 6].map((diaSemana) => ({
-      barbeariaId: BARBEARIA_PADRAO_ID,
+      estabelecimentoId: ESTABELECIMENTO_PADRAO_ID,
       diaSemana,
       inicio: '08:00',
       fim: '21:00',
@@ -237,45 +297,82 @@ async function seed() {
   // senha é... #Senha123
   const senha = senhaPadrao;
 
-  const usuarios: Usuario[] = [
-    {
-      nome: 'Marcão Machadada',
-      barbeariaId: BARBEARIA_PADRAO_ID,
-      email: 'marcao@barberflowabs.app',
-      senha,
-      telefone: '(11) 99999-9999',
-      barbeiro: true,
-      papel: 'SUPER_ADMIN',
-    },
+  const usuarios: Array<Usuario & { estabelecimentoId?: number | null }> = [
     {
       nome: 'Leonardo Leitão',
-      barbeariaId: BARBEARIA_PADRAO_ID,
+      estabelecimentoId: ESTABELECIMENTO_PADRAO_ID,
       email: 'leonardo@formacao.dev',
       senha,
       telefone: '(11) 99999-9999',
-      barbeiro: false,
+      membroEstabelecimento: false,
       papel: 'CUSTOMER',
     },
   ];
 
   await prisma.usuario.createMany({ data: usuarios as any, skipDuplicates: true });
 
+  const clientePadrao = await prisma.usuario.findUnique({
+    where: { email: 'leonardo@formacao.dev' },
+    select: { id: true },
+  });
+
+  if (clientePadrao) {
+    await (prisma as any).clienteEstabelecimento.upsert({
+      where: {
+        estabelecimentoId_usuarioId: {
+          estabelecimentoId: ESTABELECIMENTO_PADRAO_ID,
+          usuarioId: clientePadrao.id,
+        },
+      },
+      update: {},
+      create: {
+        estabelecimentoId: ESTABELECIMENTO_PADRAO_ID,
+        usuarioId: clientePadrao.id,
+        origem: 'SEED',
+      },
+    });
+  }
+
   await prisma.usuario.updateMany({
     where: { email: { in: SUPER_ADMIN_EMAILS } },
     data: {
-      barbeiro: true,
+      estabelecimentoId: null,
+      membroEstabelecimento: false,
       papel: 'SUPER_ADMIN',
     },
   });
 
-  await seedBarbeariasZonaLeste();
+  await seedEstabelecimentosZonaLeste();
+  const totalMarketplaceTatuape = await seedMarketplaceTatuape(prisma);
+  console.info(`Seed concluido: ${totalMarketplaceTatuape} estabelecimentos do marketplace do Tatuape.`);
+  const totalEspecialidades = await seedCatalogoMultissegmento(prisma);
+  console.info(`Seed concluido: ${totalEspecialidades} especialidades do catalogo multissegmento.`);
+  const totalServicosSugeridos = await seedServicosSugeridos(prisma);
+  console.info(`Seed concluido: ${totalServicosSugeridos} servicos sugeridos do catalogo inteligente.`);
+  const historico = await seedHistoricoClientesOutubro(prisma);
+  console.info(`Seed concluido: ${historico.clientes} clientes e ${historico.agendamentos} atendimentos entre ${historico.inicio} e ${historico.fim}.`);
 }
 
-async function seedBarbeariasZonaLeste() {
-  const plano = await prisma.planoAssinatura.findUnique({ where: { slug: 'professional' } });
+async function seedPlanosAssinatura() {
+  for (const plano of planosAssinatura) {
+    await prisma.planoAssinatura.upsert({
+      where: { slug: plano.slug },
+      update: plano,
+      create: plano,
+    });
+  }
 
-  for (const [indice, item] of barbeariasZonaLeste.entries()) {
-    const barbearia = await prisma.barbearia.upsert({
+  await prisma.planoAssinatura.updateMany({
+    where: { slug: { in: ['starter', 'professional', 'scale'] } },
+    data: { ativo: false },
+  });
+}
+
+async function seedEstabelecimentosZonaLeste() {
+  const plano = await prisma.planoAssinatura.findUnique({ where: { slug: 'trimestral' } });
+
+  for (const [indice, item] of estabelecimentosZonaLeste.entries()) {
+    const estabelecimento = await prisma.estabelecimento.upsert({
       where: { slug: item.slug },
       update: {
         nome: item.nome,
@@ -283,7 +380,7 @@ async function seedBarbeariasZonaLeste() {
         telefone: item.telefone,
         email: item.email,
         descricaoPublica: `Unidade demo do Barber Flow ABS em ${item.bairro}, preparada para testes de mapa, busca por raio e agendamento online.`,
-        imagemCapaURL: '/banners/principal.webp',
+        imagemCapaURL: '/banners/principal.png',
         endereco: item.endereco,
         bairro: item.bairro,
         cidade: 'Sao Paulo',
@@ -297,7 +394,7 @@ async function seedBarbeariasZonaLeste() {
         approvedAt: new Date(),
         rejectedAt: null,
         rejectedById: null,
-        reviewReason: 'Barbearia demo aprovada pelo seed da Zona Leste.',
+        reviewReason: 'Estabelecimento demo aprovada pelo seed da Zona Leste.',
         antecedenciaMinutos: 30,
       } as any,
       create: {
@@ -307,7 +404,7 @@ async function seedBarbeariasZonaLeste() {
         telefone: item.telefone,
         email: item.email,
         descricaoPublica: `Unidade demo do Barber Flow ABS em ${item.bairro}, preparada para testes de mapa, busca por raio e agendamento online.`,
-        imagemCapaURL: '/banners/principal.webp',
+        imagemCapaURL: '/banners/principal.png',
         endereco: item.endereco,
         bairro: item.bairro,
         cidade: 'Sao Paulo',
@@ -319,7 +416,7 @@ async function seedBarbeariasZonaLeste() {
         status: 'ACTIVE',
         reviewStatus: 'APPROVED',
         approvedAt: new Date(),
-        reviewReason: 'Barbearia demo aprovada pelo seed da Zona Leste.',
+        reviewReason: 'Estabelecimento demo aprovada pelo seed da Zona Leste.',
         antecedenciaMinutos: 30,
         trialEndsAt: adicionarDias(new Date(), 14),
       } as any,
@@ -327,8 +424,8 @@ async function seedBarbeariasZonaLeste() {
 
     await prisma.unidade.upsert({
       where: {
-        barbeariaId_nome: {
-          barbeariaId: barbearia.id,
+        estabelecimentoId_nome: {
+          estabelecimentoId: estabelecimento.id,
           nome: 'Matriz',
         },
       },
@@ -337,7 +434,7 @@ async function seedBarbeariasZonaLeste() {
         telefone: item.telefone,
       },
       create: {
-        barbeariaId: barbearia.id,
+        estabelecimentoId: estabelecimento.id,
         nome: 'Matriz',
         endereco: item.endereco,
         telefone: item.telefone,
@@ -345,15 +442,15 @@ async function seedBarbeariasZonaLeste() {
     });
 
     if (plano) {
-      await prisma.assinaturaBarbearia.upsert({
-        where: { barbeariaId: barbearia.id },
+      await prisma.assinaturaEstabelecimento.upsert({
+        where: { estabelecimentoId: estabelecimento.id },
         update: {
           planoId: plano.id,
           status: 'ACTIVE',
           currentPeriodEnd: adicionarDias(new Date(), 30),
         },
         create: {
-          barbeariaId: barbearia.id,
+          estabelecimentoId: estabelecimento.id,
           planoId: plano.id,
           status: 'ACTIVE',
           currentPeriodEnd: adicionarDias(new Date(), 30),
@@ -365,27 +462,29 @@ async function seedBarbeariasZonaLeste() {
       where: { email: `dono.${item.slug}@barberflowabs.app` },
       update: {
         nome: `Dono ${item.bairro}`,
-        barbeariaId: barbearia.id,
-        barbeiro: true,
-        papel: 'BARBER',
+        senha: senhaPadrao,
+        estabelecimentoId: estabelecimento.id,
+        membroEstabelecimento: true,
+        papel: 'ESTABLISHMENT_MEMBER',
       },
       create: {
         nome: `Dono ${item.bairro}`,
         email: `dono.${item.slug}@barberflowabs.app`,
         senha: senhaPadrao,
         telefone: item.telefone,
-        barbeariaId: barbearia.id,
-        barbeiro: true,
-        papel: 'BARBER',
+        estabelecimentoId: estabelecimento.id,
+        membroEstabelecimento: true,
+        papel: 'ESTABLISHMENT_MEMBER',
       },
     });
 
-    await prisma.usuario.upsert({
+    const clienteDemo = await prisma.usuario.upsert({
       where: { email: `cliente.${item.slug}@barberflowabs.app` },
       update: {
         nome: `Cliente ${item.bairro}`,
-        barbeariaId: barbearia.id,
-        barbeiro: false,
+        senha: senhaPadrao,
+        estabelecimentoId: estabelecimento.id,
+        membroEstabelecimento: false,
         papel: 'CUSTOMER',
       },
       create: {
@@ -393,18 +492,34 @@ async function seedBarbeariasZonaLeste() {
         email: `cliente.${item.slug}@barberflowabs.app`,
         senha: senhaPadrao,
         telefone: '(11) 95555-0000',
-        barbeariaId: barbearia.id,
-        barbeiro: false,
+        estabelecimentoId: estabelecimento.id,
+        membroEstabelecimento: false,
         papel: 'CUSTOMER',
+      },
+      select: { id: true },
+    });
+
+    await (prisma as any).clienteEstabelecimento.upsert({
+      where: {
+        estabelecimentoId_usuarioId: {
+          estabelecimentoId: estabelecimento.id,
+          usuarioId: clienteDemo.id,
+        },
+      },
+      update: {},
+      create: {
+        estabelecimentoId: estabelecimento.id,
+        usuarioId: clienteDemo.id,
+        origem: 'SEED',
       },
     });
 
     await prisma.profissional.createMany({
       data: [0, 1].map((offset) => ({
-        barbeariaId: barbearia.id,
+        estabelecimentoId: estabelecimento.id,
         nome: nomesProfissionais[(indice + offset) % nomesProfissionais.length],
         descricao: `Profissional especializado em corte, barba e acabamento na unidade ${item.bairro}.`,
-        imagemURL: `/profissionais/profissional-${(offset % 6) + 1}.jpg`,
+        imagemURL: '/profissionais/avatar-masculino.png',
         avaliacao: 0,
         quantidadeAvaliacoes: 0,
       })),
@@ -414,18 +529,18 @@ async function seedBarbeariasZonaLeste() {
     await prisma.servico.createMany({
       data: servicosDemo.map((servico) => ({
         ...servico,
-        barbeariaId: barbearia.id,
+        estabelecimentoId: estabelecimento.id,
       })) as any,
       skipDuplicates: true,
     });
 
     await prisma.horarioFuncionamento.deleteMany({
-      where: { barbeariaId: barbearia.id },
+      where: { estabelecimentoId: estabelecimento.id },
     });
 
     await prisma.horarioFuncionamento.createMany({
       data: [1, 2, 3, 4, 5, 6].map((diaSemana) => ({
-        barbeariaId: barbearia.id,
+        estabelecimentoId: estabelecimento.id,
         diaSemana,
         inicio: indice % 2 === 0 ? '08:00' : '09:00',
         fim: indice % 2 === 0 ? '20:00' : '21:00',
@@ -435,17 +550,17 @@ async function seedBarbeariasZonaLeste() {
       })),
     });
 
-    await criarAvaliacoesDemo(barbearia.id, indice);
+    await criarAvaliacoesDemo(estabelecimento.id, indice);
   }
 }
 
-async function criarAvaliacoesDemo(barbeariaId: number, indice: number) {
-  const totalExistente = await (prisma as any).avaliacao.count({ where: { barbeariaId } });
+async function criarAvaliacoesDemo(estabelecimentoId: number, indice: number) {
+  const totalExistente = await (prisma as any).avaliacao.count({ where: { estabelecimentoId } });
   if (totalExistente > 0) return;
 
-  const cliente = await prisma.usuario.findFirst({ where: { barbeariaId, barbeiro: false } });
-  const profissional = await prisma.profissional.findFirst({ where: { barbeariaId } });
-  const servico = await prisma.servico.findFirst({ where: { barbeariaId } });
+  const cliente = await prisma.usuario.findFirst({ where: { estabelecimentoId, membroEstabelecimento: false } });
+  const profissional = await prisma.profissional.findFirst({ where: { estabelecimentoId } });
+  const servico = await prisma.servico.findFirst({ where: { estabelecimentoId } });
 
   if (!cliente || !profissional || !servico) return;
 
@@ -454,7 +569,7 @@ async function criarAvaliacoesDemo(barbeariaId: number, indice: number) {
   for (const [offset, nota] of notas.entries()) {
     const agendamento = await prisma.agendamento.create({
       data: {
-        barbeariaId,
+        estabelecimentoId,
         usuarioId: cliente.id,
         profissionalId: profissional.id,
         data: adicionarDias(new Date(), -(offset + 2 + indice)),
@@ -468,7 +583,7 @@ async function criarAvaliacoesDemo(barbeariaId: number, indice: number) {
 
     await (prisma as any).avaliacao.create({
       data: {
-        barbeariaId,
+        estabelecimentoId,
         agendamentoId: agendamento.id,
         usuarioId: cliente.id,
         profissionalId: profissional.id,

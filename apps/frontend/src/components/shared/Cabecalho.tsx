@@ -3,23 +3,30 @@ import Link from 'next/link'
 import Logo from './Logo'
 import useSessao from '@/data/hooks/useSessao'
 import MenuUsuario from './MenuUsuario'
+import AlternadorTema from './AlternadorTema'
+import CentralNotificacoes from './CentralNotificacoes'
 
-export default function Cabecalho() {
+interface CabecalhoProps {
+    semFundo?: boolean
+}
+
+export default function Cabecalho({ semFundo = false }: CabecalhoProps) {
     const { usuario } = useSessao()
     return (
-        <header className="flex items-center h-24 bg-black/60 self-stretch">
-            <nav className="flex items-center justify-between container">
+        <header className={`cabecalho-hero flex min-h-36 shrink-0 items-start self-stretch text-white ${semFundo ? 'cabecalho-home' : 'bg-black/45'}`}>
+            <nav aria-label="Conta e preferências" className="container flex flex-wrap items-start justify-between gap-4 pb-6 pt-8">
                 <Logo />
-                <div>
+                <div className="ml-auto">
                     {usuario ? (
-                        <MenuUsuario />
+                        <div className="flex items-center gap-2 sm:gap-3"><CentralNotificacoes /><AlternadorTema /><MenuUsuario /></div>
                     ) : (
                         <div className="flex items-center gap-5">
-                            <Link href="/barbearias">Barbearias</Link>
+                            <Link href="/estabelecimentos">Estabelecimentos</Link>
                             <Link href="/onboarding" className="font-semibold text-yellow-400">
-                                Criar barbearia
+                                Criar estabelecimento
                             </Link>
                             <Link href="/entrar">Entrar</Link>
+                            <AlternadorTema />
                         </div>
                     )}
                 </div>

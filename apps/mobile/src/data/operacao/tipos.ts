@@ -1,0 +1,127 @@
+import type { AtendimentoOperacional } from '@uniflowabs/core'
+
+export interface DashboardOperacional {
+    data: string
+    agendamentosHoje: number
+    clientes: number
+    receitaHoje: number
+    receitaMes: number
+    despesasMes: number
+    saldoMes: number
+}
+
+export interface AgendamentoOperacional extends AtendimentoOperacional {
+    id: number
+    data: string
+    dataFim?: string | null
+    inicioOcupacao?: string | null
+    fimOcupacao?: string | null
+    status: string
+    valorTotal: number
+    usuario?: { id?: number; nome: string; email?: string; telefone?: string }
+    criadoPor?: { id: number; nome: string } | null
+    criadoPorId?: number | null
+    origem?: string
+    observacoes?: string | null
+    profissional?: { id: number; nome: string }
+    unidade?: { id: number; nome: string } | null
+    servicos?: Array<{ id: number; nome: string }>
+    recursos?: Array<{ recursoId?: number; recurso?: { id: number; nome: string; tipo: string } }>
+    modeloAtendimento?: ModeloAtendimentoServico
+    enderecoAtendimento?: string | null
+    deslocamentoMinutos?: number
+    periodos?: PeriodosAgendamentoOperacional
+}
+
+export interface RestricaoAgendaOperacional {
+    id: string
+    tipo: 'BLOQUEIO' | 'RECURSO_INDISPONIVEL'
+    inicio: string
+    fim: string
+    motivo: string
+    profissional?: { id: number; nome: string } | null
+    unidade?: { id: number; nome: string } | null
+    recurso?: { id: number; nome: string; tipo: string } | null
+}
+
+export interface FiltrosAgendaOperacional {
+    profissionalId: number | null
+    recursoId: number | null
+    status: string | null
+}
+
+export interface PeriodoOperacional { inicio: string; fim: string }
+export interface PeriodosAgendamentoOperacional {
+    ocupacao: PeriodoOperacional
+    deslocamentoAntes: PeriodoOperacional | null
+    preparacaoAntes: PeriodoOperacional | null
+    atendimento: PeriodoOperacional
+    preparacaoDepois: PeriodoOperacional | null
+    deslocamentoDepois: PeriodoOperacional | null
+}
+
+export interface RespostaAgendaOperacional {
+    periodo: { inicio: string; fim: string; fusoHorario: string; convencao: '[inicio,fim)' }
+    filtros: {
+        unidadeId: number | null
+        profissionalId: number | null
+        recursoId: number | null
+        servicoId: number | null
+        status: string[]
+    }
+    pagina: { limite: number; temMais: boolean; proximoCursor: string | null }
+    itens: AgendamentoOperacional[]
+    restricoes: RestricaoAgendaOperacional[]
+}
+
+export interface ProfissionalOperacional {
+    id: number
+    midiaId?: string | null
+    nome: string
+    sexo: 'MASCULINO' | 'FEMININO' | 'NAO_INFORMADO'
+    descricao: string
+    imagemURL: string
+    avaliacao?: number
+}
+
+export type ModeloAtendimentoServico = 'PRESENCIAL' | 'DOMICILIAR' | 'HIBRIDO'
+
+export interface ServicoOperacional {
+    id: number
+    midiaId?: string | null
+    servicoSugeridoId?: number | null
+    nome: string
+    descricao: string
+    preco: number
+    qtdeSlots: number
+    imagemURL: string
+    observacoes?: string | null
+    modeloAtendimento?: ModeloAtendimentoServico
+    duracaoMinutos?: number
+    preparoAntesMinutos?: number
+    preparoDepoisMinutos?: number
+    deslocamentoMinutos?: number
+    profissionalIds?: number[]
+}
+
+export type DadosServicoOperacional = Omit<ServicoOperacional, 'id' | 'qtdeSlots'>
+
+export type PermissaoEquipe = 'EQUIPE_GERENCIAR' | 'ESCALAS_GERENCIAR' | 'RECURSOS_GERENCIAR' | 'AGENDA_GERENCIAR' | 'FINANCEIRO_VISUALIZAR' | 'FINANCEIRO_GERENCIAR' | 'FINANCEIRO_AUDITAR' | 'RELACIONAMENTO_VISUALIZAR' | 'RELACIONAMENTO_GERENCIAR' | 'CONFIGURACOES_GERENCIAR'
+
+export interface UsuarioEquipe { id: number; nome: string; email: string; telefone?: string | null; papel?: string }
+export interface NovaContaMembro {
+    nome?: string; email: string; senhaTemporaria: string; profissionalId?: number | null
+    papel: string; permissoes: PermissaoEquipe[]
+}
+export interface MembroEquipe {
+    id: number; usuarioId: number; profissionalId?: number | null; papel: 'GESTOR' | 'RECEPCIONISTA' | 'PROFISSIONAL'
+    permissoes: PermissaoEquipe[]; ativo: boolean; usuario: UsuarioEquipe; profissional?: { id: number; nome: string } | null
+}
+export interface EscalaProfissional {
+    id?: number; unidadeId?: number | null; diaSemana: number; inicio: string; fim: string; intervaloInicio?: string | null; intervaloFim?: string | null; ativo?: boolean
+}
+export interface RecursoOperacional { id: number; nome: string; tipo: string; capacidade: number; ativo: boolean }
+export interface IndisponibilidadeRecurso { id: number; inicio: string; fim: string; motivo?: string | null }
+
+export type SecaoOperacao = 'RESUMO' | 'AGENDA' | 'SERVICOS' | 'EQUIPE' | 'FINANCEIRO' | 'RELACIONAMENTO'
+export type VisualizacaoAgenda = 'day' | '3days' | 'week' | 'schedule'

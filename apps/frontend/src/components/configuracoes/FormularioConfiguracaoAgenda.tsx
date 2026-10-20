@@ -1,6 +1,7 @@
 'use client'
 
 import useAPI from '@/data/hooks/useAPI'
+import PainelFluxoAtendimento from './PainelFluxoAtendimento'
 import { useCallback, useEffect, useState } from 'react'
 
 interface HorarioFuncionamento {
@@ -14,17 +15,23 @@ interface HorarioFuncionamento {
 
 interface ConfiguracaoAgenda {
     antecedenciaMinutos: number
+    fusoHorario: string
+    lembreteAgendamentoAtivo: boolean
+    lembreteAntecedenciaMinutos: number
+    janelaSilenciosaInicio: string
+    janelaSilenciosaFim: string
     horarios: HorarioFuncionamento[]
 }
 
 const nomesDias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab']
+const ordemDias = [1, 2, 3, 4, 5, 6, 0]
 
 const horariosPadrao: HorarioFuncionamento[] = [0, 1, 2, 3, 4, 5, 6].map((diaSemana) => ({
     diaSemana,
     inicio: '08:00',
     fim: '21:00',
-    intervaloInicio: '12:00',
-    intervaloFim: '13:00',
+    intervaloInicio: '',
+    intervaloFim: '',
     ativo: diaSemana !== 0,
 }))
 
@@ -32,7 +39,12 @@ export default function FormularioConfiguracaoAgenda() {
     const { httpGet, httpPut } = useAPI()
     const [configuracao, setConfiguracao] = useState<ConfiguracaoAgenda>({
         antecedenciaMinutos: 30,
-        horarios: horariosPadrao,
+        fusoHorario: 'America/Sao_Paulo',
+        lembreteAgendamentoAtivo: true,
+        lembreteAntecedenciaMinutos: 1440,
+        janelaSilenciosaInicio: '22:00',
+        janelaSilenciosaFim: '08:00',
+        horarios: [],
     })
     const [carregando, setCarregando] = useState(true)
     const [salvando, setSalvando] = useState(false)
@@ -43,7 +55,12 @@ export default function FormularioConfiguracaoAgenda() {
         const dados = await httpGet('/agenda/configuracao/horarios')
         setConfiguracao({
             antecedenciaMinutos: Number(dados?.antecedenciaMinutos ?? 30),
-            horarios: mesclarHorarios(dados?.horarios ?? []),
+            fusoHorario: dados?.fusoHorario ?? 'America/Sao_Paulo',
+            lembreteAgendamentoAtivo: dados?.lembreteAgendamentoAtivo ?? true,
+            lembreteAntecedenciaMinutos: Number(dados?.lembreteAntecedenciaMinutos ?? 1440),
+            janelaSilenciosaInicio: dados?.janelaSilenciosaInicio ?? '22:00',
+            janelaSilenciosaFim: dados?.janelaSilenciosaFim ?? '08:00',
+            horarios: normalizarHorarios(dados?.horarios ?? []),
         })
         setCarregando(false)
     }, [httpGet])
@@ -62,6 +79,17 @@ export default function FormularioConfiguracaoAgenda() {
         }))
     }
 
+    function adicionarDia(diaSemana: number) {
+        setMensagem('')
+        const padrao = horariosPadrao.find((horario) => horario.diaSemana === diaSemana)!
+        setConfiguracao((atual) => ({ ...atual, horarios: normalizarHorarios([...atual.horarios, { ...padrao, ativo: true }]) }))
+    }
+
+    function removerDia(diaSemana: number) {
+        setMensagem('')
+        setConfiguracao((atual) => ({ ...atual, horarios: atual.horarios.filter((horario) => horario.diaSemana !== diaSemana) }))
+    }
+
     async function salvar() {
         setSalvando(true)
         setMensagem('')
@@ -76,7 +104,12 @@ export default function FormularioConfiguracaoAgenda() {
 
         setConfiguracao({
             antecedenciaMinutos: Number(resposta?.antecedenciaMinutos ?? configuracao.antecedenciaMinutos),
-            horarios: mesclarHorarios(resposta?.horarios ?? configuracao.horarios),
+            fusoHorario: resposta?.fusoHorario ?? configuracao.fusoHorario,
+            lembreteAgendamentoAtivo: resposta?.lembreteAgendamentoAtivo ?? configuracao.lembreteAgendamentoAtivo,
+            lembreteAntecedenciaMinutos: Number(resposta?.lembreteAntecedenciaMinutos ?? configuracao.lembreteAntecedenciaMinutos),
+            janelaSilenciosaInicio: resposta?.janelaSilenciosaInicio ?? configuracao.janelaSilenciosaInicio,
+            janelaSilenciosaFim: resposta?.janelaSilenciosaFim ?? configuracao.janelaSilenciosaFim,
+            horarios: normalizarHorarios(resposta?.horarios ?? configuracao.horarios),
         })
         setMensagem('Configurações salvas com sucesso.')
     }
@@ -87,6 +120,7 @@ export default function FormularioConfiguracaoAgenda() {
 
     return (
         <div className="flex flex-col gap-6">
+            <PainelFluxoAtendimento />
             <div className="grid gap-2">
                 <label className="text-sm uppercase text-zinc-400">Antecedência mínima</label>
                 <input
@@ -104,6 +138,22 @@ export default function FormularioConfiguracaoAgenda() {
                 />
             </div>
 
+            <div className="grid gap-4 rounded border border-zinc-800 p-4 md:grid-cols-3">
+                <label className="flex items-center gap-3 text-sm font-semibold md:col-span-3">
+                    <input type="checkbox" checked={configuracao.lembreteAgendamentoAtivo} onChange={(e) => setConfiguracao((atual) => ({ ...atual, lembreteAgendamentoAtivo: e.target.checked }))} className="h-5 w-5 accent-yellow-400" />
+                    Enviar lembretes automáticos de agendamento
+                </label>
+                <label className="grid gap-2 text-sm text-zinc-400">Antecedência do lembrete (minutos)
+                    <input type="number" min={0} step={15} value={configuracao.lembreteAntecedenciaMinutos} onChange={(e) => setConfiguracao((atual) => ({ ...atual, lembreteAntecedenciaMinutos: Number(e.target.value) }))} className="input" />
+                </label>
+                <label className="grid gap-2 text-sm text-zinc-400">Silêncio a partir de
+                    <input type="time" value={configuracao.janelaSilenciosaInicio} onChange={(e) => setConfiguracao((atual) => ({ ...atual, janelaSilenciosaInicio: e.target.value }))} className="input" />
+                </label>
+                <label className="grid gap-2 text-sm text-zinc-400">Retomar envios às
+                    <input type="time" value={configuracao.janelaSilenciosaFim} onChange={(e) => setConfiguracao((atual) => ({ ...atual, janelaSilenciosaFim: e.target.value }))} className="input" />
+                </label>
+            </div>
+
             <div className="overflow-x-auto rounded border border-zinc-800">
                 <table className="w-full min-w-[760px] border-collapse bg-zinc-950">
                     <thead className="bg-zinc-900 text-left text-xs uppercase text-zinc-400">
@@ -114,6 +164,7 @@ export default function FormularioConfiguracaoAgenda() {
                             <th className="p-3">Fim</th>
                             <th className="p-3">Almoço início</th>
                             <th className="p-3">Almoço fim</th>
+                            <th className="p-3">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -182,10 +233,25 @@ export default function FormularioConfiguracaoAgenda() {
                                         className="input"
                                     />
                                 </td>
+                                <td className="p-3">
+                                    <button type="button" onClick={() => removerDia(horario.diaSemana)} className="rounded border border-red-500/50 px-3 py-2 text-sm font-semibold text-red-400 hover:bg-red-500/10">
+                                        Remover
+                                    </button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            {!configuracao.horarios.length && <p className="text-sm text-zinc-400">Nenhum dia de funcionamento configurado.</p>}
+            <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-zinc-400">Adicionar dia:</span>
+                {ordemDias.filter((dia) => !configuracao.horarios.some((horario) => horario.diaSemana === dia)).map((dia) => (
+                    <button key={dia} type="button" onClick={() => adicionarDia(dia)} className="rounded-full border border-zinc-700 px-3 py-2 text-sm font-semibold hover:border-yellow-400">
+                        + {nomesDias[dia]}
+                    </button>
+                ))}
             </div>
 
             <div className="flex items-center gap-4">
@@ -203,15 +269,11 @@ export default function FormularioConfiguracaoAgenda() {
     )
 }
 
-function mesclarHorarios(horarios: any[]): HorarioFuncionamento[] {
-    return horariosPadrao.map((padrao) => {
-        const horario = horarios.find((item) => item.diaSemana === padrao.diaSemana)
-        return {
-            ...padrao,
-            ...horario,
-            intervaloInicio: horario?.intervaloInicio ?? padrao.intervaloInicio,
-            intervaloFim: horario?.intervaloFim ?? padrao.intervaloFim,
-            ativo: horario?.ativo ?? padrao.ativo,
-        }
-    })
+function normalizarHorarios(horarios: any[]): HorarioFuncionamento[] {
+    return horarios.map((horario) => ({
+        ...horario,
+        intervaloInicio: horario.intervaloInicio ?? '',
+        intervaloFim: horario.intervaloFim ?? '',
+        ativo: horario.ativo ?? true,
+    })).sort((a, b) => ordemDias.indexOf(a.diaSemana) - ordemDias.indexOf(b.diaSemana))
 }

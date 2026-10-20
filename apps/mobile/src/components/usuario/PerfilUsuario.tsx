@@ -1,18 +1,40 @@
-import { StyleSheet, View, Image, Text, Pressable } from 'react-native'
-import { Usuario } from '@barbabrutal/core'
+import { StyleSheet, View, Text, Pressable } from 'react-native'
+import { Usuario } from '@uniflowabs/core'
 import React from 'react'
+import { resolverPerfil } from '@/src/data/auth/perfis'
+import useTema from '@/src/data/contexts/ContextoTema'
+import useSessao from '@/src/data/hooks/useSessao'
+import ImagemRegistro from '@/src/components/midia/ImagemRegistro'
+import AvatarUsuario from '@/src/components/midia/AvatarUsuario'
 
 export interface PerfilUsuarioProps {
     usuario: Usuario
     logout: () => void
+    cadastrarEstabelecimento: () => void
 }
 
 export default function PerfilUsuario(props: PerfilUsuarioProps) {
+    const { renovarSessao } = useSessao()
+    const { cores } = useTema()
+    const perfil = resolverPerfil(props.usuario)
+    const nomePerfil = {
+        CUSTOMER: 'Cliente',
+        ESTABLISHMENT_MEMBER: 'Profissional',
+        ESTABLISHMENT_OWNER: 'Responsável pelo estabelecimento',
+        SUPER_ADMIN: 'Administrador do software',
+        APP_OWNER: 'Dono do software',
+    }[perfil ?? 'CUSTOMER']
+
     return (
         <View style={styles.container}>
-            <Image source={require('@/assets/images/avatar.png')} style={styles.avatar} />
-            <Text style={styles.destaque}>Fala, {props.usuario?.nome}!</Text>
-            <Text style={styles.texto}>E-mail: {props.usuario?.email.toLowerCase()}</Text>
+            <AvatarUsuario nome={props.usuario.nome} fotoURL={props.usuario.fotoURL} />
+            <Text style={[styles.destaque, { color: cores.texto }]}>Olá, {props.usuario?.nome}!</Text>
+            <Text style={[styles.texto, { color: cores.textoSecundario }]}>E-mail: {props.usuario?.email.toLowerCase()}</Text>
+            <Text style={styles.perfil}>{nomePerfil}</Text>
+            <View style={{ width: '100%', marginVertical: 20 }}><ImagemRegistro titulo="Minha foto" valor={props.usuario.fotoURL} entidade="USUARIO" finalidade="AVATAR" aoSalvar={renovarSessao} /></View>
+            {perfil === 'CUSTOMER' ? <Pressable style={[styles.botaoEstabelecimento, { borderColor: cores.destaque }]} onPress={props.cadastrarEstabelecimento}>
+                <Text style={[styles.textoEstabelecimento, { color: cores.destaque }]}>Cadastrar meu estabelecimento</Text>
+            </Pressable> : null}
             <Pressable style={styles.botao} onPress={props.logout}>
                 <Text style={styles.textoBotao}>SAIR</Text>
             </Pressable>
@@ -28,8 +50,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     avatar: {
-        width: '45%',
-        height: '45%',
+        width: 96,
+        height: 96,
         borderRadius: 9999,
         marginRight: 12,
     },
@@ -45,6 +67,14 @@ const styles = StyleSheet.create({
         fontWeight: '400',
         color: '#A9A9A9',
     },
+    perfil: {
+        marginTop: 10,
+        color: '#facc15',
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    botaoEstabelecimento: { minHeight: 46, marginTop: 24, paddingHorizontal: 20, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+    textoEstabelecimento: { fontSize: 14, fontWeight: '800' },
     botao: {
         margin: 30,
         width: '35%',

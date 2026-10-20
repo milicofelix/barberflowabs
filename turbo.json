@@ -1,7 +1,15 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
-  "globalEnv": ["DATABASE_URL", "JWT_SECRET"],
+  "globalEnv": [
+    "DATABASE_URL",
+    "JWT_SECRET",
+    "MIDIA_STORAGE_DIR",
+    "MIDIA_GALERIA_DIR",
+    "REACT_NATIVE_PACKAGER_HOSTNAME",
+    "API_URL",
+    "ESTABELECIMENTO_SLUG"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

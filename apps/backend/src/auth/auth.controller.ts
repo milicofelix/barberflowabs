@@ -1,12 +1,14 @@
-import { Body, Controller, Post, Req, UnauthorizedException } from '@nestjs/common';
-import { LoginUsuario, RegistrarUsuario, Usuario } from '@barbabrutal/core';
+import { Body, Controller, Post, UnauthorizedException } from '@nestjs/common';
+import { LoginUsuario, RegistrarUsuario, Usuario } from '@uniflowabs/core';
 import { UsuarioPrisma } from './usuario.prisma';
 import { BcryptProvider } from './bcrypt.provider';
+import { AlterarSenhaService } from './alterar-senha.service';
+import { UsuarioLogado } from 'src/shared/usuario.decorator';
 import * as jwt from 'jsonwebtoken';
-import { TenantService } from 'src/shared/tenant.service';
 import { validarEmail, validarSenha, validarTextoObrigatorio } from 'src/shared/validacao';
 import {
   AuthTokenPayload,
+  AlterarSenhaDto,
   LoginDto,
   RefreshTokenDto,
   RegistrarUsuarioDto,
@@ -17,16 +19,15 @@ export class AuthController {
   constructor(
     private readonly repo: UsuarioPrisma,
     private readonly cripto: BcryptProvider,
-    private readonly tenant: TenantService,
+    private readonly alterarSenhaService: AlterarSenhaService,
   ) {}
 
   @Post('registrar')
-  async registrar(@Body() usuario: RegistrarUsuarioDto, @Req() req: any) {
+  async registrar(@Body() usuario: RegistrarUsuarioDto) {
     this.validarRegistro(usuario);
 
-    const barbeariaId = await this.tenant.resolverBarbeariaId(req);
     const casoDeUso = new RegistrarUsuario(this.repo, this.cripto);
-    await casoDeUso.executar({ ...usuario, barbeariaId });
+    await casoDeUso.executar({ ...usuario, estabelecimentoId: undefined, papel: 'CUSTOMER' });
   }
 
   @Post('login')
@@ -66,6 +67,10 @@ export class AuthController {
       throw new UnauthorizedException('Usuário não encontrado');
     }
 
+    if (payload.trocarSenhaObrigatoria && !usuario.trocarSenhaObrigatoria) {
+      throw new UnauthorizedException('A senha temporária já foi substituída. Entre novamente.');
+    }
+
     delete usuario.senha;
     return jwt.sign(this.criarPayloadToken(usuario), process.env.JWT_SECRET!, {
       expiresIn: '15d',
@@ -78,6 +83,12 @@ export class AuthController {
     validarSenha(usuario.senha);
   }
 
+  @Post('alterar-senha')
+  async alterarSenha(@Body() dados: AlterarSenhaDto, @UsuarioLogado() usuario: Usuario) {
+    const atualizado = await this.alterarSenhaService.executar(usuario.email, dados);
+    return jwt.sign(this.criarPayloadToken(atualizado), process.env.JWT_SECRET!, { expiresIn: '15d' });
+  }
+
   private validarLogin(dados: LoginDto) {
     validarEmail(dados.email);
     validarSenha(dados.senha);
@@ -85,17 +96,20 @@ export class AuthController {
 
   private criarPayloadToken(usuario: Usuario): AuthTokenPayload {
     const papel = this.resolverPapel(usuario);
+    const superAdmin = papel === 'SUPER_ADMIN';
 
     return {
       sub: usuario.id!,
       id: usuario.id!,
       nome: usuario.nome,
       email: usuario.email,
-      barbeariaId: usuario.barbeariaId!,
-      barbeiro: usuario.barbeiro ?? false,
+      estabelecimentoId: superAdmin ? null : usuario.estabelecimentoId!,
+      membroEstabelecimento: superAdmin ? false : usuario.membroEstabelecimento ?? false,
       papel,
       role: papel,
       telefone: usuario.telefone,
+      fotoURL: usuario.fotoURL,
+      trocarSenhaObrigatoria: usuario.trocarSenhaObrigatoria ?? false,
     };
   }
 
@@ -109,6 +123,6 @@ export class AuthController {
       return 'SUPER_ADMIN';
     }
 
-    return (usuario.papel ?? (usuario.barbeiro ? 'BARBER' : 'CUSTOMER')) as AuthTokenPayload['role'];
+    return (usuario.papel ?? (usuario.membroEstabelecimento ? 'ESTABLISHMENT_MEMBER' : 'CUSTOMER')) as AuthTokenPayload['role'];
   }
 }

@@ -1,10 +1,10 @@
-import { MiddlewareConsumer, Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
+import { AlterarSenhaService } from './alterar-senha.service';
 import { AuthController } from './auth.controller';
 import { DbModule } from 'src/db/db.module';
 import { UsuarioPrisma } from './usuario.prisma';
 import { BcryptProvider } from './bcrypt.provider';
 import { AuthMiddleware } from './auth.middleware';
-import { TenantService } from 'src/shared/tenant.service';
 import { RateLimitMiddleware } from './rate-limit.middleware';
 
 @Module({
@@ -14,13 +14,14 @@ import { RateLimitMiddleware } from './rate-limit.middleware';
     UsuarioPrisma,
     BcryptProvider,
     AuthMiddleware,
-    TenantService,
     RateLimitMiddleware,
+    AlterarSenhaService,
   ],
   exports: [AuthMiddleware, UsuarioPrisma, BcryptProvider],
 })
 export class AuthModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(RateLimitMiddleware).forRoutes('auth/login', 'auth/registrar', 'auth/refresh');
+    consumer.apply(RateLimitMiddleware).forRoutes('auth/login', 'auth/registrar', 'auth/refresh', 'auth/alterar-senha');
+    consumer.apply(AuthMiddleware).forRoutes({ path: 'auth/alterar-senha', method: RequestMethod.POST });
   }
 }

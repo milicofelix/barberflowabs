@@ -1,6 +1,6 @@
 'use client'
 
-import { Servico } from '@barbabrutal/core'
+import { Servico } from '@uniflowabs/core'
 import useServicos from '@/data/hooks/useServicos'
 import Image from 'next/image'
 
@@ -29,6 +29,7 @@ function Opcao(props: {
                 height={150}
                 width={150}
                 alt={props.servico.nome}
+                className="aspect-video w-full bg-card object-contain"
             />
             <div
                 className={`

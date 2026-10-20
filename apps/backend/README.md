@@ -1,73 +1,67 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# Backend UniFlow ABS
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API NestJS com Prisma e MySQL. No desenvolvimento padrao, ela e iniciada pelo servico `app` do Docker Compose na porta `4000`.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Variaveis De Ambiente
 
-## Description
+O backend precisa destas variaveis:
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+| Variavel | Uso |
+| --- | --- |
+| `DATABASE_URL` | Conexao do Prisma com o MySQL. |
+| `JWT_SECRET` | Assinatura e validacao dos tokens de acesso e refresh. |
+| `SUPER_ADMIN_EMAILS` | Lista, separada por virgula, de administradores da plataforma. |
+| `APP_TIME_ZONE` | Fuso dos calculos de agenda; o fallback atual e `America/Sao_Paulo`. |
 
-## Installation
+O arquivo `.env.sample` e somente um modelo versionado. Ele nao e carregado automaticamente pelo NestJS.
+
+### Execucao Com Docker Compose
+
+O `docker-compose.yml` injeta `DATABASE_URL`, `JWT_SECRET` e `SUPER_ADMIN_EMAILS` diretamente no container. Por isso o backend funciona mesmo sem `apps/backend/.env`.
+
+O Compose aceita sobrescrever os valores por variaveis do terminal:
 
 ```bash
-$ yarn install
+DATABASE_URL='mysql://usuario:senha@host:3306/banco' \
+JWT_SECRET='segredo-local-forte' \
+SUPER_ADMIN_EMAILS='admin@exemplo.com' \
+docker compose up app
 ```
 
-## Running the app
+Tambem e possivel criar um `.env` na raiz do monorepo. O Docker Compose le esse arquivo para interpolar `${DATABASE_URL}`, `${JWT_SECRET}` e `${SUPER_ADMIN_EMAILS}`. Esse `.env` da raiz pertence ao Compose; ele nao deve ser confundido com `apps/backend/.env`.
+
+Prioridade no fluxo Docker:
+
+1. Variavel informada no comando ou exportada no shell.
+2. `.env` localizado na raiz, ao lado do `docker-compose.yml`.
+3. Valor de desenvolvimento definido como fallback no `docker-compose.yml`.
+
+### Execucao Direta, Sem Docker
+
+O projeto nao usa `ConfigModule` nem carrega dotenv no bootstrap. Portanto, criar apenas `apps/backend/.env` nao basta para executar o Nest diretamente.
+
+Exporte as variaveis antes do comando:
 
 ```bash
-# development
-$ yarn run start
-
-# watch mode
-$ yarn run start:dev
-
-# production mode
-$ yarn run start:prod
+export DATABASE_URL='mysql://usuario:senha@host:3306/banco'
+export JWT_SECRET='segredo-local-forte'
+export SUPER_ADMIN_EMAILS='admin@exemplo.com'
+yarn dev
 ```
 
-## Test
+Outra opcao futura e adicionar uma camada central de configuracao com `@nestjs/config`; isso deve ser feito como uma mudanca propria, com validacao das variaveis obrigatorias.
 
-```bash
-# unit tests
-$ yarn run test
+## Seguranca
 
-# e2e tests
-$ yarn run test:e2e
+- Nunca versionar `.env`, `.env.local` ou segredos reais.
+- O fallback de `JWT_SECRET` do Compose serve apenas ao desenvolvimento local.
+- Producao deve fornecer um segredo forte e exclusivo.
+- Depois de trocar `JWT_SECRET`, tokens emitidos anteriormente se tornam invalidos e os usuarios precisam autenticar novamente.
 
-# test coverage
-$ yarn run test:cov
-```
+## Enderecos Locais
 
-## Support
+- API: `http://localhost:4000`
+- Verificacao simples: `GET http://localhost:4000/ping`
+- Frontend web: `http://localhost:3000`
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
+Abrir a raiz da porta `4000` retorna `404 Cannot GET /` por design; isso nao significa que o backend esteja fora do ar.

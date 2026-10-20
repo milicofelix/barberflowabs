@@ -1,9 +1,15 @@
 'use client'
 
 import useAPI from '@/data/hooks/useAPI'
-import { Profissional, Servico } from '@barbabrutal/core'
-import { IconPencil, IconPlus, IconTrash } from '@tabler/icons-react'
-import { useCallback, useEffect, useState } from 'react'
+import useSessao from '@/data/hooks/useSessao'
+import SeletorImagem from '@/components/midia/SeletorImagem'
+import { Profissional, Servico, urlImagemProfissional } from '@uniflowabs/core'
+import { IconPencil, IconPlus, IconSparkles, IconTrash, IconX } from '@tabler/icons-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import AtendimentosOperacionais from './AtendimentosOperacionais'
+import CentralRelacionamento from '@/components/relacionamento/CentralRelacionamento'
+import { rotuloStatus } from '@/data/atendimentos/operacao'
 
 type Aba =
     | 'dashboard'
@@ -25,10 +31,11 @@ const servicoVazio: Omit<Servico, 'id'> = {
     imagemURL: '/servicos/corte-de-cabelo.jpg',
 }
 
-const profissionalVazio: Omit<Profissional, 'id'> = {
+const profissionalVazio: Omit<Profissional, 'id' | 'sexo'> & { sexo: '' | 'MASCULINO' | 'FEMININO' } = {
     nome: '',
+    sexo: '',
     descricao: '',
-    imagemURL: '/profissionais/profissional-1.jpg',
+    imagemURL: '',
     avaliacao: 5,
     quantidadeAvaliacoes: 0,
 }
@@ -57,22 +64,26 @@ const lembreteVazio = {
     dataPrevista: `${hoje()}T09:00`,
 }
 
-const statusAgenda = ['AGENDADO', 'CONFIRMADO', 'CHECKIN', 'CONCLUIDO', 'CANCELADO', 'NO_SHOW']
-
 export default function PainelGestaoOperacional() {
     const { httpGet, httpPost, httpPut, httpDelete } = useAPI()
+    const { usuario } = useSessao()
     const [aba, setAba] = useState<Aba>('dashboard')
-    const [dataOperacao, setDataOperacao] = useState(hoje())
+    const parametros = useSearchParams()
+    const router = useRouter()
+    const parametroId = parametros.get('agendamentoId')
+    const agendamentoSelecionadoId = parametroId && /^\d+$/.test(parametroId) && Number.isSafeInteger(Number(parametroId)) && Number(parametroId) > 0 ? Number(parametroId) : null
     const [inicioRelatorio, setInicioRelatorio] = useState(hoje())
     const [fimRelatorio, setFimRelatorio] = useState(hoje())
     const [dashboard, setDashboard] = useState<any>(null)
-    const [agendamentos, setAgendamentos] = useState<any[]>([])
     const [clientes, setClientes] = useState<any[]>([])
     const [historico, setHistorico] = useState<any>(null)
     const [lancamentos, setLancamentos] = useState<any[]>([])
     const [relatorio, setRelatorio] = useState<any>(null)
     const [relacionamento, setRelacionamento] = useState<any>(null)
     const [servicos, setServicos] = useState<Servico[]>([])
+    const [servicosSugeridos, setServicosSugeridos] = useState<any[]>([])
+    const [catalogoEstabelecimento, setCatalogoEstabelecimento] = useState<any>(null)
+    const [mostrarSugeridos, setMostrarSugeridos] = useState(false)
     const [profissionais, setProfissionais] = useState<Profissional[]>([])
     const [cliente, setCliente] = useState<any>(clienteVazio)
     const [servico, setServico] = useState<any>(servicoVazio)
@@ -80,37 +91,45 @@ export default function PainelGestaoOperacional() {
     const [lancamento, setLancamento] = useState<any>(lancamentoVazio)
     const [lembrete, setLembrete] = useState<any>(lembreteVazio)
     const [mensagem, setMensagem] = useState('')
+    useEffect(() => {
+        const solicitada = parametros.get('aba')
+        if (agendamentoSelecionadoId) setAba('agenda')
+        else if (['dashboard', 'agenda', 'clientes', 'financeiro', 'relatorios', 'relacionamento', 'servicos', 'profissionais'].includes(solicitada ?? '')) setAba(solicitada as Aba)
+    }, [agendamentoSelecionadoId, parametros])
 
     const carregar = useCallback(async () => {
         const [
             dadosDashboard,
-            dadosAgenda,
             dadosClientes,
             dadosFinanceiro,
             dadosRelatorio,
             dadosServicos,
             dadosProfissionais,
             dadosRelacionamento,
+            dadosSugeridos,
+            dadosCatalogoEstabelecimento,
         ] = await Promise.all([
             httpGet('/gestao/dashboard'),
-            httpGet(`/gestao/agendamentos?data=${dataOperacao}`),
             httpGet('/gestao/clientes'),
             httpGet(`/gestao/financeiro?inicio=${inicioRelatorio}&fim=${fimRelatorio}`),
             httpGet(`/gestao/relatorios?inicio=${inicioRelatorio}&fim=${fimRelatorio}`),
             httpGet('/servicos'),
             httpGet('/profissionais'),
             httpGet('/gestao/relacionamento'),
+            httpGet('/catalogo/servicos-sugeridos'),
+            httpGet('/catalogo/estabelecimento'),
         ])
 
         setDashboard(dadosDashboard?.statusCode ? null : dadosDashboard)
-        setAgendamentos(Array.isArray(dadosAgenda) ? dadosAgenda : [])
         setClientes(Array.isArray(dadosClientes) ? dadosClientes : [])
         setLancamentos(Array.isArray(dadosFinanceiro) ? dadosFinanceiro : [])
         setRelatorio(dadosRelatorio?.statusCode ? null : dadosRelatorio)
         setServicos(Array.isArray(dadosServicos) ? dadosServicos : [])
         setProfissionais(Array.isArray(dadosProfissionais) ? dadosProfissionais : [])
         setRelacionamento(dadosRelacionamento?.statusCode ? null : dadosRelacionamento)
-    }, [dataOperacao, fimRelatorio, httpGet, inicioRelatorio])
+        setServicosSugeridos(Array.isArray(dadosSugeridos) ? dadosSugeridos : [])
+        setCatalogoEstabelecimento(dadosCatalogoEstabelecimento?.statusCode ? null : dadosCatalogoEstabelecimento)
+    }, [fimRelatorio, httpGet, inicioRelatorio])
 
     useEffect(() => {
         carregar()
@@ -122,14 +141,25 @@ export default function PainelGestaoOperacional() {
             nome: servico.nome,
             descricao: servico.descricao,
             preco: Number(servico.preco),
-            qtdeSlots: Number(servico.qtdeSlots),
+            duracaoMinutos: Number(servico.duracaoMinutos ?? Number(servico.qtdeSlots) * 15),
+            qtdeSlots: Math.ceil(Number(servico.duracaoMinutos ?? Number(servico.qtdeSlots) * 15) / 15),
             imagemURL: servico.imagemURL,
+            modeloAtendimento: servico.modeloAtendimento ?? 'PRESENCIAL',
+            preparoAntesMinutos: Number(servico.preparoAntesMinutos ?? 0),
+            preparoDepoisMinutos: Number(servico.preparoDepoisMinutos ?? 0),
+            deslocamentoMinutos: Number(servico.deslocamentoMinutos ?? 0),
         }
         const resposta = servico.id
             ? await httpPut(`/servicos/${servico.id}`, payload)
             : await httpPost('/servicos', payload)
 
-        if (resposta?.statusCode) return setMensagem(resposta.message)
+        if (resposta?.statusCode !== undefined || !resposta?.id) return setMensagem(resposta?.message ?? 'Não foi possível salvar o serviço.')
+
+        if (servico.midiaId !== undefined) {
+            setServico({ ...servico, id: resposta.id })
+            const associacao = await httpPut('/midias/associacao', { entidade: 'SERVICO', entidadeId: resposta.id, midiaId: servico.midiaId })
+            if (associacao?.statusCode !== undefined) { await carregar(); return setMensagem(`Serviço salvo. Tente salvar novamente para concluir a imagem: ${associacao.message}`) }
+        }
 
         setServico(servicoVazio)
         await carregar()
@@ -144,10 +174,34 @@ export default function PainelGestaoOperacional() {
         setMensagem('Serviço excluído.')
     }
 
+    async function importarServicosSugeridos(itens: any[]) {
+        setMensagem('')
+        const resposta = await httpPost('/servicos/sugeridos/importar', { itens })
+        if (resposta?.statusCode !== undefined || !Array.isArray(resposta?.criados)) { setMensagem(resposta?.message ?? 'Não foi possível adicionar os serviços.'); return false }
+        for (const item of itens.filter((item) => item.midiaId !== undefined)) {
+            const criado = resposta?.criados?.find((s: any) => s.servicoSugeridoId === item.servicoSugeridoId)
+                ?? servicos.find((s: any) => s.servicoSugeridoId === item.servicoSugeridoId)
+            if (!criado) continue
+            const associacao = await httpPut('/midias/associacao', { entidade: 'SERVICO', entidadeId: criado.id, midiaId: item.midiaId })
+            if (associacao?.statusCode !== undefined) { await carregar(); setMensagem(`Serviços adicionados. Uma imagem precisa ser revista na edição do serviço: ${associacao.message}`); return false }
+        }
+        await carregar()
+        const criados = resposta?.criados?.length ?? 0
+        const ignorados = resposta?.ignorados?.length ?? 0
+        setMensagem(`${criados} serviço(s) adicionado(s)${ignorados ? ` e ${ignorados} ignorado(s)` : ''}.`)
+        if (criados) setMostrarSugeridos(false)
+        return true
+    }
+
     async function salvarProfissional() {
         setMensagem('')
+        if (!['MASCULINO', 'FEMININO'].includes(profissional.sexo)) {
+            setMensagem('Selecione o sexo do profissional.')
+            return
+        }
         const payload = {
             nome: profissional.nome,
+            sexo: profissional.sexo,
             descricao: profissional.descricao,
             imagemURL: profissional.imagemURL,
             avaliacao: Number(profissional.avaliacao ?? 5),
@@ -157,7 +211,13 @@ export default function PainelGestaoOperacional() {
             ? await httpPut(`/profissionais/${profissional.id}`, payload)
             : await httpPost('/profissionais', payload)
 
-        if (resposta?.statusCode) return setMensagem(resposta.message)
+        if (resposta?.statusCode !== undefined || !resposta?.id) return setMensagem(resposta?.message ?? 'Não foi possível salvar o profissional.')
+
+        if (profissional.midiaId !== undefined) {
+            setProfissional({ ...profissional, id: resposta.id })
+            const associacao = await httpPut('/midias/associacao', { entidade: 'PROFISSIONAL', entidadeId: resposta.id, midiaId: profissional.midiaId })
+            if (associacao?.statusCode !== undefined) { await carregar(); return setMensagem(`Profissional salvo. Tente salvar novamente para concluir a imagem: ${associacao.message}`) }
+        }
 
         setProfissional(profissionalVazio)
         await carregar()
@@ -170,14 +230,6 @@ export default function PainelGestaoOperacional() {
         if (resposta?.statusCode) return setMensagem(resposta.message)
         await carregar()
         setMensagem('Profissional excluído.')
-    }
-
-    async function alterarStatus(id: number, status: string) {
-        setMensagem('')
-        const resposta = await httpPut(`/gestao/agendamentos/${id}/status`, { status })
-        if (resposta?.statusCode) return setMensagem(resposta.message)
-        await carregar()
-        setMensagem('Status atualizado.')
     }
 
     async function carregarHistorico(clienteId: number) {
@@ -269,7 +321,7 @@ export default function PainelGestaoOperacional() {
                     ['servicos', 'Serviços'],
                     ['profissionais', 'Profissionais'],
                 ] as [Aba, string][]).map(([id, label]) => (
-                    <button key={id} type="button" onClick={() => setAba(id)} className={botaoAba(aba === id)}>
+                    <button key={id} type="button" onClick={() => { setAba(id); if (parametros.has('aba') || parametros.has('agendamentoId')) router.replace(`/gestao?aba=${id}`, { scroll: false }) }} className={botaoAba(aba === id)}>
                         {label}
                     </button>
                 ))}
@@ -278,12 +330,7 @@ export default function PainelGestaoOperacional() {
             {aba === 'dashboard' && <Dashboard dados={dashboard} />}
 
             {aba === 'agenda' && (
-                <PainelAgenda
-                    data={dataOperacao}
-                    agendamentos={agendamentos}
-                    onData={setDataOperacao}
-                    onStatus={alterarStatus}
-                />
+                <AtendimentosOperacionais key={usuario?.estabelecimentoId} modo="agenda" selecionadoId={agendamentoSelecionadoId} />
             )}
 
             {aba === 'clientes' && (
@@ -325,25 +372,27 @@ export default function PainelGestaoOperacional() {
             )}
 
             {aba === 'relacionamento' && (
-                <PainelRelacionamento
-                    dados={relacionamento}
-                    clientes={clientes}
-                    lembrete={lembrete}
-                    onChange={setLembrete}
-                    onSalvar={salvarLembrete}
-                    onStatus={alterarStatusLembrete}
-                />
+                <CentralRelacionamento />
             )}
 
             {aba === 'servicos' && (
-                <section className="grid gap-6 lg:grid-cols-[360px_1fr]">
-                    <FormularioServico
-                        servico={servico}
-                        onChange={setServico}
-                        onSubmit={salvarServico}
-                        onNovo={() => setServico(servicoVazio)}
-                    />
-                    <ListaServicos servicos={servicos} onEditar={setServico} onExcluir={excluirServico} />
+                <section className="flex flex-col gap-6">
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded border border-violet-500/30 bg-violet-500/10 p-4">
+                        <div><h2 className="font-bold text-zinc-100">Monte seu catálogo com mais rapidez</h2><p className="text-sm text-zinc-400">Escolha serviços comuns do seu segmento e ajuste os dados antes de adicionar.</p></div>
+                        <button type="button" onClick={() => setMostrarSugeridos((valor) => !valor)} className="flex items-center gap-2 rounded bg-violet-600 px-4 py-3 font-semibold text-white">
+                            {mostrarSugeridos ? <IconX size={18} /> : <IconSparkles size={18} />}{mostrarSugeridos ? 'Fechar sugestões' : 'Serviços sugeridos'}
+                        </button>
+                    </div>
+                    {mostrarSugeridos && <SeletorServicosSugeridos sugestoes={servicosSugeridos} catalogo={catalogoEstabelecimento} profissionais={profissionais} servicosAtuais={servicos} onImportar={importarServicosSugeridos} />}
+                    <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
+                        <FormularioServico
+                            servico={servico}
+                            onChange={setServico}
+                            onSubmit={salvarServico}
+                            onNovo={() => setServico(servicoVazio)}
+                        />
+                        <ListaServicos servicos={servicos} onEditar={setServico} onExcluir={excluirServico} />
+                    </div>
                 </section>
             )}
 
@@ -379,41 +428,6 @@ function Dashboard({ dados }: { dados: any }) {
     )
 }
 
-function PainelAgenda(props: any) {
-    return (
-        <section className="flex flex-col gap-4">
-            <Campo label="Data da agenda" type="date" value={props.data} onChange={props.onData} />
-            <div className="grid gap-3">
-                {props.agendamentos.map((agendamento: any) => (
-                    <div key={agendamento.id} className="rounded border border-zinc-800 bg-zinc-950 p-4">
-                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                            <div>
-                                <h3 className="font-bold text-zinc-100">
-                                    {hora(agendamento.data)} - {agendamento.usuario?.nome}
-                                </h3>
-                                <p className="text-sm text-zinc-400">
-                                    {agendamento.profissional?.nome} | {agendamento.servicos?.map((s: any) => s.nome).join(', ')}
-                                </p>
-                                <p className="text-sm text-zinc-500">{moeda(agendamento.valorTotal)}</p>
-                            </div>
-                            <select
-                                value={agendamento.status}
-                                onChange={(e) => props.onStatus(agendamento.id, e.target.value)}
-                                className="input lg:w-56"
-                            >
-                                {statusAgenda.map((status) => (
-                                    <option key={status}>{status}</option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                ))}
-                {props.agendamentos.length === 0 && <Vazio texto="Nenhum agendamento nesse dia." />}
-            </div>
-        </section>
-    )
-}
-
 function PainelClientes(props: any) {
     return (
         <section className="grid gap-6 xl:grid-cols-[360px_320px_1fr]">
@@ -433,9 +447,11 @@ function PainelClientes(props: any) {
                             <p className="text-sm text-zinc-500">{cliente.totalAgendamentos} agendamentos</p>
                         </button>
                         <div className="mt-3 flex gap-2">
-                            <button type="button" onClick={() => props.onEditar({ ...cliente, senha: '' })} className="rounded bg-zinc-800 p-2 text-zinc-200">
-                                <IconPencil size={18} />
-                            </button>
+                            {!cliente.cadastroOperacional && (
+                                <button type="button" onClick={() => props.onEditar({ ...cliente, senha: '' })} className="rounded bg-zinc-800 p-2 text-zinc-200">
+                                    <IconPencil size={18} />
+                                </button>
+                            )}
                             <button type="button" onClick={() => props.onExcluir(cliente.id)} className="rounded bg-red-500/15 p-2 text-red-400">
                                 <IconTrash size={18} />
                             </button>
@@ -452,7 +468,7 @@ function PainelClientes(props: any) {
                     {(props.historico?.agendamentos ?? []).map((agendamento: any) => (
                         <div key={agendamento.id} className="rounded border border-zinc-800 p-3">
                             <p className="font-semibold text-zinc-100">
-                                {dataHora(agendamento.data)} | {agendamento.status}
+                                {dataHora(agendamento.data)} | {rotuloStatus(agendamento.status)}
                             </p>
                             <p className="text-sm text-zinc-400">
                                 {agendamento.profissional?.nome} | {agendamento.servicos.map((s: any) => s.nome).join(', ')}
@@ -742,6 +758,118 @@ function FiltroPeriodo(props: any) {
     )
 }
 
+function SeletorServicosSugeridos(props: {
+    sugestoes: any[]
+    catalogo: any
+    profissionais: Profissional[]
+    servicosAtuais: Servico[]
+    onImportar: (itens: any[]) => Promise<boolean>
+}) {
+    const [busca, setBusca] = useState('')
+    const [selecionados, setSelecionados] = useState<Record<number, any>>({})
+    const [salvando, setSalvando] = useState(false)
+    const [erroImportacao, setErroImportacao] = useState('')
+    const segmentoIds = new Set((props.catalogo?.segmentos ?? []).map((item: any) => item.segmentoId ?? item.segmento?.id))
+    const nomesAtuais = new Set(props.servicosAtuais.map((item: any) => item.nome.toLocaleLowerCase('pt-BR')))
+    const origensAtuais = new Set(props.servicosAtuais.map((item: any) => item.servicoSugeridoId).filter(Boolean))
+    const termo = busca.trim().toLocaleLowerCase('pt-BR')
+    const sugestoes = props.sugestoes.filter((item) =>
+        segmentoIds.has(item.segmentoId)
+        && !origensAtuais.has(item.id)
+        && !nomesAtuais.has(item.nome.toLocaleLowerCase('pt-BR'))
+        && (!termo || `${item.nome} ${item.descricao} ${item.especialidades?.map((e: any) => e.nome).join(' ')}`.toLocaleLowerCase('pt-BR').includes(termo))
+    )
+
+    function alternar(item: any) {
+        setErroImportacao('')
+        setSelecionados((atuais) => {
+            const copia = { ...atuais }
+            if (copia[item.id]) delete copia[item.id]
+            else copia[item.id] = {
+                servicoSugeridoId: item.id, preco: '', duracaoMinutos: item.duracaoMinutos,
+                modeloAtendimento: props.catalogo?.modeloAtendimento === 'HIBRIDO' ? item.modeloAtendimento : (props.catalogo?.modeloAtendimento ?? item.modeloAtendimento), preparoAntesMinutos: item.preparoAntesMinutos,
+                preparoDepoisMinutos: item.preparoDepoisMinutos, deslocamentoMinutos: item.deslocamentoMinutos, imagemURL: item.imagemURL,
+                profissionalIds: [],
+            }
+            return copia
+        })
+    }
+
+    function alterar(id: number, campo: string, valor: any) {
+        setErroImportacao('')
+        setSelecionados((atuais) => ({ ...atuais, [id]: { ...atuais[id], [campo]: valor } }))
+    }
+
+    async function importar() {
+        const itens = Object.values(selecionados).map((item: any) => ({
+            ...item,
+            preco: Number(String(item.preco).replace(',', '.')),
+            duracaoMinutos: Number(item.duracaoMinutos),
+        }))
+        if (!itens.length) return
+        if (itens.some((item: any) => !Number.isFinite(item.preco) || item.preco <= 0)) {
+            setErroImportacao('Informe um preço maior que zero para todos os serviços selecionados.')
+            return
+        }
+        setErroImportacao('')
+        setSalvando(true)
+        const sucesso = await props.onImportar(itens)
+        setSalvando(false)
+        if (sucesso) setSelecionados({})
+    }
+
+    const totalSelecionados = Object.keys(selecionados).length
+    const precosPendentes = Object.values(selecionados).filter((item: any) => {
+        const preco = Number(String(item.preco).replace(',', '.'))
+        return !Number.isFinite(preco) || preco <= 0
+    }).length
+
+    return <div className="flex flex-col gap-4 rounded border border-violet-500/30 bg-zinc-950 p-5">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+            <div><h2 className="text-xl font-bold text-zinc-100">Serviços sugeridos para sua unidade</h2><p className="text-sm text-zinc-400">Selecione os serviços e informe o preço praticado pelo seu negócio.</p></div>
+            <label className="flex min-w-[260px] flex-col gap-2 text-sm text-zinc-400">Buscar serviço
+                <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nome ou especialidade" className="input" />
+            </label>
+        </div>
+        {!segmentoIds.size && <p className="rounded bg-amber-500/10 p-3 text-sm text-amber-300">Defina primeiro os segmentos do estabelecimento em Configurações.</p>}
+        <div className="grid gap-3 lg:grid-cols-2">
+            {sugestoes.map((item) => {
+                const configuracao = selecionados[item.id]
+                return <article key={item.id} className={`rounded-xl border p-4 ${configuracao ? 'border-violet-400 bg-violet-500/10' : 'border-zinc-800 bg-zinc-900'}`}>
+                    <label className="flex cursor-pointer items-start gap-3">
+                        <input type="checkbox" checked={!!configuracao} onChange={() => alternar(item)} className="mt-1 h-5 w-5 accent-violet-500" />
+                        <span className="flex-1"><strong className="text-zinc-100">{item.nome}</strong><span className="mt-1 block text-sm text-zinc-400">{item.descricao}</span><span className="mt-2 block text-xs font-semibold uppercase text-violet-300">{item.segmento?.nome} · {item.especialidades?.map((e: any) => e.nome).join(', ')}</span></span>
+                    </label>
+                    {configuracao && <div className="mt-4 grid gap-3 border-t border-zinc-800 pt-4 sm:grid-cols-2">
+                        <div className="sm:col-span-2"><SeletorImagem finalidade="SERVICO" valor={configuracao.imagemURL} padrao="/servicos/combo.jpg" disabled={salvando} alterar={(url, midiaId) => setSelecionados((atuais) => ({ ...atuais, [item.id]: { ...atuais[item.id], imagemURL: url, midiaId } }))} /></div>
+                        <Campo label="Preço (R$)" type="number" value={configuracao.preco} onChange={(valor) => alterar(item.id, 'preco', valor)} />
+                        <Campo label="Duração (minutos)" type="number" value={configuracao.duracaoMinutos} onChange={(valor) => alterar(item.id, 'duracaoMinutos', valor)} />
+                        <label className="flex flex-col gap-2 text-sm text-zinc-400">Modalidade
+                            <select value={configuracao.modeloAtendimento} onChange={(e) => alterar(item.id, 'modeloAtendimento', e.target.value)} className="input">
+                                {(props.catalogo?.modeloAtendimento === 'HIBRIDO' ? ['PRESENCIAL', 'DOMICILIAR', 'HIBRIDO'] : [props.catalogo?.modeloAtendimento ?? 'PRESENCIAL']).map((modalidade: string) => <option key={modalidade} value={modalidade}>{modalidade === 'PRESENCIAL' ? 'Presencial' : modalidade === 'DOMICILIAR' ? 'Domiciliar' : 'Híbrido'}</option>)}
+                            </select>
+                        </label>
+                        {configuracao.modeloAtendimento !== 'PRESENCIAL' && <Campo label="Deslocamento (min)" type="number" value={configuracao.deslocamentoMinutos} onChange={(valor) => alterar(item.id, 'deslocamentoMinutos', Number(valor))} />}
+                        <div className="flex flex-col gap-2 text-sm text-zinc-400"><span>Profissionais habilitados</span><div className="flex flex-wrap gap-2">
+                            {props.profissionais.map((profissional) => <label key={profissional.id} className="flex items-center gap-2 rounded border border-zinc-700 px-2 py-1 text-xs text-zinc-200"><input type="checkbox" checked={configuracao.profissionalIds.includes(profissional.id)} onChange={(e) => alterar(item.id, 'profissionalIds', e.target.checked ? [...configuracao.profissionalIds, profissional.id] : configuracao.profissionalIds.filter((id: number) => id !== profissional.id))} />{profissional.nome}</label>)}
+                            {!props.profissionais.length && <span className="text-xs">Você poderá vincular profissionais depois.</span>}
+                        </div></div>
+                    </div>}
+                </article>
+            })}
+        </div>
+        {!sugestoes.length && segmentoIds.size > 0 && <Vazio texto={busca ? 'Nenhuma sugestão encontrada.' : 'Todas as sugestões disponíveis já foram adicionadas.'} />}
+        {erroImportacao && <p role="alert" className="rounded-lg border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-200">{erroImportacao}</p>}
+        <div className="sticky bottom-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-700 bg-zinc-900/95 p-4 shadow-xl backdrop-blur">
+            <span className="text-sm font-semibold text-zinc-200">
+                {totalSelecionados} serviço(s) selecionado(s)
+                {precosPendentes > 0 && <small className="mt-1 block font-normal text-amber-300">{precosPendentes} com preço pendente</small>}
+            </span>
+            <button type="button" disabled={totalSelecionados === 0 || salvando} onClick={importar} className="rounded bg-violet-600 px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">{salvando ? 'Adicionando...' : 'Adicionar selecionados'}</button>
+        </div>
+    </div>
+}
+
 function FormularioServico(props: any) {
     return (
         <FormularioBase
@@ -751,14 +879,21 @@ function FormularioServico(props: any) {
         >
             <Campo label="Nome" value={props.servico.nome} onChange={(nome) => props.onChange({ ...props.servico, nome })} />
             <Campo label="Descrição" value={props.servico.descricao} onChange={(descricao) => props.onChange({ ...props.servico, descricao })} />
-            <Campo label="Imagem" value={props.servico.imagemURL} onChange={(imagemURL) => props.onChange({ ...props.servico, imagemURL })} />
+            <SeletorImagem finalidade="SERVICO" valor={props.servico.imagemURL} padrao="/servicos/combo.jpg" alterar={(imagemURL, midiaId) => props.onChange({ ...props.servico, imagemURL, midiaId })} />
             <Campo label="Preço" type="number" value={props.servico.preco} onChange={(preco) => props.onChange({ ...props.servico, preco })} />
-            <Campo label="Slots de 15 min" type="number" value={props.servico.qtdeSlots} onChange={(qtdeSlots) => props.onChange({ ...props.servico, qtdeSlots })} />
+            <Campo label="Duração (minutos)" type="number" value={props.servico.duracaoMinutos ?? Number(props.servico.qtdeSlots) * 15} onChange={(duracaoMinutos) => props.onChange({ ...props.servico, duracaoMinutos, qtdeSlots: Math.ceil(Number(duracaoMinutos) / 15) })} />
         </FormularioBase>
     )
 }
 
 function FormularioProfissional(props: any) {
+    const selecionarSexo = (sexo: 'MASCULINO' | 'FEMININO') => {
+        const imagemURL = urlImagemProfissional(props.profissional.imagemURL, sexo)
+        props.onChange({ ...props.profissional, sexo, imagemURL, midiaId: imagemURL === props.profissional.imagemURL ? props.profissional.midiaId : null })
+    }
+    const imagemPadrao = props.profissional.sexo
+        ? `/profissionais/avatar-${props.profissional.sexo === 'FEMININO' ? 'feminino' : 'masculino'}.png`
+        : ''
     return (
         <FormularioBase
             titulo={props.profissional.id ? 'Editar profissional' : 'Novo profissional'}
@@ -766,25 +901,40 @@ function FormularioProfissional(props: any) {
             onNovo={props.onNovo}
         >
             <Campo label="Nome" value={props.profissional.nome} onChange={(nome) => props.onChange({ ...props.profissional, nome })} />
+            <label className="flex flex-col gap-2 text-sm text-zinc-400">
+                Sexo
+                <select className="input" value={props.profissional.sexo ?? ''} onChange={(e) => selecionarSexo(e.target.value as 'MASCULINO' | 'FEMININO')}>
+                    <option value="" disabled>Selecione</option>
+                    <option value="MASCULINO">Masculino</option>
+                    <option value="FEMININO">Feminino</option>
+                </select>
+            </label>
             <Campo label="Descrição" value={props.profissional.descricao} onChange={(descricao) => props.onChange({ ...props.profissional, descricao })} />
-            <Campo label="Imagem" value={props.profissional.imagemURL} onChange={(imagemURL) => props.onChange({ ...props.profissional, imagemURL })} />
+            <SeletorImagem titulo="Foto do profissional" finalidade="PROFISSIONAL" valor={imagemPadrao ? (props.profissional.imagemURL || imagemPadrao) : ''} padrao={imagemPadrao} disabled={!imagemPadrao} alterar={(imagemURL, midiaId) => props.onChange({ ...props.profissional, imagemURL, midiaId })} />
             <Campo label="Avaliação" type="number" value={props.profissional.avaliacao} onChange={(avaliacao) => props.onChange({ ...props.profissional, avaliacao })} />
         </FormularioBase>
     )
 }
 
 function FormularioBase(props: any) {
+    const [salvando, setSalvando] = useState(false)
+    const bloqueado = useRef(false)
+    async function submeter() {
+        if (bloqueado.current) return
+        bloqueado.current = true; setSalvando(true)
+        try { await props.onSubmit() } finally { bloqueado.current = false; setSalvando(false) }
+    }
     return (
         <div className="flex flex-col gap-4 rounded border border-zinc-800 bg-zinc-950 p-5">
             <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-zinc-100">{props.titulo}</h2>
-                <button type="button" onClick={props.onNovo} className="rounded bg-zinc-800 p-2 text-zinc-200">
+                <button type="button" disabled={salvando} onClick={props.onNovo} className="rounded bg-zinc-800 p-2 text-zinc-200">
                     <IconPlus size={18} />
                 </button>
             </div>
-            {props.children}
-            <button type="button" onClick={props.onSubmit} className="rounded bg-yellow-400 px-4 py-3 font-semibold text-black">
-                Salvar
+            <fieldset disabled={salvando} className="flex flex-col gap-4">{props.children}</fieldset>
+            <button type="button" disabled={salvando} onClick={submeter} className="rounded bg-yellow-400 px-4 py-3 font-semibold text-black disabled:opacity-50">
+                {salvando ? 'Salvando...' : 'Salvar'}
             </button>
         </div>
     )
@@ -820,7 +970,7 @@ function ListaServicos(props: {
                 <Linha
                     key={servico.id}
                     titulo={servico.nome}
-                    detalhe={`R$ ${Number(servico.preco).toFixed(2)} | ${servico.qtdeSlots * 15} min`}
+                    detalhe={`R$ ${Number(servico.preco).toFixed(2)} | ${servico.duracaoMinutos ?? servico.qtdeSlots * 15} min`}
                     onEditar={() => props.onEditar(servico)}
                     onExcluir={() => props.onExcluir(servico.id)}
                 />

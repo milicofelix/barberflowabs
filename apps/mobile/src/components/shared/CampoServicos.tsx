@@ -1,7 +1,11 @@
 import { Image, StyleSheet, Text, Pressable, View } from 'react-native'
-import { Servico } from '@barbabrutal/core'
+import { Servico } from '@uniflowabs/core'
 import useServicos from '@/src/data/hooks/useServicos'
-import imagens from '@/src/data/constants/imagens'
+import { imagemDoServico } from '@/src/data/constants/imagens'
+import Carregando from './Carregando'
+import EstadoErro from './EstadoErro'
+import EstadoVazio from './EstadoVazio'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 interface ServicosInputProps {
     value: Servico[]
@@ -9,12 +13,14 @@ interface ServicosInputProps {
 }
 
 function Opcao(props: { servico: Servico; onClick: (s: Servico) => void; selecionado?: boolean }) {
+    const { cores } = useTema()
     return (
         <View
             key={props.servico.id}
             style={{
                 ...styles.servicoCard,
-                backgroundColor: props.selecionado ? '#22c55e' : '#18181b',
+                backgroundColor: props.selecionado ? cores.sucesso : cores.superficie,
+                borderColor: cores.borda,
             }}
         >
             <Pressable
@@ -25,9 +31,10 @@ function Opcao(props: { servico: Servico; onClick: (s: Servico) => void; selecio
                 <View>
                     <Image
                         style={styles.imagemServico}
-                        source={imagens.servicos.find((s) => s.id === props.servico.id)?.imagem}
+                        source={imagemDoServico(props.servico.nome, props.servico.imagemURL)}
+                        resizeMode="contain"
                     />
-                    <Text style={styles.textoServico}>{props.servico.nome}</Text>
+                    <Text style={[styles.textoServico, { color: props.selecionado ? '#FFFFFF' : cores.texto }]}>{props.servico.nome}</Text>
                 </View>
             </Pressable>
         </View>
@@ -36,7 +43,16 @@ function Opcao(props: { servico: Servico; onClick: (s: Servico) => void; selecio
 
 export default function ServicosInput(props: ServicosInputProps) {
     const { value, onChange } = props
-    const { servicos: todosOsServicos } = useServicos()
+    const {
+        servicos: todosOsServicos,
+        carregando,
+        erro,
+        carregarServicos,
+    } = useServicos()
+
+    if (carregando) return <Carregando mensagem="Buscando serviços..." />
+    if (erro) return <EstadoErro mensagem={erro} tentarNovamente={carregarServicos} />
+    if (todosOsServicos.length === 0) return <EstadoVazio titulo="Nenhum serviço disponível" />
 
     function alternarMarcacaoServico(servico: Servico) {
         const encontrado = value.find((s) => s.id === servico.id)
@@ -74,6 +90,7 @@ const styles = StyleSheet.create({
     },
     servicoCard: {
         borderRadius: 8,
+        borderWidth: 1,
         padding: 2,
     },
     textoServico: {
@@ -83,7 +100,7 @@ const styles = StyleSheet.create({
     },
     imagemServico: {
         width: 122,
-        height: 122,
+        aspectRatio: 16 / 9,
         borderRadius: 6,
     },
 })

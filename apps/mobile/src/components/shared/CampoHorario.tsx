@@ -1,6 +1,6 @@
-import { AgendaUtils, DateUtils, Horarios } from '@barbabrutal/core'
-import { useEffect, useState } from 'react'
+import { AgendaUtils, DateUtils, Horarios } from '@uniflowabs/core'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 export interface HorariosDisponiveis {
     manha: string[]
@@ -16,66 +16,63 @@ interface CampoHorarioProps {
 }
 
 export default function CampoHorario(props: CampoHorarioProps) {
-    const [horaSelecionada, setHoraSelecionada] = useState<string | null>(null)
+    const { cores } = useTema()
     const { manha, tardeNoite } = props.horariosDisponiveis ?? AgendaUtils.horariosDoDia()
     const { horariosOcupados } = props
     const todosHorariosDisponiveis = [...manha, ...tardeNoite]
-
-    const dia = props.value.toISOString().slice(0, 10) ?? ''
-
-    useEffect(() => {
-        const horarioAtual = props.value.toLocaleString('pt-BR', {
-            hour: '2-digit',
-            minute: '2-digit',
-        })
-        setHoraSelecionada(horarioAtual)
-    }, [dia])
+    const horaSelecionada = props.value.toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit',
+    })
+    const intervaloSelecionado = new Horarios(
+        horaSelecionada,
+        props.qtdeHorarios,
+        horariosOcupados,
+        todosHorariosDisponiveis
+    )
 
     function renderizarHorario(horario: string) {
-        const horariosSelecionados = new Horarios(
-            horaSelecionada!,
+        const intervalo = new Horarios(
+            horario,
             props.qtdeHorarios,
             horariosOcupados,
             todosHorariosDisponiveis
         )
-        const selecionado = horariosSelecionados.todos.includes(horario)
-
-        const corBotao = () => {
-            if (selecionado) {
-                return horariosSelecionados.ocupado || horariosSelecionados.incompleto
-                    ? '#ef4444'
-                    : '#16a34a'
-            } else {
-                return '#18181b'
-            }
-        }
+        const horarioOcupado = horariosOcupados.includes(horario)
+        const indisponivel = intervalo.ocupado || intervalo.incompleto
+        const selecionado = intervaloSelecionado.completo
+            && !intervaloSelecionado.ocupado
+            && intervaloSelecionado.todos.includes(horario)
 
         return (
             <Pressable
                 key={horario}
+                disabled={indisponivel}
+                accessibilityState={{ disabled: indisponivel, selected: selecionado }}
+                accessibilityLabel={
+                    selecionado
+                        ? `${horario}, parte do período selecionado`
+                        : indisponivel
+                            ? `${horario}, horário indisponível`
+                            : horario
+                }
                 onPress={function () {
-                    setHoraSelecionada(horario)
-                    const horarios = new Horarios(
-                        horario!,
-                        props.qtdeHorarios,
-                        horariosOcupados,
-                        todosHorariosDisponiveis
-                    )
-
-                    if (horarios.ocupado || horarios.incompleto) {
-                        props.onChange(DateUtils.aplicarHorario(props.value, '00:00'))
-                    } else {
-                        props.onChange(DateUtils.aplicarHorario(props.value, horario))
-                    }
+                    if (indisponivel) return
+                    props.onChange(DateUtils.aplicarHorario(props.value, horario))
                 }}
-                style={{
-                    ...styles.horaContainer,
-                    backgroundColor: corBotao(),
-                }}
+                style={[styles.horaContainer, { backgroundColor: cores.superficie, borderColor: cores.borda },
+                    indisponivel && styles.horaIndisponivel,
+                    selecionado && { backgroundColor: cores.sucesso, opacity: 1 }]}
             >
                 <View style={styles.horaConteudo}>
-                    <Text style={{ color: '#e4e4e7' }}>
-                        {horariosOcupados.includes(horario) ? 'X' : horario}
+                    <Text style={[styles.horaTexto, { color: selecionado ? '#FFFFFF' : cores.texto }, indisponivel && !selecionado && styles.textoIndisponivel]}>
+                        {selecionado
+                            ? horario
+                            : horarioOcupado
+                                ? `${horario} · Ocupado`
+                                : indisponivel
+                                    ? `${horario} · Indisponível`
+                                    : horario}
                     </Text>
                 </View>
             </Pressable>
@@ -85,11 +82,11 @@ export default function CampoHorario(props: CampoHorarioProps) {
     return (
         <View style={styles.container}>
             <View>
-                <Text style={styles.horasTexto}>Manhã</Text>
+                <Text style={[styles.horasTexto, { color: cores.texto }]}>Manhã</Text>
                 <View style={styles.horasConteudo}>{manha.map(renderizarHorario)}</View>
             </View>
             <View>
-                <Text style={styles.horasTexto}>Tarde & Noite</Text>
+                <Text style={[styles.horasTexto, { color: cores.texto }]}>Tarde & Noite</Text>
                 <View style={styles.horasConteudo}>{tardeNoite.map(renderizarHorario)}</View>
             </View>
         </View>
@@ -123,6 +120,9 @@ const styles = StyleSheet.create({
         borderColor: '#27272a',
         padding: 10,
         borderRadius: 6,
-        width: 90,
+        minWidth: 96,
     },
+    horaIndisponivel: { opacity: 0.42, backgroundColor: '#475467' },
+    horaTexto: { fontSize: 12, fontWeight: '700' },
+    textoIndisponivel: { textDecorationLine: 'line-through' },
 })

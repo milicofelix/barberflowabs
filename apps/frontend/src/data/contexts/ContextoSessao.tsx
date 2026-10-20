@@ -1,8 +1,9 @@
 'use client'
-import { Usuario } from '@barbabrutal/core'
+import { Usuario } from '@uniflowabs/core'
 import { createContext, useCallback, useEffect, useState } from 'react'
 import cookie from 'js-cookie'
 import { jwtDecode } from 'jwt-decode'
+import TrocaSenhaObrigatoria from '@/components/auth/TrocaSenhaObrigatoria'
 
 const URL_BASE = process.env.NEXT_PUBLIC_API_URL
 
@@ -16,6 +17,7 @@ interface ContextoSessaoProps {
     token: string | null
     usuario: Usuario | null
     iniciarSessao: (token: string) => void
+    renovarSessao: () => Promise<boolean>
     encerrarSessao: () => void
 }
 
@@ -29,10 +31,15 @@ export function ProvedorSessao(props: any) {
     const [sessao, setSessao] = useState<Sessao>({ token: null, usuario: null })
 
     const carregarSessao = useCallback(async function () {
+        const sessaoLocal = obterSessao()
         try {
             setCarregando(true)
-            const sessao = obterSessao()
-            const tokenAtualizado = sessao.token ? await renovarToken(sessao.token) : null
+            if (!sessaoLocal.token) {
+                setSessao({ token: null, usuario: null })
+                return
+            }
+
+            const tokenAtualizado = await renovarToken(sessaoLocal.token)
 
             if (tokenAtualizado) {
                 cookie.set(nomeCookie, tokenAtualizado, { expires: 1 })
@@ -40,7 +47,10 @@ export function ProvedorSessao(props: any) {
                 return
             }
 
-            setSessao(sessao)
+            encerrarSessao()
+        } catch {
+            // Uma falha de rede não invalida uma sessão local ainda não expirada.
+            setSessao(sessaoLocal)
         } finally {
             setCarregando(false)
         }
@@ -59,6 +69,16 @@ export function ProvedorSessao(props: any) {
     function encerrarSessao() {
         cookie.remove(nomeCookie)
         setSessao({ token: null, usuario: null })
+    }
+
+    async function renovarSessao() {
+        const atual = obterSessao()
+        if (!atual.token) return false
+        const tokenAtualizado = await renovarToken(atual.token)
+        if (!tokenAtualizado) return false
+        cookie.set(nomeCookie, tokenAtualizado, { expires: 1 })
+        setSessao(obterSessao(tokenAtualizado))
+        return true
     }
 
     function obterSessao(tokenRecebido?: string): Sessao {
@@ -80,13 +100,14 @@ export function ProvedorSessao(props: any) {
                 token,
                 usuario: {
                     id: payload.id,
-                    barbeariaId: payload.barbeariaId,
+                    estabelecimentoId: payload.estabelecimentoId ?? undefined,
                     nome: payload.nome,
                     email: payload.email,
-                    barbeiro: payload.barbeiro,
+                    membroEstabelecimento: payload.membroEstabelecimento,
                     papel: payload.papel ?? payload.role,
                     role: payload.role,
                     telefone: payload.telefone,
+                    trocarSenhaObrigatoria: payload.trocarSenhaObrigatoria ?? false,
                 },
             }
         } catch (e) {
@@ -96,18 +117,13 @@ export function ProvedorSessao(props: any) {
 
     async function renovarToken(token: string) {
         if (!URL_BASE) return null
-
-        try {
-            const resposta = await fetch(`${URL_BASE}/auth/refresh`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token }),
-            })
-            const texto = await resposta.text()
-            return resposta.ok && texto ? texto : null
-        } catch (e) {
-            return null
-        }
+        const resposta = await fetch(`${URL_BASE}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token }),
+        })
+        const texto = await resposta.text()
+        return resposta.ok && texto ? texto : null
     }
 
     return (
@@ -117,10 +133,11 @@ export function ProvedorSessao(props: any) {
                 token: sessao.token,
                 usuario: sessao.usuario,
                 iniciarSessao,
+                renovarSessao,
                 encerrarSessao,
             }}
         >
-            {props.children}
+            {sessao.usuario?.trocarSenhaObrigatoria ? <TrocaSenhaObrigatoria /> : props.children}
         </ContextoSessao.Provider>
     )
 }

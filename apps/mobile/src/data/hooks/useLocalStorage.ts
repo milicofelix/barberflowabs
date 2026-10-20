@@ -5,7 +5,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 export default function useLocalStorage() {
     const get = useCallback(async (chave: string) => {
         const valorLocal = await AsyncStorage.getItem(chave)
-        return valorLocal ? JSON.parse(valorLocal) : null
+        if (!valorLocal) return null
+
+        try {
+            return JSON.parse(valorLocal)
+        } catch {
+            await AsyncStorage.removeItem(chave)
+            return null
+        }
     }, [])
 
     const set = useCallback(async (chave: string, valor: any) => {

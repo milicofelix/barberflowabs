@@ -1,91 +1,20 @@
+'use client'
+
 import useSessao from '@/data/hooks/useSessao'
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-    DropdownMenuSeparator,
-} from '../ui/dropdown-menu'
-import Image from 'next/image'
-import {
-    IconCalendar,
-    IconCreditCard,
-    IconHome,
-    IconLogout,
-    IconSettings,
-    IconShieldLock,
-    IconTool,
-} from '@tabler/icons-react'
+import AvatarUsuario from '@/components/midia/AvatarUsuario'
+import { LogOut } from 'lucide-react'
 import Link from 'next/link'
 
+/** Os destinos ficam nos botões do banner; aqui permanecem conta e saída. */
 export default function MenuUsuario() {
     const { usuario, encerrarSessao } = useSessao()
-    const superAdmin = usuario?.role === 'SUPER_ADMIN' || usuario?.papel === 'SUPER_ADMIN'
-
-    return usuario ? (
-        <DropdownMenu>
-            <DropdownMenuTrigger>
-                <div className="flex items-center gap-3">
-                    <div className="flex flex-col items-end">
-                        <span className="font-bold">{usuario.nome}</span>
-                        <span className="text-zinc-400 text-xs">{usuario.email}</span>
-                    </div>
-                    <div className="bg-zinc-700 w-10 h-10 p-1 rounded-full">
-                        <Image src="/avatar.png" width={40} height={40} alt="Avatar" />
-                    </div>
-                </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-                <DropdownMenuItem>
-                    <Link href="/" className="flex gap-2">
-                        <IconHome size={18} />
-                        <span>Início</span>
-                    </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                    <Link href="/agendamento" className="flex gap-2">
-                        <IconCalendar size={18} />
-                        <span>Agendar</span>
-                    </Link>
-                </DropdownMenuItem>
-                {usuario.barbeiro && (
-                    <DropdownMenuItem>
-                        <Link href="/gestao" className="flex gap-2">
-                            <IconTool size={18} />
-                            <span>Gestão</span>
-                        </Link>
-                    </DropdownMenuItem>
-                )}
-                {usuario.barbeiro && (
-                    <DropdownMenuItem>
-                        <Link href="/configuracoes" className="flex gap-2">
-                            <IconSettings size={18} />
-                            <span>Configurações</span>
-                        </Link>
-                    </DropdownMenuItem>
-                )}
-                {(usuario.barbeiro || superAdmin) && (
-                    <DropdownMenuItem>
-                        <Link href="/billing" className="flex gap-2">
-                            <IconCreditCard size={18} />
-                            <span>Billing</span>
-                        </Link>
-                    </DropdownMenuItem>
-                )}
-                {superAdmin && (
-                    <DropdownMenuItem>
-                        <Link href="/admin" className="flex gap-2">
-                            <IconShieldLock size={18} />
-                            <span>Admin SaaS</span>
-                        </Link>
-                    </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={encerrarSessao} className="flex gap-2 text-red-500">
-                    <IconLogout size={18} />
-                    <span>Logout</span>
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
-    ) : null
+    if (!usuario) return null
+    return <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        <Link href="/configuracoes" aria-label={`Conta de ${usuario.nome}`} title={`${usuario.nome} — ${usuario.email}`} className="rounded-full transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-violet-400">
+            <AvatarUsuario nome={usuario.nome} fotoURL={usuario.fotoURL} />
+        </Link>
+        <button type="button" onClick={encerrarSessao} aria-label="Sair da conta" title="Sair da conta" className="inline-flex min-h-10 min-w-10 items-center justify-center gap-2 rounded-full border border-rose-200/70 bg-rose-600/90 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-rose-300 sm:px-4">
+            <LogOut size={18} aria-hidden="true" /><span className="hidden sm:inline">Sair</span>
+        </button>
+    </div>
 }

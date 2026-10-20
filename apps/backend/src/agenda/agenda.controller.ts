@@ -1,6 +1,6 @@
-import { BadRequestException, Controller, ForbiddenException, Get, Param, Put, Query, Body } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Param, Put, Query, Body, Req, Post } from '@nestjs/common';
 import { UsuarioLogado } from 'src/shared/usuario.decorator';
-import { Usuario } from '@barbabrutal/core';
+import { Usuario } from '@uniflowabs/core';
 import {
   validarData,
   validarHorario,
@@ -9,33 +9,61 @@ import {
 } from 'src/shared/validacao';
 import { AgendaPrisma } from './agenda.prisma';
 import { ConfiguracaoAgendaDto } from './agenda.dto';
+import { TenantService } from 'src/shared/tenant.service';
+import { MotorAgendaService } from 'src/motor-agenda/motor-agenda.service';
+import { ConsultarDisponibilidadeDto } from 'src/motor-agenda/motor-agenda.dto';
+import { ConflitoAgendaError } from 'src/motor-agenda/conflito-agenda.error';
+import { EquipePolicy } from 'src/equipe/equipe.policy';
 
 @Controller('agenda')
 export class AgendaController {
-  constructor(private readonly repo: AgendaPrisma) {}
+  constructor(
+    private readonly repo: AgendaPrisma,
+    private readonly tenant: TenantService,
+    private readonly motor: MotorAgendaService,
+    private readonly equipePolicy: EquipePolicy,
+  ) {}
+
+  @Post('disponibilidade')
+  async consultarDisponibilidade(
+    @Body() dados: ConsultarDisponibilidadeDto,
+    @UsuarioLogado() usuario: Usuario,
+    @Req() req: any,
+  ) {
+    const estabelecimentoId = await this.resolverEstabelecimentoAgenda(req, usuario);
+    try {
+      return await this.motor.consultarDisponibilidade(estabelecimentoId, dados);
+    } catch (error: any) {
+      if (error instanceof ConflitoAgendaError) {
+        return { disponivel: false, motivo: error.message };
+      }
+      throw error;
+    }
+  }
 
   @Get('configuracao/horarios')
-  buscarConfiguracao(@UsuarioLogado() usuario: Usuario) {
-    this.validarPermissaoConfiguracao(usuario);
-    return this.repo.buscarConfiguracao(usuario.barbeariaId);
+  async buscarConfiguracao(@UsuarioLogado() usuario: Usuario) {
+    await this.validarPermissaoConfiguracao(usuario);
+    return this.repo.buscarConfiguracao(usuario.estabelecimentoId);
   }
 
   @Put('configuracao/horarios')
-  salvarConfiguracao(
+  async salvarConfiguracao(
     @Body() dados: ConfiguracaoAgendaDto,
     @UsuarioLogado() usuario: Usuario,
   ) {
-    this.validarPermissaoConfiguracao(usuario);
+    await this.validarPermissaoConfiguracao(usuario);
     this.validarConfiguracao(dados);
-    return this.repo.salvarConfiguracao(usuario.barbeariaId, dados);
+    return this.repo.salvarConfiguracao(usuario.estabelecimentoId, dados);
   }
 
   @Get('horarios/:data')
-  buscarHorariosDisponiveis(
+  async buscarHorariosDisponiveis(
     @Param('data') data: string,
     @Query('profissionalId') profissionalId: string | undefined,
     @Query('unidadeId') unidadeId: string | undefined,
     @UsuarioLogado() usuario: Usuario,
+    @Req() req: any,
   ) {
     validarData(data);
 
@@ -47,8 +75,10 @@ export class AgendaController {
       validarNumeroInteiroPositivo(unidadeId, 'Unidade');
     }
 
+    const estabelecimentoId = await this.resolverEstabelecimentoAgenda(req, usuario);
+
     return this.repo.buscarHorariosDisponiveis({
-      barbeariaId: usuario.barbeariaId,
+      estabelecimentoId,
       data,
       profissionalId: profissionalId ? Number(profissionalId) : undefined,
       unidadeId: unidadeId ? Number(unidadeId) : undefined,
@@ -56,13 +86,44 @@ export class AgendaController {
   }
 
   private validarPermissaoConfiguracao(usuario: Usuario) {
-    if (!usuario.barbeiro) {
-      throw new ForbiddenException('Apenas barbeiros podem alterar configurações da agenda');
-    }
+    return this.equipePolicy.validarPermissao(usuario, 'CONFIGURACOES_GERENCIAR');
+  }
+
+  private async resolverEstabelecimentoAgenda(req: any, usuario: Usuario) {
+    return this.tenant.resolverEstabelecimentoId(req);
   }
 
   private validarConfiguracao(dados: ConfiguracaoAgendaDto) {
     validarNumeroInteiroNaoNegativo(dados?.antecedenciaMinutos, 'Antecedência');
+    validarNumeroInteiroNaoNegativo(dados?.lembreteAntecedenciaMinutos, 'Antecedência do lembrete');
+    if (typeof dados?.lembreteAgendamentoAtivo !== 'boolean') {
+      throw new BadRequestException('Configuração do lembrete é obrigatória');
+    }
+    for (const [campo, valor] of [
+      ['Fluxo automático', dados?.fluxoAtendimentoAutomaticoAtivo],
+      ['Início automático', dados?.inicioAtendimentoAutomaticoAtivo],
+      ['Finalização automática', dados?.finalizacaoAtendimentoAutomaticaAtiva],
+    ] as const) {
+      if (valor !== undefined && typeof valor !== 'boolean') {
+        throw new BadRequestException(`${campo} deve ser verdadeiro ou falso`);
+      }
+    }
+    if (dados?.avisoAtendimentoAntecedenciaMinutos !== undefined) {
+      validarNumeroInteiroPositivo(
+        dados.avisoAtendimentoAntecedenciaMinutos,
+        'Antecedência do aviso operacional',
+      );
+      if (dados.avisoAtendimentoAntecedenciaMinutos > 60) {
+        throw new BadRequestException('Antecedência do aviso operacional deve ser de no máximo 60 minutos');
+      }
+    }
+    validarHorario(dados?.janelaSilenciosaInicio, 'Início da janela silenciosa');
+    validarHorario(dados?.janelaSilenciosaFim, 'Fim da janela silenciosa');
+    try {
+      new Intl.DateTimeFormat('pt-BR', { timeZone: dados?.fusoHorario }).format();
+    } catch {
+      throw new BadRequestException('Fuso horário inválido');
+    }
 
     if (!Array.isArray(dados?.horarios)) {
       throw new BadRequestException('Horários de funcionamento são obrigatórios');

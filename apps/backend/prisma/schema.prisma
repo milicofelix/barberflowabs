@@ -10,303 +10,1554 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Usuario {
-  id           Int           @id @default(autoincrement())
-  barbeariaId  Int
-  nome         String
-  email        String        @unique
-  senha        String
-  telefone     String?
-  dataNascimento DateTime?
-  barbeiro     Boolean
-  papel        String        @default("CUSTOMER")
-  barbearia    Barbearia     @relation(fields: [barbeariaId], references: [id])
-  agendamentos Agendamento[]
-  lancamentosFinanceiros LancamentoFinanceiro[]
-  logsAuditoria LogAuditoria[]
-  lembretesRelacionamento LembreteRelacionamento[]
-  avaliacoes Avaliacao[]
+enum SexoProfissional {
+  MASCULINO
+  FEMININO
+  NAO_INFORMADO
+}
 
-  @@index([barbeariaId])
+model Midia {
+  id                String           @id @default(uuid())
+  chaveCatalogo     String?          @unique
+  titulo            String
+  escopo            String
+  finalidade        String
+  segmentoSlug      String?
+  usuarioId         Int?
+  estabelecimentoId Int?
+  arquivoOrigem     String?
+  versoes           Json
+  ativo             Boolean          @default(true)
+  status            String           @default("DISPONIVEL")
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  usuario           Usuario?         @relation(fields: [usuarioId], references: [id])
+  estabelecimento   Estabelecimento? @relation(fields: [estabelecimentoId], references: [id])
+  vinculos          MidiaVinculo[]
+
+  @@index([escopo, finalidade, ativo])
+  @@index([estabelecimentoId])
+  @@index([usuarioId])
+  @@map("midias")
+}
+
+model MidiaVinculo {
+  id         Int      @id @default(autoincrement())
+  midiaId    String
+  entidade   String
+  entidadeId Int
+  createdAt  DateTime @default(now())
+  midia      Midia    @relation(fields: [midiaId], references: [id])
+
+  @@unique([entidade, entidadeId])
+  @@index([midiaId])
+  @@map("midias_vinculos")
+}
+
+model Usuario {
+  id                                   Int                          @id @default(autoincrement())
+  estabelecimentoId                    Int?
+  nome                                 String
+  email                                String                       @unique
+  emailContato                         String?
+  fotoURL                              String?
+  midias                               Midia[]
+  emailTecnico                         Boolean                      @default(false)
+  senha                                String
+  trocarSenhaObrigatoria               Boolean                      @default(false)
+  telefone                             String?
+  telefoneNormalizado                  String?
+  dataNascimento                       DateTime?
+  membroEstabelecimento                Boolean
+  papel                                String                       @default("CUSTOMER")
+  estabelecimento                      Estabelecimento?             @relation(fields: [estabelecimentoId], references: [id])
+  agendamentos                         Agendamento[]
+  agendamentosCriados                  Agendamento[]                @relation("AgendamentoCriadoPor")
+  lancamentosFinanceiros               LancamentoFinanceiro[]
+  logsAuditoria                        LogAuditoria[]
+  caixasAbertos                        FechamentoCaixa[]            @relation("CaixaAbertoPor")
+  caixasFechados                       FechamentoCaixa[]            @relation("CaixaFechadoPor")
+  lembretesRelacionamento              LembreteRelacionamento[]
+  avaliacoes                           Avaliacao[]
+  denunciasRevisadas                   DenunciaPerfilPublico[]      @relation("DenunciaPerfilRevisor")
+  estabelecimentosCliente              ClienteEstabelecimento[]
+  reagendamentosRealizados             HistoricoReagendamento[]     @relation("HistoricoReagendamentoAutor")
+  vinculosEquipe                       MembroEquipe[]
+  preferenciasComunicacao              PreferenciaComunicacao[]
+  enviosComunicacao                    EnvioComunicacao[]
+  solicitacoesEstabelecimento          SolicitacaoEstabelecimento[] @relation("SolicitanteSolicitacaoEstabelecimento")
+  solicitacoesEstabelecimentoRevisadas SolicitacaoEstabelecimento[] @relation("RevisorSolicitacaoEstabelecimento")
+  notificacoes                         NotificacaoUsuario[]
+  importacoesContatosOperadas          ImportacaoContatoLote[]      @relation("ImportacaoContatoOperador")
+  itensImportacaoContato               ImportacaoContatoItem[]
+  agendamentosControladosManualmente   Agendamento[]                @relation("ControleManualAgendamento")
+  transicoesAtendimentoDestinadas      TransicaoAgendamento[]       @relation("DestinatarioTransicaoAgendamento")
+  supressoesComunicacao                SupressaoComunicacao[]
+
+  @@index([estabelecimentoId])
+  @@index([telefoneNormalizado])
   @@map("usuarios")
 }
 
 model Profissional {
-  id                   Int           @id @default(autoincrement())
-  barbeariaId          Int
-  nome                 String
-  descricao            String        @db.Text
-  imagemURL            String
-  avaliacao            Float
-  quantidadeAvaliacoes Int
-  barbearia            Barbearia     @relation(fields: [barbeariaId], references: [id])
-  agendamentos         Agendamento[]
-  bloqueiosAgenda      BloqueioAgenda[]
+  id                     Int                         @id @default(autoincrement())
+  estabelecimentoId      Int
+  nome                   String
+  sexo                   SexoProfissional            @default(NAO_INFORMADO)
+  descricao              String                      @db.Text
+  imagemURL              String
+  avaliacao              Float
+  quantidadeAvaliacoes   Int
+  estabelecimento        Estabelecimento             @relation(fields: [estabelecimentoId], references: [id])
+  agendamentos           Agendamento[]
+  bloqueiosAgenda        BloqueioAgenda[]
   lancamentosFinanceiros LancamentoFinanceiro[]
-  avaliacoes           Avaliacao[]
+  avaliacoes             Avaliacao[]
+  especialidades         ProfissionalEspecialidade[]
+  servicosHabilitados    ProfissionalServico[]
+  vinculoEquipe          MembroEquipe?
+  escalas                EscalaProfissional[]
+  configuracoesComissao  ConfiguracaoComissao[]
+  repassesFinanceiros    RepasseFinanceiro[]
 
-  @@unique([barbeariaId, nome])
-  @@index([barbeariaId])
+  @@unique([estabelecimentoId, nome])
+  @@index([estabelecimentoId])
   @@map("profissionais")
 }
 
 model Servico {
-  id           Int           @id @default(autoincrement())
-  barbeariaId  Int
-  nome         String
-  descricao    String        @db.Text
-  preco        Decimal       @db.Decimal(10, 2)
-  qtdeSlots    Int
-  imagemURL    String
-  barbearia    Barbearia     @relation(fields: [barbeariaId], references: [id])
-  agendamentos Agendamento[]
+  id                       Int                    @id @default(autoincrement())
+  estabelecimentoId        Int
+  servicoSugeridoId        Int?
+  nome                     String
+  descricao                String                 @db.Text
+  preco                    Decimal                @db.Decimal(10, 2)
+  qtdeSlots                Int
+  imagemURL                String
+  observacoes              String?                @db.Text
+  modeloAtendimento        String                 @default("PRESENCIAL")
+  duracaoMinutos           Int                    @default(15)
+  preparoAntesMinutos      Int                    @default(0)
+  preparoDepoisMinutos     Int                    @default(0)
+  deslocamentoMinutos      Int                    @default(0)
+  estabelecimento          Estabelecimento        @relation(fields: [estabelecimentoId], references: [id])
+  servicoSugerido          ServicoSugerido?       @relation(fields: [servicoSugeridoId], references: [id])
+  agendamentos             Agendamento[]
+  requisitos               ServicoRequisito[]
+  especialidades           ServicoEspecialidade[]
+  profissionaisHabilitados ProfissionalServico[]
+  recursosNecessarios      ServicoRecurso[]
+  itensAgendamento         AgendamentoServico[]
+  configuracoesComissao    ConfiguracaoComissao[]
 
-  @@unique([barbeariaId, nome])
-  @@index([barbeariaId])
+  @@unique([estabelecimentoId, nome])
+  @@unique([estabelecimentoId, servicoSugeridoId])
+  @@index([estabelecimentoId])
   @@map("servicos")
 }
 
 model Agendamento {
-  id          Int      @id @default(autoincrement())
-  data        DateTime
-  barbeariaId Int
-  status      String   @default("AGENDADO")
-  valorTotal  Decimal  @default(0) @db.Decimal(10, 2)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                        Int       @id @default(autoincrement())
+  data                      DateTime
+  estabelecimentoId         Int
+  status                    String    @default("AGENDADO")
+  valorTotal                Decimal   @default(0) @db.Decimal(10, 2)
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  dataFim                   DateTime?
+  inicioOcupacao            DateTime?
+  fimOcupacao               DateTime?
+  unidadeId                 Int?
+  modeloAtendimento         String    @default("PRESENCIAL")
+  enderecoAtendimento       String?   @db.Text
+  deslocamentoMinutos       Int       @default(0)
+  reagendadoEm              DateTime?
+  criadoPorId               Int?
+  origem                    String    @default("APP_CLIENTE")
+  observacoes               String?   @db.Text
+  automacaoAtendimentoAtiva Boolean   @default(true)
+  controleManualEm          DateTime?
+  controleManualPorId       Int?
+  iniciadoEm                DateTime?
+  finalizadoEm              DateTime?
+  revisaoFluxo              Int       @default(1)
 
-  barbearia Barbearia @relation(fields: [barbeariaId], references: [id])
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  unidade         Unidade?        @relation(fields: [unidadeId], references: [id])
 
-  usuario   Usuario @relation(fields: [usuarioId], references: [id])
-  usuarioId Int
+  usuario           Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId         Int
+  criadoPor         Usuario? @relation("AgendamentoCriadoPor", fields: [criadoPorId], references: [id])
+  controleManualPor Usuario? @relation("ControleManualAgendamento", fields: [controleManualPorId], references: [id])
 
   profissional   Profissional @relation(fields: [profissionalId], references: [id])
   profissionalId Int
 
-  servicos Servico[]
-  avaliacao Avaliacao?
+  servicos                Servico[]
+  itens                   AgendamentoServico[]
+  recursos                AgendamentoRecurso[]
+  historicoReagendamentos HistoricoReagendamento[]
+  avaliacao               Avaliacao?
+  contasFinanceiras       ContaFinanceira[]
+  enviosComunicacao       EnvioComunicacao[]
+  transicoesAtendimento   TransicaoAgendamento[]
+  beneficiosFidelidade    BeneficioFidelidade[]
+  liquidacaoFidelidade    LiquidacaoFidelidade?
 
-  @@index([barbeariaId])
+  @@index([estabelecimentoId])
   @@index([profissionalId, data])
+  @@index([profissionalId, inicioOcupacao, fimOcupacao])
+  @@index([unidadeId, inicioOcupacao, fimOcupacao])
+  @@index([estabelecimentoId, inicioOcupacao, fimOcupacao])
+  @@index([estabelecimentoId, status, data])
+  @@index([criadoPorId])
+  @@index([controleManualPorId])
   @@map("agendamentos")
 }
 
-model Barbearia {
-  id            Int            @id @default(autoincrement())
-  nome          String
-  slug          String         @unique
-  telefone      String?
-  email         String?
-  nomePublico   String?
-  descricaoPublica String?     @db.Text
-  imagemCapaURL String?
-  endereco      String?
-  bairro        String?
-  cidade        String?
-  estado        String?
-  latitude      Float?
-  longitude     Float?
-  aceitaAgendamentoOnline Boolean @default(true)
-  destaque      Boolean        @default(false)
-  status        String         @default("TRIAL")
-  reviewStatus  String         @default("APPROVED")
-  approvedAt    DateTime?
-  approvedById  Int?
-  rejectedAt    DateTime?
-  rejectedById  Int?
-  reviewReason  String?        @db.Text
-  trialEndsAt   DateTime?
-  antecedenciaMinutos Int      @default(30)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  unidades      Unidade[]
-  usuarios      Usuario[]
-  profissionais Profissional[]
-  servicos      Servico[]
-  agendamentos  Agendamento[]
-  horariosFuncionamento HorarioFuncionamento[]
-  bloqueiosAgenda       BloqueioAgenda[]
-  lancamentosFinanceiros LancamentoFinanceiro[]
-  assinatura             AssinaturaBarbearia?
-  logsAuditoria          LogAuditoria[]
-  lembretesRelacionamento LembreteRelacionamento[]
-  avaliacoes             Avaliacao[]
+model Estabelecimento {
+  politicaRelacionamento PoliticaRetencaoRelacionamento?
+  solicitacoesPrivacidade SolicitacaoPrivacidade[]
+  programaFidelidade ProgramaFidelidade?
+  id                                    Int                            @id @default(autoincrement())
+  nome                                  String
+  slug                                  String                         @unique
+  telefone                              String?
+  email                                 String?
+  nomePublico                           String?
+  descricaoPublica                      String?                        @db.Text
+  imagemCapaURL                         String?
+  logoURL                               String?
+  logoModo                              String                         @default("PADRAO")
+  midias                                Midia[]
+  endereco                              String?
+  bairro                                String?
+  cidade                                String?
+  estado                                String?
+  latitude                              Float?
+  longitude                             Float?
+  aceitaAgendamentoOnline               Boolean                        @default(true)
+  destaque                              Boolean                        @default(false)
+  status                                String                         @default("TRIAL")
+  reviewStatus                          String                         @default("APPROVED")
+  approvedAt                            DateTime?
+  approvedById                          Int?
+  rejectedAt                            DateTime?
+  rejectedById                          Int?
+  reviewReason                          String?                        @db.Text
+  comercialStatus                       String                         @default("NOVO")
+  notasInternas                         String?                        @db.Text
+  ultimoContatoEm                       DateTime?
+  proximoContatoEm                      DateTime?
+  trialEndsAt                           DateTime?
+  antecedenciaMinutos                   Int                            @default(30)
+  lembreteAgendamentoAtivo              Boolean                        @default(true)
+  lembreteAntecedenciaMinutos           Int                            @default(1440)
+  janelaSilenciosaInicio                String                         @default("22:00") @db.VarChar(5)
+  janelaSilenciosaFim                   String                         @default("08:00") @db.VarChar(5)
+  fluxoAtendimentoAutomaticoAtivo       Boolean                        @default(false)
+  inicioAtendimentoAutomaticoAtivo      Boolean                        @default(true)
+  finalizacaoAtendimentoAutomaticaAtiva Boolean                        @default(true)
+  avisoAtendimentoAntecedenciaMinutos   Int                            @default(10)
+  tipoEstabelecimento                   String                         @default("BARBEARIA")
+  modeloAtendimento                     String                         @default("PRESENCIAL")
+  fusoHorario                           String                         @default("America/Sao_Paulo")
+  createdAt                             DateTime                       @default(now())
+  updatedAt                             DateTime                       @updatedAt
+  unidades                              Unidade[]
+  usuarios                              Usuario[]
+  profissionais                         Profissional[]
+  servicos                              Servico[]
+  agendamentos                          Agendamento[]
+  horariosFuncionamento                 HorarioFuncionamento[]
+  bloqueiosAgenda                       BloqueioAgenda[]
+  lancamentosFinanceiros                LancamentoFinanceiro[]
+  assinatura                            AssinaturaEstabelecimento?
+  logsAuditoria                         LogAuditoria[]
+  lembretesRelacionamento               LembreteRelacionamento[]
+  avaliacoes                            Avaliacao[]
+  denunciasPerfil                       DenunciaPerfilPublico[]
+  clientes                              ClienteEstabelecimento[]
+  segmentos                             EstabelecimentoSegmento[]
+  especialidades                        EstabelecimentoEspecialidade[]
+  especialidadesProfissionais           ProfissionalEspecialidade[]
+  especialidadesServicos                ServicoEspecialidade[]
+  profissionaisServicos                 ProfissionalServico[]
+  recursos                              Recurso[]
+  membrosEquipe                         MembroEquipe[]
+  escalasProfissionais                  EscalaProfissional[]
+  indisponibilidadesRecursos            IndisponibilidadeRecurso[]
+  configuracoesComissao                 ConfiguracaoComissao[]
+  formasPagamento                       FormaPagamento[]
+  contasFinanceiras                     ContaFinanceira[]
+  fechamentosCaixa                      FechamentoCaixa[]
+  repassesFinanceiros                   RepasseFinanceiro[]
+  eventosGateway                        EventoGatewayPagamento[]
+  conciliacoesFinanceiras               ConciliacaoFinanceira[]
+  preferenciasComunicacao               PreferenciaComunicacao[]
+  templatesComunicacao                  TemplateComunicacao[]
+  enviosComunicacao                     EnvioComunicacao[]
+  notificacoes                          NotificacaoUsuario[]
+  importacoesContatos                   ImportacaoContatoLote[]
+  transicoesAtendimento                 TransicaoAgendamento[]
+  campanhasComunicacao                  CampanhaComunicacao[]
+  supressoesComunicacao                 SupressaoComunicacao[]
+  solicitacaoOrigem                     SolicitacaoEstabelecimento?    @relation("EstabelecimentoGeradoSolicitacao")
 
-  @@map("barbearias")
+  @@map("estabelecimentos")
+}
+
+model Segmento {
+  id                Int                                  @id @default(autoincrement())
+  slug              String                               @unique
+  nome              String
+  descricao         String?                              @db.Text
+  ativo             Boolean                              @default(true)
+  createdAt         DateTime                             @default(now())
+  updatedAt         DateTime                             @updatedAt
+  especialidades    Especialidade[]
+  estabelecimentos  EstabelecimentoSegmento[]
+  solicitacoes      SolicitacaoEstabelecimentoSegmento[]
+  servicosSugeridos ServicoSugerido[]
+
+  @@map("segmentos")
+}
+
+model Especialidade {
+  id                Int                                       @id @default(autoincrement())
+  segmentoId        Int
+  slug              String
+  nome              String
+  descricao         String?                                   @db.Text
+  ativo             Boolean                                   @default(true)
+  createdAt         DateTime                                  @default(now())
+  updatedAt         DateTime                                  @updatedAt
+  segmento          Segmento                                  @relation(fields: [segmentoId], references: [id])
+  estabelecimentos  EstabelecimentoEspecialidade[]
+  profissionais     ProfissionalEspecialidade[]
+  servicos          ServicoEspecialidade[]
+  solicitacoes      SolicitacaoEstabelecimentoEspecialidade[]
+  servicosSugeridos ServicoSugeridoEspecialidade[]
+
+  @@unique([segmentoId, slug])
+  @@index([segmentoId, ativo])
+  @@map("especialidades")
+}
+
+model ServicoSugerido {
+  id                     Int                            @id @default(autoincrement())
+  segmentoId             Int
+  slug                   String
+  nome                   String
+  descricao              String                         @db.Text
+  imagemURL              String
+  modeloAtendimento      String                         @default("PRESENCIAL")
+  duracaoMinutos         Int                            @default(30)
+  preparoAntesMinutos    Int                            @default(0)
+  preparoDepoisMinutos   Int                            @default(0)
+  deslocamentoMinutos    Int                            @default(0)
+  ordem                  Int                            @default(0)
+  requisitosOperacionais Json?
+  recursosNecessarios    Json?
+  ativo                  Boolean                        @default(true)
+  createdAt              DateTime                       @default(now())
+  updatedAt              DateTime                       @updatedAt
+  segmento               Segmento                       @relation(fields: [segmentoId], references: [id])
+  especialidades         ServicoSugeridoEspecialidade[]
+  servicosImportados     Servico[]
+
+  @@unique([segmentoId, slug])
+  @@index([segmentoId, ativo, ordem])
+  @@map("servicos_sugeridos")
+}
+
+model ServicoSugeridoEspecialidade {
+  id                Int             @id @default(autoincrement())
+  servicoSugeridoId Int
+  especialidadeId   Int
+  servicoSugerido   ServicoSugerido @relation(fields: [servicoSugeridoId], references: [id], onDelete: Cascade)
+  especialidade     Especialidade   @relation(fields: [especialidadeId], references: [id])
+
+  @@unique([servicoSugeridoId, especialidadeId], map: "servico_sugerido_especialidade_uq")
+  @@index([especialidadeId])
+  @@map("servicos_sugeridos_especialidades")
+}
+
+model EstabelecimentoSegmento {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  segmentoId        Int
+  principal         Boolean         @default(false)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  segmento          Segmento        @relation(fields: [segmentoId], references: [id])
+
+  @@unique([estabelecimentoId, segmentoId])
+  @@index([segmentoId])
+  @@map("estabelecimentos_segmentos")
+}
+
+model EstabelecimentoEspecialidade {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  especialidadeId   Int
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  especialidade     Especialidade   @relation(fields: [especialidadeId], references: [id])
+
+  @@unique([estabelecimentoId, especialidadeId])
+  @@index([especialidadeId])
+  @@map("estabelecimentos_especialidades")
+}
+
+model SolicitacaoEstabelecimento {
+  id                      Int                                       @id @default(autoincrement())
+  usuarioId               Int
+  revisorId               Int?
+  estabelecimentoGeradoId Int?                                      @unique
+  chaveAtiva              String?                                   @unique
+  status                  String                                    @default("RASCUNHO")
+  nomePublico             String?
+  emailComercial          String?
+  telefoneComercial       String?
+  tipoEstabelecimento     String?
+  modeloAtendimento       String?
+  planoSlug               String?
+  cep                     String?                                   @db.VarChar(8)
+  logradouro              String?
+  numero                  String?
+  complemento             String?
+  pontoReferencia         String?
+  bairro                  String?
+  cidade                  String?
+  estado                  String?                                   @db.VarChar(2)
+  termosVersao            String?
+  termosAceitosEm         DateTime?
+  enviadoEm               DateTime?
+  revisadoEm              DateTime?
+  motivoRevisao           String?                                   @db.Text
+  versao                  Int                                       @default(1)
+  createdAt               DateTime                                  @default(now())
+  updatedAt               DateTime                                  @updatedAt
+  usuario                 Usuario                                   @relation("SolicitanteSolicitacaoEstabelecimento", fields: [usuarioId], references: [id])
+  revisor                 Usuario?                                  @relation("RevisorSolicitacaoEstabelecimento", fields: [revisorId], references: [id])
+  estabelecimentoGerado   Estabelecimento?                          @relation("EstabelecimentoGeradoSolicitacao", fields: [estabelecimentoGeradoId], references: [id])
+  segmentos               SolicitacaoEstabelecimentoSegmento[]
+  especialidades          SolicitacaoEstabelecimentoEspecialidade[]
+  notificacoes            NotificacaoUsuario[]
+
+  @@index([usuarioId, status, updatedAt])
+  @@index([status, enviadoEm])
+  @@index([revisorId])
+  @@map("solicitacoes_estabelecimentos")
+}
+
+model SolicitacaoEstabelecimentoSegmento {
+  id            Int                        @id @default(autoincrement())
+  solicitacaoId Int
+  segmentoId    Int
+  principal     Boolean                    @default(false)
+  createdAt     DateTime                   @default(now())
+  solicitacao   SolicitacaoEstabelecimento @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade, map: "solicitacao_segmento_solicitacao_fkey")
+  segmento      Segmento                   @relation(fields: [segmentoId], references: [id], map: "solicitacao_segmento_segmento_fkey")
+
+  @@unique([solicitacaoId, segmentoId], map: "solicitacao_segmento_unica")
+  @@index([segmentoId], map: "solicitacao_segmento_segmento_idx")
+  @@map("solicitacoes_estabelecimentos_segmentos")
+}
+
+model SolicitacaoEstabelecimentoEspecialidade {
+  id              Int                        @id @default(autoincrement())
+  solicitacaoId   Int
+  especialidadeId Int
+  createdAt       DateTime                   @default(now())
+  solicitacao     SolicitacaoEstabelecimento @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade, map: "solicitacao_especialidade_solicitacao_fkey")
+  especialidade   Especialidade              @relation(fields: [especialidadeId], references: [id], map: "solicitacao_especialidade_especialidade_fkey")
+
+  @@unique([solicitacaoId, especialidadeId], map: "solicitacao_especialidade_unica")
+  @@index([especialidadeId], map: "solicitacao_especialidade_idx")
+  @@map("solicitacoes_estabelecimentos_especialidades")
+}
+
+model NotificacaoUsuario {
+  id                Int                         @id @default(autoincrement())
+  usuarioId         Int
+  estabelecimentoId Int?
+  solicitacaoId     Int?
+  tipo              String
+  titulo            String
+  mensagem          String                      @db.Text
+  prioridade        String                      @default("NORMAL")
+  acaoUrl           String?
+  metadados         Json?
+  lidaEm            DateTime?
+  expiraEm          DateTime?
+  createdAt         DateTime                    @default(now())
+  usuario           Usuario                     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  estabelecimento   Estabelecimento?            @relation(fields: [estabelecimentoId], references: [id], onDelete: SetNull)
+  solicitacao       SolicitacaoEstabelecimento? @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId, lidaEm, createdAt])
+  @@index([estabelecimentoId, createdAt])
+  @@index([solicitacaoId])
+  @@map("notificacoes_usuarios")
+}
+
+model ProfissionalEspecialidade {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  profissionalId    Int
+  especialidadeId   Int
+  principal         Boolean         @default(false)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  profissional      Profissional    @relation(fields: [profissionalId], references: [id])
+  especialidade     Especialidade   @relation(fields: [especialidadeId], references: [id])
+
+  @@unique([profissionalId, especialidadeId])
+  @@index([estabelecimentoId, profissionalId])
+  @@index([especialidadeId])
+  @@map("profissionais_especialidades")
+}
+
+model ServicoEspecialidade {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  servicoId         Int
+  especialidadeId   Int
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  servico           Servico         @relation(fields: [servicoId], references: [id])
+  especialidade     Especialidade   @relation(fields: [especialidadeId], references: [id])
+
+  @@unique([servicoId, especialidadeId])
+  @@index([estabelecimentoId, servicoId])
+  @@index([especialidadeId])
+  @@map("servicos_especialidades")
+}
+
+model ProfissionalServico {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  profissionalId    Int
+  servicoId         Int
+  ativo             Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  profissional      Profissional    @relation(fields: [profissionalId], references: [id])
+  servico           Servico         @relation(fields: [servicoId], references: [id])
+
+  @@unique([profissionalId, servicoId])
+  @@index([estabelecimentoId, ativo])
+  @@index([servicoId])
+  @@map("profissionais_servicos")
+}
+
+model Recurso {
+  id                 Int                        @id @default(autoincrement())
+  estabelecimentoId  Int
+  unidadeId          Int?
+  nome               String
+  tipo               String
+  capacidade         Int                        @default(1)
+  ativo              Boolean                    @default(true)
+  createdAt          DateTime                   @default(now())
+  updatedAt          DateTime                   @updatedAt
+  estabelecimento    Estabelecimento            @relation(fields: [estabelecimentoId], references: [id])
+  unidade            Unidade?                   @relation(fields: [unidadeId], references: [id])
+  reservas           AgendamentoRecurso[]
+  indisponibilidades IndisponibilidadeRecurso[]
+
+  @@unique([estabelecimentoId, nome])
+  @@index([estabelecimentoId, tipo, ativo])
+  @@index([unidadeId, tipo, ativo])
+  @@map("recursos")
+}
+
+model MembroEquipe {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  usuarioId         Int
+  profissionalId    Int?            @unique
+  papel             String          @default("PROFISSIONAL")
+  permissoes        Json
+  ativo             Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  usuario           Usuario         @relation(fields: [usuarioId], references: [id])
+  profissional      Profissional?   @relation(fields: [profissionalId], references: [id])
+
+  @@unique([estabelecimentoId, usuarioId])
+  @@index([estabelecimentoId, ativo])
+  @@map("membros_equipe")
+}
+
+model EscalaProfissional {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  profissionalId    Int
+  unidadeId         Int?
+  diaSemana         Int
+  inicio            String          @db.VarChar(5)
+  fim               String          @db.VarChar(5)
+  intervaloInicio   String?         @db.VarChar(5)
+  intervaloFim      String?         @db.VarChar(5)
+  ativo             Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  profissional      Profissional    @relation(fields: [profissionalId], references: [id])
+  unidade           Unidade?        @relation(fields: [unidadeId], references: [id])
+
+  @@index([estabelecimentoId, diaSemana, ativo])
+  @@index([profissionalId, diaSemana, ativo])
+  @@index([unidadeId])
+  @@map("escalas_profissionais")
+}
+
+model IndisponibilidadeRecurso {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  recursoId         Int
+  inicio            DateTime
+  fim               DateTime
+  motivo            String?         @db.Text
+  ativo             Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  recurso           Recurso         @relation(fields: [recursoId], references: [id])
+
+  @@index([estabelecimentoId, inicio, fim])
+  @@index([recursoId, inicio, fim, ativo])
+  @@map("indisponibilidades_recursos")
+}
+
+model ServicoRecurso {
+  id          Int      @id @default(autoincrement())
+  servicoId   Int
+  tipoRecurso String
+  quantidade  Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  servico     Servico  @relation(fields: [servicoId], references: [id])
+
+  @@unique([servicoId, tipoRecurso])
+  @@map("servicos_recursos")
+}
+
+model AgendamentoServico {
+  id                   Int         @id @default(autoincrement())
+  agendamentoId        Int
+  servicoId            Int
+  ordem                Int
+  duracaoMinutos       Int
+  preparoAntesMinutos  Int         @default(0)
+  preparoDepoisMinutos Int         @default(0)
+  preco                Decimal     @db.Decimal(10, 2)
+  createdAt            DateTime    @default(now())
+  agendamento          Agendamento @relation(fields: [agendamentoId], references: [id])
+  servico              Servico     @relation(fields: [servicoId], references: [id])
+
+  @@unique([agendamentoId, ordem])
+  @@index([servicoId])
+  @@map("agendamentos_servicos")
+}
+
+model AgendamentoRecurso {
+  id            Int         @id @default(autoincrement())
+  agendamentoId Int
+  recursoId     Int
+  inicio        DateTime
+  fim           DateTime
+  quantidade    Int         @default(1)
+  createdAt     DateTime    @default(now())
+  agendamento   Agendamento @relation(fields: [agendamentoId], references: [id])
+  recurso       Recurso     @relation(fields: [recursoId], references: [id])
+
+  @@unique([agendamentoId, recursoId])
+  @@index([recursoId, inicio, fim])
+  @@map("agendamentos_recursos")
+}
+
+model HistoricoReagendamento {
+  id                Int         @id @default(autoincrement())
+  agendamentoId     Int
+  alteradoPorId     Int
+  dataAnterior      DateTime
+  dataFimAnterior   DateTime?
+  unidadeIdAnterior Int?
+  dataNova          DateTime
+  dataFimNova       DateTime
+  unidadeIdNova     Int?
+  motivo            String?     @db.Text
+  createdAt         DateTime    @default(now())
+  agendamento       Agendamento @relation(fields: [agendamentoId], references: [id])
+  alteradoPor       Usuario     @relation("HistoricoReagendamentoAutor", fields: [alteradoPorId], references: [id])
+
+  @@index([agendamentoId, createdAt])
+  @@index([alteradoPorId])
+  @@map("historico_reagendamentos")
+}
+
+model Requisito {
+  id        Int                @id @default(autoincrement())
+  slug      String             @unique
+  nome      String
+  descricao String?            @db.Text
+  tipo      String             @default("INFORMATIVO")
+  ativo     Boolean            @default(true)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  servicos  ServicoRequisito[]
+
+  @@map("requisitos")
+}
+
+model ServicoRequisito {
+  id          Int       @id @default(autoincrement())
+  servicoId   Int
+  requisitoId Int
+  obrigatorio Boolean   @default(true)
+  observacao  String?   @db.Text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  servico     Servico   @relation(fields: [servicoId], references: [id])
+  requisito   Requisito @relation(fields: [requisitoId], references: [id])
+
+  @@unique([servicoId, requisitoId])
+  @@index([requisitoId])
+  @@map("servicos_requisitos")
+}
+
+model ClienteEstabelecimento {
+  privacidadeRestritaEm DateTime?
+  solicitacoesPrivacidade SolicitacaoPrivacidade[]
+  carteiraFidelidade CarteiraFidelidade?
+  id                    Int       @id @default(autoincrement())
+  estabelecimentoId     Int
+  usuarioId             Int
+  origem                String    @default("AGENDAMENTO")
+  primeiroAgendamentoEm DateTime?
+  ultimoAgendamentoEm   DateTime?
+  status                String    @default("ATIVO")
+  tags                  Json?
+  observacoes           String?   @db.Text
+  ultimaInteracaoEm     DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  usuario         Usuario         @relation(fields: [usuarioId], references: [id])
+  audienciasCampanhas CampanhaDestinatario[]
+
+  @@unique([estabelecimentoId, usuarioId])
+  @@index([usuarioId])
+  @@map("clientes_estabelecimentos")
+}
+
+model ImportacaoContatoLote {
+  id                String                  @id @default(uuid())
+  estabelecimentoId Int
+  operadorId        Int
+  chaveIdempotencia String
+  status            String                  @default("SIMULADO")
+  totalRecebidos    Int                     @default(0)
+  totalNovos        Int                     @default(0)
+  totalExistentes   Int                     @default(0)
+  totalInvalidos    Int                     @default(0)
+  totalConflitos    Int                     @default(0)
+  totalImportados   Int                     @default(0)
+  confirmadoEm      DateTime?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  estabelecimento   Estabelecimento         @relation(fields: [estabelecimentoId], references: [id])
+  operador          Usuario                 @relation("ImportacaoContatoOperador", fields: [operadorId], references: [id])
+  itens             ImportacaoContatoItem[]
+
+  @@unique([estabelecimentoId, chaveIdempotencia], map: "import_contatos_lote_tenant_chave_uq")
+  @@index([estabelecimentoId, createdAt])
+  @@index([operadorId])
+  @@map("importacoes_contatos_lotes")
+}
+
+model ImportacaoContatoItem {
+  id          Int                   @id @default(autoincrement())
+  loteId      String
+  usuarioId   Int?
+  referencia  String
+  fingerprint String
+  resultado   String
+  motivo      String?
+  createdAt   DateTime              @default(now())
+  lote        ImportacaoContatoLote @relation(fields: [loteId], references: [id], onDelete: Cascade)
+  usuario     Usuario?              @relation(fields: [usuarioId], references: [id], onDelete: SetNull)
+
+  @@unique([loteId, referencia])
+  @@index([usuarioId])
+  @@map("importacoes_contatos_itens")
+}
+
+model PreferenciaComunicacao {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  usuarioId         Int
+  canal             String
+  consentido        Boolean         @default(false)
+  origem            String          @default("USUARIO")
+  versaoTermos      String?
+  consentidoEm      DateTime?
+  revogadoEm        DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  usuario           Usuario         @relation(fields: [usuarioId], references: [id])
+
+  @@unique([estabelecimentoId, usuarioId, canal])
+  @@index([estabelecimentoId, canal, consentido])
+  @@index([usuarioId])
+  @@map("preferencias_comunicacao")
+}
+
+model TemplateComunicacao {
+  id                Int                @id @default(autoincrement())
+  estabelecimentoId Int
+  nome              String
+  evento            String
+  canal             String
+  assunto           String?
+  conteudo          String             @db.Text
+  ativo             Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  estabelecimento   Estabelecimento    @relation(fields: [estabelecimentoId], references: [id])
+  envios            EnvioComunicacao[]
+  campanhas         CampanhaComunicacao[]
+
+  @@unique([estabelecimentoId, nome, canal])
+  @@index([estabelecimentoId, evento, canal, ativo])
+  @@map("templates_comunicacao")
+}
+
+model EnvioComunicacao {
+  dadosExpurgadosEm DateTime?
+  id                   Int                         @id @default(autoincrement())
+  estabelecimentoId    Int
+  usuarioId            Int?
+  agendamentoId        Int?
+  templateId           Int?
+  campanhaId           Int?
+  canal                String
+  tipo                 String
+  destinatario         String
+  assunto              String?
+  conteudo             String                      @db.Text
+  status               String                      @default("AGENDADO")
+  chaveIdempotencia    String?
+  agendadoPara         DateTime
+  proximaTentativaEm   DateTime?
+  tentativasRealizadas Int                         @default(0)
+  maximoTentativas     Int                         @default(3)
+  bloqueadoEm          DateTime?
+  bloqueadoPor         String?
+  provedor             String?
+  referenciaExterna    String?
+  enviadoEm            DateTime?
+  erro                 String?                     @db.Text
+  metadados            Json?
+  createdAt            DateTime                    @default(now())
+  updatedAt            DateTime                    @updatedAt
+  estabelecimento      Estabelecimento             @relation(fields: [estabelecimentoId], references: [id])
+  usuario              Usuario?                    @relation(fields: [usuarioId], references: [id])
+  agendamento          Agendamento?                @relation(fields: [agendamentoId], references: [id])
+  template             TemplateComunicacao?        @relation(fields: [templateId], references: [id])
+  tentativas           TentativaEnvioComunicacao[]
+  callbacks            CallbackEnvioComunicacao[]
+  campanha             CampanhaComunicacao? @relation(fields: [campanhaId], references: [id])
+  destinatarioCampanha  CampanhaDestinatario?
+
+  @@unique([estabelecimentoId, chaveIdempotencia])
+  @@index([estabelecimentoId, status, agendadoPara])
+  @@index([status, proximaTentativaEm, bloqueadoEm])
+  @@index([provedor, referenciaExterna])
+  @@index([usuarioId, createdAt])
+  @@index([agendamentoId])
+  @@index([campanhaId, status])
+  @@index([estabelecimentoId, usuarioId, canal, createdAt], map: "envios_marketing_frequencia_idx")
+  @@index([estabelecimentoId, dadosExpurgadosEm, createdAt], map: "envios_retencao_idx")
+  @@map("envios_comunicacao")
+}
+
+model CampanhaComunicacao {
+  id Int @id @default(autoincrement())
+  estabelecimentoId Int
+  templateId Int
+  nome String @db.VarChar(191)
+  status String @default("RASCUNHO")
+  filtros Json
+  templateSnapshot Json?
+  intervaloMinimoHoras Int @default(168)
+  audienciaCongeladaEm DateTime?
+  agendadoPara DateTime?
+  concluidaEm DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  template TemplateComunicacao @relation(fields: [templateId], references: [id])
+  destinatarios CampanhaDestinatario[]
+  envios EnvioComunicacao[]
+  @@index([estabelecimentoId, status, createdAt])
+  @@index([status, agendadoPara])
+  @@map("campanhas_comunicacao")
+}
+
+model CampanhaDestinatario {
+  id Int @id @default(autoincrement())
+  campanhaId Int
+  clienteId Int?
+  usuarioId Int
+  envioId Int? @unique
+  status String @default("PENDENTE")
+  motivo String? @db.VarChar(191)
+  evidencia Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  campanha CampanhaComunicacao @relation(fields: [campanhaId], references: [id])
+  cliente ClienteEstabelecimento? @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  envio EnvioComunicacao? @relation(fields: [envioId], references: [id], onDelete: SetNull)
+  @@unique([campanhaId, usuarioId])
+  @@index([campanhaId, status, id])
+  @@map("campanhas_destinatarios")
+}
+
+model SupressaoComunicacao {
+  id Int @id @default(autoincrement())
+  estabelecimentoId Int
+  usuarioId Int
+  canal String
+  ativa Boolean @default(true)
+  motivo String @db.VarChar(300)
+  ultimoDisparoEm DateTime?
+  ultimoEnvioId Int?
+  intervaloReservadoHoras Int @default(168)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+  @@unique([estabelecimentoId, usuarioId, canal])
+  @@map("supressoes_comunicacao")
+}
+
+model TentativaEnvioComunicacao {
+  id                Int              @id @default(autoincrement())
+  envioId           Int
+  numero            Int
+  status            String
+  provedor          String?
+  referenciaExterna String?
+  resposta          Json?
+  erro              String?          @db.Text
+  iniciadaEm        DateTime         @default(now())
+  finalizadaEm      DateTime?
+  envio             EnvioComunicacao @relation(fields: [envioId], references: [id], onDelete: Cascade)
+
+  @@unique([envioId, numero])
+  @@index([status, iniciadaEm])
+  @@map("tentativas_envios_comunicacao")
+}
+
+model CallbackEnvioComunicacao {
+  id                Int               @id @default(autoincrement())
+  envioId           Int?
+  provedor          String
+  eventoExternoId   String
+  referenciaExterna String?
+  tipo              String
+  payload           Json
+  recebidoEm        DateTime          @default(now())
+  processadoEm      DateTime?
+  erro              String?           @db.Text
+  envio             EnvioComunicacao? @relation(fields: [envioId], references: [id], onDelete: SetNull)
+
+  @@unique([provedor, eventoExternoId])
+  @@index([referenciaExterna])
+  @@index([processadoEm, recebidoEm])
+  @@index([envioId, tipo, recebidoEm], map: "callbacks_metricas_idx")
+  @@map("callbacks_envios_comunicacao")
 }
 
 model Unidade {
-  id          Int       @id @default(autoincrement())
-  barbeariaId Int
-  nome        String
-  endereco    String?
-  telefone    String?
-  ativa       Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  barbearia   Barbearia @relation(fields: [barbeariaId], references: [id])
+  id                    Int                    @id @default(autoincrement())
+  estabelecimentoId     Int
+  nome                  String
+  endereco              String?
+  telefone              String?
+  ativa                 Boolean                @default(true)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  estabelecimento       Estabelecimento        @relation(fields: [estabelecimentoId], references: [id])
   horariosFuncionamento HorarioFuncionamento[]
   bloqueiosAgenda       BloqueioAgenda[]
+  recursos              Recurso[]
+  agendamentos          Agendamento[]
+  escalasProfissionais  EscalaProfissional[]
 
-  @@unique([barbeariaId, nome])
-  @@index([barbeariaId])
+  @@unique([estabelecimentoId, nome])
+  @@index([estabelecimentoId])
   @@map("unidades")
 }
 
 model HorarioFuncionamento {
-  id              Int       @id @default(autoincrement())
-  barbeariaId     Int
-  unidadeId       Int?
-  diaSemana       Int
-  inicio          String    @db.VarChar(5)
-  fim             String    @db.VarChar(5)
-  intervaloInicio String?   @db.VarChar(5)
-  intervaloFim    String?   @db.VarChar(5)
-  ativo           Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  barbearia       Barbearia @relation(fields: [barbeariaId], references: [id])
-  unidade         Unidade?  @relation(fields: [unidadeId], references: [id])
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  unidadeId         Int?
+  diaSemana         Int
+  inicio            String          @db.VarChar(5)
+  fim               String          @db.VarChar(5)
+  intervaloInicio   String?         @db.VarChar(5)
+  intervaloFim      String?         @db.VarChar(5)
+  ativo             Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  unidade           Unidade?        @relation(fields: [unidadeId], references: [id])
 
-  @@index([barbeariaId, diaSemana])
+  @@index([estabelecimentoId, diaSemana])
   @@index([unidadeId])
   @@map("horarios_funcionamento")
 }
 
 model BloqueioAgenda {
-  id             Int           @id @default(autoincrement())
-  barbeariaId    Int
-  profissionalId Int?
-  unidadeId      Int?
-  inicio         DateTime
-  fim            DateTime
-  motivo         String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  barbearia      Barbearia     @relation(fields: [barbeariaId], references: [id])
-  profissional   Profissional? @relation(fields: [profissionalId], references: [id])
-  unidade        Unidade?      @relation(fields: [unidadeId], references: [id])
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  profissionalId    Int?
+  unidadeId         Int?
+  inicio            DateTime
+  fim               DateTime
+  motivo            String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  profissional      Profissional?   @relation(fields: [profissionalId], references: [id])
+  unidade           Unidade?        @relation(fields: [unidadeId], references: [id])
 
-  @@index([barbeariaId, inicio, fim])
+  @@index([estabelecimentoId, inicio, fim])
   @@index([profissionalId, inicio, fim])
   @@index([unidadeId, inicio, fim])
   @@map("bloqueios_agenda")
 }
 
 model LancamentoFinanceiro {
-  id             Int           @id @default(autoincrement())
-  barbeariaId    Int
-  profissionalId Int?
-  usuarioId      Int?
-  tipo           String
-  categoria      String?
-  descricao      String
-  valor          Decimal       @db.Decimal(10, 2)
-  data           DateTime
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  barbearia      Barbearia     @relation(fields: [barbeariaId], references: [id])
-  profissional   Profissional? @relation(fields: [profissionalId], references: [id])
-  usuario        Usuario?      @relation(fields: [usuarioId], references: [id])
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  profissionalId    Int?
+  usuarioId         Int?
+  tipo              String
+  categoria         String?
+  descricao         String
+  valor             Decimal         @db.Decimal(10, 2)
+  data              DateTime
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  profissional      Profissional?   @relation(fields: [profissionalId], references: [id])
+  usuario           Usuario?        @relation(fields: [usuarioId], references: [id])
 
-  @@index([barbeariaId, data])
+  @@index([estabelecimentoId, data])
   @@index([profissionalId, data])
   @@index([usuarioId])
   @@map("lancamentos_financeiros")
 }
 
+model ConfiguracaoComissao {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  profissionalId    Int?
+  servicoId         Int?
+  chave             String
+  percentual        Decimal         @db.Decimal(5, 2)
+  ativo             Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  profissional      Profissional?   @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
+  servico           Servico?        @relation(fields: [servicoId], references: [id], onDelete: Cascade)
+
+  @@unique([estabelecimentoId, chave])
+  @@index([estabelecimentoId, ativo])
+  @@index([profissionalId])
+  @@index([servicoId])
+  @@map("configuracoes_comissao")
+}
+
+model FormaPagamento {
+  id                Int               @id @default(autoincrement())
+  estabelecimentoId Int
+  nome              String
+  tipo              String
+  taxaPercentual    Decimal           @default(0) @db.Decimal(5, 2)
+  taxaFixa          Decimal           @default(0) @db.Decimal(10, 2)
+  prazoRecebimento  Int               @default(0)
+  ativa             Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  estabelecimento   Estabelecimento   @relation(fields: [estabelecimentoId], references: [id])
+  contas            ContaFinanceira[]
+
+  @@unique([estabelecimentoId, nome])
+  @@index([estabelecimentoId, ativa])
+  @@map("formas_pagamento")
+}
+
+model ContaFinanceira {
+  id                Int                     @id @default(autoincrement())
+  estabelecimentoId Int
+  agendamentoId     Int?                    @unique
+  formaPagamentoId  Int?
+  tipo              String
+  categoria         String?
+  descricao         String
+  documento         String?
+  valorOriginal     Decimal                 @db.Decimal(10, 2)
+  valorPago         Decimal                 @default(0) @db.Decimal(10, 2)
+  status            String                  @default("PENDENTE")
+  competencia       DateTime
+  vencimento        DateTime
+  pagoEm            DateTime?
+  observacoes       String?                 @db.Text
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  estabelecimento   Estabelecimento         @relation(fields: [estabelecimentoId], references: [id])
+  agendamento       Agendamento?            @relation(fields: [agendamentoId], references: [id])
+  formaPagamento    FormaPagamento?         @relation(fields: [formaPagamentoId], references: [id])
+  conciliacoes      ConciliacaoFinanceira[]
+
+  @@index([estabelecimentoId, tipo, status, vencimento])
+  @@index([formaPagamentoId])
+  @@map("contas_financeiras")
+}
+
+model FechamentoCaixa {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  abertoPorId       Int
+  fechadoPorId      Int?
+  status            String          @default("ABERTO")
+  chaveAberto       String?         @unique
+  abertoEm          DateTime        @default(now())
+  fechadoEm         DateTime?
+  saldoInicial      Decimal         @default(0) @db.Decimal(10, 2)
+  totalReceitas     Decimal         @default(0) @db.Decimal(10, 2)
+  totalDespesas     Decimal         @default(0) @db.Decimal(10, 2)
+  saldoEsperado     Decimal         @default(0) @db.Decimal(10, 2)
+  saldoInformado    Decimal?        @db.Decimal(10, 2)
+  diferenca         Decimal?        @db.Decimal(10, 2)
+  observacoes       String?         @db.Text
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  abertoPor         Usuario         @relation("CaixaAbertoPor", fields: [abertoPorId], references: [id])
+  fechadoPor        Usuario?        @relation("CaixaFechadoPor", fields: [fechadoPorId], references: [id])
+
+  @@index([estabelecimentoId, status, abertoEm])
+  @@index([abertoPorId])
+  @@index([fechadoPorId])
+  @@map("fechamentos_caixa")
+}
+
+model RepasseFinanceiro {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  profissionalId    Int
+  periodoInicio     DateTime
+  periodoFim        DateTime
+  receitaBruta      Decimal         @db.Decimal(10, 2)
+  percentualMedio   Decimal         @db.Decimal(5, 2)
+  valorComissao     Decimal         @db.Decimal(10, 2)
+  ajustes           Decimal         @default(0) @db.Decimal(10, 2)
+  valorLiquido      Decimal         @db.Decimal(10, 2)
+  status            String          @default("PENDENTE")
+  pagoEm            DateTime?
+  observacoes       String?         @db.Text
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  profissional      Profissional    @relation(fields: [profissionalId], references: [id])
+
+  @@unique([estabelecimentoId, profissionalId, periodoInicio, periodoFim])
+  @@index([estabelecimentoId, status, periodoFim])
+  @@index([profissionalId])
+  @@map("repasses_financeiros")
+}
+
 model PlanoAssinatura {
-  id              Int                  @id @default(autoincrement())
-  nome            String               @unique
-  slug            String               @unique
-  descricao       String               @db.Text
-  precoMensal     Decimal              @db.Decimal(10, 2)
-  limiteUsuarios  Int
-  limiteUnidades  Int
-  limiteServicos  Int
-  recursos        Json
-  ativo           Boolean              @default(true)
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-  assinaturas     AssinaturaBarbearia[]
+  id             Int                         @id @default(autoincrement())
+  nome           String                      @unique
+  slug           String                      @unique
+  descricao      String                      @db.Text
+  precoMensal    Decimal                     @db.Decimal(10, 2)
+  limiteUsuarios Int
+  limiteUnidades Int
+  limiteServicos Int
+  recursos       Json
+  ativo          Boolean                     @default(true)
+  createdAt      DateTime                    @default(now())
+  updatedAt      DateTime                    @updatedAt
+  assinaturas    AssinaturaEstabelecimento[]
 
   @@map("planos_assinatura")
 }
 
-model AssinaturaBarbearia {
-  id              Int              @id @default(autoincrement())
-  barbeariaId     Int              @unique
-  planoId         Int
-  status          String           @default("TRIAL")
-  trialEndsAt     DateTime?
-  currentPeriodEnd DateTime?
-  cancelAtPeriodEnd Boolean        @default(false)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  barbearia       Barbearia        @relation(fields: [barbeariaId], references: [id])
-  plano           PlanoAssinatura  @relation(fields: [planoId], references: [id])
+model AssinaturaEstabelecimento {
+  id                Int                  @id @default(autoincrement())
+  estabelecimentoId Int                  @unique
+  planoId           Int
+  status            String               @default("TRIAL")
+  trialEndsAt       DateTime?
+  currentPeriodEnd  DateTime?
+  cancelAtPeriodEnd Boolean              @default(false)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  estabelecimento   Estabelecimento      @relation(fields: [estabelecimentoId], references: [id])
+  plano             PlanoAssinatura      @relation(fields: [planoId], references: [id])
+  cobrancas         CobrancaAssinatura[]
 
   @@index([planoId])
   @@index([status])
-  @@map("assinaturas_barbearia")
+  @@map("assinaturas_estabelecimentos")
+}
+
+model CobrancaAssinatura {
+  id                Int                       @id @default(autoincrement())
+  assinaturaId      Int
+  provedor          String                    @default("MANUAL")
+  referenciaExterna String?                   @unique
+  valor             Decimal                   @db.Decimal(10, 2)
+  status            String                    @default("PENDENTE")
+  vencimento        DateTime
+  pagoEm            DateTime?
+  tentativas        Int                       @default(0)
+  linkPagamento     String?                   @db.Text
+  codigoPix         String?                   @db.Text
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  assinatura        AssinaturaEstabelecimento @relation(fields: [assinaturaId], references: [id], onDelete: Cascade)
+
+  @@index([assinaturaId, status, vencimento])
+  @@map("cobrancas_assinaturas")
+}
+
+model EventoGatewayPagamento {
+  id                Int              @id @default(autoincrement())
+  estabelecimentoId Int?
+  provedor          String
+  eventoExternoId   String
+  tipo              String
+  payload           Json
+  status            String           @default("PENDENTE")
+  processadoEm      DateTime?
+  erro              String?          @db.Text
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  estabelecimento   Estabelecimento? @relation(fields: [estabelecimentoId], references: [id])
+
+  @@unique([provedor, eventoExternoId])
+  @@index([estabelecimentoId, createdAt])
+  @@index([status, createdAt])
+  @@map("eventos_gateway_pagamento")
+}
+
+model ConciliacaoFinanceira {
+  id                 Int              @id @default(autoincrement())
+  estabelecimentoId  Int
+  contaFinanceiraId  Int?
+  provedor           String
+  transacaoExternaId String
+  valorEsperado      Decimal          @db.Decimal(10, 2)
+  valorRecebido      Decimal          @db.Decimal(10, 2)
+  diferenca          Decimal          @db.Decimal(10, 2)
+  status             String           @default("PENDENTE")
+  conciliadoEm       DateTime?
+  observacoes        String?          @db.Text
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  estabelecimento    Estabelecimento  @relation(fields: [estabelecimentoId], references: [id])
+  contaFinanceira    ContaFinanceira? @relation(fields: [contaFinanceiraId], references: [id])
+
+  @@unique([estabelecimentoId, provedor, transacaoExternaId])
+  @@index([estabelecimentoId, status, createdAt])
+  @@index([contaFinanceiraId])
+  @@map("conciliacoes_financeiras")
 }
 
 model LogAuditoria {
-  id          Int       @id @default(autoincrement())
-  barbeariaId Int?
-  usuarioId   Int?
-  acao        String
-  entidade    String
-  entidadeId  String?
-  detalhes    Json?
-  createdAt   DateTime  @default(now())
-  barbearia   Barbearia? @relation(fields: [barbeariaId], references: [id])
-  usuario     Usuario?   @relation(fields: [usuarioId], references: [id])
+  id                Int              @id @default(autoincrement())
+  estabelecimentoId Int?
+  usuarioId         Int?
+  acao              String
+  entidade          String
+  entidadeId        String?
+  detalhes          Json?
+  createdAt         DateTime         @default(now())
+  estabelecimento   Estabelecimento? @relation(fields: [estabelecimentoId], references: [id])
+  usuario           Usuario?         @relation(fields: [usuarioId], references: [id])
 
-  @@index([barbeariaId, createdAt])
+  @@index([estabelecimentoId, createdAt])
   @@index([usuarioId, createdAt])
   @@map("logs_auditoria")
 }
 
-model LembreteRelacionamento {
-  id             Int          @id @default(autoincrement())
-  barbeariaId    Int
-  usuarioId      Int?
-  agendamentoId  Int?
-  tipo           String
-  canal          String       @default("WHATSAPP")
-  status         String       @default("PENDENTE")
-  mensagem       String       @db.Text
-  dataPrevista   DateTime
-  enviadoEm      DateTime?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  barbearia      Barbearia    @relation(fields: [barbeariaId], references: [id])
-  usuario        Usuario?     @relation(fields: [usuarioId], references: [id])
+model TransicaoAgendamento {
+  id                    Int             @id @default(autoincrement())
+  agendamentoId         Int
+  estabelecimentoId     Int
+  destinatarioUsuarioId Int?
+  revisaoFluxo          Int
+  tipo                  String
+  status                String          @default("AGENDADA")
+  chaveIdempotencia     String          @unique
+  dataPrevista          DateTime
+  processadoEm          DateTime?
+  tentativas            Int             @default(0)
+  proximaTentativaEm    DateTime?
+  bloqueadoEm           DateTime?
+  bloqueadoPor          String?
+  erro                  String?         @db.Text
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  agendamento           Agendamento     @relation(fields: [agendamentoId], references: [id], onDelete: Cascade)
+  estabelecimento       Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  destinatario          Usuario?        @relation("DestinatarioTransicaoAgendamento", fields: [destinatarioUsuarioId], references: [id], onDelete: SetNull)
 
-  @@index([barbeariaId, status, dataPrevista])
+  @@index([status, dataPrevista])
+  @@index([status, proximaTentativaEm])
+  @@index([estabelecimentoId, status, dataPrevista])
+  @@index([agendamentoId, revisaoFluxo])
+  @@index([destinatarioUsuarioId])
+  @@map("transicoes_agendamentos")
+}
+
+model LembreteRelacionamento {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  usuarioId         Int?
+  agendamentoId     Int?
+  tipo              String
+  canal             String          @default("WHATSAPP")
+  status            String          @default("PENDENTE")
+  mensagem          String          @db.Text
+  dataPrevista      DateTime
+  enviadoEm         DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  usuario           Usuario?        @relation(fields: [usuarioId], references: [id])
+
+  @@index([estabelecimentoId, status, dataPrevista])
   @@index([usuarioId])
   @@map("lembretes_relacionamento")
 }
 
 model Avaliacao {
-  id             Int          @id @default(autoincrement())
-  barbeariaId    Int
-  agendamentoId  Int          @unique
-  usuarioId      Int
-  profissionalId Int
-  nota           Int
-  comentario     String?      @db.Text
-  status         String       @default("APPROVED")
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  barbearia      Barbearia    @relation(fields: [barbeariaId], references: [id])
-  agendamento    Agendamento  @relation(fields: [agendamentoId], references: [id])
-  usuario        Usuario      @relation(fields: [usuarioId], references: [id])
-  profissional   Profissional @relation(fields: [profissionalId], references: [id])
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  agendamentoId     Int             @unique
+  usuarioId         Int
+  profissionalId    Int
+  nota              Int
+  comentario        String?         @db.Text
+  status            String          @default("APPROVED")
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  agendamento       Agendamento     @relation(fields: [agendamentoId], references: [id])
+  usuario           Usuario         @relation(fields: [usuarioId], references: [id])
+  profissional      Profissional    @relation(fields: [profissionalId], references: [id])
 
-  @@index([barbeariaId, status])
+  @@index([estabelecimentoId, status])
   @@index([profissionalId, status])
   @@index([usuarioId])
   @@map("avaliacoes")
+}
+
+model DenunciaPerfilPublico {
+  id                Int             @id @default(autoincrement())
+  estabelecimentoId Int
+  nome              String?
+  email             String?
+  motivo            String
+  mensagem          String          @db.Text
+  status            String          @default("PENDENTE")
+  resolucao         String?         @db.Text
+  revisadoPorId     Int?
+  revisadoEm        DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  revisadoPor       Usuario?        @relation("DenunciaPerfilRevisor", fields: [revisadoPorId], references: [id])
+
+  @@index([estabelecimentoId, status, createdAt])
+  @@index([revisadoPorId])
+  @@map("denuncias_perfil_publico")
+}
+
+model ProgramaFidelidade {
+  estabelecimentoId Int @id
+  ativo Boolean @default(false)
+  centavosPorPonto Int @default(100)
+  validadeDias Int @default(365)
+  bonusIndicacao Int @default(0)
+  minimoIndicacaoCentavos Int @default(0)
+  niveis Json
+  updatedAt DateTime @updatedAt
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  recompensas RecompensaFidelidade[]
+  cupons CupomFidelidade[]
+  @@map("programas_fidelidade")
+}
+
+model CarteiraFidelidade {
+  clienteId Int @id
+  createdAt DateTime @default(now())
+  cliente ClienteEstabelecimento @relation(fields: [clienteId], references: [id])
+  movimentos MovimentoFidelidade[]
+  beneficios BeneficioFidelidade[]
+  indicacoesFeitas IndicacaoFidelidade[] @relation("IndicadorFidelidade")
+  indicacaoRecebida IndicacaoFidelidade? @relation("IndicadoFidelidade")
+  @@map("carteiras_fidelidade")
+}
+
+model MovimentoFidelidade {
+  id Int @id @default(autoincrement())
+  clienteId Int
+  chave String @unique @db.VarChar(191)
+  tipo String
+  pontos Int
+  creditoId Int?
+  beneficioId Int?
+  expiraEm DateTime?
+  detalhes Json
+  createdAt DateTime @default(now())
+  carteira CarteiraFidelidade @relation(fields: [clienteId], references: [clienteId])
+  credito MovimentoFidelidade? @relation("LotePontos", fields: [creditoId], references: [id], onDelete: Restrict)
+  consumos MovimentoFidelidade[] @relation("LotePontos")
+  beneficio BeneficioFidelidade? @relation(fields: [beneficioId], references: [id], onDelete: Restrict)
+  @@index([clienteId, creditoId, expiraEm])
+  @@map("movimentos_fidelidade")
+}
+
+model RecompensaFidelidade {
+  id Int @id @default(autoincrement())
+  estabelecimentoId Int
+  nome String @db.VarChar(120)
+  pontos Int
+  descontoCentavos Int
+  ativo Boolean @default(true)
+  programa ProgramaFidelidade @relation(fields: [estabelecimentoId], references: [estabelecimentoId])
+  beneficios BeneficioFidelidade[]
+  @@index([estabelecimentoId, ativo])
+  @@map("recompensas_fidelidade")
+}
+
+model CupomFidelidade {
+  id Int @id @default(autoincrement())
+  estabelecimentoId Int
+  codigo String @db.VarChar(40)
+  descontoCentavos Int
+  inicio DateTime
+  fim DateTime
+  limiteTotal Int
+  limitePorCliente Int @default(1)
+  minimoCentavos Int @default(0)
+  elegibilidade Json
+  ativo Boolean @default(true)
+  programa ProgramaFidelidade @relation(fields: [estabelecimentoId], references: [estabelecimentoId])
+  beneficios BeneficioFidelidade[]
+  @@unique([estabelecimentoId, codigo])
+  @@map("cupons_fidelidade")
+}
+
+model BeneficioFidelidade {
+  id Int @id @default(autoincrement())
+  agendamentoId Int
+  clienteId Int
+  recompensaId Int?
+  cupomId Int?
+  chaveAtiva String? @unique
+  chave String @unique @db.VarChar(191)
+  status String @default("APLICADO")
+  descontoCentavos Int
+  pontos Int @default(0)
+  snapshot Json
+  createdAt DateTime @default(now())
+  agendamento Agendamento @relation(fields: [agendamentoId], references: [id])
+  carteira CarteiraFidelidade @relation(fields: [clienteId], references: [clienteId])
+  recompensa RecompensaFidelidade? @relation(fields: [recompensaId], references: [id], onDelete: Restrict)
+  cupom CupomFidelidade? @relation(fields: [cupomId], references: [id], onDelete: Restrict)
+  movimentos MovimentoFidelidade[]
+  @@index([agendamentoId, status])
+  @@index([cupomId, status, clienteId])
+  @@map("beneficios_fidelidade")
+}
+
+model IndicacaoFidelidade {
+  id Int @id @default(autoincrement())
+  indicadorId Int
+  indicadoId Int @unique
+  status String @default("PENDENTE")
+  aprovadoPorId Int?
+  bonusPontos Int @default(0)
+  createdAt DateTime @default(now())
+  indicador CarteiraFidelidade @relation("IndicadorFidelidade", fields: [indicadorId], references: [clienteId])
+  indicado CarteiraFidelidade @relation("IndicadoFidelidade", fields: [indicadoId], references: [clienteId])
+  @@index([indicadorId, status])
+  @@map("indicacoes_fidelidade")
+}
+
+model LiquidacaoFidelidade {
+  agendamentoId Int @id
+  liquidoCentavos Decimal @db.Decimal(12, 0)
+  pontos Int
+  createdAt DateTime @default(now())
+  agendamento Agendamento @relation(fields: [agendamentoId], references: [id])
+  @@map("liquidacoes_fidelidade")
+}
+
+model PoliticaRetencaoRelacionamento {
+  estabelecimentoId Int @id
+  ativa Boolean @default(false)
+  conteudoDias Int @default(90)
+  fundamento String @db.VarChar(500)
+  aprovadaPorId Int
+  updatedAt DateTime @updatedAt
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id], map: "politicas_retencao_estabelecimento_fkey")
+  @@map("politicas_retencao_relacionamento")
+}
+
+model SolicitacaoPrivacidade {
+  id Int @id @default(autoincrement())
+  estabelecimentoId Int
+  clienteId Int
+  tipo String
+  status String @default("ABERTA")
+  chave String @db.VarChar(100)
+  solicitadoPorId Int
+  validadoPorId Int?
+  identidadeValidadaEm DateTime?
+  referenciaVerificacao String? @db.VarChar(150)
+  motivoConservacao String? @db.VarChar(500)
+  resultado Json?
+  concluidaEm DateTime?
+  createdAt DateTime @default(now())
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  cliente ClienteEstabelecimento @relation(fields: [clienteId], references: [id])
+  @@unique([estabelecimentoId, chave])
+  @@index([estabelecimentoId, status, id])
+  @@map("solicitacoes_privacidade")
 }

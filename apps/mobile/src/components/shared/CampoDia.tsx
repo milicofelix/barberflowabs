@@ -1,5 +1,6 @@
-import { DateUtils } from '@barbabrutal/core'
+import { DateUtils } from '@uniflowabs/core'
 import { StyleSheet, Text, Pressable, View } from 'react-native'
+import useTema from '@/src/data/contexts/ContextoTema'
 
 export interface CampoDiaProps {
     value: Date
@@ -7,6 +8,7 @@ export interface CampoDiaProps {
 }
 
 export default function CampoDia(props: CampoDiaProps) {
+    const { cores } = useTema()
     function renderizarDia(data: Date) {
         if (data.getDay() === 0) {
             data.setDate(data.getDate() + 1)
@@ -14,14 +16,14 @@ export default function CampoDia(props: CampoDiaProps) {
 
         const selecionado = data.getDate() === props.value.getDate()
         return (
-            <View key={data.getTime()} style={{ ...styles.card, backgroundColor: selecionado ? '#fbbf24' : '#18181b' }}>
+            <View key={data.getTime()} style={[styles.card, { backgroundColor: selecionado ? cores.destaque : cores.superficie }]}>
                 <Pressable onPress={() => props.onChange(data)}>
                     <View style={{ alignItems: 'center' }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                             <Text
                                 style={{
                                     ...styles.mesNumero,
-                                    color: selecionado ? 'black' : '#e4e4e7',
+                                    color: selecionado ? cores.destaqueTexto : cores.texto,
                                 }}
                             >
                                 {data.getDate()}
@@ -29,7 +31,7 @@ export default function CampoDia(props: CampoDiaProps) {
                             <Text
                                 style={{
                                     ...styles.mesTexto,
-                                    color: selecionado ? 'black' : '#e4e4e7',
+                                    color: selecionado ? cores.destaqueTexto : cores.texto,
                                 }}
                             >
                                 {data.toLocaleDateString('pt-BR', { month: 'short' }).slice(0, 3)}
@@ -37,7 +39,7 @@ export default function CampoDia(props: CampoDiaProps) {
                         </View>
                         <Text
                             style={{
-                                color: selecionado ? 'black' : '#e4e4e7',
+                                color: selecionado ? cores.destaqueTexto : cores.texto,
                                 textTransform: 'uppercase',
                             }}
                         >
@@ -51,7 +53,7 @@ export default function CampoDia(props: CampoDiaProps) {
 
     return (
         <View style={{ marginTop: 30, alignItems: 'center' }}>
-            <Text style={{ color: '#e4e4e7', fontSize: 18, fontWeight: 'bold' }}>Dias Disponíveis</Text>
+            <Text style={{ color: cores.texto, fontSize: 18, fontWeight: 'bold' }}>Dias Disponíveis</Text>
             <View style={styles.diaContainer}>
                 {DateUtils.proximosDias(7)
                     .filter((date) => date.getDay() !== 0)

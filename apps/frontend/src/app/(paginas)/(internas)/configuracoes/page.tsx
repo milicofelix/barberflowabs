@@ -1,25 +1,27 @@
 'use client'
 
 import FormularioConfiguracaoAgenda from '@/components/configuracoes/FormularioConfiguracaoAgenda'
-import FormularioPerfilPublicoBarbearia from '@/components/configuracoes/FormularioPerfilPublicoBarbearia'
+import FormularioPerfilPublicoEstabelecimento from '@/components/configuracoes/FormularioPerfilPublicoEstabelecimento'
 import CabecalhoComTitulo from '@/components/shared/CabecalhoComTitulo'
 import useSessao from '@/data/hooks/useSessao'
+import MinhaFoto from '@/components/midia/MinhaFoto'
 import { CalendarDays, MapPinned } from 'lucide-react'
 import { useState } from 'react'
 
 export default function Page() {
     const { usuario } = useSessao()
     const [aba, setAba] = useState<'agenda' | 'perfil'>('perfil')
+    const superAdmin = usuario?.role === 'SUPER_ADMIN' || usuario?.papel === 'SUPER_ADMIN'
 
-    if (!usuario?.barbeiro) {
+    if (!usuario?.membroEstabelecimento || superAdmin) {
         return (
             <div className="flex flex-col gap-5">
                 <CabecalhoComTitulo
                     titulo="Configurações"
-                    descricao="Acesso restrito aos responsáveis pela barbearia."
+                    descricao="Personalize sua conta."
                 />
-                <div className="container py-10 text-zinc-300">
-                    Você não tem permissão para alterar estas configurações.
+                <div className="container py-10">
+                    <MinhaFoto />
                 </div>
             </div>
         )
@@ -29,9 +31,10 @@ export default function Page() {
         <div className="flex flex-col gap-5">
             <CabecalhoComTitulo
                 titulo="Configurações"
-                descricao="Defina perfil público, localização e agenda da barbearia."
+                descricao="Defina perfil público, localização e agenda do estabelecimento."
             />
             <div className="container grid gap-6 py-10">
+                <MinhaFoto />
                 <div className="flex w-fit rounded border border-zinc-800 bg-zinc-900 p-1">
                     <button type="button" onClick={() => setAba('perfil')} className={classeAba(aba === 'perfil')}>
                         <MapPinned size={18} />
@@ -42,7 +45,7 @@ export default function Page() {
                         Agenda
                     </button>
                 </div>
-                {aba === 'perfil' ? <FormularioPerfilPublicoBarbearia /> : <FormularioConfiguracaoAgenda />}
+                {aba === 'perfil' ? <FormularioPerfilPublicoEstabelecimento /> : <FormularioConfiguracaoAgenda />}
             </div>
         </div>
     )

@@ -14,15 +14,19 @@ export type RefreshTokenDto = {
   token: string;
 };
 
-export type UsuarioRole = 'SUPER_ADMIN' | 'BARBER' | 'CUSTOMER';
+export type AlterarSenhaDto = { senhaAtual: string; novaSenha: string };
+
+export type UsuarioRole = 'SUPER_ADMIN' | 'APP_OWNER' | 'ESTABLISHMENT_OWNER' | 'ESTABLISHMENT_MEMBER' | 'CUSTOMER';
 
 export type AuthTokenPayload = {
+  trocarSenhaObrigatoria?: boolean;
+  fotoURL?: string | null;
   sub: number;
   id: number;
   nome: string;
   email: string;
-  barbeariaId: number;
-  barbeiro: boolean;
+  estabelecimentoId: number | null;
+  membroEstabelecimento: boolean;
   papel?: UsuarioRole;
   role: UsuarioRole;
   telefone?: string;

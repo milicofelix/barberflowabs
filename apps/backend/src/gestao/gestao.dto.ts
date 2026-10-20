@@ -1,5 +1,33 @@
+import { StatusAgendamento } from '@uniflowabs/core';
+
 export interface AtualizarStatusAgendamentoDto {
-  status: string;
+  status: StatusAgendamento;
+  motivo?: string | null;
+}
+
+export interface ConsultarAgendaPeriodoDto {
+  inicio: string;
+  fim: string;
+  unidadeId?: string;
+  profissionalId?: string;
+  recursoId?: string;
+  servicoId?: string;
+  status?: string;
+  cursor?: string;
+  limite?: string;
+}
+
+export interface CriarAgendamentoAssistidoDto {
+  clienteId: number;
+  data: string;
+  profissional: { id: number };
+  servicos: Array<{ id: number }>;
+  unidadeId?: number | null;
+  modeloAtendimento?: 'PRESENCIAL' | 'DOMICILIAR' | 'HIBRIDO';
+  enderecoAtendimento?: string | null;
+  deslocamentoMinutos?: number;
+  origem?: 'RECEPCAO' | 'TELEFONE' | 'WHATSAPP' | 'PRESENCIAL' | 'OUTRO';
+  observacoes?: string | null;
 }
 
 export interface CriarLancamentoFinanceiroDto {
@@ -14,10 +42,27 @@ export interface CriarLancamentoFinanceiroDto {
 
 export interface SalvarClienteDto {
   nome: string;
-  email: string;
+  email?: string;
   telefone?: string;
   dataNascimento?: string;
   senha?: string;
+}
+
+export interface ContatoImportacaoDto {
+  referencia: string;
+  nome: string;
+  telefone?: string;
+  email?: string;
+}
+
+export interface SimularImportacaoContatosDto {
+  chaveIdempotencia: string;
+  contatos: ContatoImportacaoDto[];
+}
+
+export interface ConfirmarImportacaoContatosDto {
+  contatos: ContatoImportacaoDto[];
+  confirmarCorrespondencias?: boolean;
 }
 
 export interface CriarLembreteRelacionamentoDto {

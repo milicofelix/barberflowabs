@@ -44,4 +44,4 @@ RUN yarn --cwd apps/backend prisma:generate
 
 EXPOSE 3000 4000 8081 19000 19001 19002 19006
 
-CMD ["yarn", "turbo", "dev", "--ui=stream"]
+CMD ["sh", "-lc", "yarn --cwd apps/backend prisma:generate && yarn turbo dev --ui=stream"]

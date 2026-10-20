@@ -1,6 +1,6 @@
 # Roadmap SaaS - Barber Flow ABS
 
-Este roadmap consolida o plano para transformar o projeto atual em um SaaS multi-barbearia. Ele foi baseado no documento de avaliacao arquitetural enviado como referencia e ajustado para as decisoes atuais do projeto.
+Este roadmap consolida o plano para transformar o projeto atual em um SaaS multi-estabelecimento. Ele foi baseado no documento de avaliacao arquitetural enviado como referencia e ajustado para as decisoes atuais do projeto.
 
 ## Decisoes Do Projeto
 
@@ -9,7 +9,11 @@ Este roadmap consolida o plano para transformar o projeto atual em um SaaS multi
 - O `docker-compose.yml` deste projeto deve apontar para o container MySQL externo, sem criar um MySQL local.
 - Nome publico do produto: `Barber Flow ABS`.
 - Slug padrao de desenvolvimento: `barber-flow-abs`.
-- Pacotes tecnicos `@barbabrutal/core` e `@barbabrutal/ui` devem ser preservados ate haver uma fase propria de migracao tecnica, para evitar quebra dos workspaces.
+- Planos comerciais iniciais: `Mensal`, `Trimestral` e `Anual`.
+- Mensal a partir de R$ 49,90.
+- Pagamento inicial dos planos: PIX.
+- Planos Trimestral e Anual devem comunicar vantagem por desconto/previsibilidade em relacao ao mensal.
+- Os pacotes tecnicos foram canonicalizados como `@uniflowabs/core` e `@uniflowabs/ui` na Etapa 7.
 - Gerenciador de pacotes preferencial: Yarn.
 - Portas de desenvolvimento:
   - `3000`: frontend Next.js.
@@ -29,11 +33,11 @@ O projeto ja possui uma base forte:
 - Agenda baseada em slots de 15 minutos.
 - Agenda profissional com horarios de funcionamento e bloqueios.
 - Prisma configurado para MySQL.
-- Entidades iniciais de SaaS: `Barbearia` e `Unidade`.
-- Dados principais vinculados a `barbeariaId`.
+- Entidades iniciais de SaaS: `Estabelecimento` e `Unidade`.
+- Dados principais vinculados a `estabelecimentoId`.
 - Resolucao inicial de tenant por headers:
-  - `x-barbearia-slug`
-  - `x-barbearia-id`
+  - `x-estabelecimento-slug`
+  - `x-estabelecimento-id`
 
 ## Fase 0 - Fundacao Tecnica
 
@@ -68,9 +72,9 @@ Concluido:
 
 - Prisma usa `provider = "mysql"`.
 - `Servico.preco` usa `Decimal(10, 2)`.
-- Criadas entidades `Barbearia` e `Unidade`.
-- `Usuario`, `Profissional`, `Servico` e `Agendamento` possuem `barbeariaId`.
-- Criados indices e unicidades por barbearia onde aplicavel.
+- Criadas entidades `Estabelecimento` e `Unidade`.
+- `Usuario`, `Profissional`, `Servico` e `Agendamento` possuem `estabelecimentoId`.
+- Criados indices e unicidades por estabelecimento onde aplicavel.
 - Seed/base local aponta para `Barber Flow ABS`.
 
 Pendente:
@@ -82,26 +86,26 @@ Pendente:
 
 Status: concluida para o MVP SaaS.
 
-Objetivo: garantir isolamento por barbearia.
+Objetivo: garantir isolamento por estabelecimento.
 
 Concluido:
 
 - Criado `TenantService`.
-- Suporte a tenant via `x-barbearia-slug` e `x-barbearia-id`.
-- Rotas `servicos` e `profissionais` filtram por barbearia.
-- Cadastro de usuario usa a barbearia resolvida no request.
-- Agendamentos usam a barbearia do usuario autenticado.
+- Suporte a tenant via `x-estabelecimento-slug` e `x-estabelecimento-id`.
+- Rotas `servicos` e `profissionais` filtram por estabelecimento.
+- Cadastro de usuario usa o estabelecimento resolvido no request.
+- Agendamentos usam o estabelecimento do usuario autenticado.
 - Criadas rotas iniciais:
-  - `GET /barbearias`
-  - `GET /barbearias/:slug`
-  - `POST /barbearias`
+  - `GET /estabelecimentos`
+  - `GET /estabelecimentos/:slug`
+  - `POST /estabelecimentos`
 
 Pendente:
 
-- Criar testes automatizados garantindo que Barbearia A nao acessa dados da Barbearia B.
+- Criar testes automatizados garantindo que Estabelecimento A nao acessa dados da Estabelecimento B.
 - Criar middleware/interceptor global de tenant, se fizer sentido para reduzir repeticao.
-- Criar painel para selecionar/gerenciar barbearia e unidades.
-- Definir estrategia futura de subdominio/domino por barbearia.
+- Criar painel para selecionar/gerenciar estabelecimento e unidades.
+- Definir estrategia futura de subdominio/domino por estabelecimento.
 
 ## Fase 3 - Seguranca E Contratos De API
 
@@ -115,20 +119,20 @@ Concluido:
   - `RegistrarUsuarioDto`
   - `LoginDto`
   - `CriarAgendamentoDto`
-  - `CriarBarbeariaDto`
+  - `CriarEstabelecimentoDto`
 - Criada validacao manual inicial para:
   - registro
   - login
-  - criacao de barbearia
+  - criacao de estabelecimento
   - criacao/consulta/exclusao de agendamento
 - Payload do JWT deixou de assinar o objeto inteiro do usuario e passou a usar campos explicitos:
   - `sub`
   - `id`
   - `nome`
   - `email`
-  - `barbeariaId`
-  - `barbeiro`
-- Web e mobile leem `barbeariaId` do token.
+  - `estabelecimentoId`
+  - `membro do estabelecimento`
+- Web e mobile leem `estabelecimentoId` do token.
 - Criados DTOs para:
   - `CriarServicoDto`
   - `CriarProfissionalDto`
@@ -139,7 +143,7 @@ Concluido:
   - `POST /auth/registrar`
   - `POST /auth/refresh`
 - Adicionado `role` derivado no JWT e no modelo compartilhado:
-  - `BARBER`
+  - `ESTABLISHMENT_MEMBER`
   - `CUSTOMER`
 
 Melhorias futuras:
@@ -147,30 +151,30 @@ Melhorias futuras:
 - Trocar a validacao interna por `class-validator` e `class-transformer` quando a fase de normalizacao de dependencias for executada.
 - Ativar `ValidationPipe` global com `whitelist`, `transform` e `forbidNonWhitelisted`.
 - Evoluir refresh token para persistencia, rotacao e revogacao em banco.
-- Trocar definitivamente `barbeiro: boolean` por RBAC completo no banco.
+- Trocar definitivamente `membro do estabelecimento: boolean` por RBAC completo no banco.
 - Substituir rate limit em memoria por estrategia distribuida com Redis antes de producao multi-instancia.
 
 ## Fase 4 - Agenda Profissional
 
 Status: concluida para o MVP SaaS.
 
-Objetivo: transformar agenda simples em agenda operacional de barbearia.
+Objetivo: transformar agenda simples em agenda operacional de estabelecimento.
 
 Concluido:
 
 - Criada tabela `horarios_funcionamento`.
 - Criada tabela `bloqueios_agenda`.
-- Seed/migration criam horario padrao da barbearia de segunda a sabado:
+- Seed/migration criam horario padrao do estabelecimento de segunda a sabado:
   - `08:00` a `21:00`
   - intervalo de `12:00` a `13:00`
-- Criada antecedencia minima configuravel por barbearia, com padrao de `30` minutos.
+- Criada antecedencia minima configuravel por estabelecimento, com padrao de `30` minutos.
 - Criado endpoint autenticado:
   - `GET /agenda/horarios/:data`
 - Criados endpoints administrativos para configuracao:
   - `GET /agenda/configuracao/horarios`
   - `PUT /agenda/configuracao/horarios`
 - Disponibilidade respeita:
-  - barbearia do usuario autenticado
+  - estabelecimento do usuario autenticado
   - unidade opcional
   - profissional opcional
   - bloqueios globais ou do profissional
@@ -207,11 +211,11 @@ Concluido:
   - `POST /servicos`
   - `PUT /servicos/:id`
   - `DELETE /servicos/:id`
-- Rotas de escrita protegidas para usuarios barbeiros.
+- Rotas de escrita protegidas para usuarios membro do estabelecimentos.
 - Frontend e mobile passaram a carregar servicos/profissionais da API.
 - Criada tela web inicial de gestao:
   - `/gestao`
-- Menu web mostra `Gestao` para usuarios barbeiros.
+- Menu web mostra `Gestao` para usuarios membro do estabelecimentos.
 - Validado fluxo de criar, editar e excluir registros temporarios via API.
 - Criados campos operacionais em agendamentos:
   - `status`
@@ -249,7 +253,7 @@ Concluido:
   - `NO_SHOW`
 - Caixa inicial permite registrar receitas e despesas.
 - Relatorios iniciais calculam receitas, despesas, saldo, comissoes e servicos vendidos.
-- Historico do cliente mostra seus agendamentos por barbearia.
+- Historico do cliente mostra seus agendamentos por estabelecimento.
 
 Melhorias futuras:
 
@@ -269,37 +273,43 @@ Concluido:
 
 - Criados modelos SaaS no Prisma:
   - `PlanoAssinatura`
-  - `AssinaturaBarbearia`
+  - `AssinaturaEstabelecimento`
   - `LogAuditoria`
-- `Barbearia` passou a ter:
+- `Estabelecimento` passou a ter:
   - `status`
   - `trialEndsAt`
-- `Usuario` passou a ter `papel`, preservando `barbeiro` para compatibilidade.
+- `Usuario` passou a ter `papel`, preservando `membro do estabelecimento` para compatibilidade.
 - Payload de sessao suporta:
   - `SUPER_ADMIN`
-  - `BARBER`
+  - `ESTABLISHMENT_MEMBER`
   - `CUSTOMER`
 - Criado onboarding publico:
   - `GET /saas/planos`
   - `POST /saas/onboarding`
 - Onboarding cria:
-  - barbearia
+  - estabelecimento
   - unidade matriz
   - assinatura em trial
-  - usuario dono/barbeiro
+  - usuario dono/membro do estabelecimento
   - log de auditoria
-- Criada area de billing:
-  - `GET /saas/billing`
-  - `PUT /saas/billing/plano`
+- Criada area de cobranca:
+  - `GET /saas/cobranca`
+  - `PUT /saas/cobranca/plano`
+  - aliases legados mantidos em `/saas/billing`
 - Criada area Super Admin:
-  - `GET /saas/admin/barbearias`
-  - `PUT /saas/admin/barbearias/:id/status`
+  - `GET /saas/admin/planos`
+  - `PUT /saas/admin/planos/:id`
+  - `GET /saas/admin/estabelecimentos`
+  - `PUT /saas/admin/estabelecimentos/:id/status`
   - `GET /saas/admin/auditoria`
 - Frontend criado:
   - `/onboarding`
-  - `/billing`
+  - `/cobranca`
   - `/admin`
-- Menu web exibe Billing para responsaveis e Admin SaaS para super admins.
+- Menu web exibe Cobranca para responsaveis de estabelecimento e Admin SaaS para super admins.
+- Super admin foi separado do tenant operacional:
+  - sem `estabelecimentoId` no token
+  - sem acesso a agendamento, gestao, perfil publico, agenda e cobranca de estabelecimento
 
 Melhorias futuras:
 
@@ -307,7 +317,7 @@ Melhorias futuras:
 - Criar checkout hospedado e webhooks de assinatura.
 - Bloquear recursos automaticamente conforme limites do plano.
 - Criar convite de equipe.
-- Criar painel de troca de dominio/subdominio por barbearia.
+- Criar painel de troca de dominio/subdominio por estabelecimento.
 - Expandir auditoria para todas as acoes sensiveis.
 
 ## Fase 7 - Relacionamento E Inteligencia
@@ -364,21 +374,21 @@ Objetivo: fazer os planos deixarem de ser apenas informativos e começarem a con
 Concluido:
 
 - Criado servico backend de limites de plano.
-- Billing passou a retornar objeto estruturado de uso:
+- Cobranca passou a retornar objeto estruturado de uso:
   - profissionais
   - unidades
   - servicos
   - percentual de uso
   - indicadores de limite atingido
-- Super Admin passou a receber a mesma visao de limites por barbearia.
+- Super Admin passou a receber a mesma visao de limites por estabelecimento.
 - Criacao de servicos respeita `limiteServicos`.
 - Criacao de profissionais respeita `limiteUsuarios`, usado no MVP como limite de equipe/profissionais.
-- Barbearias com status `SUSPENDED` ou `CANCELED` ficam impedidas de:
+- Estabelecimentos com status `PAST_DUE`, `SUSPENDED` ou `CANCELED` ficam impedidas de:
   - criar agendamentos
   - criar/editar/excluir servicos
   - criar/editar/excluir profissionais
-- Tela de Billing mostra barras de uso e alerta de limite.
-- Tela de Admin SaaS mostra uso dos limites por barbearia.
+- Tela de Cobranca mostra barras de uso e alerta de limite.
+- Tela de Admin SaaS mostra uso dos limites por estabelecimento.
 
 Melhorias futuras:
 
@@ -391,7 +401,7 @@ Melhorias futuras:
 
 ## Proximas Fases
 
-O detalhamento do dono do app, aprovacao de barbearias e marketplace publico com mapa esta em:
+O detalhamento do dono do app, aprovacao de estabelecimentos e marketplace publico com mapa esta em:
 
 - `docs/ROADMAP_ADMIN_MARKETPLACE.md`
 
@@ -417,10 +427,10 @@ http://localhost:3000
 http://localhost:4000/ping
 ```
 
-4. Validar barbearia padrao no browser:
+4. Validar estabelecimento padrao no browser:
 
 ```text
-http://localhost:4000/barbearias/barber-flow-abs
+http://localhost:4000/estabelecimentos/barber-flow-abs
 ```
 
 5. Validar mobile/web no browser:
@@ -448,7 +458,7 @@ docker compose exec -T app sh -lc 'cd apps/backend && yarn build'
 git c "chore: documentar roadmap saas"
 git c "chore: estabilizar ambiente docker"
 git c "feat: preparar banco mysql para saas"
-git c "feat: iniciar multiempresa por barbearia"
+git c "feat: iniciar multiempresa por estabelecimento"
 git c "feat: adicionar validacao de entrada na api"
 git c "feat: configurar agenda profissional"
 git c "feat: adicionar gestao operacional"

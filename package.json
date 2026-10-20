@@ -1,7 +1,11 @@
 {
-  "name": "barber-flow-abs",
+  "name": "uniflow-abs",
   "private": true,
   "scripts": {
+    "prod:build": "node scripts/producao.cjs build",
+    "prod:web": "node scripts/producao.cjs web",
+    "prod:api": "node scripts/producao.cjs api",
+    "prod:migrate": "node scripts/producao.cjs migrate",
     "build": "turbo build",
     "dev": "turbo dev",
     "lint": "turbo lint",

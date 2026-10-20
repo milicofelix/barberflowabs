@@ -1,36 +1,77 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "UniFlow ABS",
+    "slug": "barber-flow-abs",
+    "description": "Serviços, agendamentos e gestão de beleza, estética e bem-estar em uma só plataforma.",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "barberflowabs",
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#081426",
+      "dark": {
+        "image": "./assets/images/splash.png",
+        "backgroundColor": "#040A13"
+      }
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.barberflowabs.app"
     },
     "android": {
+      "package": "com.barberflowabs.app",
+      "blockedPermissions": [
+        "android.permission.WRITE_CONTACTS"
+      ],
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
+        "foregroundImage": "./assets/images/brand/android-foreground.png",
+        "monochromeImage": "./assets/images/brand/monochrome-icon.png",
+        "backgroundColor": "#081426"
+      },
+      "edgeToEdgeEnabled": true
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
-    ],
-    "experiments": {
-      "typedRoutes": true
-    }
+      ["expo-image-picker", {
+        "photosPermission": "Escolha fotos para seu perfil, serviços e estabelecimento na UniFlow ABS.",
+        "cameraPermission": "Permita que a UniFlow ABS tire a foto que você deseja usar.",
+        "microphonePermission": false
+      }],
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#081426",
+          "dark": {
+            "image": "./assets/images/splash.png",
+            "backgroundColor": "#040A13"
+          }
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Permita que a UniFlow ABS use sua localização para encontrar estabelecimentos próximos."
+        }
+      ],
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "Permita que a UniFlow ABS acesse os contatos escolhidos para cadastrá-los como clientes do seu estabelecimento."
+        }
+      ],
+      "expo-status-bar",
+      "expo-web-browser"
+    ]
   }
 }

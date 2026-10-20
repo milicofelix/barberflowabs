@@ -11,7 +11,7 @@ export default function PainelBilling() {
 
     const carregar = useCallback(async function carregar() {
         const [dadosBilling, dadosPlanos] = await Promise.all([
-            httpGet('/saas/billing'),
+            httpGet('/saas/cobranca'),
             httpGet('/saas/planos'),
         ])
         setBilling(dadosBilling?.statusCode ? null : dadosBilling)
@@ -24,7 +24,7 @@ export default function PainelBilling() {
 
     async function trocarPlano(planoSlug: string) {
         setMensagem('')
-        const resposta = await httpPut('/saas/billing/plano', { planoSlug })
+        const resposta = await httpPut('/saas/cobranca/plano', { planoSlug })
         if (resposta?.statusCode) return setMensagem(resposta.message)
         await carregar()
         setMensagem('Plano atualizado.')
@@ -47,13 +47,25 @@ export default function PainelBilling() {
             <section className="grid gap-3 lg:grid-cols-3">
                 {planos.map((plano) => (
                     <div key={plano.slug} className="rounded border border-zinc-800 bg-zinc-950 p-5">
-                        <h2 className="text-xl font-bold text-zinc-100">{plano.nome}</h2>
+                        <div className="flex items-start justify-between gap-3">
+                            <div>
+                                <h2 className="text-xl font-bold text-zinc-100">{plano.nome}</h2>
+                                <p className="mt-1 text-xs font-bold uppercase tracking-normal text-yellow-400">{plano.formaPagamento ?? 'PIX'}</p>
+                            </div>
+                            {Number(plano.economiaPercentual ?? 0) > 0 && (
+                                <span className="rounded bg-emerald-500/15 px-2 py-1 text-xs font-bold text-emerald-300">
+                                    -{plano.economiaPercentual}%
+                                </span>
+                            )}
+                        </div>
                         <p className="mt-2 text-sm text-zinc-400">{plano.descricao}</p>
-                        <p className="mt-4 text-2xl font-black text-yellow-400">{moeda(plano.precoMensal)}</p>
+                        <p className="mt-4 text-2xl font-black text-yellow-400">{moeda(plano.valorDoCiclo ?? plano.precoMensal)}</p>
+                        <p className="mt-1 text-sm font-semibold text-zinc-300">{plano.ciclo?.cobranca ?? 'Pagamento via PIX'}</p>
                         <ul className="mt-4 grid gap-2 text-sm text-zinc-400">
                             <li>{plano.limiteUsuarios} profissionais</li>
                             <li>{plano.limiteUnidades} unidade(s)</li>
                             <li>{plano.limiteServicos} serviço(s)</li>
+                            <li>Pagamento inicial via PIX</li>
                         </ul>
                         <button
                             type="button"

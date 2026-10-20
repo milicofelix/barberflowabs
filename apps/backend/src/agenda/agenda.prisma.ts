@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { AgendaUtils, TEMPO_SLOT } from '@barbabrutal/core';
+import { AgendaUtils, TEMPO_SLOT } from '@uniflowabs/core';
 import { PrismaService } from 'src/db/prisma.service';
 import { ConfiguracaoAgendaDto, HorariosDisponiveisDto } from './agenda.dto';
 
@@ -8,7 +8,7 @@ export class AgendaPrisma {
   constructor(private readonly prisma: PrismaService) {}
 
   async buscarHorariosDisponiveis(params: {
-    barbeariaId: number;
+    estabelecimentoId: number;
     data: string;
     profissionalId?: number;
     unidadeId?: number;
@@ -16,31 +16,55 @@ export class AgendaPrisma {
     const dataReferencia = this.criarDataReferencia(params.data);
     const diaSemana = dataReferencia.getUTCDay();
 
-    const [barbearia, horariosFuncionamento] = await Promise.all([
-      this.prisma.barbearia.findUnique({
-        where: { id: params.barbeariaId },
+    const [estabelecimento, horariosFuncionamento, escalasProfissional, totalHorariosConfigurados] = await Promise.all([
+      this.prisma.estabelecimento.findUnique({
+        where: { id: params.estabelecimentoId },
         select: { antecedenciaMinutos: true },
       }),
       this.prisma.horarioFuncionamento.findMany({
         where: {
-          barbeariaId: params.barbeariaId,
+          estabelecimentoId: params.estabelecimentoId,
           diaSemana,
           ativo: true,
           ...(params.unidadeId ? { unidadeId: params.unidadeId } : {}),
         },
         orderBy: { inicio: 'asc' },
       }),
+      params.profissionalId
+        ? (this.prisma as any).escalaProfissional.findMany({
+          where: {
+            estabelecimentoId: params.estabelecimentoId,
+            profissionalId: params.profissionalId,
+            diaSemana,
+            ativo: true,
+            OR: params.unidadeId ? [{ unidadeId: params.unidadeId }, { unidadeId: null }] : [{ unidadeId: null }],
+          },
+          orderBy: { inicio: 'asc' },
+        })
+        : Promise.resolve([]),
+      this.prisma.horarioFuncionamento.count({
+        where: { estabelecimentoId: params.estabelecimentoId, ativo: true },
+      }),
     ]);
 
-    if (horariosFuncionamento.length === 0) {
+    const possuiEscalaConfigurada = params.profissionalId
+      ? await (this.prisma as any).escalaProfissional.count({
+        where: { estabelecimentoId: params.estabelecimentoId, profissionalId: params.profissionalId, ativo: true },
+      }) > 0
+      : false;
+    const periodos = possuiEscalaConfigurada ? escalasProfissional : horariosFuncionamento;
+
+    if (periodos.length === 0) {
+      if (possuiEscalaConfigurada) return { manha: [], tardeNoite: [] };
+      if (totalHorariosConfigurados > 0) return { manha: [], tardeNoite: [] };
       return this.removerHorariosSemAntecedencia(
         AgendaUtils.horariosDoDia(),
         params.data,
-        barbearia?.antecedenciaMinutos ?? 30,
+        estabelecimento?.antecedenciaMinutos ?? 30,
       );
     }
 
-    const horarios = horariosFuncionamento.flatMap((horario) =>
+    const horarios = periodos.flatMap((horario) =>
       this.gerarSlots({
         inicio: horario.inicio,
         fim: horario.fim,
@@ -51,7 +75,7 @@ export class AgendaPrisma {
 
     const bloqueios = await this.prisma.bloqueioAgenda.findMany({
       where: {
-        barbeariaId: params.barbeariaId,
+        estabelecimentoId: params.estabelecimentoId,
         inicio: { lt: this.comporDataHora(params.data, '23:59') },
         fim: { gt: this.comporDataHora(params.data, '00:00') },
         AND: [
@@ -72,39 +96,74 @@ export class AgendaPrisma {
     return this.removerHorariosSemAntecedencia({
       manha: horariosDisponiveis.filter((horario) => horario < '12:00'),
       tardeNoite: horariosDisponiveis.filter((horario) => horario >= '12:00'),
-    }, params.data, barbearia?.antecedenciaMinutos ?? 30);
+    }, params.data, estabelecimento?.antecedenciaMinutos ?? 30);
   }
 
-  async buscarConfiguracao(barbeariaId: number): Promise<ConfiguracaoAgendaDto> {
-    const [barbearia, horarios] = await Promise.all([
-      this.prisma.barbearia.findUnique({
-        where: { id: barbeariaId },
-        select: { antecedenciaMinutos: true },
+  async buscarConfiguracao(estabelecimentoId: number): Promise<ConfiguracaoAgendaDto> {
+    const [estabelecimento, horarios] = await Promise.all([
+      (this.prisma as any).estabelecimento.findUnique({
+        where: { id: estabelecimentoId },
+        select: {
+          antecedenciaMinutos: true,
+          fusoHorario: true,
+          lembreteAgendamentoAtivo: true,
+          lembreteAntecedenciaMinutos: true,
+          janelaSilenciosaInicio: true,
+          janelaSilenciosaFim: true,
+          fluxoAtendimentoAutomaticoAtivo: true,
+          inicioAtendimentoAutomaticoAtivo: true,
+          finalizacaoAtendimentoAutomaticaAtiva: true,
+          avisoAtendimentoAntecedenciaMinutos: true,
+        },
       }),
       this.prisma.horarioFuncionamento.findMany({
-        where: { barbeariaId, unidadeId: null },
+        where: { estabelecimentoId, unidadeId: null },
         orderBy: [{ diaSemana: 'asc' }, { inicio: 'asc' }],
       }),
     ]);
 
     return {
-      antecedenciaMinutos: barbearia?.antecedenciaMinutos ?? 30,
+      antecedenciaMinutos: estabelecimento?.antecedenciaMinutos ?? 30,
+      fusoHorario: estabelecimento?.fusoHorario ?? process.env.APP_TIME_ZONE ?? 'America/Sao_Paulo',
+      lembreteAgendamentoAtivo: estabelecimento?.lembreteAgendamentoAtivo ?? true,
+      lembreteAntecedenciaMinutos: estabelecimento?.lembreteAntecedenciaMinutos ?? 1440,
+      janelaSilenciosaInicio: estabelecimento?.janelaSilenciosaInicio ?? '22:00',
+      janelaSilenciosaFim: estabelecimento?.janelaSilenciosaFim ?? '08:00',
+      fluxoAtendimentoAutomaticoAtivo: estabelecimento?.fluxoAtendimentoAutomaticoAtivo ?? false,
+      inicioAtendimentoAutomaticoAtivo: estabelecimento?.inicioAtendimentoAutomaticoAtivo ?? true,
+      finalizacaoAtendimentoAutomaticaAtiva: estabelecimento?.finalizacaoAtendimentoAutomaticaAtiva ?? true,
+      avisoAtendimentoAntecedenciaMinutos: estabelecimento?.avisoAtendimentoAntecedenciaMinutos ?? 10,
       horarios,
     };
   }
 
-  async salvarConfiguracao(barbeariaId: number, configuracao: ConfiguracaoAgendaDto) {
+  async salvarConfiguracao(estabelecimentoId: number, configuracao: ConfiguracaoAgendaDto) {
     await this.prisma.$transaction([
-      this.prisma.barbearia.update({
-        where: { id: barbeariaId },
-        data: { antecedenciaMinutos: configuracao.antecedenciaMinutos },
+      (this.prisma as any).estabelecimento.update({
+        where: { id: estabelecimentoId },
+        data: {
+          antecedenciaMinutos: configuracao.antecedenciaMinutos,
+          fusoHorario: configuracao.fusoHorario,
+          lembreteAgendamentoAtivo: configuracao.lembreteAgendamentoAtivo,
+          lembreteAntecedenciaMinutos: configuracao.lembreteAntecedenciaMinutos,
+          janelaSilenciosaInicio: configuracao.janelaSilenciosaInicio,
+          janelaSilenciosaFim: configuracao.janelaSilenciosaFim,
+          ...(configuracao.fluxoAtendimentoAutomaticoAtivo !== undefined
+            ? { fluxoAtendimentoAutomaticoAtivo: configuracao.fluxoAtendimentoAutomaticoAtivo } : {}),
+          ...(configuracao.inicioAtendimentoAutomaticoAtivo !== undefined
+            ? { inicioAtendimentoAutomaticoAtivo: configuracao.inicioAtendimentoAutomaticoAtivo } : {}),
+          ...(configuracao.finalizacaoAtendimentoAutomaticaAtiva !== undefined
+            ? { finalizacaoAtendimentoAutomaticaAtiva: configuracao.finalizacaoAtendimentoAutomaticaAtiva } : {}),
+          ...(configuracao.avisoAtendimentoAntecedenciaMinutos !== undefined
+            ? { avisoAtendimentoAntecedenciaMinutos: configuracao.avisoAtendimentoAntecedenciaMinutos } : {}),
+        },
       }),
       this.prisma.horarioFuncionamento.deleteMany({
-        where: { barbeariaId, unidadeId: null },
+        where: { estabelecimentoId, unidadeId: null },
       }),
       this.prisma.horarioFuncionamento.createMany({
         data: configuracao.horarios.map((horario) => ({
-          barbeariaId,
+          estabelecimentoId,
           diaSemana: horario.diaSemana,
           inicio: horario.inicio,
           fim: horario.fim,
@@ -115,7 +174,7 @@ export class AgendaPrisma {
       }),
     ]);
 
-    return this.buscarConfiguracao(barbeariaId);
+    return this.buscarConfiguracao(estabelecimentoId);
   }
 
   private gerarSlots(params: {

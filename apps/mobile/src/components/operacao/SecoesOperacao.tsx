@@ -1,0 +1,84 @@
+import CampoTexto from '@/src/components/shared/CampoTexto'
+import SeletorImagem from '@/src/components/midia/SeletorImagem'
+import ImagemRegistro from '@/src/components/midia/ImagemRegistro'
+import FeedbackSucesso from '@/src/components/shared/FeedbackSucesso'
+import type {
+    DashboardOperacional, ProfissionalOperacional,
+} from '@/src/data/operacao/tipos'
+import { useState } from 'react'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { CartaoMetrica, moeda } from './ComponentesOperacao'
+import useTema from '@/src/data/contexts/ContextoTema'
+import { urlImagemProfissional } from '@uniflowabs/core'
+
+export function ResumoOperacao({ dados }: { dados: DashboardOperacional | null }) {
+    if (!dados) return null
+    return <View style={styles.grade}>
+        <CartaoMetrica titulo="Agendamentos hoje" valor={dados.agendamentosHoje} />
+        <CartaoMetrica titulo="Clientes" valor={dados.clientes} />
+        <CartaoMetrica titulo="Receita hoje" valor={moeda(dados.receitaHoje)} destaque />
+        <CartaoMetrica titulo="Saldo do mês" valor={moeda(dados.saldoMes)} destaque />
+    </View>
+}
+
+export function EquipeOperacao({ itens, criar, recarregar, erro }: {
+    itens: ProfissionalOperacional[]; criar: (dados: Omit<ProfissionalOperacional, 'id'>) => Promise<boolean>; recarregar: () => Promise<void>
+    erro?: string | null
+}) {
+    const { cores } = useTema()
+    const [nome, setNome] = useState(''); const [descricao, setDescricao] = useState(''); const [salvando, setSalvando] = useState(false)
+    const [sexo, setSexo] = useState<'MASCULINO' | 'FEMININO' | null>(null)
+    const [imagemURL, setImagemURL] = useState(''); const [midiaId, setMidiaId] = useState<string | null | undefined>()
+    const [resultado, setResultado] = useState<'sucesso' | 'erro' | null>(null)
+    const imagemPadrao = `/profissionais/avatar-${sexo === 'FEMININO' ? 'feminino' : 'masculino'}.png`
+    function selecionarSexo(novoSexo: 'MASCULINO' | 'FEMININO') {
+        const imagem = urlImagemProfissional(imagemURL, novoSexo)
+        if (imagem !== imagemURL) { setImagemURL(imagem); setMidiaId(null) }
+        setSexo(novoSexo)
+    }
+    async function submeter() {
+        if (!nome.trim() || !sexo || !descricao.trim() || salvando) return
+        try {
+            setSalvando(true); setResultado(null)
+            const criado = await criar({ nome: nome.trim(), sexo, descricao: descricao.trim(), imagemURL: imagemURL || imagemPadrao, midiaId })
+            if (criado) { setNome(''); setSexo(null); setDescricao(''); setImagemURL(''); setMidiaId(undefined) }
+            setResultado(criado ? 'sucesso' : 'erro')
+        }
+        finally { setSalvando(false) }
+    }
+    return <View style={styles.lista}><View style={[styles.formulario, { backgroundColor: cores.superficie }]}><Text style={[styles.subtitulo, { color: cores.texto }]}>Adicionar profissional</Text>
+        <CampoTexto label="Nome" value={nome} onChangeText={setNome} />
+        <Text style={[styles.rotulo, { color: cores.textoSecundario }]}>Sexo</Text><View style={styles.modelos}>{(['MASCULINO', 'FEMININO'] as const).map((opcao) => <Pressable key={opcao} onPress={() => selecionarSexo(opcao)} style={[styles.chip, { borderColor: sexo === opcao ? cores.destaque : cores.borda, backgroundColor: sexo === opcao ? cores.destaque : cores.campo }]}><Text style={[styles.chipTexto, { color: sexo === opcao ? '#fff' : cores.texto }]}>{opcao === 'MASCULINO' ? 'Masculino' : 'Feminino'}</Text></Pressable>)}</View>
+        <CampoTexto label="Apresentação" value={descricao} onChangeText={setDescricao} />
+        <SeletorImagem titulo="Foto do profissional" valor={sexo ? (imagemURL || imagemPadrao) : ''} finalidade="PROFISSIONAL" padrao={sexo ? imagemPadrao : ''} disabled={salvando || !sexo} alterar={(url, id) => { setImagemURL(url); setMidiaId(id) }} />
+        <Text style={[styles.descricao, { color: cores.textoSecundario }]}>Preencha nome, sexo e apresentação para adicionar o profissional.</Text>
+        <Botao texto={salvando ? 'Salvando...' : 'Adicionar à equipe'} acao={submeter} desabilitado={salvando || !nome.trim() || !sexo || !descricao.trim()} />
+        {resultado === 'sucesso' ? <FeedbackSucesso mensagem="Profissional adicionado à equipe." /> : null}
+        {resultado === 'erro' ? <Text accessibilityRole="alert" style={{ color: '#B42318' }}>{erro ?? 'Não foi possível adicionar o profissional. Tente novamente.'}</Text> : null}
+        </View>
+        {itens.map((item) => <View key={item.id} style={[styles.cartao, { backgroundColor: cores.superficie, borderColor: cores.borda }]}><Text style={[styles.titulo, { color: cores.texto }]}>{item.nome}</Text>
+            <Text style={[styles.descricao, { color: cores.textoSecundario }]}>{item.descricao}</Text><Text style={styles.meta}>★ {Number(item.avaliacao ?? 5).toFixed(1)}</Text>
+            <ImagemRegistro titulo="Foto do profissional" valor={item.imagemURL} padrao={`/profissionais/avatar-${item.sexo === 'FEMININO' ? 'feminino' : 'masculino'}.png`} entidade="PROFISSIONAL" entidadeId={item.id} finalidade="PROFISSIONAL" aoSalvar={recarregar} /></View>)}</View>
+}
+
+export function AtalhoCentralFinanceira({ abrir }: { abrir: () => void }) {
+    const { cores } = useTema()
+    return <View style={[styles.atalhoFinanceiro, { backgroundColor: cores.superficie, borderColor: cores.borda }]}>
+        <Text style={[styles.subtitulo, { color: cores.texto }]}>Central financeira</Text>
+        <Text style={[styles.descricao, { color: cores.textoSecundario }]}>Contas, caixa, comissões, repasses, cobranças, conciliação e auditoria estão reunidos em um único fluxo.</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel="Abrir central financeira" style={styles.botao} onPress={abrir}><Text style={styles.botaoTexto}>Abrir central financeira</Text></Pressable>
+    </View>
+}
+
+function Botao({ texto, acao, desabilitado = false }: { texto: string; acao: () => void; desabilitado?: boolean }) {
+    return <Pressable disabled={desabilitado} style={[styles.botao, desabilitado && styles.desabilitado]} onPress={acao}><Text style={styles.botaoTexto}>{texto}</Text></Pressable>
+}
+
+const styles = StyleSheet.create({
+    grade: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 }, lista: { gap: 10 }, cartao: { backgroundColor: '#101E33', borderRadius: 13, padding: 14, borderWidth: 1, borderColor: '#26364E' },
+    titulo: { color: '#FFF', fontSize: 16, fontWeight: '800' }, subtitulo: { color: '#FFF', fontSize: 18, fontWeight: '900', marginBottom: 8 }, descricao: { color: '#AEBBCE', marginTop: 5, lineHeight: 19 }, meta: { color: '#E7B84B', marginTop: 8 },
+    rotulo: { fontSize: 12, fontWeight: '700', marginTop: 3 }, modelos: { flexDirection: 'row', gap: 7, marginBottom: 4 },
+    acoes: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginTop: 10 }, chip: { borderWidth: 1, borderColor: '#43516A', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 7 }, chipAtivo: { borderColor: '#E7B84B', backgroundColor: '#493B16' }, chipTexto: { color: '#E7EAF0', fontSize: 10, fontWeight: '800' },
+    filtrosAgenda: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 4 }, formulario: { backgroundColor: '#101E33', borderRadius: 14, padding: 15, gap: 7, marginBottom: 5 }, botao: { minHeight: 46, backgroundColor: '#E7B84B', borderRadius: 11, alignItems: 'center', justifyContent: 'center', marginTop: 5 }, botaoTexto: { color: '#081426', fontWeight: '900' },
+    atalhoFinanceiro: { borderWidth: 1, borderRadius: 14, padding: 16 }, desabilitado: { opacity: .45 },
+})

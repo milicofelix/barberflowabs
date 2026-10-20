@@ -5,11 +5,19 @@ import { DbModule } from './db/db.module';
 import { AgendamentoModule } from './agendamento/agendamento.module';
 import { ProfissionalModule } from './profissional/profissional.module';
 import { ServicoModule } from './servico/servico.module';
-import { BarbeariaModule } from './barbearia/barbearia.module';
+import { EstabelecimentoModule } from './estabelecimento/estabelecimento.module';
 import { AgendaModule } from './agenda/agenda.module';
 import { GestaoModule } from './gestao/gestao.module';
 import { SaasModule } from './saas/saas.module';
 import { PublicoModule } from './publico/publico.module';
+import { CatalogoModule } from './catalogo/catalogo.module';
+import { RecursoModule } from './recurso/recurso.module';
+import { EquipeModule } from './equipe/equipe.module';
+import { FinanceiroModule } from './financeiro/financeiro.module';
+import { RelacionamentoModule } from './relacionamento/relacionamento.module';
+import { SolicitacaoEstabelecimentoModule } from './solicitacao-estabelecimento/solicitacao-estabelecimento.module';
+import { NotificacaoModule } from './notificacao/notificacao.module';
+import { MidiaModule } from './midia/midia.module';
 
 @Module({
   imports: [
@@ -18,11 +26,19 @@ import { PublicoModule } from './publico/publico.module';
     AgendamentoModule,
     ProfissionalModule,
     ServicoModule,
-    BarbeariaModule,
+    EstabelecimentoModule,
     AgendaModule,
     GestaoModule,
     SaasModule,
     PublicoModule,
+    CatalogoModule,
+    RecursoModule,
+    EquipeModule,
+    FinanceiroModule,
+    RelacionamentoModule,
+    SolicitacaoEstabelecimentoModule,
+    NotificacaoModule,
+    MidiaModule,
   ],
   controllers: [AppController],
 })

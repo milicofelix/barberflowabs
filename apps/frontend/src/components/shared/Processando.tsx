@@ -1,15 +1,15 @@
-import Image from 'next/image'
+import ImagemFundoPlataforma from './ImagemFundoPlataforma'
 import Logo from './Logo'
 
 export default function Processando() {
     return (
         <div className="h-screen">
-            <Image src="/banners/principal.webp" fill alt="Banner" />
+            <ImagemFundoPlataforma />
             <div
                 className="
                     flex flex-col justify-center items-center
                     absolute top-0 left-0 w-full h-full gap-2
-                    bg-black/90 text-center
+                    sobre-imagem bg-black/90 text-center
                 "
             >
                 <Logo />

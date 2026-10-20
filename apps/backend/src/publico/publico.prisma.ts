@@ -1,22 +1,83 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
+import { urlImagemProfissional } from '@uniflowabs/core';
 import { PrismaService } from 'src/db/prisma.service';
+import { mapearClassificacaoEstabelecimento } from 'src/estabelecimento/classificacao-estabelecimento.mapper';
+
+const TIME_ZONE_PADRAO = 'America/Sao_Paulo';
 
 @Injectable()
 export class PublicoPrisma {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listarBarbearias(filtros: any = {}) {
+  async listarServicosPublicos() {
+    const servicos = await this.prisma.servico.findMany({
+      where: {
+        estabelecimento: this.criteriosPublicacao(),
+        profissionaisHabilitados: { some: { ativo: true } },
+      },
+      orderBy: [{ nome: 'asc' }, { estabelecimentoId: 'asc' }, { id: 'asc' }],
+      select: {
+        id: true, estabelecimentoId: true, nome: true, descricao: true, preco: true,
+        imagemURL: true, qtdeSlots: true, duracaoMinutos: true,
+        estabelecimento: { select: { id: true, slug: true, nome: true, nomePublico: true } },
+      },
+    });
+    return servicos.map((servico) => ({
+      ...servico,
+      preco: Number(servico.preco),
+      estabelecimento: {
+        id: servico.estabelecimento.id,
+        slug: servico.estabelecimento.slug,
+        nome: servico.estabelecimento.nomePublico ?? servico.estabelecimento.nome,
+      },
+    }));
+  }
+
+  async listarProfissionaisPublicos() {
+    const profissionais = await this.prisma.profissional.findMany({
+      where: {
+        estabelecimento: this.criteriosPublicacao(),
+        servicosHabilitados: { some: { ativo: true } },
+      },
+      orderBy: [
+        { avaliacao: 'desc' },
+        { quantidadeAvaliacoes: 'desc' },
+        { nome: 'asc' },
+      ],
+      select: {
+        id: true,
+        nome: true,
+        sexo: true,
+        descricao: true,
+        imagemURL: true,
+        avaliacao: true,
+        quantidadeAvaliacoes: true,
+        estabelecimento: {
+          select: {
+            id: true,
+            nome: true,
+            nomePublico: true,
+            slug: true,
+          },
+        },
+      },
+    });
+    return profissionais.map((profissional) => ({ ...profissional, imagemURL: urlImagemProfissional(profissional.imagemURL, profissional.sexo) }));
+  }
+
+  async listarEstabelecimentos(filtros: any = {}) {
     const latitude = this.numero(filtros.lat);
     const longitude = this.numero(filtros.lng);
     const raioKm = this.numero(filtros.raioKm) ?? 10;
+    const semLimiteDistancia = filtros.semLimiteDistancia === 'true';
     const termo = typeof filtros.q === 'string' ? filtros.q.trim() : '';
     const cidade = typeof filtros.cidade === 'string' ? filtros.cidade.trim() : '';
     const estado = typeof filtros.estado === 'string' ? filtros.estado.trim() : '';
     const servico = typeof filtros.servico === 'string' ? filtros.servico.trim() : '';
     const abertaAgora = filtros.abertaAgora === 'true' || filtros.status === 'ABERTA';
     const where: any = {
-      reviewStatus: 'APPROVED',
-      status: { notIn: ['SUSPENDED', 'CANCELED'] },
+      ...this.criteriosPublicacao(),
       ...(termo
         ? {
             OR: [
@@ -47,6 +108,25 @@ export class PublicoPrisma {
           nome: true,
           preco: true,
           qtdeSlots: true,
+          duracaoMinutos: true,
+          preparoAntesMinutos: true,
+          preparoDepoisMinutos: true,
+          deslocamentoMinutos: true,
+          observacoes: true,
+          modeloAtendimento: true,
+          requisitos: {
+            where: { requisito: { ativo: true } },
+            select: {
+              obrigatorio: true,
+              observacao: true,
+              requisito: { select: { id: true, slug: true, nome: true, tipo: true } },
+            },
+          },
+          especialidades: {
+            select: {
+              especialidade: { select: { id: true, slug: true, nome: true } },
+            },
+          },
         },
       },
       profissionais: {
@@ -54,6 +134,12 @@ export class PublicoPrisma {
           id: true,
           avaliacao: true,
           quantidadeAvaliacoes: true,
+          especialidades: {
+            select: {
+              principal: true,
+              especialidade: { select: { id: true, slug: true, nome: true } },
+            },
+          },
         },
       },
       avaliacoes: {
@@ -71,20 +157,40 @@ export class PublicoPrisma {
           intervaloFim: true,
         },
       },
+      segmentos: {
+        where: { segmento: { ativo: true } },
+        select: {
+          principal: true,
+          segmento: { select: { id: true, slug: true, nome: true } },
+        },
+      },
+      especialidades: {
+        where: { especialidade: { ativo: true } },
+        select: {
+          especialidade: {
+            select: {
+              id: true,
+              slug: true,
+              nome: true,
+              segmento: { select: { id: true, slug: true, nome: true } },
+            },
+          },
+        },
+      },
     };
 
-    const barbearias: any[] = await this.prisma.barbearia.findMany({
+    const estabelecimentos: any[] = await this.prisma.estabelecimento.findMany({
       where,
       include,
     });
 
-    return barbearias
-      .map((barbearia) => this.resumoBarbearia(barbearia, latitude, longitude))
-      .filter((barbearia) => {
-        if (latitude !== null && longitude !== null && barbearia.distanciaKm !== null && barbearia.distanciaKm > raioKm) {
+    return estabelecimentos
+      .map((estabelecimento) => this.resumoEstabelecimento(estabelecimento, latitude, longitude))
+      .filter((estabelecimento) => {
+        if (!semLimiteDistancia && latitude !== null && longitude !== null && estabelecimento.distanciaKm !== null && estabelecimento.distanciaKm > raioKm) {
           return false;
         }
-        if (abertaAgora && barbearia.statusOperacional.status !== 'ABERTA') {
+        if (abertaAgora && estabelecimento.statusOperacional.status !== 'ABERTA') {
           return false;
         }
         return true;
@@ -104,13 +210,12 @@ export class PublicoPrisma {
       });
   }
 
-  async buscarBarbeariaPorSlug(slug: string) {
-    const barbearia: any = await this.prisma.barbearia.findFirst({
+  async buscarEstabelecimentoPorSlug(slug: string) {
+    const estabelecimento: any = await this.prisma.estabelecimento.findFirst({
       where: {
         slug,
-        reviewStatus: 'APPROVED',
-        status: { notIn: ['SUSPENDED', 'CANCELED'] },
-      } as any,
+        ...this.criteriosPublicacao(),
+      },
       include: {
         servicos: {
           orderBy: { nome: 'asc' },
@@ -120,7 +225,26 @@ export class PublicoPrisma {
             descricao: true,
             preco: true,
             qtdeSlots: true,
+            duracaoMinutos: true,
+            preparoAntesMinutos: true,
+            preparoDepoisMinutos: true,
+            deslocamentoMinutos: true,
             imagemURL: true,
+            observacoes: true,
+            modeloAtendimento: true,
+            requisitos: {
+              where: { requisito: { ativo: true } },
+              select: {
+                obrigatorio: true,
+                observacao: true,
+                requisito: { select: { id: true, slug: true, nome: true, tipo: true } },
+              },
+            },
+            especialidades: {
+              select: {
+                especialidade: { select: { id: true, slug: true, nome: true } },
+              },
+            },
           },
         },
         profissionais: {
@@ -128,10 +252,17 @@ export class PublicoPrisma {
           select: {
             id: true,
             nome: true,
+            sexo: true,
             descricao: true,
             imagemURL: true,
             avaliacao: true,
             quantidadeAvaliacoes: true,
+            especialidades: {
+              select: {
+                principal: true,
+                especialidade: { select: { id: true, slug: true, nome: true } },
+              },
+            },
           },
         },
         avaliacoes: {
@@ -158,39 +289,60 @@ export class PublicoPrisma {
             intervaloFim: true,
           },
         },
+        segmentos: {
+          where: { segmento: { ativo: true } },
+          select: {
+            principal: true,
+            segmento: { select: { id: true, slug: true, nome: true } },
+          },
+        },
+        especialidades: {
+          where: { especialidade: { ativo: true } },
+          select: {
+            especialidade: {
+              select: {
+                id: true,
+                slug: true,
+                nome: true,
+                segmento: { select: { id: true, slug: true, nome: true } },
+              },
+            },
+          },
+        },
       },
-    } as any);
+    });
 
-    if (!barbearia) return null;
+    if (!estabelecimento) return null;
 
     return {
-      id: barbearia.id,
-      nome: barbearia.nomePublico ?? barbearia.nome,
-      slug: barbearia.slug,
-      telefone: barbearia.telefone,
-      email: barbearia.email,
-      descricao: barbearia.descricaoPublica,
-      imagemCapaURL: this.imagemCapa(barbearia.imagemCapaURL),
+      ...mapearClassificacaoEstabelecimento(estabelecimento),
+      id: estabelecimento.id,
+      nome: estabelecimento.nomePublico ?? estabelecimento.nome,
+      slug: estabelecimento.slug,
+      telefone: estabelecimento.telefone,
+      email: estabelecimento.email,
+      descricao: estabelecimento.descricaoPublica,
+      imagemCapaURL: this.imagemCapa(estabelecimento.imagemCapaURL),
+      logoModo: estabelecimento.logoModo,
+      logoURL: estabelecimento.logoURL,
       endereco: {
-        logradouro: barbearia.endereco,
-        bairro: barbearia.bairro,
-        cidade: barbearia.cidade,
-        estado: barbearia.estado,
-        latitude: barbearia.latitude,
-        longitude: barbearia.longitude,
+        logradouro: estabelecimento.endereco,
+        bairro: estabelecimento.bairro,
+        cidade: estabelecimento.cidade,
+        estado: estabelecimento.estado,
+        latitude: estabelecimento.latitude,
+        longitude: estabelecimento.longitude,
       },
-      aceitaAgendamentoOnline: barbearia.aceitaAgendamentoOnline,
-      destaque: barbearia.destaque,
-      statusOperacional: this.statusOperacional(barbearia.horariosFuncionamento ?? []),
-      servicos: (barbearia.servicos ?? []).map((servico: any) => ({
-        ...servico,
-        preco: Number(servico.preco),
-        duracaoMinutos: servico.qtdeSlots * 15,
-      })),
-      profissionais: barbearia.profissionais ?? [],
-      avaliacaoMedia: this.mediaAvaliacoes(barbearia.avaliacoes ?? []),
-      quantidadeAvaliacoes: barbearia.avaliacoes?.length ?? 0,
-      avaliacoes: (barbearia.avaliacoes ?? []).map((avaliacao: any) => ({
+      aceitaAgendamentoOnline: estabelecimento.aceitaAgendamentoOnline,
+      destaque: estabelecimento.destaque,
+      statusOperacional: this.statusOperacional(estabelecimento.horariosFuncionamento ?? []),
+      servicos: (estabelecimento.servicos ?? []).map((servico: any) => this.mapearServicoPublico(servico)),
+      profissionais: (estabelecimento.profissionais ?? []).map((profissional: any) =>
+        this.mapearProfissionalPublico(profissional),
+      ),
+      avaliacaoMedia: this.mediaAvaliacoes(estabelecimento.avaliacoes ?? []),
+      quantidadeAvaliacoes: estabelecimento.avaliacoes?.length ?? 0,
+      avaliacoes: (estabelecimento.avaliacoes ?? []).map((avaliacao: any) => ({
         id: avaliacao.id,
         nota: avaliacao.nota,
         comentario: avaliacao.comentario,
@@ -198,14 +350,62 @@ export class PublicoPrisma {
         cliente: avaliacao.usuario?.nome,
         profissional: avaliacao.profissional?.nome,
       })),
-      horariosFuncionamento: barbearia.horariosFuncionamento ?? [],
+      horariosFuncionamento: estabelecimento.horariosFuncionamento ?? [],
+    };
+  }
+
+  async denunciarPerfil(slug: string, dados: any) {
+    const estabelecimento = await this.prisma.estabelecimento.findFirst({
+      where: {
+        slug,
+        ...this.criteriosPublicacao(),
+      } as any,
+      select: { id: true, nome: true, slug: true },
+    });
+
+    if (!estabelecimento) throw new NotFoundException('Estabelecimento não encontrado');
+
+    const denuncia = await (this.prisma as any).denunciaPerfilPublico.create({
+      data: {
+        estabelecimentoId: estabelecimento.id,
+        nome: this.textoOuNulo(dados.nome),
+        email: this.textoOuNulo(dados.email),
+        motivo: dados.motivo.trim(),
+        mensagem: dados.mensagem.trim(),
+        status: 'PENDENTE',
+      },
+    });
+
+    await this.prisma.logAuditoria.create({
+      data: {
+        estabelecimentoId: null,
+        usuarioId: null,
+        acao: 'PUBLIC_PROFILE_REPORT',
+        entidade: 'DenunciaPerfilPublico',
+        entidadeId: String(denuncia.id),
+        detalhes: {
+          tipo: 'DENUNCIA_PERFIL_PUBLICO',
+          titulo: 'Denúncia de perfil público recebida',
+          mensagem: `${estabelecimento.nome} recebeu uma denúncia pública para revisão.`,
+          estabelecimentoId: estabelecimento.id,
+          estabelecimentoSlug: estabelecimento.slug,
+          denunciaId: denuncia.id,
+          motivo: denuncia.motivo,
+        },
+      },
+    });
+
+    return {
+      id: denuncia.id,
+      status: denuncia.status,
+      mensagem: 'Denúncia recebida para revisão.',
     };
   }
 
   private statusOperacional(horarios: any[]) {
-    const agora = new Date();
-    const diaSemana = agora.getDay();
-    const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
+    const agora = this.obterAgoraLocal();
+    const diaSemana = agora.diaSemana;
+    const minutosAgora = agora.minutos;
     const horarioHoje = horarios.find((horario) => horario.diaSemana === diaSemana);
 
     if (!horarioHoje) {
@@ -238,46 +438,110 @@ export class PublicoPrisma {
     return { status: 'FECHADA', label: 'Fechada agora' };
   }
 
+  criteriosPublicacao(): Prisma.EstabelecimentoWhereInput {
+    return {
+      reviewStatus: 'APPROVED',
+      status: { notIn: ['PAST_DUE', 'SUSPENDED', 'CANCELED'] },
+      servicos: { some: {} },
+      profissionais: { some: {} },
+      profissionaisServicos: { some: { ativo: true } },
+      horariosFuncionamento: { some: { ativo: true } },
+      AND: [{ OR: [
+          { modeloAtendimento: 'DOMICILIAR' },
+          { endereco: { not: null }, bairro: { not: null }, cidade: { not: null }, estado: { not: null } },
+      ] }],
+    };
+  }
+
+  private obterAgoraLocal() {
+    const partes = new Intl.DateTimeFormat('pt-BR', {
+      timeZone: TIME_ZONE_PADRAO,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(new Date());
+
+    const valor = (tipo: string) => partes.find((parte) => parte.type === tipo)?.value ?? '00';
+    const ano = Number(valor('year'));
+    const mes = Number(valor('month'));
+    const dia = Number(valor('day'));
+
+    return {
+      diaSemana: new Date(ano, mes - 1, dia).getDay(),
+      minutos: Number(valor('hour')) * 60 + Number(valor('minute')),
+    };
+  }
+
   private minutos(horario: string) {
     const [hora, minuto] = horario.split(':').map(Number);
     return hora * 60 + minuto;
   }
 
-  private resumoBarbearia(barbearia: any, latitude: number | null, longitude: number | null) {
+  private resumoEstabelecimento(estabelecimento: any, latitude: number | null, longitude: number | null) {
     const distanciaKm =
-      latitude !== null && longitude !== null && barbearia.latitude !== null && barbearia.longitude !== null
-        ? this.distanciaKm(latitude, longitude, barbearia.latitude, barbearia.longitude)
+      latitude !== null && longitude !== null && estabelecimento.latitude !== null && estabelecimento.longitude !== null
+        ? this.distanciaKm(latitude, longitude, estabelecimento.latitude, estabelecimento.longitude)
         : null;
 
-    const avaliacaoMedia = this.mediaAvaliacoes(barbearia.avaliacoes ?? []);
-    const quantidadeAvaliacoes = barbearia.avaliacoes?.length ?? 0;
+    const avaliacaoMedia = this.mediaAvaliacoes(estabelecimento.avaliacoes ?? []);
+    const quantidadeAvaliacoes = estabelecimento.avaliacoes?.length ?? 0;
 
     return {
-      id: barbearia.id,
-      nome: barbearia.nomePublico ?? barbearia.nome,
-      slug: barbearia.slug,
-      telefone: barbearia.telefone,
-      email: barbearia.email,
-      descricao: barbearia.descricaoPublica,
-      imagemCapaURL: this.imagemCapa(barbearia.imagemCapaURL),
+      ...mapearClassificacaoEstabelecimento(estabelecimento),
+      id: estabelecimento.id,
+      nome: estabelecimento.nomePublico ?? estabelecimento.nome,
+      slug: estabelecimento.slug,
+      telefone: estabelecimento.telefone,
+      email: estabelecimento.email,
+      descricao: estabelecimento.descricaoPublica,
+      imagemCapaURL: this.imagemCapa(estabelecimento.imagemCapaURL),
+      logoModo: estabelecimento.logoModo,
+      logoURL: estabelecimento.logoURL,
       endereco: {
-        logradouro: barbearia.endereco,
-        bairro: barbearia.bairro,
-        cidade: barbearia.cidade,
-        estado: barbearia.estado,
-        latitude: barbearia.latitude,
-        longitude: barbearia.longitude,
+        logradouro: estabelecimento.endereco,
+        bairro: estabelecimento.bairro,
+        cidade: estabelecimento.cidade,
+        estado: estabelecimento.estado,
+        latitude: estabelecimento.latitude,
+        longitude: estabelecimento.longitude,
       },
-      aceitaAgendamentoOnline: barbearia.aceitaAgendamentoOnline,
-      destaque: barbearia.destaque,
+      aceitaAgendamentoOnline: estabelecimento.aceitaAgendamentoOnline,
+      destaque: estabelecimento.destaque,
       distanciaKm: distanciaKm === null ? null : Number(distanciaKm.toFixed(1)),
-      statusOperacional: this.statusOperacional(barbearia.horariosFuncionamento ?? []),
+      statusOperacional: this.statusOperacional(estabelecimento.horariosFuncionamento ?? []),
       avaliacaoMedia,
       quantidadeAvaliacoes,
-      servicos: (barbearia.servicos ?? []).map((servico: any) => ({
-        ...servico,
-        preco: Number(servico.preco),
-        duracaoMinutos: servico.qtdeSlots * 15,
+      servicos: (estabelecimento.servicos ?? []).map((servico: any) => this.mapearServicoPublico(servico)),
+    };
+  }
+
+  private mapearServicoPublico(servico: any) {
+    const { requisitos = [], especialidades = [], ...dadosServico } = servico;
+
+    return {
+      ...dadosServico,
+      preco: Number(servico.preco),
+      duracaoMinutos: servico.duracaoMinutos ?? servico.qtdeSlots * 15,
+      requisitos: requisitos.map(({ requisito, obrigatorio, observacao }) => ({
+        ...requisito,
+        obrigatorio,
+        observacao,
+      })),
+      especialidades: especialidades.map(({ especialidade }) => especialidade),
+    };
+  }
+
+  private mapearProfissionalPublico(profissional: any) {
+    const { especialidades = [], ...dadosProfissional } = profissional;
+    return {
+      ...dadosProfissional,
+      imagemURL: urlImagemProfissional(profissional.imagemURL, profissional.sexo),
+      especialidades: especialidades.map(({ especialidade, principal }) => ({
+        ...especialidade,
+        principal,
       })),
     };
   }
@@ -311,6 +575,12 @@ export class PublicoPrisma {
   }
 
   private imagemCapa(imagem?: string | null) {
-    return imagem && imagem !== '/banner.png' ? imagem : '/banners/principal.webp';
+    if (imagem === '/banners/principal.webp') return '/banners/principal.png';
+    return imagem && imagem !== '/banner.png' ? imagem : '/banners/principal.png';
+  }
+
+  private textoOuNulo(valor?: string | null) {
+    const texto = typeof valor === 'string' ? valor.trim() : '';
+    return texto || null;
   }
 }

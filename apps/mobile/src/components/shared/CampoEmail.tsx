@@ -1,5 +1,19 @@
+import { forwardRef } from 'react'
+import { TextInput } from 'react-native'
 import CampoTexto, { CampoTextoProps } from './CampoTexto'
 
-export default function CampoEmail(props: CampoTextoProps) {
-    return <CampoTexto {...props} keyboardType="email-address" />
-}
+const CampoEmail = forwardRef<TextInput, CampoTextoProps>(function CampoEmail(props, ref) {
+    return (
+        <CampoTexto
+            {...props}
+            ref={ref}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="email"
+            textContentType="emailAddress"
+        />
+    )
+})
+
+export default CampoEmail
