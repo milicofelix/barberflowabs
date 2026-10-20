@@ -55,6 +55,58 @@ DATABASE_URL='mysql://usuario:senha@host:3306/banco' JWT_SECRET='segredo-local-f
 
 Inicia o ambiente usando valores diferentes dos fallbacks do `docker-compose.yml`. Nao copie credenciais reais para documentacao, historico compartilhado ou commits.
 
+## Produção em public_html
+
+Pré-condições e estrutura completa em [DEPLOY_PUBLIC_HTML.md](DEPLOY_PUBLIC_HTML.md). Estes comandos são para a raiz **privada** do repositório no servidor Linux compatível, fora de `public_html`; não executar no container de desenvolvimento como se fosse publicação. O provedor precisa suportar dois processos Node.js persistentes e proxy reverso. Nenhum dos comandos abaixo foi executado pelo agente.
+
+Para `https://uniflowabs.top`, o diretório de trabalho proposto é `/home/rico4167/domains/uniflowabs.top/uniflow`. `public_html` recebe somente a entrada pública; `public_ftp` não é utilizado. `.env.prod` e o modelo já usam esse domínio e os caminhos privados documentados no guia. Credenciais e suporte do provedor ainda precisam ser configurados/confirmados.
+
+### Gerar um segredo independente
+
+```bash
+openssl rand -hex 32
+```
+
+Gera 32 bytes aleatórios (64 caracteres hexadecimais). Repetir separadamente para JWT_SECRET, AGENDAMENTO_ACAO_SECRET, PAYMENT_WEBHOOK_SECRET e NOTIFICACOES_CALLBACK_SECRET e guardar os resultados no `.env.prod` privado/gestor de senhas, nunca em commits, tickets ou capturas de tela. Não reutilizar o mesmo resultado nas quatro variáveis.
+
+### Instalar dependências para compilar no servidor
+
+```bash
+yarn install --frozen-lockfile --production=false
+```
+
+Exige Node.js 22 e Yarn Classic 1.22.22 no sistema/arquitetura de destino. Instala também ferramentas de build e executa scripts de instalação, incluindo geração Prisma do backend. Não inicia aplicação, não aplica migrations nem popula o banco. Não copiar `node_modules` do macOS para o Linux. Requer acesso de rede e pode exigir binários/bibliotecas nativas compatíveis com Prisma, bcrypt e sharp.
+
+### Compilar somente web, backend e core para produção
+
+```bash
+yarn prod:build
+```
+
+Lê explicitamente `.env.prod` privado, gera Prisma Client e compila core, NestJS e Next.js, sem Expo/Turbo dev. Exige dependências instaladas e ambiente preenchido, inclusive NEXT_PUBLIC_API_URL HTTPS antes do build. Substitui saídas compiladas: executar em release de preparação, não por cima de uma aplicação ativa. Não executa migrations nem seed.
+
+### Aplicar migrations na base de produção
+
+```bash
+yarn prod:migrate
+```
+
+Lê DATABASE_URL de `.env.prod` (variáveis do painel têm prioridade) e executa Prisma `migrate deploy`. Altera schema/dados conforme o SQL das migrations: exige backup, revisão e autorização do responsável. Não reseta nem semeia a base. Rodar antes de liberar a nova versão e somente após conferir o host/banco de destino sem expor a senha.
+
+### Comandos dos dois processos supervisionados
+
+```bash
+yarn prod:api
+```
+
+```bash
+yarn prod:web
+```
+
+Cadastrar separadamente no supervisor suportado pelo provedor, com diretório de trabalho na raiz privada do projeto. Não executar sequencialmente em um mesmo terminal esperando que ambos persistam: cada comando permanece em primeiro plano. Usam `.env.prod` e código previamente compilado. API usa BACKEND_PORT=4000 e web FRONTEND_PORT=3000 por padrão; PORT/HOST fornecidos por processo no painel têm prioridade e devem corresponder ao proxy. Não executam dev server, build, migrations ou seed automaticamente. Não são arquivos startup Passenger; planos com Passenger exclusivo precisam de adaptação após confirmar recursos do provedor.
+
+Não há comando genérico de upload, reinício do supervisor ou ativação de proxy: esses passos dependem do plano/painel, ainda não informados. Usar apenas o `.htaccess` de `public_html` como entrada pública, nunca enviar `.env.prod` ou o repositório completo ao document root.
+
 ## Controlar O Container
 
 ### Reiniciar depois de alterar o backend
@@ -84,6 +136,22 @@ docker compose down
 Para e remove os containers e a rede criada pelo Compose. Nao remove volumes nomeados sem a opcao `--volumes`.
 
 ## Diagnostico Docker E API
+
+### Recuperar o MySQL compartilhado depois de remover containers
+
+O Compose deste aplicativo declara somente `app`; o MySQL pertence ao projeto `infra`. Se os logs mostrarem `P1001` / `Can't reach database server at infra-mysql-1:3306`, confira primeiro a listagem de containers desta seção. Se o MySQL foi removido, recrie somente esse serviço usando o Compose original:
+
+```bash
+docker compose -p infra -f /Users/adrianofreitas/www/general-projects/infra/docker-compose.yml up -d mysql
+```
+
+Comando específico desta máquina. Cria/inicia o container MySQL e usa o volume `infra_mysql_data` e a rede `shared_net` definidos na infraestrutura original. Não executado pelo agente. O volume existente não comprova integridade nem presença dos dados; não remova volumes, não use reset nem seed como tentativa de recuperação. Se o volume tiver sido apagado, a inicialização cria uma base vazia e os dados antigos exigem backup.
+
+```bash
+docker compose -p infra -f /Users/adrianofreitas/www/general-projects/infra/docker-compose.yml logs --tail=80 mysql
+```
+
+Consulta os logs da infraestrutura. Aguarde a mensagem `ready for connections`; se o banco não iniciar, investigue esses logs antes de reiniciar o app. Com o MySQL pronto, use **Reiniciar depois de alterar o backend**, já catalogado acima, para reiniciar `app`. Não é necessário rebuild para resolver a ausência desse container.
 
 ### Conferir o estado dos servicos
 

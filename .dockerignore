@@ -1,0 +1,9 @@
+# Nunca copiar ambientes privados para a imagem, inclusive o novo .env.prod.
+.env
+.env.*
+**/.env
+**/.env.*
+.git
+node_modules
+**/node_modules
+**/.next

@@ -4,3 +4,4 @@ apps/backend/storage/
 .env.*
 !.env.example
 !.env.sample
+!/.env.prod.example
