@@ -5,3 +5,28 @@ apps/backend/storage/
 !.env.example
 !.env.sample
 !/.env.prod.example
+
+# Dependencias
+node_modules/
+**/node_modules/
+
+# Arquivos do macOS
+.DS_Store
+**/.DS_Store
+
+# Backups e arquivos temporarios
+*.bak
+*.backup
+*.log
+*.tmp
+
+# Builds e caches
+.next/
+.turbo/
+.expo/
+coverage/
+*.tsbuildinfo
+
+# Arquivos de diagnostico local
+/schema.txt
+/schema-completo.txt

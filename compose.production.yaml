@@ -1,0 +1,10 @@
+services:
+  build:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    image: uniflowabs-production-builder
+    working_dir: /app
+    environment:
+      NODE_ENV: production
+    command: ["bash"]

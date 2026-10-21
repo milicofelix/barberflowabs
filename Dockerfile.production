@@ -1,0 +1,30 @@
+FROM rockylinux:8
+
+RUN dnf install -y \
+    curl \
+    ca-certificates \
+    openssl \
+    openssl-devel \
+    python3 \
+    make \
+    gcc \
+    gcc-c++ \
+    && curl -fsSL https://rpm.nodesource.com/setup_24.x | bash - \
+    && dnf install -y nodejs \
+    && dnf clean all
+
+RUN npm install -g yarn@1.22.22
+
+WORKDIR /app
+
+COPY . .
+
+RUN yarn install --frozen-lockfile
+
+RUN yarn workspace @uniflowabs/core build
+
+RUN yarn workspace backend prisma:generate
+
+RUN yarn workspace backend build
+
+CMD ["bash"]
