@@ -44,9 +44,18 @@ async function iniciar() {
   if ([raiz, arquivo].some(caminho => /[\\/]public_html([\\/]|$)/i.test(caminho))) {
     throw new Error('Mantenha o projeto e .env.prod fora de public_html; publique somente a entrada pública.');
   }
-  if (!existsSync(arquivo)) throw new Error('Arquivo .env.prod ausente. Prepare-o fora de public_html.');
-  loadEnvFile(arquivo);
+  if (existsSync(arquivo)) {
+    loadEnvFile(arquivo);
+  } else if (!['build', 'build:web', 'build:api'].includes(acao)) {
+    throw new Error('Arquivo .env.prod ausente. Prepare-o fora de public_html.');
+  }
+
   process.env.NODE_ENV = 'production';
+
+  if (['build', 'build:web'].includes(acao)) {
+    process.env.NEXT_PUBLIC_API_URL ||= 'https://api.uniflowabs.top';
+    process.env.PUBLIC_APP_URL ||= 'https://uniflowabs.top';
+  }
   const backend = join(raiz, 'apps/backend');
   const frontend = join(raiz, 'apps/frontend');
   if (acao === 'migrate') {
