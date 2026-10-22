@@ -1,3 +1,4 @@
+import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import { profissionais, servicos, Usuario } from '@uniflowabs/core';
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
@@ -6,7 +7,15 @@ import { seedHistoricoClientesOutubro } from './seeds/historico-clientes-outubro
 import { seedCatalogoMultissegmento } from './seeds/catalogo-multissegmento.seed';
 import { seedServicosSugeridos } from './seeds/servicos-sugeridos.seed';
 
-const prisma = new PrismaClient();
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error('DATABASE_URL não configurada');
+}
+
+const prisma = new PrismaClient({
+  adapter: new PrismaMariaDb(databaseUrl),
+});
 const ESTABELECIMENTO_PADRAO_ID = 1;
 const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS ?? 'milicofelix@gmail.com')
   .split(',')

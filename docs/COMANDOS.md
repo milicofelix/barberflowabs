@@ -11,6 +11,71 @@ Antes de usar um comando, leia a explicacao e confirme se ele apenas consulta in
 - Quando duas variantes tiverem finalidades diferentes, mantenha ambas e explique a diferenca.
 - Comandos de teste, build, lint, migration, seed, instalacao ou restart somente devem ser executados quando solicitados explicitamente.
 
+## APK Android beta pelo EAS
+
+Fluxo preparado em `apps/mobile/eas.json`, perfil **beta**, distribuição interna, APK release sem Metro/Expo Go, usando `https://api.uniflowabs.top`. O perfil define EXPO_PUBLIC_API_BASE_URL e também API_URL, pois o código atual consome esta última. Guia: [ANDROID_APK_BETA_EAS.md](ANDROID_APK_BETA_EAS.md). Executar no terminal local, não no servidor de produção. Não executado pelo agente.
+
+### Abrir o terminal Docker já dentro do mobile
+
+```bash
+docker compose run --rm --no-deps \
+  --workdir /workspace/barberFlowABS/apps/mobile \
+  --volume uniflowabs_expo_home:/root/.expo \
+  -e API_URL=https://api.uniflowabs.top \
+  -e EXPO_PUBLIC_API_BASE_URL=https://api.uniflowabs.top \
+  app bash
+```
+
+Executar no terminal do Mac na raiz do repositório, onde está `docker-compose.yml`. Requer Docker ativo, imagem do serviço `app` e dependências disponíveis. Não usar `-T`: login, associação, credenciais e configuração de variáveis são interativos. `--workdir` seleciona a pasta mobile dentro do container. `app bash` substitui o comando padrão e não inicia Turbo, backend ou Metro; `--no-deps` evita iniciar dependências. Não publica portas de desenvolvimento.
+
+O volume `uniflowabs_expo_home` é criado/reutilizado para preservar a sessão Expo entre containers temporários, como nos projetos Autoflow/Saiu do Forno. Não contém os dados MySQL nem uploads, mas armazena credenciais de sessão: não compartilhar nem remover indiscriminadamente. O bind mount existente mantém alterações de `app.json` no repositório do Mac.
+
+**Os próximos comandos são executados dentro desse mesmo terminal Docker.** Não executar npx no Mac nem abrir containers separados sem o volume de sessão. Ao terminar, sair do shell normalmente; o container temporário será removido e o volume de login será preservado. Para um novo build, reabrir o shell com o comando acima e repetir o build; fazer login novamente somente se a sessão tiver expirado. Não é preciso reiniciar/recriar o serviço `app` já existente.
+
+### Login e associação do projeto (primeira vez)
+
+Se o responsável fez login no serviço `app` existente (por exemplo com Expo CLI), usar a sessão desse container em vez de abrir outro container com um volume de sessão diferente:
+
+```bash
+docker compose exec -w /workspace/barberFlowABS/apps/mobile app bash
+```
+
+Exige serviço `app` em execução; abre shell interativo na pasta correta sem reiniciar processos. Executar os comandos EAS abaixo dentro dele. A sessão da camada gravável de `app` pode ser perdida ao recriar esse container; isso não equivale à sessão persistente no volume `uniflowabs_expo_home`. Não usar `-T` para menus interativos nem copiar senhas/tokens para o repositório.
+
+```bash
+npx eas-cli@latest login
+```
+
+```bash
+npx eas-cli@latest init
+```
+
+O npx pode baixar EAS CLI. Login autentica sua conta; init cria/associa um projeto remoto Expo e grava o projectId. Escolher a conta/projeto UniFlow correto, não o projeto Saiu do Forno. Se o CLI informar que não pode editar a configuração dinâmica, copiar o ID real informado para `expo.extra.eas.projectId` de `apps/mobile/app.json`, preservando os campos existentes. Não inventar projectId nem repetir init para criar projetos duplicados.
+
+### Assinatura e chave do mapa Android
+
+```bash
+npx eas-cli@latest credentials -p android
+```
+
+Menu de credenciais: selecionar perfil beta e consultar/criar keystore conforme necessário. Pode alterar credenciais remotas se essa ação for escolhida; reutilizar a assinatura existente do app quando houver. Obter o SHA-1 do certificado de assinatura EAS para restringir a chave Google ao pacote `com.barberflowabs.app` e ao Maps SDK for Android.
+
+```bash
+npx eas-cli@latest env:set --environment production --name GOOGLE_MAPS_API_KEY --visibility sensitive
+```
+
+Cria/atualiza a variável do projeto EAS; informar a chave Google Maps no prompt, sem colocá-la no histórico do shell. Se ela já existir corretamente no ambiente production, não é preciso repetir. A configuração dinâmica lê essa variável para o mapa nativo. Não usar visibilidade secret para configuração que precisa ser resolvida pelo CLI localmente. A chave Android será incorporada ao aplicativo: restringir por pacote, SHA-1 e SDK, nunca tratá-la como segredo de backend. Habilitar Maps SDK for Android e faturamento conforme requisitos do Google Cloud.
+
+### Gerar APK beta na nuvem
+
+```bash
+npx eas-cli@latest build --platform android --profile beta
+```
+
+Envia o código ao Expo e inicia compilação remota, podendo consumir cota/cobrança do plano. O hook EAS compila o core compartilhado antes do bundle. Ao concluir, abrir o link fornecido no Android, baixar o APK e autorizar a instalação pela origem escolhida. Não publica na Play Store. Nos próximos builds, repetir apenas este comando se projeto/credenciais já estiverem configurados. A URL da API já está no perfil; não depende de exportá-la no terminal local. Não enviar `.env.prod` do backend ao Expo.
+
+Usa produção real: a disponibilidade da API e a configuração do mapa precisam ser homologadas pelo responsável. Nenhuma verificação de API, geração de chave, login remoto ou build foi executado pelo agente.
+
 ## Descobrir O IP Local
 
 ### macOS com Wi-Fi em `en0`
@@ -429,7 +494,59 @@ docker compose exec -T app sh -lc 'cd apps/backend && npx prisma db seed'
 
 Cria ou atualiza os dados de demonstracao definidos em `apps/backend/prisma/seed.ts`. Isso inclui os 12 estabelecimentos multissegmento do Tatuape, 48 clientes e 240 atendimentos concluidos distribuidos entre 1 e 10 de outubro de 2026. O historico cobre barbearia, salao de beleza, manicure e pedicure, clinica de estetica, spa e estudios de beleza. Mesmo usando operacoes idempotentes, o seed altera dados e deve ser revisado antes da execucao.
 
-### Sequencia apos migrations
+**Pré-requisito identificado em 22/10/2026:** o schema atual usa `engineType = "client"` e a API inicializa Prisma com `PrismaMariaDb`, mas o seed principal ainda usa `new PrismaClient()` sem adapter. Adaptar o seed antes de executá-lo com o client atual. Não executar reset contando com o seed automático enquanto essa incompatibilidade não estiver corrigida. Esta consulta não alterou o código do seed nem executou comandos no banco.
+
+### Conferir o destino antes de seed/reset
+
+```bash
+docker compose exec -T app node -e 'const u=new URL(process.env.DATABASE_URL);console.log({host:u.hostname,porta:u.port||"3306",banco:u.pathname.slice(1)})'
+```
+
+Mostra somente host, porta e database do ambiente do container, sem usuário/senha. O comando não lê `.env.prod` automaticamente. O APK aponta para `https://api.uniflowabs.top`; alterar o banco do Docker local não altera o servidor remoto, salvo se DATABASE_URL desse container apontar explicitamente para ele. Confirmar o destino e backup antes de qualquer escrita.
+
+### Equivalente Prisma de migrate:fresh --seed (destrutivo)
+
+```bash
+docker compose exec app sh -lc 'cd apps/backend && npx prisma migrate reset'
+```
+
+Somente para uma base de testes descartável com destino conferido. Apaga os dados do database alvo, reaplica as migrations e, no Prisma 6 deste projeto, chama o seed configurado. Exige a correção do adapter no seed descrita acima. Não usar `-T` ou `--force`: manter a confirmação interativa e conferir o banco mostrado antes de aceitar. Não apaga/recria o container MySQL inteiro, mas remove os dados da aplicação no database selecionado, incluindo usuários, unidades, agenda e financeiro; uploads em disco não são apagados e podem ficar órfãos. Recuperação dos dados anteriores exige backup. Não executado pelo agente.
+
+Não existe refresh obrigatório para executar o seed: em base já migrada, o comando **Executar o seed** é suficiente após corrigir sua compatibilidade. Ele redefine o superadmin demonstrativo `milicofelix@gmail.com` para a senha `password` e cria outros dados demo; reservar essa conta ao operador, nunca distribuir acesso administrativo a todos os testers.
+
+Para a exigência de teste fechado Google Play, APK instalado diretamente pelo link EAS não substitui a participação no teste fechado da Play Console. Distribuir o artefato apropriado (AAB para novos apps) pela faixa de teste exigida, conforme a conta. Referências: [requisitos de testes](https://support.google.com/googleplay/android-developer/answer/14151465), [faixas de teste](https://support.google.com/googleplay/android-developer/answer/9845334).
+
+### Seed e reset no servidor, sem Docker
+
+Usar somente depois de corrigir a compatibilidade do seed com o adapter `PrismaMariaDb` descrita acima. Requer Node.js 22+, repositório completo no diretório privado, Prisma CLI, ts-node e demais dependências do seed instaladas e Prisma Client atualizado. Um pacote de deploy contendo somente `dist/` e dependências de runtime pode não incluir seed/CLI/ts-node; não presumir disponibilidade nesses pacotes.
+
+```bash
+cd /home/rico4167/domains/uniflowabs.top/uniflow/apps/backend
+```
+
+O `.env.prod` usado abaixo fica na raiz privada `uniflow`, dois níveis acima. O CLI é resolvido das dependências locais com `require.resolve`, sem instalar/baixar automaticamente outra versão via npx. Variáveis já exportadas no terminal/painel têm prioridade sobre `--env-file`; conferir o destino efetivo antes de escrever.
+
+```bash
+node --env-file=../../.env.prod -e 'const u=new URL(process.env.DATABASE_URL);console.log({host:u.hostname,porta:u.port||"3306",banco:u.pathname.slice(1)})'
+```
+
+Consulta apenas host/porta/database configurados, sem conexão ao banco e sem exibir senha. Não valida que a base está vazia ou que é descartável.
+
+```bash
+node --env-file=../../.env.prod "$(node -p 'require.resolve("prisma/build/index.js")')" db seed
+```
+
+Executa o seed existente, incluindo conta administrativa demonstrativa e dados demo. Não apaga previamente as tabelas, mas altera registros e redefine a senha do superadmin demonstrativo. O processo filho ts-node herda as variáveis carregadas pelo Node. Não executar enquanto o seed não estiver adaptado ao engine atual.
+
+```bash
+node --env-file=../../.env.prod "$(node -p 'require.resolve("prisma/build/index.js")')" migrate reset
+```
+
+**Destrutivo:** equivalente funcional ao migrate:fresh --seed no Prisma 6 configurado neste projeto. Apaga os dados da aplicação no database alvo, reaplica migrations e chama o seed. Manter confirmação interativa, sem `--force`; exige backup e autorização sobre a base exata. A existência de `.env.prod` não torna o banco descartável: usar somente se confirmado que ele contém exclusivamente testes. Não executar durante atendimento de usuários; colocar a aplicação em manutenção/parar workers pelo supervisor do provedor antes. Não fornecer um restart genérico sem conhecer o supervisor instalado. O seed pode falhar após o reset e deixar a base sem os usuários esperados: corrigir o adapter primeiro. Recuperação depende de backup; arquivos de mídia não são removidos por esse comando.
+
+Nenhum dos comandos desta subseção foi executado pelo agente. Para atualizar estrutura sem zerar dados, usar o fluxo já catalogado `yarn prod:migrate`, na raiz privada do repositório.
+
+### Sequencia apos migrations (sem reset)
 
 Execute, nesta ordem, os comandos já documentados em **Aplicar migrations pendentes**, **Gerar o Prisma Client** e **Reiniciar depois de alterar o backend**.
 

@@ -3,6 +3,7 @@
     "main": "index.js",
     "version": "1.0.0",
     "scripts": {
+        "eas-build-post-install": "yarn --cwd ../.. workspace @uniflowabs/core build",
         "start": "expo start",
         "reset-project": "node ./scripts/reset-project.js",
         "dev": "expo start --lan --port 8081",

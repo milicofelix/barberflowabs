@@ -1,0 +1,21 @@
+{
+  "cli": {
+    "version": ">= 16.18.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "beta": {
+      "distribution": "internal",
+      "developmentClient": false,
+      "environment": "production",
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://api.uniflowabs.top",
+        "API_URL": "https://api.uniflowabs.top"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    }
+  }
+}

@@ -6,7 +6,7 @@ const { spawn } = require('node:child_process');
 
 const raiz = resolve(__dirname, '..');
 const acao = process.argv[2];
-const acoes = ['build', 'web', 'api', 'migrate'];
+const acoes = ['build', 'build:web', 'build:api', 'web', 'api', 'migrate'];
 let filho;
 
 function exigir(nome) {
@@ -53,18 +53,31 @@ async function iniciar() {
     exigir('DATABASE_URL');
     return executar('yarn', ['prisma', 'migrate', 'deploy'], backend);
   }
-  if (acao === 'build' || acao === 'web') {
+  if (['build', 'build:web', 'web'].includes(acao)) {
     for (const chave of ['NEXT_PUBLIC_API_URL', 'PUBLIC_APP_URL']) {
       if (new URL(exigir(chave)).protocol !== 'https:') throw new Error(`${chave} deve usar HTTPS.`);
     }
   }
-  if (acao === 'build') {
-    exigir('DATABASE_URL');
-    await executar('yarn', ['prisma:generate'], backend);
+  if (['build', 'build:web', 'build:api'].includes(acao)) {
+    const compilarApi = acao !== 'build:web';
+    const compilarWeb = acao !== 'build:api';
+
+    if (compilarApi) {
+      exigir('DATABASE_URL');
+      await executar('yarn', ['prisma:generate'], backend);
+    }
+
     await executar('yarn', ['workspace', '@uniflowabs/core', 'build'], raiz);
-    await executar('yarn', ['build'], backend);
+
+    if (compilarApi) {
+      await executar('yarn', ['build'], backend);
+    }
+
     // Sem Turbo/dev: não inicializa Expo, workers ou API e não aplica migrations.
-    return executar('yarn', ['build'], frontend);
+    if (compilarWeb) {
+      await executar('yarn', ['build'], frontend);
+    }
+    return;
   }
   if (acao === 'web') {
     const cli = require.resolve('next/dist/bin/next', { paths: [frontend] });

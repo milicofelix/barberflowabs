@@ -39,11 +39,14 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      ["expo-image-picker", {
-        "photosPermission": "Escolha fotos para seu perfil, serviços e estabelecimento na UniFlow ABS.",
-        "cameraPermission": "Permita que a UniFlow ABS tire a foto que você deseja usar.",
-        "microphonePermission": false
-      }],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Escolha fotos para seu perfil, serviços e estabelecimento na UniFlow ABS.",
+          "cameraPermission": "Permita que a UniFlow ABS tire a foto que você deseja usar.",
+          "microphonePermission": false
+        }
+      ],
       "expo-font",
       [
         "expo-splash-screen",
@@ -72,6 +75,12 @@
       ],
       "expo-status-bar",
       "expo-web-browser"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "2cdbc4be-4595-4b28-92d1-297cf33d5612"
+      }
+    },
+    "owner": "milicofelix"
   }
 }

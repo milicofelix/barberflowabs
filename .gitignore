@@ -36,3 +36,5 @@ coverage/
 
 # Relatorios temporarios de diagnostico
 /core-referencias.txt
+
+/.deploy/
