@@ -30,3 +30,9 @@ coverage/
 # Arquivos de diagnostico local
 /schema.txt
 /schema-completo.txt
+
+# Artefatos compilados do Core (gerados pelo Docker)
+/packages/core/dist/
+
+# Relatorios temporarios de diagnostico
+/core-referencias.txt
