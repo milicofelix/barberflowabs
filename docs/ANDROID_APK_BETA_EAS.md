@@ -1,6 +1,6 @@
 # Android — APK beta com API de produção
 
-Preparação local entregue. Após autorização explícita, foram confirmados login e associação EAS e geradas credenciais Android; consultar o registro abaixo. O APK ainda não foi compilado: falta configurar Google Maps. A compatibilidade do build com o SDK/dependências atuais ainda depende da execução.
+Preparação local entregue. Após autorização explícita, foram confirmados login e associação EAS, geradas credenciais Android e enviado o primeiro build beta após o cadastro da chave Maps. Consultar os registros abaixo e o link EAS para o resultado remoto; submissão não equivale a compilação concluída ou homologação no aparelho.
 
 ## Configuração
 
@@ -49,9 +49,48 @@ Não usar `eas build:configure` por cima do perfil pronto nem `expo prebuild --c
 - Consulta de ambiente EAS production confirmou ausência de `GOOGLE_MAPS_API_KEY`; nenhum valor de variável foi impresso. Falta o responsável configurar a chave Google e cadastrá-la como sensitive no projeto EAS para o mapa nativo.
 - Build **ainda não enviado**. Nenhum APK ou URL de build gerado; nenhum teste ou alteração de banco executado. A execução parou na configuração externa do Google Maps, antes de consumir um build.
 
-## Referências oficiais
+## Envio autorizado do APK beta — 22/10/2026
+
+- Após cadastro pelo responsável, EAS carregou `GOOGLE_MAPS_API_KEY` do ambiente production e as duas variáveis de API do perfil beta, sem exposição do valor da chave.
+- A variável foi cadastrada com escopo global da conta, conforme imagem enviada pelo responsável; isso também pode atingir outros projetos. Não foi alterado o escopo automaticamente. Recomenda-se uma variável específica por projeto quando as restrições Android diferirem.
+- Build Android enviado pelo container `app` autenticado, perfil beta, versão 1.0.0, versionCode incrementado de 1 para 2, reutilizando o keystore `UniFlow ABS Android Beta`.
+- [Build EAS 119c8fdd-9be4-4d84-9dea-0faccf4d608d](https://expo.dev/accounts/milicofelix/projects/barber-flow-abs/builds/119c8fdd-9be4-4d84-9dea-0faccf4d608d).
+- O comando de envio concluiu com código 0 usando `--no-wait`: confirma submissão, não conclusão da compilação. O resultado/APK deve ser conferido no link EAS; não houve publicação na Play Store, deploy de backend ou alteração de banco.
+
+## Correção do primeiro build — 22/10/2026
+
+O build `119c8fdd-9be4-4d84-9dea-0faccf4d608d` terminou como **ERRORED**. O log final do Gradle confirmou o bloqueio em `react-native-reanimated/android/build.gradle.kts`: **react-native-worklets library not found**. Expo Doctor também encontrou seis grupos de problemas, mas seu código de saída não foi o erro final: o EAS chegou ao prebuild e ao Gradle.
+
+Correções preparadas para a nova tentativa:
+
+- Dependência direta `react-native-worklets` 0.10.1, versão indicada pelo SDK/Reanimated instalados.
+- Patches do SDK 57 alinhados aos relatados pelo Doctor, sem migração para outro SDK ou mudança do pacote Android/assinatura.
+- Remoção de `android.edgeToEdgeEnabled` e da configuração legada `splash`, campos não aceitos pelo schema atual do Expo. A mesma imagem/cores de abertura permanecem no plugin `expo-splash-screen` já configurado.
+- Metro usando `getDefaultConfig(__dirname)` sem os overrides de monorepo antigos.
+- `nohoist` restrito ao workspace mobile no Yarn Classic, mantendo sua árvore React 19/React Native isolada da web React 18; não foi criada resolução global que force todos os apps para React 19.
+- `.easignore` explícito para excluir dependências/cache locais, ambientes/credenciais privadas e `package-lock.json` do arquivo enviado ao EAS. O lock npm legado foi preservado no repositório; o build remoto usa somente `yarn.lock`.
+
+A reinstalação Docker para sincronizar o lock usa `--ignore-scripts`, sem rodar postinstall/Prisma do backend. A instalação limpa do EAS mantém seu ciclo normal de scripts, incluindo o hook de compilação do core. Não apagar `node_modules`/volumes ou o lock do usuário como tentativa de correção. Não ignorar os checks do Doctor para esconder problemas: reavaliar os resultados após instalar as dependências corrigidas.
+
+Validação executada no Docker durante a correção autorizada:
+
+- `yarn install --ignore-scripts --non-interactive --network-timeout 300000`: concluído com código 0 e `yarn.lock` atualizado. Não foram executados os scripts de instalação do backend.
+- `expo-doctor --verbose` após todas as correções: **20/21 checks passaram**. Schema da configuração, Metro, peers obrigatórios, versões SDK e ausência de duplicação nativa aprovados.
+- O único check local restante é a presença do `package-lock.json` legado. O arquivo não foi apagado do repositório; `.easignore` exclui-o do arquivo remoto. Foi conferido no código do EAS CLI instalado que `.easignore` é lido da raiz do repositório e substitui as regras `.gitignore` no empacotamento. O Doctor remoto ainda deve ser conferido na nova tentativa.
+- Não foram executados testes unitários, reset, migrations, seed, publicação Play Store ou deploy da API. A aprovação do Doctor não equivale a compilação Gradle concluída nem teste do APK no aparelho.
+
+Nova tentativa enviada com código de submissão 0, mesma assinatura, perfil beta e versão **1.0.0 / versionCode 3**:
+
+[Build EAS 3cc26e99-f16d-490e-b448-071fb2e7b087](https://expo.dev/accounts/milicofelix/projects/barber-flow-abs/builds/3cc26e99-f16d-490e-b448-071fb2e7b087).
+
+A conclusão/artefato deve ser verificada no painel EAS. O envio com `--no-wait` não declara o APK aprovado.
+
+## Referências oficiais (configuração e dependências)
 
 - [Expo — APK instalável e distribuição interna](https://docs.expo.dev/build-reference/apk/).
 - [Expo — monorepos e compilação de dependências compartilhadas](https://docs.expo.dev/build-reference/build-with-monorepos/).
 - [Expo — ambientes EAS](https://docs.expo.dev/eas/environment-variables/usage/).
 - [react-native-maps — chave Google Maps Android](https://github.com/react-native-maps/react-native-maps/blob/master/docs/installation.md).
+- [Expo — configuração automática do monorepo/Metro](https://docs.expo.dev/guides/monorepos/).
+- [Expo — Reanimated e Worklets](https://docs.expo.dev/versions/latest/sdk/reanimated/).
+- [Yarn Classic — isolamento com nohoist](https://classic.yarnpkg.com/blog/2018/02/15/nohoist/).

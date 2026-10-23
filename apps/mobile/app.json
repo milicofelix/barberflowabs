@@ -8,15 +8,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "barberflowabs",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#081426",
-      "dark": {
-        "image": "./assets/images/splash.png",
-        "backgroundColor": "#040A13"
-      }
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.barberflowabs.app"
@@ -30,8 +21,7 @@
         "foregroundImage": "./assets/images/brand/android-foreground.png",
         "monochromeImage": "./assets/images/brand/monochrome-icon.png",
         "backgroundColor": "#081426"
-      },
-      "edgeToEdgeEnabled": true
+      }
     },
     "web": {
       "bundler": "metro",

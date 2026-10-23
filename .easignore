@@ -1,0 +1,42 @@
+# Arquivo do monorepo enviado ao EAS: somente Yarn, sem ambientes/binaries locais.
+# .easignore substitui as regras .gitignore na montagem do arquivo EAS.
+.git/
+**/node_modules/
+**/.next/
+**/.expo/
+**/.turbo/
+**/dist/
+**/coverage/
+**/.env
+**/.env.*
+.env
+.env.*
+**/.DS_Store
+*.log
+**/*.log
+*.tsbuildinfo
+**/*.tsbuildinfo
+*.bak
+*.backup
+*.tmp
+**/*.bak
+**/*.backup
+**/*.tmp
+# Lock npm antigo permanece no repositório, mas não participa da instalação EAS.
+package-lock.json
+**/package-lock.json
+/.deploy/
+/schema.txt
+/schema-completo.txt
+/core-referencias.txt
+apps/backend/storage/
+apps/backend/prisma/dev.db
+**/*.sql.gz
+# Credenciais de assinatura e material privado não devem entrar no arquivo EAS.
+**/*.jks
+**/*.keystore
+**/*.p8
+**/*.p12
+**/*.key
+**/*.mobileprovision
+**/credentials.json

@@ -74,7 +74,34 @@ npx eas-cli@latest build --platform android --profile beta
 
 Envia o código ao Expo e inicia compilação remota, podendo consumir cota/cobrança do plano. O hook EAS compila o core compartilhado antes do bundle. Ao concluir, abrir o link fornecido no Android, baixar o APK e autorizar a instalação pela origem escolhida. Não publica na Play Store. Nos próximos builds, repetir apenas este comando se projeto/credenciais já estiverem configurados. A URL da API já está no perfil; não depende de exportá-la no terminal local. Não enviar `.env.prod` do backend ao Expo.
 
+Variante executada com autorização em 22/10/2026, usando o serviço `app` já autenticado (partir da raiz do repositório no Mac):
+
+```bash
+docker compose exec -w /workspace/barberFlowABS/apps/mobile \
+  -e API_URL=https://api.uniflowabs.top \
+  -e EXPO_PUBLIC_API_BASE_URL=https://api.uniflowabs.top \
+  app npx --yes eas-cli@latest build --platform android --profile beta --no-wait
+```
+
+Envia um **novo build** remoto e retorna após submissão com o link EAS; não aguarda sucesso da compilação. Incrementa versionCode conforme o perfil e pode consumir cota. Não repetir para consultar o progresso: usar o link do build já enviado. O valor da chave Maps não aparece nesse comando; é carregado do ambiente EAS production. Registro do envio em `ANDROID_APK_BETA_EAS.md`.
+
 Usa produção real: a disponibilidade da API e a configuração do mapa precisam ser homologadas pelo responsável. Nenhuma verificação de API, geração de chave, login remoto ou build foi executado pelo agente.
+
+## Correção de dependências do APK beta (Docker)
+
+Comandos utilizados no fluxo de correção autorizado do primeiro build EAS. Partir da raiz do repositório no Mac, com `app` em execução. Não usar estes comandos no servidor remoto como rotina de deploy.
+
+```bash
+docker compose exec -T -w /workspace/barberFlowABS app yarn install --ignore-scripts --non-interactive --network-timeout 300000
+```
+
+Atualiza a instalação e `yarn.lock` conforme os manifests corrigidos. Usa `--ignore-scripts` para não executar postinstall do backend/Prisma; não é uma instalação completa para provisionar um ambiente novo do zero (binários nativos como bcrypt podem exigir seus scripts em ambiente novo). Pode baixar pacotes e modificar dependências do workspace. Não remove volumes nem executa migrations/seed/restart. O EAS faz uma instalação limpa normal, com scripts, a partir do lock atualizado.
+
+```bash
+docker compose exec -T -w /workspace/barberFlowABS/apps/mobile app npx --yes expo-doctor --verbose
+```
+
+Diagnóstico focado de SDK, config e dependências do mobile. Não executa testes unitários nem altera o banco. Pode baixar o Expo Doctor e consultar recomendações atuais pela rede. No checkout local o lock npm legado ainda existe; `.easignore` exclui esse arquivo do EAS, portanto esse check local pode diferir do arquivo realmente enviado. Duplicações adicionais precisam ser investigadas, não suprimidas indiscriminadamente. Reenvio usa o comando beta já catalogado acima; gera outro build/versionCode e pode consumir cota.
 
 ## Descobrir O IP Local
 
